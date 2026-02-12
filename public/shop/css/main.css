@@ -1,0 +1,17 @@
+@charset "utf-8";
+
+
+/* PC */
+@media all and (min-width:1025px){
+	
+}
+
+/* 태블릿&모바일 공통*/
+@media all and (max-width:1024px){
+	
+}
+
+/* 모바일 */
+@media all and (max-width:768px){
+	
+}

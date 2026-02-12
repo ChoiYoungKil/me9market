@@ -1,0 +1,152 @@
+@extends('layouts.frontend')
+
+@section('page_type', 'sub')
+
+@php
+    $dep1_id = "04";
+    $dep1_tit = "고객센터";
+@endphp
+
+@section('content')
+@include('layouts.inc.sub_header', [
+    'dep1_id' => $dep1_id,
+    'dep2_id' => '03',
+    'dep1_tit' => $dep1_tit,
+    'dep2_tit' => '제휴/문의',
+    'dep2_sub' => '미구마켓의 다양한 소식을 안내해 드립니다.'
+])
+
+<div id="container">
+    <div id="contents">
+        <div id="contact">
+            <div class="box box1">
+                <div class="inner_bx">
+                    <div id="board">
+                        <form action="{{ route('cs.contact') }}" method="POST">
+                            @csrf
+                            <div class="write01">
+                                <div class="f_bx">
+                                    <div class="f_inner">
+                                        <div class="f_w">
+                                            <div class="ttl">회사명<span class="imp">필수</span></div>
+                                            <input type="text" name="company_name" required>
+                                        </div>
+                                        <div class="f_w">
+                                            <div class="ttl">담당자명 / 직책<span class="imp">필수</span></div>
+                                            <input type="text" name="manager_name" required>
+                                        </div>
+                                        <div class="f_w">
+                                            <div class="ttl">연락처<span class="imp">필수</span></div>
+                                            <div class="tel_bx">
+                                                <select name="manager_tel_1" required>
+                                                    <option value="010">010</option>
+                                                    <option value="02">02</option>
+                                                    <option value="031">031</option>
+                                                </select>
+                                                <span>-</span>
+                                                <input type="text" name="manager_tel_2" required maxlength="4">
+                                                <span>-</span>
+                                                <input type="text" name="manager_tel_3" required maxlength="4">
+                                            </div>
+                                        </div>
+                                        <div class="f_w">
+                                            <div class="ttl">이메일<span class="imp">필수</span></div>
+                                            <div class="email_bx">
+                                                <input type="text" name="manager_email_1" class="email1" required>
+                                                <span>@</span>
+                                                <input type="text" name="manager_email_2" class="email2" required>
+                                                <select onchange="$(this).parent().find('.email2').val(this.value)">
+                                                    <option value="">직접입력</option>
+                                                    <option value="naver.com">naver.com</option>
+                                                    <option value="daum.net">daum.net</option>
+                                                    <option value="gmail.com">gmail.com</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="f_inner">
+                                        <div class="f_w">
+                                            <div class="ttl">문의내용<span class="imp">필수</span></div>
+                                            <textarea name="message" required></textarea>
+                                        </div>
+                                        <div class="f_w">
+                                            <div class="ttl">스크립트 방지 태그<span class="imp">필수</span></div>
+                                            <div class="spam_bx">
+                                                <div class="l_txt">ADFKDKEFKD</div>
+                                                <input type="text" name="captcha" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="agree_bx">
+                                    <div class="ttl">약관동의</div>
+                                    <ul class="con_bx">
+                                        <li>
+                                            <div class="s_txt">
+                                                <input type="checkbox" id="agree1" name="agree_terms" required>
+                                                <label for="agree1">이용약관 동의 <span class="col2">(필수)</span></label>
+                                                <div class="btn">전문보기</div>
+                                            </div>
+                                            <div class="h_txt">
+                                                이용약관 내용입니다.<br>
+                                                이용약관 내용입니다. 이용약관 내용입니다.<br><br>
+                                                이용약관 내용입니다. 이용약관 내용입니다. 이용약관 내용입니다.<br>
+                                                이용약관 내용입니다.<br>
+                                                이용약관 내용입니다.<br>
+                                                이용약관 내용입니다. 이용약관 내용입니다.<br><br>
+                                                이용약관 내용입니다. 이용약관 내용입니다. 이용약관 내용입니다.<br>
+                                                이용약관 내용입니다.
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <div class="s_txt">
+                                                <input type="checkbox" id="agree2" name="agree_privacy" required>
+                                                <label for="agree2">개인정보 수집 및 이용에 관한 안내 <span class="col2">(필수)</span></label>
+                                                <div class="btn">전문보기</div>
+                                            </div>
+                                            <div class="h_txt">
+                                                개인정보 수집 및 이용에 관한 안내입니다.<br>
+                                                개인정보 수집 및 이용에 관한 안내입니다. 개인정보 수집 및 이용에 관한 안내입니다.<br><br>
+                                                개인정보 수집 및 이용에 관한 안내입니다. 개인정보 수집 및 이용에 관한 안내입니다. 개인정보 수집 및 이용에 관한 안내입니다.<br>
+                                                개인정보 수집 및 이용에 관한 안내입니다.
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <div class="s_txt">
+                                                <input type="checkbox" id="agree3" name="agree_marketing">
+                                                <label for="agree3">마케팅활용동의 <span class="col3">(선택)</span></label>
+                                                <div class="btn">전문보기</div>
+                                            </div>
+                                            <div class="h_txt">
+                                                마케팅활용동의 내용입니다.<br>
+                                                마케팅활용동의 내용입니다. 마케팅활용동의 내용입니다.<br><br>
+                                                마케팅활용동의 내용입니다. 마케팅활용동의 내용입니다. 마케팅활용동의 내용입니다.<br>
+                                                마케팅활용동의 내용입니다.
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </div>
+                                <div class="btm_btn">
+                                    <a href="#" onclick="submitContactForm(event)">문의하기</a>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+      </div><!-- //contents -->
+</div><!-- //container -->
+
+@push('scripts')
+    <script type="text/javascript">
+        $(".agree_bx .s_txt .btn").click(function(){
+            $(this).parent(".s_txt").siblings(".h_txt").stop().slideToggle(300);
+        });
+
+        function submitContactForm(event) {
+            event.preventDefault();
+            $(event.target).closest('form').submit();
+        }
+    </script>
+@endpush

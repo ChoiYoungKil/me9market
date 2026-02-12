@@ -1,0 +1,33 @@
+@charset "utf-8";
+
+.order_list01 {display: flex; flex-flow: wrap; margin-bottom: -10px;}
+.order_list01 li {box-sizing: border-box; padding-left: 60px; min-height: 50px; display:flex; justify-content:center; align-items:center; table-layout:fixed; width: 14.285%; margin-bottom: 10px;}
+.order_list01 li.icon0 {background: url(../images/icon/order_icon0.png) no-repeat left top;}
+.order_list01 li.icon1 {background: url(../images/icon/order_icon1.png) no-repeat left top;}
+.order_list01 li.icon2 {background: url(../images/icon/order_icon2.png) no-repeat left top;}
+.order_list01 li.icon3 {background: url(../images/icon/order_icon3.png) no-repeat left top;}
+.order_list01 li.icon4 {background: url(../images/icon/order_icon4.png) no-repeat left top;}
+.order_list01 li.icon5 {background: url(../images/icon/order_icon5.png) no-repeat left top;}
+.order_list01 li.icon6 {background: url(../images/icon/order_icon6.png) no-repeat left top;}
+.order_list01 li .txt_w {width: 100%;}
+.order_list01 li .txt_w .txt1 {font-size: 12px; color: #000000; letter-spacing: -0.03em;}
+.order_list01 li .txt_w .txt2 {font-size: 12px; color: #444444; letter-spacing: -0.03em; line-height: 20px; margin-top: 6px;}
+.order_list01 li .txt_w .txt2 strong {font-size: 18px; color: #444444; font-weight: 800; letter-spacing: 0;}
+
+
+
+#main .box {height: 100%;}
+
+
+
+/* box3 */
+#main .box3 .txt_bx {text-align: center; margin-bottom: 24px;}
+#main .box3 .txt_bx strong {display: block; font-size: 16px; color: #000000; font-weight: 700; letter-spacing: -0.03em; word-break: keep-all; line-height: 24px;}
+#main .box3 .txt_bx p {font-size: 14px; color: #444444; letter-spacing: -0.03em; word-break: keep-all; line-height: 22px; margin-top: 2px;}
+
+
+
+/* box4 */
+#main .box4 .txt_bx {text-align: center; margin-bottom: 24px;}
+#main .box4 .txt_bx strong {display: block; font-size: 16px; color: #000000; font-weight: 700; letter-spacing: -0.03em; word-break: keep-all; line-height: 24px;}
+#main .box4 .txt_bx p {font-size: 14px; color: #444444; letter-spacing: -0.03em; word-break: keep-all; line-height: 22px; margin-top: 2px;}

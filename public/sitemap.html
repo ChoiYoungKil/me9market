@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verified Implementation Sitemap - Me9 Market</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f5f7;
+        }
+
+        h1 {
+            border-bottom: 3px solid #007bff;
+            padding-bottom: 15px;
+            color: #007bff;
+            font-size: 2.2em;
+        }
+
+        .highlight-notice {
+            background-color: #e8f5e9;
+            border: 2px solid #28a745;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        h2 {
+            margin-top: 30px;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+            color: #555;
+            background-color: #e9ecef;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        h3 {
+            margin-top: 20px;
+            color: #666;
+            border-left: 4px solid #007bff;
+            padding-left: 10px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 10px;
+        }
+
+        li {
+            background: #fff;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+            border: 1px solid #eee;
+        }
+
+        li:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-color: #007bff;
+        }
+
+        a {
+            text-decoration: none;
+            color: #333;
+            display: block;
+            font-weight: 500;
+        }
+
+        a:hover {
+            color: #007bff;
+        }
+
+        .url {
+            font-size: 0.85em;
+            color: #888;
+            display: block;
+            margin-top: 5px;
+            font-family: monospace;
+            background: #f8f9fa;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+
+        .note {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border: 1px solid #ffeeba;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25em 0.4em;
+            font-size: 75%;
+            font-weight: 700;
+            line-height: 1;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+            border-radius: 0.25rem;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Me9 Market Project Sitemap</h1>
+
+    <div class="note">
+        <strong>Project Note:</strong> This sitemap reflects the verified route structure of the Laravel migration.
+        Routes marked with <span class="badge" style="background:#28a745; color:white;">Exact Match</span> have been
+        audited against source HTML.
+        <br><br>
+        <span style="font-size:0.9em; color:#d9534f; font-weight:bold;">Last Updated: 2026-01-17 06:15 (URGENT FIX:
+            Resolved Fatal Error in Channel Portal & Duplicate Routes, Layout Fixes)</span>
+    </div>
+
+    <h2>1. Main Site (Frontend)</h2>
+    <ul>
+        <li>
+            <a href="/">Home (Main Mall)</a>
+            <span class="url">/</span>
+            <span class="badge" style="background:#28a745; color:white;">Exact Match</span>
+        </li>
+        <li>
+            <a href="/login">Login</a>
+            <span class="url">/login</span>
+        </li>
+        <li>
+            <a href="/register/member">Register (Member Type / Join)</a>
+            <span class="url">/register/member</span>
+            <span class="badge" style="background:#28a745; color:white;">Verified Match</span>
+        </li>
+        <li>
+            <a href="/register/step1">Register Step 1 (Basic Info)</a>
+            <span class="url">/register/step1</span>
+            <span class="badge" style="background:#28a745; color:white;">New Flow</span>
+        </li>
+        <li>
+            <a href="/register/step2">Register Step 2 (Company)</a>
+            <span class="url">/register/step2</span>
+            <span class="badge" style="background:#28a745; color:white;">New Flow</span>
+        </li>
+        <li>
+            <a href="/register/step3">Register Step 3 (Seller)</a>
+            <span class="url">/register/step3</span>
+            <span class="badge" style="background:#28a745; color:white;">New Flow</span>
+        </li>
+        <li>
+            <a href="/find/id">Find ID</a>
+            <span class="url">/find/id</span>
+        </li>
+        <li>
+            <a href="/find/pw">Find Password</a>
+            <span class="url">/find/pw</span>
+        </li>
+    </ul>
+
+    <h3>Customer Service</h3>
+    <ul>
+        <li>
+            <a href="/notice">Notice</a>
+            <span class="url">/notice</span>
+            <span class="badge" style="background:#28a745; color:white;">Exact Match</span>
+        </li>
+        <li>
+            <a href="/faq">FAQ</a>
+            <span class="url">/faq</span>
+            <span class="badge" style="background:#28a745; color:white;">Exact Match</span>
+        </li>
+        <li>
+            <a href="/contact">Contact Us</a>
+            <span class="url">/contact</span>
+            <span class="badge" style="background:#28a745; color:white;">Exact Match</span>
+        </li>
+    </ul>
+
+    <h2>2. My Page (User Dashboard)</h2>
+    <ul>
+        <li>
+            <a href="/mypage/main">My Page Home</a>
+            <span class="url">/mypage/main</span>
+            <span class="badge" style="background:#28a745; color:white;">Exact Match</span>
+        </li>
+        <li>
+            <a href="/mypage/order/view">Order History</a>
+            <span class="url">/mypage/order/view</span>
+            <span class="badge" style="background:#28a745; color:white;">Exact Match</span>
+        </li>
+        <li>
+            <a href="/mypage/profile">Profile Modify</a>
+            <span class="url">/mypage/profile</span>
+            <span class="badge" style="background:#28a745; color:white;">Verified Layout Fix</span>
+        </li>
+        <li>
+            <a href="/mypage/delivery">Delivery Destinations</a>
+            <span class="url">/mypage/delivery</span>
+            <span class="badge" style="background:#28a745; color:white;">Exact Match</span>
+        </li>
+        <li>
+            <a href="/mypage/withdraw">Withdrawal</a>
+            <span class="url">/mypage/withdraw</span>
+            <span class="badge" style="background:#28a745; color:white;">Exact Match</span>
+        </li>
+        <li>
+            <a href="/mypage/withdraw/success">WithdrawalSuccess</a>
+            <span class="url">/mypage/withdraw/success</span>
+            <span class="badge" style="background:#28a745; color:white;">Exact Match</span>
+        </li>
+    </ul>
+
+    <h2>3. Shop (Cart & Order)</h2>
+    <ul>
+        <li>
+            <a href="/shop/cart">Shopping Cart</a>
+            <span class="url">/shop/cart</span>
+            <span class="badge" style="background:#28a745; color:white;">Exact Match</span>
+        </li>
+        <li>
+            <a href="/shop/order">Order Form</a>
+            <span class="url">/shop/order</span>
+            <span class="badge" style="background:#28a745; color:white;">Exact Match</span>
+        </li>
+        <li>
+            <a href="/shop/order/complete">Order Complete</a>
+            <span class="url">/shop/order/complete</span>
+            <span class="badge" style="background:#28a745; color:white;">Exact Match</span>
+        </li>
+        <li>
+            <a href="/shop/order/details">Order Details</a>
+            <span class="url">/shop/order/details</span>
+            <span class="badge" style="background:#28a745; color:white;">Exact Match</span>
+        </li>
+        <li>
+            <a href="/shop/cancel/details">Cancel Details</a>
+            <span class="url">/shop/cancel/details</span>
+            <span class="badge" style="background:#28a745; color:white;">Exact Match</span>
+        </li>
+        <li>
+            <a href="/shop/exchange/details">Exchange Details</a>
+            <span class="url">/shop/exchange/details</span>
+            <span class="badge" style="background:#28a745; color:white;">Exact Match</span>
+        </li>
+        <li>
+            <a href="/shop/return/details">Return Details</a>
+            <span class="url">/shop/return/details</span>
+            <span class="badge" style="background:#28a745; color:white;">Exact Match</span>
+        </li>
+    </ul>
+
+    <h2>4. Channel Portal (Seller Center)</h2>
+    <ul>
+        <li>
+            <a href="/channel">Dashboard (Main)</a>
+            <span class="url">/channel</span>
+            <span class="badge" style="background:#17a2b8; color:white;">Re-Verified (Fixed Fatal Error)</span>
+        </li>
+        <li>
+            <a href="/channel/login">Login</a>
+            <span class="url">/channel/login</span>
+            <span class="badge" style="background:#28a745; color:white;">Exact Match</span>
+        </li>
+        <!--<li>
+            <a href="/channel/register">Seller Registration</a>
+            <span class="url">/channel/register</span>
+            <span class="badge" style="background:#28a745; color:white;">Exact Match</span>
+        </li>-->
+    </ul>
+
+    <h3>Info & Settings (Sub00)</h3>
+    <ul>
+        <li><a href="/channel/settings/info">Info Management</a><span class="url">channel/settings/info</span></li>
+        <li><a href="/channel/settings/delivery">Delivery Charges</a><span class="url">/channel/settings/delivery</span>
+        </li>
+        <li><a href="/channel/settings/sub-accounts">Sub Accounts</a><span
+                class="url">/channel/settings/sub-accounts</span></li>
+        <li><a href="/channel/settings/refund">Cancel/Refund Types</a><span class="url">/channel/settings/refund</span>
+        </li>
+        <li><a href="/channel/settings/order-manager">Order Manager</a><span
+                class="url">/channel/settings/order-manager</span></li>
+        <li><a href="/channel/settings/points">Points</a><span class="url">/channel/settings/points</span></li>
+    </ul>
+
+    <h3>Shop Management (Sub01)</h3>
+    <ul>
+        <li><a href="/channel/shop/list">Shop List</a><span class="url">/channel/shop/list</span></li>
+        <li><a href="channel/shop/register">Shop Register</a><span class="url">/channel/shop/register</span>
+            <spanclass="badge" style="background:#28a745; color:white;">Verified</spßßan>
+        </li>
+        <li><a href="/channel/shop/info">Shop Info</a><span class="url">/channel/shop/info</span></li>
+        <li><a href="/channel/shop/community">Shop Community</a><span class="url">/channel/shop/community</span></li>
+        <li><a href="/channel/shop/product01">Shop Product List</a><span class="url">/channel/shop/product01</span></li>
+        <li><a href="/channel/shop/product02">Shop Product (Stopped)</a><span class="url">/channel/shop/product02</span>
+        </li>
+    </ul>
+
+    <h3>Product Management (Sub02)</h3>
+    <ul>
+        <li><a href="/channel/product/own">Product Own (Jasa)</a><span class="url">/channel/product/own</span><span
+                class="badge" style="background:#28a745; color:white;">Verified</span></li>
+        <li><a href="/channel/product/public">Product Public (Gongyong)</a><span
+                class="url">/channel/product/public</span></li>
+        <li><a href="/channel/product/partial">Product Partial (Bubun)</a><span
+                class="url">/channel/order/return/list</span></li>
+        <li><a href="/channel/order/return/list">Product Request</a><span class="url">/channel/order/return/list</span>
+        </li>
+    </ul>
+
+    <h3>Order Management (Sub04)</h3>
+    <ul>
+        <li><a href="/channel/order/list">Order List</a><span class="url">/channel/order/list</span></li>
+        <li><a href="/channel/order/cancel/list">Order Cancel List</a><span
+                class="url">/channel/order/cancel/list</span></li>
+        <li><a href="/channel/order/exchange/list">Exchange Requests</a><span
+                class="url">/channel/order/exchange/list</span></li>
+        <li><a href="/channel/order/return/list">Return Requests</a><span class="url">/channel/order/return/list</span>
+        </li>
+    </ul>
+
+    <h2>5. Master Portal (Admin)</h2>
+    <ul>
+        <li>
+            <a href="/admin/login">Master login</a>
+            <span class="url">/Master login</span>
+            <span class="badge" style="background:#28a745; color:white;">Master login</span>
+        </li>
+        <li>
+            <a href="/admin/dashboard">Master Dashboard</a>
+            <span class="url">/master</span>
+            <span class="badge" style="background:#28a745; color:white;">Verified</span>
+        </li>
+        <li>
+            <a href="/admin/sub01">Info Management (Sub01)</a>
+            <span class="url">/admin/sub01</span>
+            <span class="badge" style="background:#28a745; color:white;">New View</span>
+        </li>
+        <li>
+            <a href="/admin/sub02">Sub-Admin Management (Sub02)</a>
+            <span class="url">/admin/sub02</span>
+            <span class="badge" style="background:#28a745; color:white;">New View</span>
+        </li>
+        <li>
+            <a href="/admin/sub03">Order/Admin List (Sub03)</a>
+            <span class="url">/admin/sub03</span>
+            <span class="badge" style="background:#28a745; color:white;">New View</span>
+        </li>
+        <li>
+            <a href="/admin/loading">Master Loading</a>
+            <span class="url">/admin/loading</span>
+            <span class="badge" style="background:#28a745; color:white;">New View</span>
+        </li>
+    </ul>
+
+</body>
+
+</html>

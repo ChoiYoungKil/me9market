@@ -1,0 +1,46 @@
+@charset "utf-8";
+
+label, input, select{vertical-align:middle;}
+body{font-size:14px; font-family:'Pretendard', '맑은 고딕', 'Malgun Gothic', Dotum, "돋움",Gulim, "굴림", Verdana, Tahoma, AppleGothic, sans-serif; color:#333; letter-spacing:0; }
+input, textarea, select{ font-family:'Pretendard', sans-serif !important; }
+input[type="checkbox"]{ border:1px solid #ddd;}
+
+
+
+/* header */
+#header {position: fixed; z-index: 10000; left: 0; top: 0; background-color: antiquewhite; height: 100px; width: 100%; box-sizing: border-box;}
+
+
+
+
+/* footer */
+#footer {background-color: #1b2431;}
+
+
+
+
+/* container */
+#container {padding-top: 100px;}
+
+
+
+.pc_show2 {display: block!important;}
+.m_show2 {display: none!important;}
+
+
+/* PC */
+@media all and (min-width:1025px){
+
+}
+
+/* 태블릿&모바일 공통*/
+@media all and (max-width:1024px){	
+
+}
+
+/* 모바일 */
+@media all and (max-width:768px){
+    .pc_show2 {display: none!important;}
+    .m_show2 {display: block!important;}
+}
+
