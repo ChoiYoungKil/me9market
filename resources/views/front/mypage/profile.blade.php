@@ -29,7 +29,7 @@
                                 <tbody class="textL">
                                     <tr>
                                         <th class="w160"><span>회원번호</span></th>
-                                        <td>{{ Auth::user()->id }}</td>
+                                        <td>{{ Auth::user()->member_number }}</td>
                                         <th class="w160"><span>가입일</span></th>
                                         <td>{{ Auth::user()->created_at }}</td>
                                     </tr>
@@ -142,6 +142,9 @@
                                         <td colspan="3">
                                             <div class="r_btn_w w457">
                                                 <div class="tel_bx">
+                                                    @php
+                                                        $userMobile = !empty(Auth::user()->mobile) ? explode('-', Auth::user()->mobile) : ['', '', ''];
+                                                    @endphp
                                                     <select name="mobile_1" required="required">
                                                         <option value="" disabled></option>
                                                         <option value="010" @if(Str::startsWith(Auth::user()->mobile, '010')) selected @endif>010</option>
@@ -149,25 +152,28 @@
                                                     </select>
                                                     <span>-</span>
                                                     <input type="text" class="tel1" name="mobile_2" required="required"
-                                                        value="{{ explode('-', Auth::user()->mobile)[1] ?? '' }}">
+                                                        value="{{ $userMobile[1] ?? '' }}">
                                                     <span>-</span>
                                                     <input type="text" class="tel2" name="mobile_3" required="required"
-                                                        value="{{ explode('-', Auth::user()->mobile)[2] ?? '' }}">
+                                                        value="{{ $userMobile[2] ?? '' }}">
                                                 </div>
                                                 <a href="#" class="btn01 col5">본인인증</a>
                                             </div>
-                                            <span class="fcol2 r_txt">( 2024년 01월 01일 인증완료 )</span>
+                                            <span class="fcol2 r_txt">( 현재 개발중 )</span>
                                         </td>
                                     </tr>
                                     <tr>
                                         <th class="w160"><span>이메일</span></th>
                                         <td colspan="3">
                                             <div class="email_bx">
+                                                @php
+                                                    $userEmail = !empty(Auth::user()->email) ? explode('@', Auth::user()->email) : ['', ''];
+                                                @endphp
                                                 <input type="text" class="email1" name="email_1" required="required"
-                                                    value="{{ explode('@', Auth::user()->email)[0] ?? '' }}">
+                                                    value="{{ $userEmail[0] ?? '' }}">
                                                 <span>@</span>
                                                 <input type="text" class="email2" name="email_2" required="required"
-                                                    value="{{ explode('@', Auth::user()->email)[1] ?? '' }}">
+                                                    value="{{ $userEmail[1] ?? '' }}">
                                                 <select class="off">
                                                     <option value="">직접입력</option>
                                                     <option value="naver.com">naver.com</option>
@@ -194,10 +200,14 @@
                         </div>
                     </div>
 
+                    {{-- 회원사 정보 (Box 3) --}}
                     <div class="box box3">
-                        <div class="ttl01">회원사 정보</div>
+                        <div class="ttl01">
+                            회원사 정보
+                            <button type="button" class="btn_toggle" style="float:right; cursor:pointer; border:none; background:none; font-size:16px;">▼</button>
+                        </div>
 
-                        <div class="tb01 type2">
+                        <div class="tb01 type2" style="display:none;">
                             <table class="two">
                                 <colgroup>
                                     <col width="160px">
@@ -208,62 +218,83 @@
                                 <tbody class="textL">
                                     <tr>
                                         <th class="w160"><span>회원사 명</span></th>
-                                        <td colspan="3"><input type="text" class="w310" required="required"></td>
+                                        <td colspan="3"><input type="text" class="w310" name="shop_name"
+                                                value="{{ $business->shop_name ?? '' }}" required="required"></td>
                                     </tr>
                                     <tr>
                                         <th class="w160"><span>사업자구분</span></th>
                                         <td>
                                             <ul class="chk01">
                                                 <li>
-                                                    <input type="radio" name="type2_1" id="type2_1_1" checked>
+                                                    <input type="radio" name="shop_business_type" id="type2_1_1"
+                                                        value="individual" {{ ($business->shop_business_type ?? '') == 'individual' ? 'checked' : '' }}>
                                                     <label for="type2_1_1">개인판매</label>
                                                 </li>
                                                 <li>
-                                                    <input type="radio" name="type2_1" id="type2_1_2">
+                                                    <input type="radio" name="shop_business_type" id="type2_1_2"
+                                                        value="business" {{ ($business->shop_business_type ?? '') == 'business' ? 'checked' : '' }}>
                                                     <label for="type2_1_2">개인사업자</label>
                                                 </li>
                                                 <li>
-                                                    <input type="radio" name="type2_1" id="type2_1_3">
+                                                    <input type="radio" name="shop_business_type" id="type2_1_3"
+                                                        value="corporation" {{ ($business->shop_business_type ?? '') == 'corporation' ? 'checked' : '' }}>
                                                     <label for="type2_1_3">법인사업자</label>
                                                 </li>
                                             </ul>
                                         </td>
                                         <th class="w160"><span>사업자등록번호</span></th>
                                         <td>
+                                            @php
+                                                $bizLicense = !empty($business->business_license_number) ? explode('-', $business->business_license_number) : ['', '', ''];
+                                            @endphp
                                             <div class="tel_bx2">
-                                                <input type="text" class="tel1" required="required">
+                                                <input type="text" class="tel1" name="business_license_1"
+                                                    value="{{ $bizLicense[0] ?? '' }}" required="required">
                                                 <span>-</span>
-                                                <input type="text" class="tel2" required="required">
+                                                <input type="text" class="tel2" name="business_license_2"
+                                                    value="{{ $bizLicense[1] ?? '' }}" required="required">
                                                 <span>-</span>
-                                                <input type="text" class="tel3" required="required">
+                                                <input type="text" class="tel3" name="business_license_3"
+                                                    value="{{ $bizLicense[2] ?? '' }}" required="required">
                                             </div>
                                         </td>
                                     </tr>
                                     <tr>
                                         <th class="w160"><span>연락처</span></th>
                                         <td colspan="3">
+                                            @php
+                                                $shopMobile = !empty($business->shop_mobile) ? explode('-', $business->shop_mobile) : ['', '', ''];
+                                            @endphp
                                             <div class="tel_bx">
-                                                <select required="required">
+                                                <select name="mobile_1" required="required">
                                                     <option value="" disabled selected></option>
-                                                    <option value="1">010</option>
+                                                    <option value="010" {{ ($shopMobile[0] ?? '') == '010' ? 'selected' : '' }}>010</option>
+                                                    <option value="011" {{ ($shopMobile[0] ?? '') == '011' ? 'selected' : '' }}>011</option>
                                                 </select>
                                                 <span>-</span>
-                                                <input type="text" class="tel1" required="required">
+                                                <input type="text" class="tel1" name="mobile_2"
+                                                    value="{{ $shopMobile[1] ?? '' }}" required="required">
                                                 <span>-</span>
-                                                <input type="text" class="tel2" required="required">
+                                                <input type="text" class="tel2" name="mobile_3"
+                                                    value="{{ $shopMobile[2] ?? '' }}" required="required">
                                             </div>
                                         </td>
                                     </tr>
                                     <tr>
                                         <th class="w160"><span>이메일</span></th>
                                         <td colspan="3">
+                                            @php
+                                                $shopEmail = !empty($business->shop_email) ? explode('@', $business->shop_email) : ['', ''];
+                                            @endphp
                                             <div class="email_bx">
-                                                <input type="text" class="email1" required="required">
+                                                <input type="text" class="email1" name="email_1"
+                                                    value="{{ $shopEmail[0] ?? '' }}" required="required">
                                                 <span>@</span>
-                                                <input type="text" class="email2" required="required">
-                                                <select class="off" required="required">
+                                                <input type="text" class="email2" name="email_2"
+                                                    value="{{ $shopEmail[1] ?? '' }}" required="required">
+                                                <select class="off">
                                                     <option value="" selected>직접입력</option>
-                                                    <option value="1">naver.com</option>
+                                                    <option value="naver.com">naver.com</option>
                                                 </select>
                                             </div>
                                         </td>
@@ -272,10 +303,13 @@
                                         <th class="w160"><span>회원사 주소지</span></th>
                                         <td colspan="3">
                                             <div class="addr_bx">
-                                                <input type="text" class="addr1 off" placeholder="우편번호" required="required">
+                                                <input type="text" class="addr1 off" name="zipcode" placeholder="우편번호"
+                                                    value="{{ $business->shop_pincode ?? '' }}" required="required">
                                                 <a href="#" class="btn01">우편번호찾기</a>
-                                                <input type="text" class="addr2 off" placeholder="주소" required="required">
-                                                <input type="text" class="addr3 off" placeholder="상세주소" required="required">
+                                                <input type="text" class="addr2 off" name="address1" placeholder="주소"
+                                                    value="{{ $business->shop_address ?? '' }}" required="required">
+                                                <input type="text" class="addr3 off" name="address2" placeholder="상세주소"
+                                                    value="{{ $business->shop_address_detail ?? '' }}" required="required">
                                             </div>
                                         </td>
                                     </tr>
@@ -283,13 +317,17 @@
                                         <th class="w160"><span>정산용 계좌번호</span></th>
                                         <td colspan="3">
                                             <div class="bank_bx">
-                                                <select required="required">
+                                                <select name="bank_name" required="required">
                                                     <option value="" disabled selected>은행선택</option>
-                                                    <option value="1">국민은행</option>
+                                                    <option value="국민은행" {{ ($business->bank_name ?? '') == '국민은행' ? 'selected' : '' }}>국민은행</option>
+                                                    <!-- 추가 은행 옵션 필요 -->
                                                 </select>
-                                                <input type="text" class="bank1" placeholder="계좌번호 (‘-’없이 숫자만 입력)"
+                                                <input type="text" class="bank1" name="account_number" placeholder="계좌번호"
+                                                    value="{{ $business->bank_account_number ?? '' }}" required="required">
+                                                <input type="text" class="bank2" name="account_holder_name"
+                                                    placeholder="예금주"
+                                                    value="{{ $business->bank_account_holder_name ?? '' }}"
                                                     required="required">
-                                                <input type="text" class="bank2" placeholder="예금주" required="required">
                                             </div>
                                         </td>
                                     </tr>
@@ -298,9 +336,10 @@
                                         <td colspan="3">
                                             <div class="fileBox">
                                                 <input type="text" class="fileName" readonly="readonly"
+                                                    value="{{ $business->bank_copy_image ?? '' }}"
                                                     placeholder="입력한 계좌번호와 동일한 통장첨부">
                                                 <label for="uploadBtn" class="btn_file">찾아보기</label>
-                                                <input type="file" id="uploadBtn" class="uploadBtn" name="bbs_file1">
+                                                <input type="file" id="uploadBtn" class="uploadBtn" name="bank_copy_image">
                                             </div>
                                         </td>
                                     </tr>
@@ -309,163 +348,179 @@
                         </div>
                     </div>
 
-                    <div class="box box4">
-                        <div class="ttl01">회원사 판매권한 정보 <span class="col2">( M9 Market 의 Shop 채널에서 공유 및 공동구매 상품을 판매하기
-                                위해서는 판매인증이 필요합니다. )</span></div>
+                    {{-- 판매 권한 정보 (Box 4/5/6) --}}
+                    @php
+                        $vendorStatus = -1;
+                        $hasProof = false;
+                        if($vendor) {
+                            $vendorStatus = $vendor->status;
+                            $hasProof = $business && !empty($business->address_proof_image);
+                        }
+                    @endphp
 
-                        <div class="tb01 type2">
-                            <table>
-                                <tbody class="textL">
-                                    <tr>
-                                        <th class="w160">판매인증</th>
-                                        <td><strong class="fcol3">미인증</strong></td>
-                                    </tr>
-                                    <tr>
-                                        <th class="w160">사업자등록증</th>
-                                        <td>
-                                            <div class="fileBox">
-                                                <input type="text" class="fileName" readonly="readonly" placeholder="">
-                                                <label for="uploadBtn2" class="btn_file">찾아보기</label>
-                                                <input type="file" id="uploadBtn2" class="uploadBtn" name="bbs_file1">
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th class="w160">사업자 명의 계좌번호 <br class="pc_show">(정산용)</th>
-                                        <td>
-                                            <div class="bank_bx">
-                                                <select required="required">
-                                                    <option value="" disabled selected>은행선택</option>
-                                                    <option value="1">국민은행</option>
-                                                </select>
-                                                <input type="text" class="bank1" placeholder="계좌번호 (‘-’없이 숫자만 입력)"
-                                                    required="required">
-                                                <input type="text" class="bank2" placeholder="예금주" required="required">
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th class="w160">사업자 명의 통장사본</th>
-                                        <td>
-                                            <div class="fileBox">
-                                                <input type="text" class="fileName" readonly="readonly"
-                                                    placeholder="입력한 계좌번호와 동일한 통장첨부">
-                                                <label for="uploadBtn3" class="btn_file">찾아보기</label>
-                                                <input type="file" id="uploadBtn3" class="uploadBtn" name="bbs_file1">
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                    @if($vendorStatus == 1)
+                        {{-- Box 6: 인증 완료 --}}
+                        <div class="box box6">
+                            <div class="ttl01">
+                                회원사 판매권한 정보 <span class="col2">( M9 Market 의 Shop 채널에서 공유 및 공동구매 상품을 판매하기 위해서는 판매인증이 필요합니다. )</span>
+                                <button type="button" class="btn_toggle" style="float:right; cursor:pointer; border:none; background:none; font-size:16px;">▼</button>
+                            </div>
 
-                        <div class="btm_btn t_r pt10">
-                            <a href="#">인증요청</a>
-                        </div>
-                    </div>
-
-                    <div class="box box5">
-                        <div class="ttl01">회원사 판매권한 정보 <span class="col2">( M9 Market 의 Shop 채널에서 공유 및 공동구매 상품을 판매하기
-                                위해서는 판매인증이 필요합니다. )</span></div>
-
-                        <div class="tb01 type2">
-                            <table>
-                                <tbody class="textL">
-                                    <tr>
-                                        <th class="w160">판매인증</th>
-                                        <td><strong class="fcol4">인증대기</strong></td>
-                                    </tr>
-                                    <tr>
-                                        <th class="w160">사업자등록증</th>
-                                        <td>
-                                            <div class="f_img">
-                                                <div class="img_w"
-                                                    style="background-image:url({{ asset('frontend/images/sub/thumbnail02.jpg') }})">
+                            <div class="tb01 type2" style="display:none;">
+                                <table>
+                                    <tbody class="textL">
+                                        <tr>
+                                            <th class="w160">판매인증</th>
+                                            <td><strong class="fcol2">인증완료 ( 인증완료일 : {{ $vendor->updated_at->format('Y-m-d') }} )</strong></td>
+                                        </tr>
+                                        <tr>
+                                            <th class="w160">사업자등록증</th>
+                                            <td>
+                                                <div class="f_img">
+                                                    @if(!empty($business->address_proof_image))
+                                                    <div class="img_w" style="background-image:url({{ asset('front/images/bank_copies/' . $business->address_proof_image) }})"></div>
+                                                    @endif
+                                                    <span class="f_txt">사업자등록번호 / {{ $business->business_license_number ?? '' }}</span>
                                                 </div>
-                                            </div>
-                                            <div class="fileBox">
-                                                <input type="text" class="fileName on" readonly="readonly" placeholder=""
-                                                    value="파일명.jpg">
-                                                <label for="uploadBtn4" class="btn_file">찾아보기</label>
-                                                <input type="file" id="uploadBtn4" class="uploadBtn" name="bbs_file1">
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th class="w160">사업자 명의 계좌번호 <br class="pc_show">(정산용)</th>
-                                        <td>
-                                            <div class="bank_bx">
-                                                <select required="required">
-                                                    <option value="" disabled>은행선택</option>
-                                                    <option value="1" selected>국민은행</option>
-                                                </select>
-                                                <input type="text" class="bank1" placeholder="계좌번호 (‘-’없이 숫자만 입력)"
-                                                    required="required" value="123456789">
-                                                <input type="text" class="bank2" placeholder="예금주" required="required"
-                                                    value="미구마켓">
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th class="w160">사업자 명의 통장사본</th>
-                                        <td>
-                                            <div class="f_img">
-                                                <div class="img_w"
-                                                    style="background-image:url({{ asset('frontend/images/sub/thumbnail02.jpg') }})">
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th class="w160">사업자 명의 계좌번호 <br class="pc_show">(정산용)</th>
+                                            <td>
+                                                <div class="f_down">
+                                                    <div class="f_name">{{ $business->bank_name ?? '' }} / {{ $business->bank_account_number ?? '' }} / {{ $business->bank_account_holder_name ?? '' }} </div>
                                                 </div>
-                                            </div>
-                                            <div class="fileBox">
-                                                <input type="text" class="fileName on" readonly="readonly" placeholder=""
-                                                    value="파일명.jpg">
-                                                <label for="uploadBtn5" class="btn_file">찾아보기</label>
-                                                <input type="file" id="uploadBtn5" class="uploadBtn" name="bbs_file1">
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
 
-                        <div class="btm_btn t_r pt10">
-                            <a href="#">재인증요청</a>
-                        </div>
-                    </div>
+                        @elseif($hasProof)
+                        {{-- Box 5: 인증 대기 --}}
+                        <div class="box box5">
+                            <div class="ttl01">
+                                회원사 판매권한 정보 <span class="col2">( M9 Market 의 Shop 채널에서 공유 및 공동구매 상품을 판매하기 위해서는 판매인증이 필요합니다. )</span>
+                                <button type="button" class="btn_toggle" style="float:right; cursor:pointer; border:none; background:none; font-size:16px;">▼</button>
+                            </div>
 
-                    <div class="box box6">
-                        <div class="ttl01">회원사 판매권한 정보 <span class="col2">( M9 Market 의 Shop 채널에서 공유 및 공동구매 상품을 판매하기
-                                위해서는 판매인증이 필요합니다. )</span></div>
-
-                        <div class="tb01 type2">
-                            <table>
-                                <tbody class="textL">
-                                    <tr>
-                                        <th class="w160">판매인증</th>
-                                        <td><strong class="fcol2">인증완료 ( 인증완료일 : 2024-01-01 )</strong></td>
-                                    </tr>
-                                    <tr>
-                                        <th class="w160">사업자등록증</th>
-                                        <td>
-                                            <div class="f_img">
-                                                <div class="img_w"
-                                                    style="background-image:url({{ asset('frontend/images/sub/thumbnail02.jpg') }})">
+                            <div class="tb01 type2" style="display:none;">
+                                <table>
+                                    <tbody class="textL">
+                                        <tr>
+                                            <th class="w160">판매인증</th>
+                                            <td><strong class="fcol4">인증대기</strong></td>
+                                        </tr>
+                                        <tr>
+                                            <th class="w160">사업자등록증</th>
+                                            <td>
+                                                <div class="f_img">
+                                                    @if(!empty($business->address_proof_image))
+                                                    <div class="img_w" style="background-image:url({{ asset('front/images/bank_copies/' . $business->address_proof_image) }})"></div>
+                                                    @endif
                                                 </div>
-                                                <span class="f_txt">사업자등록번호 / 000-01-00000</span>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th class="w160">사업자 명의 계좌번호 <br class="pc_show">(정산용)</th>
-                                        <td>
-                                            <div class="f_down">
-                                                <div class="f_name">국민은행 / 000000000-02-000000 / 통장주 </div>
-                                                <a href="#" class="btn01">통장사본 내려받기</a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                                                <div class="fileBox">
+                                                    <input type="text" class="fileName on" readonly="readonly" value="{{ $business->address_proof_image ?? '' }}">
+                                                    <label for="uploadBtn4" class="btn_file">찾아보기</label>
+                                                    <input type="file" id="uploadBtn4" class="uploadBtn" name="address_proof_image">
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th class="w160">사업자 명의 계좌번호 <br class="pc_show">(정산용)</th>
+                                            <td>
+                                                <div class="bank_bx">
+                                                    <select name="bank_name" required="required">
+                                                        <option value="" disabled>은행선택</option>
+                                                        <option value="국민은행" {{ ($business->bank_name ?? '') == '국민은행' ? 'selected' : '' }}>국민은행</option>
+                                                    </select>
+                                                    <input type="text" class="bank1" name="account_number" placeholder="계좌번호" required="required" value="{{ $business->bank_account_number ?? '' }}">
+                                                    <input type="text" class="bank2" name="account_holder_name" placeholder="예금주" required="required" value="{{ $business->bank_account_holder_name ?? '' }}">
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th class="w160">사업자 명의 통장사본</th>
+                                            <td>
+                                                <div class="f_img">
+                                                    @if(!empty($business->bank_copy_image))
+                                                    <div class="img_w" style="background-image:url({{ asset('front/images/bank_copies/' . $business->bank_copy_image) }})"></div>
+                                                    @endif
+                                                </div>
+                                                <div class="fileBox">
+                                                    <input type="text" class="fileName on" readonly="readonly" value="{{ $business->bank_copy_image ?? '' }}">
+                                                    <label for="uploadBtn5" class="btn_file">찾아보기</label>
+                                                    <input type="file" id="uploadBtn5" class="uploadBtn" name="bank_copy_image_2">
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="btm_btn t_r pt10" style="display:none;">
+                                <a href="#">재인증요청</a>
+                            </div>
                         </div>
-                    </div>
+
+                        @else
+                        {{-- Box 4: 미인증 --}}
+                        <div class="box box4">
+                            <div class="ttl01">
+                                회원사 판매권한 정보 <span class="col2">( M9 Market 의 Shop 채널에서 공유 및 공동구매 상품을 판매하기 위해서는 판매인증이 필요합니다. )</span>
+                                <button type="button" class="btn_toggle" style="float:right; cursor:pointer; border:none; background:none; font-size:16px;">▼</button>
+                            </div>
+
+                            <div class="tb01 type2" style="display:none;">
+                                <table>
+                                    <tbody class="textL">
+                                        <tr>
+                                            <th class="w160">판매인증</th>
+                                            <td><strong class="fcol3">미인증</strong></td>
+                                        </tr>
+                                        <tr>
+                                            <th class="w160">사업자등록증</th>
+                                            <td>
+                                                <div class="fileBox">
+                                                    <input type="text" class="fileName" readonly="readonly" placeholder="">
+                                                    <label for="uploadBtn2" class="btn_file">찾아보기</label>
+                                                    <input type="file" id="uploadBtn2" class="uploadBtn" name="address_proof_image">
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th class="w160">사업자 명의 계좌번호 <br class="pc_show">(정산용)</th>
+                                            <td>
+                                                <div class="bank_bx">
+                                                    <select name="bank_name" required="required">
+                                                        <option value="" disabled selected>은행선택</option>
+                                                        <option value="국민은행">국민은행</option>
+                                                    </select>
+                                                    <input type="text" class="bank1" name="account_number" placeholder="계좌번호 (‘-’없이 숫자만 입력)" required="required">
+                                                    <input type="text" class="bank2" name="account_holder_name" placeholder="예금주" required="required">
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th class="w160">사업자 명의 통장사본</th>
+                                            <td>
+                                                <div class="fileBox">
+                                                    <input type="text" class="fileName" readonly="readonly" placeholder="입력한 계좌번호와 동일한 통장첨부">
+                                                    <label for="uploadBtn3" class="btn_file">찾아보기</label>
+                                                    <input type="file" id="uploadBtn3" class="uploadBtn" name="bank_copy_image_2">
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="btm_btn t_r pt10" style="display:none;">
+                                <a href="#">인증요청</a>
+                            </div>
+                        </div>
+                    @endif
 
                     <div class="box box7">
                         <div class="ttl01 brb">약관동의</div>
@@ -475,7 +530,7 @@
                                 <ul class="con_bx">
                                     <li>
                                         <div class="s_txt">
-                                            <input type="checkbox" id="agree1_1">
+                                            <input type="checkbox" id="agree1_1" checked>
                                             <label for="agree1_1">이용약관 동의 <span class="col2">(필수)</span></label>
                                             <div class="btn">전문보기</div>
                                         </div>
@@ -492,7 +547,7 @@
                                     </li>
                                     <li>
                                         <div class="s_txt">
-                                            <input type="checkbox" id="agree1_2">
+                                            <input type="checkbox" id="agree1_2" checked>
                                             <label for="agree1_2">개인정보 수집 및 이용에 관한 안내 <span class="col2">(필수)</span></label>
                                             <div class="btn">전문보기</div>
                                         </div>
@@ -505,7 +560,7 @@
                                     </li>
                                     <li>
                                         <div class="s_txt">
-                                            <input type="checkbox" id="agree1_3">
+                                            <input type="checkbox" id="agree1_3" checked>
                                             <label for="agree1_3">제3자 정보제공 동의 <span class="col2">(필수)</span></label>
                                             <div class="btn">전문보기</div>
                                         </div>
@@ -549,7 +604,7 @@
                                 <ul class="con_bx">
                                     <li>
                                         <div class="s_txt">
-                                            <input type="checkbox" id="agree2_1">
+                                            <input type="checkbox" id="agree2_1" checked>
                                             <label for="agree2_1">상품 판매시 약관 동의 <span class="col2">(필수)</span></label>
                                             <div class="btn">전문보기</div>
                                         </div>
@@ -571,7 +626,7 @@
                                 <ul class="con_bx">
                                     <li>
                                         <div class="s_txt">
-                                            <input type="checkbox" id="agree3_1">
+                                            <input type="checkbox" id="agree3_1" checked>
                                             <label for="agree3_1">판매권한 약관 동의 <span class="col2">(필수)</span></label>
                                             <div class="btn">전문보기</div>
                                         </div>
@@ -626,6 +681,21 @@
             $(this).parents(".popup_bx").stop().fadeOut(300);
 
             return false;
+        });
+
+        /* 아코디언 토글 */
+        $(".btn_toggle").click(function () {
+             var $content = $(this).closest('.box').find('.tb01');
+             var $btnItems = $(this).closest('.box').find('.btm_btn'); // 하단 버튼도 같이 토글
+
+             $content.stop().slideToggle(300);
+             $btnItems.stop().slideToggle(300);
+             
+             if ($(this).text() == '▲') {
+                 $(this).text('▼');
+             } else {
+                 $(this).text('▲');
+             }
         });
 
         /* 약관 */

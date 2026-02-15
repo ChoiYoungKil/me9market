@@ -3,6 +3,7 @@
 
 <head>
     <title>Me9 market</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="format-detection" content="telephone=no" />
@@ -66,7 +67,7 @@
                             @guest
                                 <!-- 로그인전 -->
                                 <li><a href="{{ route('front.member.login') }}">로그인</a></li>
-                                <li><a href="{{ route('front.member.register.step1') }}">회원가입</a></li>
+                                <li><a href="{{ route('front.member.register.member') }}">회원가입</a></li>
                             @else
                                 <!-- 로그인후 -->
                                 <li><a href="{{ route('channel.index') }}">채널관리자</a></li>

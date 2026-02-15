@@ -163,7 +163,7 @@
 </div>
 
 <!-- 정상 주문 팝업 ==> 배송대기, 배송중 팝업 -->
-<div class="popup_bx" data-id="pop1_2_3">
+<div class="popup_bx" data-id="pop1_2_3" id="modal_shipping_update">
     <div class="pop_w">
         <div class="pop_inner">
             <div class="pop_con w800">
@@ -171,94 +171,97 @@
                 <div class="page_info type2">
                     <div class="ttl">주문 배송정보 관리</div>
                 </div>
-                <div class="conbx">
-                    <div class="con_w">
-                        <div class="imp_bx01">
-                            <div class="txt2 mt0">
-                                배송대기 / 배송중 상품만 배송정보를 관리 할 수 있습니다. <br>
-                                변경하기가 완료되면 배송중으로 상태가 변경됩니다.
+                <form id="form_shipping_update">
+                    <input type="hidden" name="order_id" id="shipping_order_id" value="">
+                    <input type="hidden" name="status" value="shipping">
+                    <div class="conbx">
+                        <div class="con_w">
+                            <div class="imp_bx01">
+                                <div class="txt2 mt0">
+                                    배송대기 / 배송중 상품만 배송정보를 관리 할 수 있습니다. <br>
+                                    변경하기가 완료되면 배송중으로 상태가 변경됩니다.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="con_w">
+                            <div class="ttl01">주문상품목록</div>
+                            <div class="tb01">
+                                <table>
+                                    <colgroup>
+                                        <col width="70px">
+                                        <col width="100px">
+                                        <col width="">
+                                        <col width="100px">
+                                        <col width="100px">
+                                        <col width="80px">
+                                    </colgroup>
+                                    <thead>
+                                        <tr>
+                                            <th><input type="checkbox"></th>
+                                            <th>주문상태</th>
+                                            <th>상품명</th>
+                                            <th>상품코드</th>
+                                            <th>옵션</th>
+                                            <th>주문수량</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="shipping_order_items">
+                                        <!-- JS를 통해 항목이 채워짐 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="con_w">
+                            <div class="ttl01">배송정보</div>
+                            <div class="tb01">
+                                <table>
+                                    <colgroup>
+                                        <col width="160px">
+                                        <col width="">
+                                    </colgroup>
+                                    <tbody class="textL">
+                                        <tr>
+                                            <th class="w160"><span>택배사</span></th>
+                                            <td>
+                                                <select class="w200" name="courier_name" required="required">
+                                                    <option value="" disabled="" selected="">택배사 선택</option>
+                                                    <option value="CJ대한통운">CJ대한통운</option>
+                                                    <option value="우체국택배">우체국택배</option>
+                                                    <option value="한진택배">한진택배</option>
+                                                    <option value="로젠택배">로젠택배</option>
+                                                    <option value="롯데택배">롯데택배</option>
+                                                    <option value="직접배송">직접배송</option>
+                                                </select>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th class="w160"><span>송장번호</span></th>
+                                            <td>
+                                                <input type="text" name="tracking_number" value="" required="required">
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
 
-                    <div class="con_w">
-                        <div class="ttl01">주문상품목록</div>
-                        <div class="tb01">
-                            <table>
-                                <colgroup>
-                                    <col width="70px">
-                                    <col width="100px">
-                                    <col width="">
-                                    <col width="100px">
-                                    <col width="100px">
-                                    <col width="80px">
-                                </colgroup>
-                                <thead>
-                                    <tr>
-                                        <th><input type="checkbox"></th>
-                                        <th>주문상태</th>
-                                        <th>상품명</th>
-                                        <th>상품코드</th>
-                                        <th>옵션</th>
-                                        <th>주문수량</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td><input type="checkbox"></td>
-                                        <td>배송대기</td>
-                                        <td class="t_l"><span class="fcol2">BlueViolet a omnis</span></td>
-                                        <td>a0029</td>
-                                        <td>RD/S</td>
-                                        <td>2</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                    <!-- 하단버튼 -->
+                    <div class="btm_btn mt10">
+                        <a href="#" class="btn_submit"
+                            onclick="submitOrderForm('form_shipping_update', '{{ route('channel.order.status.update') }}'); return false;">변경하기</a>
+                        <a href="#" class="col5 close_btn">닫기</a>
                     </div>
-
-                    <div class="con_w">
-                        <div class="ttl01">배송정보</div>
-                        <div class="tb01">
-                            <table>
-                                <colgroup>
-                                    <col width="160px">
-                                    <col width="">
-                                </colgroup>
-                                <tbody class="textL">
-                                    <tr>
-                                        <th class="w160"><span>택배사</span></th>
-                                        <td>
-                                            <select class="w200" required="required">
-                                                <option value="" disabled="" selected="">택배사 선택</option>
-                                                <option value="1">직접배송</option>
-                                            </select>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th class="w160"><span>송장번호</span></th>
-                                        <td>
-                                            <input type="text" value="" required="required">
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 하단버튼 -->
-                <div class="btm_btn mt10">
-                    <a href="#">변경하기</a>
-                    <a href="#" class="col5 close_btn">닫기</a>
-                </div>
+                </form>
             </div>
         </div>
     </div>
 </div>
 
 <!-- 정상 주문 팝업 ==> 반품요청 팝업 -->
-<div class="popup_bx" data-id="pop1_2_4">
+<div class="popup_bx" data-id="pop1_2_4" id="modal_return_request">
     <div class="pop_w">
         <div class="pop_inner">
             <div class="pop_con w800">
@@ -266,191 +269,145 @@
                 <div class="page_info type2">
                     <div class="ttl">반품요청</div>
                 </div>
-                <div class="conbx">
-                    <div class="con_w">
-                        <div class="imp_bx01">
-                            <div class="txt2 mt0">
-                                배송중 상품만 반품요청으로 관리 할 수 있습니다. <br>
-                                반품요청을 진행하면 새로운 주문번호가 생성되면서 반품이 진행됩니다.
+                <form id="form_return_request">
+                    <input type="hidden" name="order_id" id="return_order_id" value="">
+                    <div class="conbx">
+                        <div class="con_w">
+                            <div class="imp_bx01">
+                                <div class="txt2 mt0">
+                                    배송중 상품만 반품요청으로 관리 할 수 있습니다. <br>
+                                    반품요청을 진행하면 새로운 주문번호가 생성되면서 반품이 진행됩니다.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="con_w">
+                            <div class="ttl01">주문정보</div>
+                            <div class="tb01">
+                                <table>
+                                    <colgroup>
+                                        <col width="160px">
+                                        <col width="">
+                                        <col width="160px">
+                                        <col width="">
+                                    </colgroup>
+                                    <tbody class="textL">
+                                        <tr>
+                                            <th class="w160"><span>주문번호</span></th>
+                                            <td id="return_order_no">Me9-000939393</td>
+                                            <th class="w160"><span>주문일시</span></th>
+                                            <td id="return_order_date">2024-10-01 09:02:12</td>
+                                        </tr>
+                                        <tr>
+                                            <th class="w160"><span>판매처</span></th>
+                                            <td id="return_shop_name">Shop채널명</td>
+                                            <th class="w160"><span>결제일시</span></th>
+                                            <td id="return_payment_date">2024-10-01 09:02:12</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="tb01 mt10">
+                                <table>
+                                    <colgroup>
+                                        <col width="70px">
+                                        <col width="100px">
+                                        <col width="">
+                                        <col width="100px">
+                                        <col width="100px">
+                                        <col width="80px">
+                                    </colgroup>
+                                    <thead>
+                                        <tr>
+                                            <th><input type="checkbox"></th>
+                                            <th>주문상태</th>
+                                            <th>상품명</th>
+                                            <th>상품코드</th>
+                                            <th>옵션</th>
+                                            <th>주문수량</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="return_order_items">
+                                        <!-- JS를 통해 항목이 채워짐 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="con_w">
+                            <div class="ttl01">반품정보</div>
+                            <div class="tb01">
+                                <table>
+                                    <colgroup>
+                                        <col width="160px">
+                                        <col width="100px">
+                                        <col width="">
+                                        <col width="">
+                                    </colgroup>
+                                    <tbody class="textL">
+                                        <tr>
+                                            <th class="w160"><span>반품지</span></th>
+                                            <td colspan="3">(06236) 서울특별시 강남구 테헤란로 152(역삼동) test</td>
+                                        </tr>
+                                        <tr>
+                                            <th class="w160"><span>반품 사유</span></th>
+                                            <td colspan="3">
+                                                <select name="reason" required="required">
+                                                    <option value="" disabled="" selected="">반품사유 선택</option>
+                                                    <option value="mind_change">마음이 변했어요</option>
+                                                    <option value="product_defect">상품에 하자가 있어요(상세 사유 필요)</option>
+                                                    <option value="wrong_delivery">다른 상품이 배송됐어요(상세 사유 필요)</option>
+                                                </select>
+                                                <textarea class="mt5" name="detail_reason" required="required"
+                                                    placeholder="상세 사유를 입력해 주세요 (필수)"></textarea>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th class="w160"><span>회수 방법</span></th>
+                                            <td colspan="3">
+                                                <select name="return_method" required="required">
+                                                    <option value="" disabled="" selected="">회수 방법 선택</option>
+                                                    <option value="self_return">고객 직접 회수</option>
+                                                    <option value="pickup">업체 회수</option>
+                                                </select>
+                                            </td>
+                                        </tr>
+                                        <!-- 회수 방법 => 고객 직접 회수 -->
+                                        <tr>
+                                            <th class="w160"><span>회수 정보</span></th>
+                                            <td class="pr0">택배사 정보</td>
+                                            <td colspan="2">
+                                                <div class="search_w01">
+                                                    <select name="courier_name" required="required">
+                                                        <option value="" disabled="" selected="">택배사 선택</option>
+                                                        <option value="CJ대한통운">CJ대한통운</option>
+                                                        <option value="우체국택배">우체국택배</option>
+                                                    </select>
+                                                    <input type="text" name="tracking_number" value=""
+                                                        required="required">
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
 
-                    <div class="con_w">
-                        <div class="ttl01">주문정보</div>
-                        <div class="tb01">
-                            <table>
-                                <colgroup>
-                                    <col width="160px">
-                                    <col width="">
-                                    <col width="160px">
-                                    <col width="">
-                                </colgroup>
-                                <tbody class="textL">
-                                    <tr>
-                                        <th class="w160"><span>주문번호</span></th>
-                                        <td>Me9-000939393</td>
-                                        <th class="w160"><span>주문일시</span></th>
-                                        <td>2024-10-01 09:02:12</td>
-                                    </tr>
-                                    <tr>
-                                        <th class="w160"><span>판매처</span></th>
-                                        <td>Shop채널명</td>
-                                        <th class="w160"><span>결제일시</span></th>
-                                        <td>2024-10-01 09:02:12</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="tb01 mt10">
-                            <table>
-                                <colgroup>
-                                    <col width="70px">
-                                    <col width="100px">
-                                    <col width="">
-                                    <col width="100px">
-                                    <col width="100px">
-                                    <col width="80px">
-                                </colgroup>
-                                <thead>
-                                    <tr>
-                                        <th><input type="checkbox"></th>
-                                        <th>주문상태</th>
-                                        <th>상품명</th>
-                                        <th>상품코드</th>
-                                        <th>옵션</th>
-                                        <th>주문수량</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td><input type="checkbox"></td>
-                                        <td>배송대기</td>
-                                        <td class="t_l"><span class="fcol2">BlueViolet a omnis</span></td>
-                                        <td>a0029</td>
-                                        <td>RD/S</td>
-                                        <td>2</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                    <!-- 하단버튼 -->
+                    <div class="btm_btn mt10">
+                        <a href="#" class="btn_submit"
+                            onclick="submitOrderForm('form_return_request', '{{ route('channel.order.return.request') }}'); return false;">반품요청하기</a>
+                        <a href="#" class="col5 close_btn">닫기</a>
                     </div>
-
-                    <div class="con_w">
-                        <div class="ttl01">반품정보</div>
-                        <div class="tb01">
-                            <table>
-                                <colgroup>
-                                    <col width="160px">
-                                    <col width="100px">
-                                    <col width="">
-                                    <col width="">
-                                </colgroup>
-                                <tbody class="textL">
-                                    <tr>
-                                        <th class="w160"><span>반품지</span></th>
-                                        <td colspan="3">(06236) 서울특별시 강남구 테헤란로 152(역삼동) test</td>
-                                    </tr>
-                                    <tr>
-                                        <th class="w160"><span>반품 사유</span></th>
-                                        <td colspan="3">
-                                            <select required="required">
-                                                <option value="" disabled="" selected="">반품사유 선택</option>
-                                                <option value="1">마음이 변했어요</option>
-                                                <option value="2">상품에 하자가 있어요(상세 사유 필요)</option>
-                                                <option value="3">다른 상품이 배송됐어요(상세 사유 필요)</option>
-                                            </select>
-                                            <textarea class="mt5" required="required"
-                                                placeholder="상세 사유를 입력해 주세요 (필수)"></textarea>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th class="w160"><span>회수 방법</span></th>
-                                        <td colspan="3">
-                                            <select required="required">
-                                                <option value="" disabled="" selected="">회수 방법 선택</option>
-                                                <option value="1">고객 직접 회수</option>
-                                                <option value="2">업체 회수</option>
-                                            </select>
-                                        </td>
-                                    </tr>
-                                    <!-- 회수 방법 => 고객 직접 회수 -->
-                                    <tr>
-                                        <th class="w160"><span>회수 정보</span></th>
-                                        <td class="pr0">택배사 정보</td>
-                                        <td colspan="2">
-                                            <div class="search_w01">
-                                                <select required="required">
-                                                    <option value="" disabled="" selected="">택배사 선택</option>
-                                                    <option value="1">택배사1</option>
-                                                </select>
-                                                <input type="text" value="" required="required">
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <!-- 회수 방법 => 업체 회수 -->
-                                    <tr>
-                                        <th class="w160" rowspan="3"><span>회수 정보</span></th>
-                                        <td class="pr0">주문자</td>
-                                        <td colspan="2">
-                                            <input type="text" value="" required="required">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td class="pr0">연락처</td>
-                                        <td colspan="2">
-                                            <input type="text" value="" required="required">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td class="pr0">교환 수거지</td>
-                                        <td colspan="2">
-                                            <div class="addr_bx">
-                                                <input type="text" class="addr1 off" placeholder="우편번호"
-                                                    required="required">
-                                                <a href="#" class="btn01">우편번호찾기</a>
-                                                <input type="text" class="addr2 off" placeholder="주소"
-                                                    required="required">
-                                                <input type="text" class="addr3 off" placeholder="상세주소"
-                                                    required="required">
-                                            </div>
-                                        </td>
-                                    </tr>
-
-                                    <tr>
-                                        <th class="w160"><span>반품상품 결제금액</span></th>
-                                        <td colspan="3">90,000 원</td>
-                                    </tr>
-                                    <tr>
-                                        <th class="w160"><span>차감 내역</span></th>
-                                        <td colspan="3">
-                                            0 원<br>
-                                            반품 배송비 <input class="w160" type="text" value="" required="required"> 원
-                                            &nbsp;&nbsp;<a href="#" class="btn02 col7">적용</a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th class="w160"><span>환불 예상 금액</span></th>
-                                        <td colspan="3">90,000 원</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 하단버튼 -->
-                <div class="btm_btn mt10">
-                    <a href="#">반품요청하기</a>
-                    <a href="#" class="col5 close_btn">닫기</a>
-                </div>
+                </form>
             </div>
         </div>
     </div>
 </div>
 
 <!-- 정상 주문 팝업 ==> 교환신청 팝업 -->
-<div class="popup_bx" data-id="pop1_2_5">
+<div class="popup_bx" data-id="pop1_2_5" id="modal_exchange_request">
     <div class="pop_w">
         <div class="pop_inner">
             <div class="pop_con w800">
@@ -458,218 +415,147 @@
                 <div class="page_info type2">
                     <div class="ttl">교환신청</div>
                 </div>
-                <div class="conbx">
-                    <div class="con_w">
-                        <div class="imp_bx01">
-                            <div class="txt2 mt0">
-                                배송중 상품만 교환요청으로 관리 할 수 있습니다. <br>
-                                교환요청을 진행하면 새로운 주문번호가 생성되면서 교환이 진행됩니다.
+                <form id="form_exchange_request">
+                    <input type="hidden" name="order_id" id="exchange_order_id" value="">
+                    <div class="conbx">
+                        <div class="con_w">
+                            <div class="imp_bx01">
+                                <div class="txt2 mt0">
+                                    배송중 상품만 교환요청으로 관리 할 수 있습니다. <br>
+                                    교환요청을 진행하면 새로운 주문번호가 생성되면서 교환이 진행됩니다.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="con_w">
+                            <div class="ttl01">주문정보</div>
+                            <div class="tb01">
+                                <table>
+                                    <colgroup>
+                                        <col width="160px">
+                                        <col width="">
+                                        <col width="160px">
+                                        <col width="">
+                                    </colgroup>
+                                    <tbody class="textL">
+                                        <tr>
+                                            <th class="w160"><span>주문번호</span></th>
+                                            <td id="exchange_order_no">Me9-000939393</td>
+                                            <th class="w160"><span>주문일시</span></th>
+                                            <td id="exchange_order_date">2024-10-01 09:02:12</td>
+                                        </tr>
+                                        <tr>
+                                            <th class="w160"><span>판매처</span></th>
+                                            <td id="exchange_shop_name">Shop채널명</td>
+                                            <th class="w160"><span>결제일시</span></th>
+                                            <td id="exchange_payment_date">2024-10-01 09:02:12</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="tb01 mt10">
+                                <table>
+                                    <colgroup>
+                                        <col width="70px">
+                                        <col width="100px">
+                                        <col width="">
+                                        <col width="100px">
+                                        <col width="100px">
+                                        <col width="80px">
+                                        <col width="130px">
+                                    </colgroup>
+                                    <thead>
+                                        <tr>
+                                            <th><input type="checkbox"></th>
+                                            <th>주문상태</th>
+                                            <th>상품명</th>
+                                            <th>상품코드</th>
+                                            <th>옵션</th>
+                                            <th>주문수량</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="exchange_order_items">
+                                        <!-- JS를 통해 항목이 채워짐 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="con_w">
+                            <div class="ttl01">반품정보</div>
+                            <div class="tb01">
+                                <table>
+                                    <colgroup>
+                                        <col width="160px">
+                                        <col width="100px">
+                                        <col width="">
+                                        <col width="">
+                                    </colgroup>
+                                    <tbody class="textL">
+                                        <tr>
+                                            <th class="w160"><span>교환지</span></th>
+                                            <td colspan="3">(06236) 서울특별시 강남구 테헤란로 152(역삼동) test</td>
+                                        </tr>
+                                        <tr>
+                                            <th class="w160"><span>교환 사유</span></th>
+                                            <td colspan="3">
+                                                <select name="reason" required="required">
+                                                    <option value="" disabled="" selected="">교환사유 선택</option>
+                                                    <option value="mind_change">마음이 변했어요</option>
+                                                    <option value="product_defect">상품에 하자가 있어요(상세 사유 필요)</option>
+                                                    <option value="wrong_delivery">다른 상품이 배송됐어요(상세 사유 필요)</option>
+                                                </select>
+                                                <textarea class="mt5" name="detail_reason" required="required"
+                                                    placeholder="상세 사유를 입력해 주세요 (필수)"></textarea>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th class="w160"><span>회수 방법</span></th>
+                                            <td colspan="3">
+                                                <select name="return_method" required="required">
+                                                    <option value="" disabled="" selected="">회수 방법 선택</option>
+                                                    <option value="self_return">고객 직접 회수</option>
+                                                    <option value="pickup">업체 회수</option>
+                                                </select>
+                                            </td>
+                                        </tr>
+                                        <!-- 회수 방법 => 고객 직접 회수 -->
+                                        <tr>
+                                            <th class="w160"><span>회수 정보</span></th>
+                                            <td class="pr0">택배사 정보</td>
+                                            <td colspan="2">
+                                                <div class="search_w01">
+                                                    <select name="courier_name" required="required">
+                                                        <option value="" disabled="" selected="">택배사 선택</option>
+                                                        <option value="CJ대한통운">CJ대한통운</option>
+                                                        <option value="우체국택배">우체국택배</option>
+                                                    </select>
+                                                    <input type="text" name="tracking_number" value=""
+                                                        required="required">
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
 
-                    <div class="con_w">
-                        <div class="ttl01">주문정보</div>
-                        <div class="tb01">
-                            <table>
-                                <colgroup>
-                                    <col width="160px">
-                                    <col width="">
-                                    <col width="160px">
-                                    <col width="">
-                                </colgroup>
-                                <tbody class="textL">
-                                    <tr>
-                                        <th class="w160"><span>주문번호</span></th>
-                                        <td>Me9-000939393</td>
-                                        <th class="w160"><span>주문일시</span></th>
-                                        <td>2024-10-01 09:02:12</td>
-                                    </tr>
-                                    <tr>
-                                        <th class="w160"><span>판매처</span></th>
-                                        <td>Shop채널명</td>
-                                        <th class="w160"><span>결제일시</span></th>
-                                        <td>2024-10-01 09:02:12</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="tb01 mt10">
-                            <table>
-                                <colgroup>
-                                    <col width="70px">
-                                    <col width="100px">
-                                    <col width="">
-                                    <col width="100px">
-                                    <col width="100px">
-                                    <col width="80px">
-                                    <col width="130px">
-                                </colgroup>
-                                <thead>
-                                    <tr>
-                                        <th><input type="checkbox"></th>
-                                        <th>주문상태</th>
-                                        <th>상품명</th>
-                                        <th>상품코드</th>
-                                        <th>옵션</th>
-                                        <th>주문수량</th>
-                                        <th></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td><input type="checkbox"></td>
-                                        <td>배송대기</td>
-                                        <td class="t_l"><span class="fcol2">BlueViolet a omnis</span></td>
-                                        <td>a0029</td>
-                                        <td>RD/S</td>
-                                        <td>2</td>
-                                        <td>
-                                            <select required="required">
-                                                <option value="" disabled="" selected="">변경 옵션</option>
-                                                <option value="1">변경 옵션1</option>
-                                            </select>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                    <!-- 하단버튼 -->
+                    <div class="btm_btn mt10">
+                        <a href="#" class="btn_submit"
+                            onclick="submitOrderForm('form_exchange_request', '{{ route('channel.order.exchange.request') }}'); return false;">교환요청하기</a>
+                        <a href="#" class="col5 close_btn">닫기</a>
                     </div>
-
-                    <div class="con_w">
-                        <div class="ttl01">반품정보</div>
-                        <div class="tb01">
-                            <table>
-                                <colgroup>
-                                    <col width="160px">
-                                    <col width="100px">
-                                    <col width="">
-                                    <col width="">
-                                </colgroup>
-                                <tbody class="textL">
-                                    <tr>
-                                        <th class="w160"><span>교환지</span></th>
-                                        <td colspan="3">(06236) 서울특별시 강남구 테헤란로 152(역삼동) test</td>
-                                    </tr>
-                                    <tr>
-                                        <th class="w160"><span>교환 사유</span></th>
-                                        <td colspan="3">
-                                            <select required="required">
-                                                <option value="" disabled="" selected="">교환사유 선택</option>
-                                                <option value="1">마음이 변했어요</option>
-                                                <option value="2">상품에 하자가 있어요(상세 사유 필요)</option>
-                                                <option value="3">다른 상품이 배송됐어요(상세 사유 필요)</option>
-                                            </select>
-                                            <textarea class="mt5" required="required"
-                                                placeholder="상세 사유를 입력해 주세요 (필수)"></textarea>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th class="w160"><span>회수 방법</span></th>
-                                        <td colspan="3">
-                                            <select required="required">
-                                                <option value="" disabled="" selected="">회수 방법 선택</option>
-                                                <option value="1">고객 직접 회수</option>
-                                                <option value="2">업체 회수</option>
-                                            </select>
-                                        </td>
-                                    </tr>
-                                    <!-- 회수 방법 => 고객 직접 회수 -->
-                                    <tr>
-                                        <th class="w160"><span>회수 정보</span></th>
-                                        <td class="pr0">택배사 정보</td>
-                                        <td colspan="2">
-                                            <div class="search_w01">
-                                                <select required="required">
-                                                    <option value="" disabled="" selected="">택배사 선택</option>
-                                                    <option value="1">택배사1</option>
-                                                </select>
-                                                <input type="text" value="" required="required">
-                                            </div>
-                                        </td>
-                                    </tr>
-                                    <!-- 회수 방법 => 업체 회수 -->
-                                    <tr>
-                                        <th class="w160" rowspan="3"><span>회수 정보</span></th>
-                                        <td class="pr0">주문자</td>
-                                        <td colspan="2">
-                                            <input type="text" value="" required="required">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td class="pr0">연락처</td>
-                                        <td colspan="2">
-                                            <input type="text" value="" required="required">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td class="pr0">교환 수거지</td>
-                                        <td colspan="2">
-                                            <div class="addr_bx">
-                                                <input type="text" class="addr1 off" placeholder="우편번호"
-                                                    required="required">
-                                                <a href="#" class="btn01">우편번호찾기</a>
-                                                <input type="text" class="addr2 off" placeholder="주소"
-                                                    required="required">
-                                                <input type="text" class="addr3 off" placeholder="상세주소"
-                                                    required="required">
-                                            </div>
-                                        </td>
-                                    </tr>
-
-                                    <tr>
-                                        <th class="w160"><span>추가 결제 금액</span></th>
-                                        <td colspan="3">
-                                            0 원<br>
-                                            추가 결제비용 <input class="w160" type="text" value="" required="required"> 원
-                                            &nbsp;&nbsp;<a href="#" class="btn02 col7">적용</a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th class="w160" rowspan="3"><span>교환 배송지</span></th>
-                                        <td class="pr0">주문자</td>
-                                        <td colspan="2">
-                                            <input type="text" value="" required="required">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td class="pr0">연락처</td>
-                                        <td colspan="2">
-                                            <input type="text" value="" required="required">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td class="pr0">주소</td>
-                                        <td colspan="2">
-                                            <div class="addr_bx">
-                                                <input type="text" class="addr1 off" placeholder="우편번호"
-                                                    required="required">
-                                                <a href="#" class="btn01">우편번호찾기</a>
-                                                <input type="text" class="addr2 off" placeholder="주소"
-                                                    required="required">
-                                                <input type="text" class="addr3 off" placeholder="상세주소"
-                                                    required="required">
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 하단버튼 -->
-                <div class="btm_btn mt10">
-                    <a href="#">교환요청하기</a>
-                    <a href="#" class="col5 close_btn">닫기</a>
-                </div>
+                </form>
             </div>
         </div>
     </div>
 </div>
 
 <!-- 정상 주문 팝업 ==> 취소요청 팝업 -->
-<div class="popup_bx" data-id="pop1_2_6">
+<div class="popup_bx" data-id="pop1_2_6" id="modal_cancel_request">
     <div class="pop_w">
         <div class="pop_inner">
             <div class="pop_con w800">
@@ -677,115 +563,113 @@
                 <div class="page_info type2">
                     <div class="ttl">취소요청</div>
                 </div>
-                <div class="conbx">
-                    <div class="con_w">
-                        <div class="imp_bx01">
-                            <div class="txt2 mt0">
-                                입금대기,결제완료,배송대기 상품만 취소요청 상태로 변경 할 수 있습니다. <br>
-                                주문 취소를 요청하면 새로운 주문번호가 생성되면서 주문취소가 진행됩니다.
+                <form id="form_cancel_request">
+                    <input type="hidden" name="order_id" id="cancel_order_id" value="">
+                    <div class="conbx">
+                        <div class="con_w">
+                            <div class="imp_bx01">
+                                <div class="txt2 mt0">
+                                    입금대기,결제완료,배송대기 상품만 취소요청 상태로 변경 할 수 있습니다. <br>
+                                    주문 취소를 요청하면 새로운 주문번호가 생성되면서 주문취소가 진행됩니다.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="con_w">
+                            <div class="ttl01">주문정보</div>
+                            <div class="tb01">
+                                <table>
+                                    <colgroup>
+                                        <col width="160px">
+                                        <col width="">
+                                        <col width="160px">
+                                        <col width="">
+                                    </colgroup>
+                                    <tbody class="textL">
+                                        <tr>
+                                            <th class="w160"><span>주문번호</span></th>
+                                            <td id="cancel_order_no">Me9-000939393</td>
+                                            <th class="w160"><span>주문일시</span></th>
+                                            <td id="cancel_order_date">2024-10-01 09:02:12</td>
+                                        </tr>
+                                        <tr>
+                                            <th class="w160"><span>판매처</span></th>
+                                            <td id="cancel_shop_name">Shop채널명</td>
+                                            <th class="w160"><span>결제일시</span></th>
+                                            <td id="cancel_payment_date">2024-10-01 09:02:12</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="tb01 mt10">
+                                <table>
+                                    <colgroup>
+                                        <col width="70px">
+                                        <col width="100px">
+                                        <col width="">
+                                        <col width="100px">
+                                        <col width="100px">
+                                        <col width="80px">
+                                    </colgroup>
+                                    <thead>
+                                        <tr>
+                                            <th><input type="checkbox"></th>
+                                            <th>주문상태</th>
+                                            <th>상품명</th>
+                                            <th>상품코드</th>
+                                            <th>옵션</th>
+                                            <th>주문수량</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="cancel_order_items">
+                                        <!-- Items populated via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="con_w">
+                            <div class="ttl01">취소정보</div>
+                            <div class="tb01">
+                                <table>
+                                    <colgroup>
+                                        <col width="160px">
+                                        <col width="100px">
+                                        <col width="">
+                                        <col width="">
+                                    </colgroup>
+                                    <tbody class="textL">
+                                        <tr>
+                                            <th class="w160"><span>취소 사유</span></th>
+                                            <td colspan="3">
+                                                <select name="reason" required="required">
+                                                    <option value="" disabled="" selected="">취소사유 선택</option>
+                                                    <option value="mind_change">마음이 변했어요</option>
+                                                    <option value="product_defect">상품에 하자가 있어요(상세 사유 필요)</option>
+                                                    <option value="wrong_delivery">다른 상품이 배송됐어요(상세 사유 필요)</option>
+                                                </select>
+                                                <textarea class="mt5" name="detail_reason" required="required"
+                                                    placeholder="상세 사유를 입력해 주세요 (필수)"></textarea>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th class="w160"><span>환불금액</span></th>
+                                            <td colspan="3"><span id="cancel_refund_amount">0</span> 원</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
 
-                    <div class="con_w">
-                        <div class="ttl01">주문정보</div>
-                        <div class="tb01">
-                            <table>
-                                <colgroup>
-                                    <col width="160px">
-                                    <col width="">
-                                    <col width="160px">
-                                    <col width="">
-                                </colgroup>
-                                <tbody class="textL">
-                                    <tr>
-                                        <th class="w160"><span>주문번호</span></th>
-                                        <td>Me9-000939393</td>
-                                        <th class="w160"><span>주문일시</span></th>
-                                        <td>2024-10-01 09:02:12</td>
-                                    </tr>
-                                    <tr>
-                                        <th class="w160"><span>판매처</span></th>
-                                        <td>Shop채널명</td>
-                                        <th class="w160"><span>결제일시</span></th>
-                                        <td>2024-10-01 09:02:12</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="tb01 mt10">
-                            <table>
-                                <colgroup>
-                                    <col width="70px">
-                                    <col width="100px">
-                                    <col width="">
-                                    <col width="100px">
-                                    <col width="100px">
-                                    <col width="80px">
-                                </colgroup>
-                                <thead>
-                                    <tr>
-                                        <th><input type="checkbox"></th>
-                                        <th>주문상태</th>
-                                        <th>상품명</th>
-                                        <th>상품코드</th>
-                                        <th>옵션</th>
-                                        <th>주문수량</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td><input type="checkbox"></td>
-                                        <td>배송대기</td>
-                                        <td class="t_l"><span class="fcol2">BlueViolet a omnis</span></td>
-                                        <td>a0029</td>
-                                        <td>RD/S</td>
-                                        <td>2</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                    <!-- 하단버튼 -->
+                    <div class="btm_btn mt10">
+                        <a href="#" class="btn_submit"
+                            onclick="submitOrderForm('form_cancel_request', '{{ route('channel.order.cancel.request') }}'); return false;">주문취소
+                            요청하기</a>
+                        <a href="#" class="col5 close_btn">닫기</a>
                     </div>
-
-                    <div class="con_w">
-                        <div class="ttl01">취소정보</div>
-                        <div class="tb01">
-                            <table>
-                                <colgroup>
-                                    <col width="160px">
-                                    <col width="100px">
-                                    <col width="">
-                                    <col width="">
-                                </colgroup>
-                                <tbody class="textL">
-                                    <tr>
-                                        <th class="w160"><span>취소 사유</span></th>
-                                        <td colspan="3">
-                                            <select required="required">
-                                                <option value="" disabled="" selected="">취소사유 선택</option>
-                                                <option value="1">마음이 변했어요</option>
-                                                <option value="2">상품에 하자가 있어요(상세 사유 필요)</option>
-                                                <option value="3">다른 상품이 배송됐어요(상세 사유 필요)</option>
-                                            </select>
-                                            <textarea class="mt5" required="required"
-                                                placeholder="상세 사유를 입력해 주세요 (필수)"></textarea>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th class="w160"><span>환불금액</span></th>
-                                        <td colspan="3">90,000 원</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 하단버튼 -->
-                <div class="btm_btn mt10">
-                    <a href="#">주문취소 요청하기</a>
-                    <a href="#" class="col5 close_btn">닫기</a>
-                </div>
+                </form>
             </div>
         </div>
     </div>

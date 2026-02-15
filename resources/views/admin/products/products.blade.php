@@ -1,120 +1,161 @@
-@extends('admin.layout.layout')
-
+@extends('layouts.admin')
 
 @section('content')
-    <div class="main-panel">
-        <div class="content-wrapper">
-            <div class="row">
-                <div class="col-lg-12 grid-margin stretch-card">
-                    <div class="card">
-                        <div class="card-body">
-                            <h4 class="card-title">Products</h4>
+    <div id="contents">
+        <div class="row">
+            <div class="box box1">
+                <div class="page_info">
+                    <div class="ttl">상품 관리</div>
+                    <ul class="dep">
+                        <li>홈</li>
+                        <li>상품 관리</li>
+                        <li>상품 리스트</li>
+                    </ul>
+                </div>
+                <div class="conbx">
+                    <div class="con_w">
+                        <div class="list_top1">
+                            <div class="count">총 <strong>{{ count($products) }}</strong> 개</div>
+                            <div class="r_btn_w ml20">
+                                <a href="{{ url('admin/add-edit-product') }}" class="btn02">상품 추가</a>
+                            </div>
+                        </div>
 
-
-
-                            
-                            <a href="{{ url('admin/add-edit-product') }}" style="max-width: 150px; float: right; display: inline-block" class="btn btn-block btn-primary">Add Product</a>
-
-                            {{-- 유효성 검사 오류 표시: https://laravel.com/docs/9.x/validation#quick-displaying-the-validation-errors 및 https://laravel.com/docs/9.x/blade#validation-errors --}}
-                            {{-- 세션에 항목이 존재하는지 확인(has() 메서드 사용): https://laravel.com/docs/9.x/session#determining-if-an-item-exists-in-the-session --}}
-                            {{-- 관리자 비밀번호 업데이트 성공 시 Bootstrap 성공 메시지: --}}
-                            @if (Session::has('success_message')) <!-- AdminController.php, updateAdminPassword() 메서드 확인 -->
-                                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                    <strong>Success:</strong> {{ Session::get('success_message') }}
-                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        @if (Session::has('success_message'))
+                            <div class="alert alert-success alert-dismissible fade show" role="alert" style="margin-top: 10px;">
+                                <strong>성공:</strong> {{ Session::get('success_message') }}
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                                     <span aria-hidden="true">&times;</span>
-                                    </button>
-                                </div>
-                            @endif
+                                </button>
+                            </div>
+                        @endif
 
-
-                            <div class="table-responsive pt-3">
-                                {{-- DataTable --}}
-                                <table id="products" class="table table-bordered"> {{-- DataTable에 여기 id 사용 --}}
-                                    <thead>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>Product Name</th>
-                                            <th>Product Code</th>
-                                            <th>Product Color</th>
-                                            <th>Product Image</th>
-                                            <th>Category</th> {{-- 관계를 통해 --}}
-                                            <th>Section</th>  {{-- 관계를 통해 --}}
-                                            <th>Added by</th> {{-- 관계를 통해 --}}
-                                            <th>Status</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
+                        <div class="tb01 ovS">
+                            <table class="table table-bordered">
+                                <colgroup>
+                                    <col width="60px">
+                                    <col width="200px">
+                                    <col width="120px">
+                                    <col width="100px">
+                                    <col width="120px">
+                                    <col width="150px">
+                                    <col width="150px">
+                                    <col width="100px">
+                                    <col width="80px">
+                                    <col width="200px">
+                                </colgroup>
+                                <thead>
+                                    <tr>
+                                        <th>번호</th>
+                                        <th>상품명</th>
+                                        <th>상품코드</th>
+                                        <th>색상</th>
+                                        <th>이미지</th>
+                                        <th>분류</th>
+                                        <th>섹션</th>
+                                        <th>등록자</th>
+                                        <th>상태</th>
+                                        <th>관리</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if(count($products) > 0)
                                         @foreach ($products as $product)
                                             <tr>
                                                 <td>{{ $product['id'] }}</td>
-                                                <td>{{ $product['product_name'] }}</td>
+                                                <td style="text-align: left;">{{ $product['product_name'] }}</td>
                                                 <td>{{ $product['product_code'] }}</td>
                                                 <td>{{ $product['product_color'] }}</td>
                                                 <td>
                                                     @if (!empty($product['product_image']))
-                                                        <img style="width:120px; height:100px" src="{{ asset('front/images/product_images/small/' . $product['product_image']) }}"> {{-- 'small' 폴더에서 'small' 이미지 크기 표시 --}}
+                                                        <img style="width:80px; height:80px; object-fit: cover;"
+                                                            src="{{ asset('front/images/product_images/small/' . $product['product_image']) }}">
                                                     @else
-                                                        <img style="width:120px; height:100px" src="{{ asset('front/images/product_images/small/no-image.png') }}"> {{-- 'no-image' 더미 이미지 표시: 예를 들어 'images' 열이 있는 테이블(존재할 수도 있고 존재하지 않을 수도 있음)이 있는 경우 이미지가 없을 때 '더미 이미지'를 사용합니다. 예: https://dummyimage.com/  --}}
+                                                        <img style="width:80px; height:80px; object-fit: cover;"
+                                                            src="{{ asset('front/images/product_images/small/no-image.png') }}">
                                                     @endif
                                                 </td>
-                                                <td>{{ $product['category']['category_name'] }}</td> {{-- 관계를 통해 --}}
-                                                <td>{{ $product['section']['name'] }}</td> {{-- 관계를 통해 --}}
+                                                <td>{{ $product['category']['category_name'] }}</td>
+                                                <td>{{ $product['section']['name'] }}</td>
                                                 <td>
                                                     @if ($product['admin_type'] == 'vendor')
-                                                        <a target="_blank" href="{{ url('admin/view-vendor-details/' . $product['admin_id']) }}">{{ ucfirst($product['admin_type']) }}</a>
+                                                        <a target="_blank"
+                                                            href="{{ url('admin/view-vendor-details/' . $product['admin_id']) }}">판매자</a>
                                                     @else
-                                                        {{ ucfirst($product['admin_type']) }}
+                                                        {{ $product['admin_type'] == 'admin' ? '관리자' : '서브관리자' }}
                                                     @endif
                                                 </td>
                                                 <td>
                                                     @if ($product['status'] == 1)
-                                                        <a class="updateProductStatus" id="product-{{ $product['id'] }}" product_id="{{ $product['id'] }}" href="javascript:void(0)"> {{-- HTML 사용자 정의 속성 사용. admin/js/custom.js 확인 --}}
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i> {{-- Skydash 관리자 패널 템플릿의 아이콘 --}}
+                                                        <a class="updateProductStatus" id="product-{{ $product['id'] }}"
+                                                            product_id="{{ $product['id'] }}" href="javascript:void(0)">
+                                                            <span style="color:green">활성</span>
                                                         </a>
-                                                    @else {{-- 관리자 상태가 비활성인 경우 --}}
-                                                        <a class="updateProductStatus" id="product-{{ $product['id'] }}" product_id="{{ $product['id'] }}" href="javascript:void(0)"> {{-- HTML 사용자 정의 속성 사용. admin/js/custom.js 확인 --}}
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i> {{-- Skydash 관리자 패널 템플릿의 아이콘 --}}
+                                                    @else
+                                                        <a class="updateProductStatus" id="product-{{ $product['id'] }}"
+                                                            product_id="{{ $product['id'] }}" href="javascript:void(0)">
+                                                            <span style="color:red">비활성</span>
                                                         </a>
                                                     @endif
                                                 </td>
                                                 <td>
-                                                    <a title="Edit Product" href="{{ url('admin/add-edit-product/' . $product['id']) }}">
-                                                        <i style="font-size: 25px" class="mdi mdi-pencil-box"></i> {{-- Skydash 관리자 패널 템플릿의 아이콘 --}}
-                                                    </a>
-                                                    <a title="Add Attributes" href="{{ url('admin/add-edit-attributes/' . $product['id']) }}">
-                                                        <i style="font-size: 25px" class="mdi mdi-plus-box"></i> {{-- Skydash 관리자 패널 템플릿의 아이콘 --}}
-                                                    </a>
-                                                    <a title="Add Multiple Images" href="{{ url('admin/add-images/' . $product['id']) }}">
-                                                        <i style="font-size: 25px" class="mdi mdi-library-plus"></i> {{-- Skydash 관리자 패널 템플릿의 아이콘 --}}
-                                                    </a>
-
-                                                    {{-- 삭제 확인 JS 경고 및 Sweet Alert --}}
-                                                    {{-- <a title="Product" class="confirmDelete" href="{{ url('admin/delete-product/' . $product['id']) }}"> --}}
-                                                        {{-- <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i> --}} {{-- Skydash 관리자 패널 템플릿의 아이콘 --}}
-                                                    {{-- </a> --}}
-                                                    <a href="JavaScript:void(0)" class="confirmDelete" module="product" moduleid="{{ $product['id'] }}"> {{-- admin/js/custom.js 및 web.php (라우트) 확인 --}}
-                                                        <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i> {{-- Skydash 관리자 패널 템플릿의 아이콘 --}}
-                                                    </a>
+                                                    <a title="상품 수정" href="{{ url('admin/add-edit-product/' . $product['id']) }}"
+                                                        class="btn02">수정</a>
+                                                    <a title="속성 추가" href="{{ url('admin/add-edit-attributes/' . $product['id']) }}"
+                                                        class="btn02">속성</a>
+                                                    <a title="이미지 추가" href="{{ url('admin/add-images/' . $product['id']) }}"
+                                                        class="btn02">이미지</a>
+                                                    <a href="JavaScript:void(0)" class="btn02 confirmDelete" module="product"
+                                                        moduleid="{{ $product['id'] }}" style="color: red;">삭제</a>
                                                 </td>
                                             </tr>
                                         @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
+                                    @else
+                                        <tr>
+                                            <td colspan="10" class="no_data">등록된 상품이 없습니다.</td>
+                                        </tr>
+                                    @endif
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <!-- content-wrapper ends -->
-        <!-- partial:../../partials/_footer.html -->
-        <footer class="footer">
-            <div class="d-sm-flex justify-content-center justify-content-sm-between">
-                <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © 2022. All rights reserved.</span>
-            </div>
-        </footer>
-        <!-- partial -->
     </div>
+
+    <script>
+        $(document).ready(function () {
+            // Update Product Status
+            $(".updateProductStatus").click(function () {
+                var status = $(this).text().trim();
+                var product_id = $(this).attr("product_id");
+
+                $.ajax({
+                    type: 'post',
+                    url: '/admin/update-product-status',
+                    data: { status: status, product_id: product_id },
+                    success: function (resp) {
+                        if (resp['status'] == 0) {
+                            $("#product-" + product_id).html("<span style='color:red'>비활성</span>");
+                        } else if (resp['status'] == 1) {
+                            $("#product-" + product_id).html("<span style='color:green'>활성</span>");
+                        }
+                    }, error: function () {
+                        alert("오류가 발생했습니다.");
+                    }
+                });
+            });
+
+            // Confirm Delete
+            $(".confirmDelete").click(function (e) {
+                var module = $(this).attr('module');
+                var moduleid = $(this).attr('moduleid');
+                if (!confirm("정말로 삭제하시겠습니까?")) {
+                    return false;
+                }
+                window.location.href = "/admin/delete-product/" + moduleid;
+            });
+        });
+    </script>
 @endsection

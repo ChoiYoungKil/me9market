@@ -23,9 +23,9 @@ class Category extends Model
         return $this->belongsTo('App\Models\Category', 'parent_id')->select('id', 'category_name'); 
     }
 
-    // 다단계 카테고리 관계: 자식(서브) 카테고리
+    // 다단계 카테고리 관계: 자식(서브) 카테고리 (재귀적)
     public function subCategories() { 
-        return $this->hasMany('App\Models\Category', 'parent_id')->where('status', 1);
+        return $this->hasMany('App\Models\Category', 'parent_id')->with('subCategories');
     }
 
 

@@ -90,7 +90,7 @@ class ProductsController extends Controller
 
         if ($id == '') { // $id가 없으면 상품 추가
             $title = '상품 추가';
-            $product = new \App\Models\Product();
+            $product = new Product();
             // dd($product);
             $message = '상품이 성공적으로 추가되었습니다!';
         } else { // $id가 있으면 상품 수정

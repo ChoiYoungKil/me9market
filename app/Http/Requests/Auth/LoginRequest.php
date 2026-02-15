@@ -53,6 +53,15 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        if (Auth::user()->status == 0) {
+            Auth::logout();
+            RateLimiter::hit($this->throttleKey());
+            
+            throw ValidationException::withMessages([
+                'email' => 'Your account is disabled.',
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 

@@ -110,7 +110,7 @@
                                                             <th class="w160"><span>사업자등록번호</span></th>
                                                             <td>
                                                                 @php
-                                                                    $bln = explode('-', $businessDetails->business_license_number ?? '--');
+                                                                    $bln = !empty($businessDetails->business_license_number) ? explode('-', $businessDetails->business_license_number) : ['', '', ''];
                                                                 @endphp
                                                                 <div class="tel_bx2">
                                                                     <input type="text" name="business_license_1"
@@ -132,7 +132,7 @@
                                                             <td colspan="3">
                                                                 <div class="tel_bx">
                                                                     @php
-                                                                        $mbl = explode('-', $businessDetails->shop_mobile ?? '--');
+                                                                        $mbl = !empty($businessDetails->shop_mobile) ? explode('-', $businessDetails->shop_mobile) : ['', '', ''];
                                                                         $m1 = $mbl[0] ?? '010';
                                                                     @endphp
                                                                     <select name="mobile_1" required="required">
@@ -156,7 +156,7 @@
                                                             <th class="w160"><span>이메일</span></th>
                                                             <td colspan="3">
                                                                 @php
-                                                                    $eml = explode('@', $businessDetails->shop_email ?? '@');
+                                                                    $eml = !empty($businessDetails->shop_email) ? explode('@', $businessDetails->shop_email) : ['', ''];
                                                                 @endphp
                                                                 <div class="email_bx">
                                                                     <input type="text" name="email_1" class="email1"
@@ -350,18 +350,15 @@
     @push('scripts')
         <script type="text/javascript">
             $(function () {
-                // 전체 텍스트 보기 토글
                 $(".agree_bx .s_txt .btn").click(function () {
                     $(this).parent(".s_txt").siblings(".h_txt").stop().slideToggle(300);
                 });
 
-                // 파일 업로드 표시 로직
                 $('.fileBox .uploadBtn').on('change', function () {
                     var filename = $(this)[0].files[0].name;
                     $(this).parents('.fileBox').find('.fileName').val(filename);
                 });
 
-                // 이메일 도메인 선택
                 $('.email_bx select').change(function () {
                     var val = $(this).val();
                     var target = $('.email_bx .email2');
@@ -372,7 +369,6 @@
                     }
                 });
 
-                // 비밀번호 모달 로직 (Step 1과 동기화)
                 $('#btnChangePassword').click(function (e) {
                     e.preventDefault();
                     $('#passwordChangeModal').css('display', 'flex').show();
@@ -403,7 +399,6 @@
                 });
             });
 
-            // Step 2 폼 제출
             function submitStep2(goToStep3) {
                 if (!$('#agree1').is(':checked')) {
                     alert('필수 약관에 동의해야 합니다.');

@@ -40,7 +40,6 @@
                             </ul>
                         </div>
                         <form id="step1Form" method="POST" action="{{ route('front.member.register.step1.update') }}">
-                            <!-- 나중에 이 라우트를 정의하세요 -->
                             @csrf
                             <input type="hidden" name="user_id" value="{{ $user->id }}">
                             <div id="board">
@@ -64,7 +63,6 @@
                                                         <tr>
                                                             <th class="w160"><span>아이디</span></th>
                                                             <td>{{ $user->username ?? $user->email }}</td>
-                                                            <!-- 사용자명이 없는 경우 이메일을 대신 사용 -->
                                                             <th class="w160"><span>비밀번호</span></th>
                                                             <td><a href="#" class="btn01" id="btnChangePassword">비밀번호 변경</a>
                                                             </td>
@@ -104,10 +102,10 @@
                                                                 <div class="r_btn_w w457">
                                                                     <div class="tel_bx">
                                                                         @php
-                                                                            $mobileParts = explode('-', $user->mobile);
-                                                                            $m1 = isset($mobileParts[0]) ? $mobileParts[0] : '';
-                                                                            $m2 = isset($mobileParts[1]) ? $mobileParts[1] : '';
-                                                                            $m3 = isset($mobileParts[2]) ? $mobileParts[2] : '';
+                                                                            $mobileParts = !empty($user->mobile) ? explode('-', $user->mobile) : ['', '', ''];
+                                                                            $m1 = $mobileParts[0] ?? '';
+                                                                            $m2 = $mobileParts[1] ?? '';
+                                                                            $m3 = $mobileParts[2] ?? '';
                                                                         @endphp
                                                                         <select name="mobile_1" required="required">
                                                                             <option value="" disabled=""></option>
@@ -125,7 +123,6 @@
                                                                         <input type="text" class="tel2" name="mobile_3"
                                                                             required="required" value="{{ $m3 }}">
                                                                     </div>
-                                                                    <!-- <a href="#" class="btn01 col2">본인인증</a> (아직 구현되지 않음) -->
                                                                     <a href="javascript:alert('본인인증 서비스는 준비중입니다.');"
                                                                         class="btn01 col2">본인인증</a>
                                                                 </div>
@@ -182,7 +179,6 @@
                                                             <div class="btn">전문보기</div>
                                                         </div>
                                                         <div class="h_txt">
-                                                            <!-- 약관 내용 생략 -->
                                                             약관 내용...
                                                         </div>
                                                     </li>
@@ -194,7 +190,6 @@
                                                             <div class="btn">전문보기</div>
                                                         </div>
                                                         <div class="h_txt">
-                                                            <!-- 약관 내용 생략 -->
                                                             약관 내용...
                                                         </div>
                                                     </li>
@@ -206,7 +201,6 @@
                                                             <div class="btn">전문보기</div>
                                                         </div>
                                                         <div class="h_txt">
-                                                            <!-- 약관 내용 생략 -->
                                                             약관 내용...
                                                         </div>
                                                     </li>
@@ -297,7 +291,6 @@
         var element_layer = document.getElementById('daumPostcodeLayer');
 
         function closeDaumPostcode() {
-            // 레이어 숨기기
             element_layer.style.display = 'none';
         }
 
@@ -325,8 +318,6 @@
                     document.getElementById('zipcode').value = data.zonecode;
                     document.getElementById("address1").value = addr;
                     document.getElementById("address2").focus();
-
-                    // Close layer
                     element_layer.style.display = 'none';
                 },
                 width: '100%',
@@ -334,16 +325,11 @@
                 maxSuggestItems: 5
             }).embed(element_layer);
 
-            // Show layer
             element_layer.style.display = 'block';
-
-            // 크기 및 위치 조정
             initLayerPosition();
         }
 
         function initLayerPosition() {
-            // 일반적인 화면의 약 1/3 너비 또는 1/3처럼 보이는 고정 크기로 설정
-            // 400px는 데스크톱 주소 검색 레이어의 좋은 표준입니다.
             var width = 400;
             var height = 500;
             var borderWidth = 1;
@@ -351,9 +337,8 @@
             element_layer.style.width = width + 'px';
             element_layer.style.height = height + 'px';
             element_layer.style.border = borderWidth + 'px solid #333';
-            element_layer.style.backgroundColor = '#fff'; // 흰색 배경 보장
+            element_layer.style.backgroundColor = '#fff';
 
-            // 중앙에 안전하게 배치
             element_layer.style.left = (((window.innerWidth || document.documentElement.clientWidth) - width) / 2) + 'px';
             element_layer.style.top = (((window.innerHeight || document.documentElement.clientHeight) - height) / 2) + 'px';
         }
@@ -362,12 +347,10 @@
     @push('scripts')
         <script type="text/javascript">
             $(function () {
-                // 전체 텍스트 보기 토글
                 $(".agree_bx .s_txt .btn").click(function () {
                     $(this).parent(".s_txt").siblings(".h_txt").stop().slideToggle(300);
                 });
 
-                // 전체 동의 로직
                 $('#agree_all').change(function () {
                     var checked = $(this).prop('checked');
                     $('input[type="checkbox"][id^="agree"]').not('#agree_all').prop('checked', checked);
@@ -378,7 +361,6 @@
                     $('#agree_all').prop('checked', total === checked);
                 });
 
-                // 비밀번호 모달
                 $('#btnChangePassword').click(function (e) {
                     e.preventDefault();
                     $('#passwordChangeModal').css('display', 'flex').show();
@@ -387,7 +369,6 @@
                     $('#passwordChangeModal').hide();
                 });
 
-                // AJAX 비밀번호 업데이트
                 $('#btnSavePassword').click(function () {
                     var current = $('#current_password').val();
                     var new_pw = $('#new_password').val();
@@ -432,9 +413,7 @@
                 });
             });
 
-            // Step 1 폼 제출
             function submitStep1(goToStep2) {
-                // 필수 약관 체크 (agree1, agree2, agree3)
                 if (!$('#agree1').is(':checked') || !$('#agree2').is(':checked') || !$('#agree3').is(':checked')) {
                     alert('필수 약관에 동의해야 합니다.');
                     return;

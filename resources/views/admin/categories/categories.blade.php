@@ -1,121 +1,140 @@
-@extends('admin.layout.layout')
-
+@extends('layouts.admin')
 
 @section('content')
-    <div class="main-panel">
-        <div class="content-wrapper">
-            <div class="row">
-                <div class="col-lg-12 grid-margin stretch-card">
-                    <div class="card">
-                        <div class="card-body">
-                            <h4 class="card-title">Categories</h4>
+    <div id="contents">
+        <div class="row">
+            <div class="box box1">
+                <div class="page_info">
+                    <div class="ttl">분류 관리</div>
+                    <ul class="dep">
+                        <li>홈</li>
+                        <li>상품 관리</li>
+                        <li>분류 관리</li>
+                    </ul>
+                </div>
+                <div class="conbx">
+                    <div class="con_w">
+                        <div class="list_top1">
+                            <div class="count">총 <strong>{{ count($categories) }}</strong> 개</div>
+                            <div class="r_btn_w ml20">
+                                <a href="{{ url('admin/add-edit-category') }}" class="btn02">분류 추가</a>
+                            </div>
+                        </div>
 
+                        @if (Session::has('success_message'))
+                            <div class="alert alert-success alert-dismissible fade show" role="alert" style="margin-top: 10px;">
+                                <strong>성공:</strong> {{ Session::get('success_message') }}
+                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                            </div>
+                        @endif
 
-
-
-                            <a href="{{ url('admin/add-edit-category') }}"
-                                style="max-width: 150px; float: right; display: inline-block"
-                                class="btn btn-block btn-primary">Add Category</a>
-
-                            {{-- 유효성 검사 오류 표시:
-                            https://laravel.com/docs/9.x/validation#quick-displaying-the-validation-errors 및
-                            https://laravel.com/docs/9.x/blade#validation-errors --}}
-                            {{-- 세션에 항목이 존재하는지 확인(has() 메서드 사용):
-                            https://laravel.com/docs/9.x/session#determining-if-an-item-exists-in-the-session --}}
-                            {{-- 관리자 비밀번호 업데이트 성공 시 Bootstrap 성공 메시지: --}}
-                            @if (Session::has('success_message')) <!-- AdminController.php, updateAdminPassword() 메서드 확인 -->
-                                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                    <strong>Success:</strong> {{ Session::get('success_message') }}
-                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                        <span aria-hidden="true">&times;</span>
-                                    </button>
-                                </div>
-                            @endif
-
-
-                            <div class="table-responsive pt-3">
-                                {{-- DataTable --}}
-                                <table id="categories" class="table table-bordered"> {{-- DataTable에 여기 id 사용 --}}
-                                    <thead>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>Category Name</th>
-                                            <th>Parent Category</th> {{-- 관계를 통해 --}}
-                                            <th>Parent Section</th> {{-- 관계를 통해 --}}
-                                            <th>URL</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
+                        <div class="tb01 ovS">
+                            <table class="table table-bordered">
+                                <colgroup>
+                                    <col width="80px">
+                                    <col width="300px">
+                                    <col width="200px">
+                                    <col width="200px">
+                                    <col width="250px">
+                                    <col width="100px">
+                                    <col width="150px">
+                                </colgroup>
+                                <thead>
+                                    <tr>
+                                        <th>번호</th>
+                                        <th>분류명</th>
+                                        <th>상위 분류</th>
+                                        <th>섹션</th>
+                                        <th>URL</th>
+                                        <th>상태</th>
+                                        <th>관리</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if(count($categories) > 0)
                                         @foreach ($categories as $category)
-                                            {{-- @php echo '
-                                            <pre>', var_dump($category['parent_category']), '</pre>'; @endphp --}}
-                                            @if (isset($category['parent_category']['category_name']) && !empty($category['parent_category']['category_name']))
-                                                @php $parent_category = $category['parent_category']['category_name']; @endphp
-                                            @else
-                                                @php $parent_category = 'Root'; @endphp
-                                            @endif
+                                            @php
+                                                if (isset($category['parent_category']['category_name']) && !empty($category['parent_category']['category_name'])) {
+                                                    $parent_category = $category['parent_category']['category_name'];
+                                                } else {
+                                                    $parent_category = '최상위';
+                                                }
+                                            @endphp
                                             <tr>
                                                 <td>{{ $category['id'] }}</td>
-                                                <td>{{ $category['category_name'] }}</td>
-                                                <td>{{ $parent_category }}</td> {{-- 관계를 통해 --}}
-                                                <td>{{ $category['section']['name'] }}</td> {{-- 관계를 통해 --}}
-                                                <td>{{ $category['url'] }}</td>
+                                                <td style="text-align: left;">{{ $category['category_name'] }}</td>
+                                                <td>{{ $parent_category }}</td>
+                                                <td>{{ $category['section']['name'] }}</td>
+                                                <td style="text-align: left;">{{ $category['url'] }}</td>
                                                 <td>
                                                     @if ($category['status'] == 1)
                                                         <a class="updateCategoryStatus" id="category-{{ $category['id'] }}"
-                                                            category_id="{{ $category['id'] }}" href="javascript:void(0)"> {{-- HTML
-                                                            사용자 정의 속성 사용. admin/js/custom.js 확인 --}}
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-check"
-                                                                status="Active"></i> {{-- Skydash 관리자 패널 템플릿의 아이콘 --}}
+                                                            category_id="{{ $category['id'] }}" href="javascript:void(0)">
+                                                            <span style="color:green">활성</span>
                                                         </a>
-                                                    @else {{-- 관리자 상태가 비활성인 경우 --}}
+                                                    @else
                                                         <a class="updateCategoryStatus" id="category-{{ $category['id'] }}"
-                                                            category_id="{{ $category['id'] }}" href="javascript:void(0)"> {{-- HTML
-                                                            사용자 정의 속성 사용. admin/js/custom.js 확인 --}}
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
-                                                                status="Inactive"></i> {{-- Skydash 관리자 패널 템플릿의 아이콘 --}}
+                                                            category_id="{{ $category['id'] }}" href="javascript:void(0)">
+                                                            <span style="color:red">비활성</span>
                                                         </a>
                                                     @endif
                                                 </td>
                                                 <td>
-                                                    <a href="{{ url('admin/add-edit-category/' . $category['id']) }}">
-                                                        <i style="font-size: 25px" class="mdi mdi-pencil-box"></i> {{-- Skydash
-                                                        관리자 패널 템플릿의 아이콘 --}}
-                                                    </a>
-
-                                                    {{-- 삭제 확인 JS 경고 및 Sweet Alert --}}
-                                                    {{-- <a title="Category" class="confirmDelete"
-                                                        href="{{ url('admin/delete-category/' . $category['id']) }}"> --}}
-                                                        {{-- <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i> --}}
-                                                        {{-- Skydash 관리자 패널 템플릿의 아이콘 --}}
-                                                        {{-- </a> --}}
-                                                    <a href="JavaScript:void(0)" class="confirmDelete" module="category"
-                                                        moduleid="{{ $category['id'] }}"> {{-- admin/js/custom.js 및 web.php
-                                                        (라우트) 확인 --}}
-                                                        <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i> {{--
-                                                        Skydash 관리자 패널 템플릿의 아이콘 --}}
-                                                    </a>
+                                                    <a href="{{ url('admin/add-edit-category/' . $category['id']) }}"
+                                                        class="btn02">수정</a>
+                                                    <a href="JavaScript:void(0)" class="btn02 confirmDelete" module="category"
+                                                        moduleid="{{ $category['id'] }}" style="color: red;">삭제</a>
                                                 </td>
                                             </tr>
                                         @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
+                                    @else
+                                        <tr>
+                                            <td colspan="7" class="no_data">등록된 분류가 없습니다.</td>
+                                        </tr>
+                                    @endif
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <!-- content-wrapper ends -->
-        <!-- partial:../../partials/_footer.html -->
-        <footer class="footer">
-            <div class="d-sm-flex justify-content-center justify-content-sm-between">
-                <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © 2022. All rights
-                    reserved.</span>
-            </div>
-        </footer>
-        <!-- partial -->
     </div>
+
+    <script>
+        $(document).ready(function () {
+            // Update Category Status
+            $(".updateCategoryStatus").click(function () {
+                var status = $(this).text().trim();
+                var category_id = $(this).attr("category_id");
+
+                $.ajax({
+                    type: 'post',
+                    url: '/admin/update-category-status',
+                    data: { status: status, category_id: category_id },
+                    success: function (resp) {
+                        if (resp['status'] == 0) {
+                            $("#category-" + category_id).html("<span style='color:red'>비활성</span>");
+                        } else if (resp['status'] == 1) {
+                            $("#category-" + category_id).html("<span style='color:green'>활성</span>");
+                        }
+                    }, error: function () {
+                        alert("오류가 발생했습니다.");
+                    }
+                });
+            });
+
+            // Confirm Delete
+            $(".confirmDelete").click(function (e) {
+                var module = $(this).attr('module');
+                var moduleid = $(this).attr('moduleid');
+                if (!confirm("정말로 삭제하시겠습니까?")) {
+                    return false;
+                }
+                window.location.href = "/admin/delete-category/" + moduleid;
+            });
+        });
+    </script>
 @endsection

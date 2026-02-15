@@ -72,7 +72,7 @@
                                         <div class="f_w">
                                             <div class="ttl">스크립트 방지 태그<span class="imp">필수</span></div>
                                             <div class="spam_bx">
-                                                <div class="l_txt">ADFKDKEFKD</div>
+                                                <div class="l_txt">{{ $captcha }}</div>
                                                 <input type="text" name="captcha" required>
                                             </div>
                                         </div>
@@ -138,15 +138,79 @@
       </div><!-- //contents -->
 </div><!-- //container -->
 
+<!-- 모달 팝업 HTML -->
+<div id="contactModal" class="modal_bg" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999;">
+    <div class="modal_content" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:#fff; padding:30px; border-radius:10px; text-align:center; min-width:300px; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
+        <p id="modalMessage" style="font-size:16px; color:#333; margin-bottom:20px; line-height: 1.5; word-break: keep-all; white-space: pre-wrap;"></p>
+        <button onclick="closeModal()" style="padding:10px 30px; background:#3470f7; color:#fff; border:none; border-radius:5px; cursor:pointer; font-size: 14px; font-weight: 700;">확인</button>
+    </div>
+</div>
+
 @push('scripts')
     <script type="text/javascript">
+        // 기존 세션 메시지 처리 (새로고침 시 등)
+        @if(Session::has('success_message'))
+            alert(@json(Session::get('success_message')));
+        @endif
+
+        @if($errors->any())
+            var errors = @json($errors->all());
+            alert(errors.join('\n'));
+        @endif
+
         $(".agree_bx .s_txt .btn").click(function(){
             $(this).parent(".s_txt").siblings(".h_txt").stop().slideToggle(300);
         });
 
+        // Axios CSRF 토큰 설정
+        try {
+            axios.defaults.headers.common['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+        } catch(e) {
+            console.error('CSRF Token Meta Tag not found');
+        }
+
+        function closeModal() {
+            $('#contactModal').fadeOut(300);
+        }
+
         function submitContactForm(event) {
             event.preventDefault();
-            $(event.target).closest('form').submit();
+            var form = $(event.target).closest('form')[0];
+            
+            // HTML5 유효성 검사
+            if (!form.reportValidity()) return;
+
+            var formData = new FormData(form);
+
+            axios.post(form.action, formData)
+                .then(function (response) {
+                    // 성공 시
+                    $('#modalMessage').text(response.data.success_message);
+                    $('#contactModal').fadeIn(300);
+                    form.reset(); // 폼 초기화
+                    
+                    // 새 캡차 갱신
+                    if (response.data.new_captcha) {
+                        $('.spam_bx .l_txt').text(response.data.new_captcha);
+                    }
+                })
+                .catch(function (error) {
+                    // 실패 시
+                    var message = '오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+                    
+                    if (error.response && error.response.data && error.response.data.errors) {
+                        // 유효성 검사 에러
+                        var errors = Object.values(error.response.data.errors).flat();
+                        message = errors.join('\n');
+                    } else if (error.response && error.response.data && error.response.data.message) {
+                        // 기타 서버 에러 메시지
+                        message = error.response.data.message;
+                    }
+                    
+                    $('#modalMessage').text(message); // 줄바꿈 처리를 위해 text 대신 html을 쓰거나 pre-wrap 스타일 적용 필요. 여기서는 간단히 text로.
+                    $('#contactModal').fadeIn(300);
+                });
         }
     </script>
 @endpush

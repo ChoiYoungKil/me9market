@@ -1,26 +1,31 @@
 <div id="l_menu">
     <div class="con_bx">
         <div class="con1">
-            <div class="ttl on">주문목록</div> <!-- 알림: on -->
+            <div class="ttl on">주문목록 <span class="num"
+                    style="background-color: #ef4131; color: #fff; padding: 2px 6px; border-radius: 10px; font-size: 11px; margin-left: 5px; vertical-align: middle;">99+</span>
+            </div> <!-- 알림: on -->
             <ul>
                 <li>
-                    <a href="{{ route('mypage.order.view') }}">
+                    <a href="{{ route('mypage.order.list', ['status' => 'payment_completed']) }}"
+                        class="{{ request('status') == 'payment_completed' ? 'on' : '' }}">
                         <div class="icon icon1">
-                            <span class="num">99+</span>
+                            <span class="num">20</span>
                         </div>
                         <div class="txt">결제완료</div>
                     </a>
                 </li>
                 <li>
-                    <a href="#">
+                    <a href="{{ route('mypage.order.list', ['status' => 'preparing_shipment']) }}"
+                        class="{{ request('status') == 'preparing_shipment' ? 'on' : '' }}">
                         <div class="icon icon2">
-                            <span class="num">20</span>
+                            <!--<span class="num">20</span>-->
                         </div>
                         <div class="txt">배송대기중</div>
                     </a>
                 </li>
                 <li>
-                    <a href="#">
+                    <a href="{{ route('mypage.order.list', ['status' => 'shipping']) }}"
+                        class="{{ request('status') == 'shipping' ? 'on' : '' }}">
                         <div class="icon icon3">
                             <!--<span class="num">99+</span>-->
                         </div>
@@ -28,15 +33,24 @@
                     </a>
                 </li>
                 <li>
-                    <a href="#">
+                    <a href="{{ route('mypage.order.list', ['status' => 'purchase_confirmed']) }}"
+                        class="{{ request('status') == 'purchase_confirmed' ? 'on' : '' }}">
                         <div class="icon icon4">
                             <!--<span class="num">99+</span>-->
                         </div>
                         <div class="txt">구매확정</div>
                     </a>
                 </li>
+            </ul>
+        </div>
+
+        <div class="con1" style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 20px;">
+            <div class="ttl on cancel">취소목록
+            </div>
+            <ul>
                 <li>
-                    <a href="#">
+                    <a href="{{ route('mypage.order.list', ['tab' => 'cancel', 'status' => 'cancel_request']) }}"
+                        class="{{ request('status') == 'cancel_request' ? 'on' : '' }}">
                         <div class="icon icon5">
                             <!--<span class="num">99+</span>-->
                         </div>
@@ -44,39 +58,101 @@
                     </a>
                 </li>
                 <li>
-                    <a href="#">
-                        <div class="icon icon6">
+                    <a href="{{ route('mypage.order.list', ['tab' => 'cancel', 'status' => 'cancel_completed']) }}"
+                        class="{{ request('status') == 'cancel_completed' ? 'on' : '' }}">
+                        <div class="icon icon4"> <!-- Reusing purchase confirm icon (Check) for completion -->
+                            <!--<span class="num">99+</span>-->
+                        </div>
+                        <div class="txt">취소완료</div>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="con1" style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 20px;">
+            <div class="ttl on return">반품목록
+            </div>
+            <ul>
+                <li>
+                    <a href="{{ route('mypage.order.list', ['tab' => 'return', 'status' => 'return_request']) }}"
+                        class="{{ request('status') == 'return_request' ? 'on' : '' }}">
+                        <div class="icon icon5">
                             <!--<span class="num">99+</span>-->
                         </div>
                         <div class="txt">반품신청</div>
                     </a>
                 </li>
+                <li>
+                    <a href="{{ route('mypage.order.list', ['tab' => 'return', 'status' => 'return_completed']) }}"
+                        class="{{ request('status') == 'return_completed' ? 'on' : '' }}">
+                        <div class="icon icon4"> <!-- Reusing purchase confirm icon (Check) for completion -->
+                            <!--<span class="num">99+</span>-->
+                        </div>
+                        <div class="txt">반품완료</div>
+                    </a>
+                </li>
             </ul>
         </div>
+
+        <div class="con1" style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 20px;">
+            <div class="ttl on exchange">교환목록
+            </div>
+            <ul>
+                <li>
+                    <a href="{{ route('mypage.order.list', ['tab' => 'exchange', 'status' => 'exchange_request']) }}"
+                        class="{{ request('status') == 'exchange_request' ? 'on' : '' }}">
+                        <div class="icon icon2"> <!-- Reusing 'Waiting Delivery' (Box) icon for Exchange Request -->
+                            <!--<span class="num">99+</span>-->
+                        </div>
+                        <div class="txt">교환신청</div>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('mypage.order.list', ['tab' => 'exchange', 'status' => 'exchange_completed']) }}"
+                        class="{{ request('status') == 'exchange_completed' ? 'on' : '' }}">
+                        <div class="icon icon4"> <!-- Reusing purchase confirm icon (Check) for completion -->
+                            <!--<span class="num">99+</span>-->
+                        </div>
+                        <div class="txt">교환완료</div>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
         <div class="con2">
             <div class="con_w dep02">
                 <div class="c_ttl">주요메뉴</div>
                 <ul class="dep1_wrap">
-                    <li class="dep1 icon1_1 arrow">
+                    <li
+                        class="dep1 icon1_1 arrow {{ request()->routeIs('mypage.profile', 'mypage.delivery', 'mypage.withdraw') ? 'on' : '' }}">
                         <!-- on -->
                         <a href="#">정보관리</a>
                         <ul class="dep2_wrap">
-                            <li><a href="{{ route('mypage.profile') }}">회원 정보 수정</a></li> <!-- on -->
-                            <li><a href="{{ route('mypage.delivery') }}">배송지 설정</a></li>
-                            <li><a href="{{ route('mypage.withdraw') }}">회원 탈퇴 신청</a></li>
+                            <li class="{{ request()->routeIs('mypage.profile') ? 'on' : '' }}"><a
+                                    href="{{ route('mypage.profile') }}">회원 정보 수정</a></li> <!-- on -->
+                            <li class="{{ request()->routeIs('mypage.delivery') ? 'on' : '' }}"><a
+                                    href="{{ route('mypage.delivery') }}">배송지 설정</a></li>
+                            <li class="{{ request()->routeIs('mypage.withdraw') ? 'on' : '' }}"><a
+                                    href="{{ route('mypage.withdraw') }}">회원 탈퇴 신청</a></li>
                         </ul>
                     </li>
-                    <li class="dep1 icon1_2">
-                        <a href="#">방문한 채널</a>
+                    <li class="dep1 icon1_2 {{ request()->routeIs('mypage.visited_channels') ? 'on' : '' }}">
+                        <a href="{{ route('mypage.visited_channels') }}">방문한 채널</a>
                     </li>
-                    <li class="dep1 icon1_3">
+                    <li class="dep1 icon1_3 arrow {{ request()->routeIs('mypage.point.*') ? 'on' : '' }}">
                         <a href="#">포인트관리</a>
+                        <ul class="dep2_wrap">
+                            <li class="{{ request()->routeIs('mypage.point.status') ? 'on' : '' }}"><a
+                                    href="{{ route('mypage.point.status') }}">포인트 현황</a></li>
+                            <li class="{{ request()->routeIs('mypage.point.history') ? 'on' : '' }}"><a
+                                    href="{{ route('mypage.point.history') }}">포인트 이력</a></li>
+                        </ul>
                     </li>
-                    <li class="dep1 icon1_4">
-                        <a href="#">장바구니 목록</a>
+                    <li class="dep1 icon1_4 {{ request()->routeIs('mypage.cart') ? 'on' : '' }}">
+                        <a href="{{ route('mypage.cart') }}">장바구니 목록</a>
                     </li>
-                    <li class="dep1 icon1_5">
-                        <a href="#">찜한 상품 목록</a>
+                    <li class="dep1 icon1_5 {{ request()->routeIs('mypage.wishlist') ? 'on' : '' }}">
+                        <a href="{{ route('mypage.wishlist') }}">찜한 상품 목록</a>
                     </li>
                 </ul>
             </div>

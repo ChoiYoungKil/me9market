@@ -53,7 +53,7 @@
 					<li><a href="{{ route('channel.product_own') }}">상품관리</a></li>
 					<li><a href="#">공동구매관리</a></li>
 					<li><a href="{{ route('channel.order.list') }}">주문관리</a></li>
-					<li><a href="#">정산관리</a></li>
+					<li><a href="{{ route('channel.settlement.list') }}">정산관리</a></li>
 				</ul>
 			</div>
 

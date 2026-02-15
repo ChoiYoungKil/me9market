@@ -29,7 +29,7 @@
                 <ul class="link_bx">
                     <li><a href="{{ route('front.member.find_id') }}">아이디 찾기</a></li>
                     <li><a href="{{ route('front.member.find_pw') }}">비밀번호 찾기</a></li>
-                    <li><a href="{{ route('front.member.register.step1') }}">회원가입</a></li>
+                    <li><a href="{{ route('front.member.register.member') }}">회원가입</a></li>
                 </ul>
                 <div class="sns_bx">
                     <div class="txt"><span>간편회원 로그인</span></div>

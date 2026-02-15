@@ -20,47 +20,55 @@
                         <div id="board">
                             <div class="view01">
                                 <div class="subject">
-                                    <div class="on">공지</div>
-                                    <strong>공지사항 입니다. 공지사항 입니다. 공지사항 입니다. 공지사항 입니다. 공지사항 입니다. 공지사항 입니다.</strong>
+                                    @if($notice->is_important)
+                                        <div class="on">공지</div>
+                                    @endif
+                                    <strong>{{ $notice->title }}</strong>
                                     <ul>
-                                        <li>2024-10-01</li>
+                                        <li>{{ $notice->created_at->format('Y-m-d') }}</li>
                                     </ul>
                                 </div>
-                                <div class="file">
-                                    <span class="l_txt">첨부파일</span>
-                                    <ul>
-                                        <li><a href="#">첨부파일명.확장자</a></li>
-                                        <li><a href="#">첨부파일명.확장자</a></li>
-                                        <li><a href="#">첨부파일명.확장자</a></li>
-                                    </ul>
-                                </div>
+
+                                @if($notice->attachment)
+                                    <div class="file">
+                                        <span class="l_txt">첨부파일</span>
+                                        <ul>
+                                            <li>
+                                                <a href="{{ url('admin/attachments/notices/' . $notice->attachment) }}"
+                                                    download>
+                                                    {{ $notice->attachment }}
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                @endif
+
                                 <div class="con">
-                                    <img src="{{ asset('public/images/sub/view_sample01.jpg') }}"><br>
-                                    <br>
-                                    내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출
-                                    내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출
-                                    내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 <br>
-                                    <br>
-                                    내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출
-                                    내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 <br>
-                                    <br>
-                                    내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출
-                                    내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출
-                                    내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출
-                                    내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출
-                                    내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출 내용노출
+                                    {!! $notice->content !!}
                                 </div>
+
                                 <div class="page">
-                                    <div class="page_w prev">
-                                        <span class="l_txt">이전글</span>
-                                        <div class="sb"><a href="#">이전글 제목 추출영역입니다. 이전글 제목 추출영역입니다. 이전글 제목 추출영역입니다. 이전글 제목
-                                                추출영역입니다. 이전글 제목 추출영역입니다. 이전글 제목 추출영역입니다. 이전글 제목 추출영역입니다. 이전글 제목 추출영역입니다.</a>
+                                    @if($prevNotice)
+                                        <div class="page_w prev">
+                                            <span class="l_txt">이전글</span>
+                                            <div class="sb">
+                                                <a href="{{ route('cs.notice.view', ['id' => $prevNotice->id]) }}">
+                                                    {{ $prevNotice->title }}
+                                                </a>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="page_w next">
-                                        <span class="l_txt">다음글</span>
-                                        <div class="sb"><a href="#">다음글 제목 추출영역입니다.</a></div>
-                                    </div>
+                                    @endif
+
+                                    @if($nextNotice)
+                                        <div class="page_w next">
+                                            <span class="l_txt">다음글</span>
+                                            <div class="sb">
+                                                <a href="{{ route('cs.notice.view', ['id' => $nextNotice->id]) }}">
+                                                    {{ $nextNotice->title }}
+                                                </a>
+                                            </div>
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
 

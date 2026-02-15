@@ -35,7 +35,7 @@
                             </div>
 
                             <!-- 하단버튼 -->
-                            <div class="btm_btn mt20">
+                            <div class="btm_btn right mt10">
                                 <a href="/" class="pop_btn" data-pop="pop1_1">메인으로 이동</a>
                             </div>
                         </div>

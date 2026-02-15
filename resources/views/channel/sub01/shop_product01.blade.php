@@ -284,6 +284,7 @@
 @endsection
 
 @push('scripts')
+    <script src="/channel_assets/js/product_management.js"></script>
     <script type="text/javascript">
         $(function () {
             /* 팝업 */

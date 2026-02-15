@@ -50,13 +50,21 @@
         <header id="header">
             <a href="{{ route('admin.dashboard') }}" class="logo">Me9 market</a>
 
+            @php
+                $currentPage = Session::get('page');
+                $isUserManagement = in_array($currentPage, ['users', 'admins', 'add_edit_user', 'add_edit_admin', 'view_vendor_details']) || strpos($currentPage, 'view_') === 0;
+                $isSettings = in_array($currentPage, ['update_admin_password', 'update_admin_details', 'update_personal_details', 'update_business_details', 'update_bank_details']);
+                $isProductManagement = in_array($currentPage, ['products', 'categories', 'sections', 'brands', 'filters', 'attributes']);
+                $isSupport = in_array($currentPage, ['notices', 'faqs', 'contacts']);
+            @endphp
             <div class="t_menu">
                 <ul>
-                    <li><a href="#" class="on">환경설정</a></li>
-                    <li><a href="#">회원관리</a></li>
+                    <li><a href="#" class="{{ $isSettings ? 'on' : '' }}">환경설정</a></li>
+                    <li><a href="{{ url('admin/users') }}" class="{{ $isUserManagement ? 'on' : '' }}">회원관리</a></li>
+                    <li><a href="{{ url('admin/products') }}" class="{{ $isProductManagement ? 'on' : '' }}">상품관리</a>
+                    </li>
+                    <li><a href="{{ url('admin/notices') }}" class="{{ $isSupport ? 'on' : '' }}">고객센터</a></li>
                     <li><a href="#">판매사이트관리</a></li>
-                    <li><a href="#">대분류</a></li>
-                    <li><a href="#">대분류</a></li>
                 </ul>
             </div>
 
@@ -64,7 +72,7 @@
                 <div class="name">[최고관리자] {{ Auth::user()->name ?? 'Admin' }}</div>
                 <a href="{{ route('logout') }}"
                     onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
-                    class="btn icon1">logout</a>
+                    class="btn icon1">로그아웃</a>
                 <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
                     @csrf
                 </form>

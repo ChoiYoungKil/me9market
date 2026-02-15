@@ -21,6 +21,11 @@ class Order extends Model
         return $this->hasMany('App\Models\OrdersProduct', 'order_id'); 
     }
 
+    public function claims()
+    {
+        return $this->hasMany(OrderClaim::class);
+    }
+
 
 
 

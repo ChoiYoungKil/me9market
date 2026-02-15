@@ -17,8 +17,70 @@ class ChannelController extends Controller
             if ($user->type == 'vendor' && $user->status == 0) {
                 return redirect()->route('channel.complete_profile');
             }
+            
+            $vendor_id = $user->vendor_id;
+
+            // 1. Order Status Counts
+            $statusCounts = \App\Models\OrdersProduct::where('vendor_id', $vendor_id)
+                ->select('item_status', \Illuminate\Support\Facades\DB::raw('count(*) as total'))
+                ->groupBy('item_status')
+                ->pluck('total', 'item_status')
+                ->all();
+
+            $data = [
+                'total' => array_sum($statusCounts),
+                'paid' => $statusCounts['결제완료'] ?? 0,
+                'shipping_ready' => $statusCounts['배송대기'] ?? 0, // Assuming '배송대기' is the status string
+                'shipping' => $statusCounts['배송중'] ?? 0,
+                'complete' => $statusCounts['구매확정'] ?? 0,
+                'cancel_request' => $statusCounts['취소요청'] ?? 0,
+                'return_request' => $statusCounts['반품요청'] ?? 0, // '반품신청' in view, checking DB value usually '반품요청'
+            ];
+
+            // 2. Recent Orders (Top 3)
+            $recentOrders = \App\Models\Order::with(['orders_products' => function($q) use ($vendor_id) {
+                $q->where('vendor_id', $vendor_id);
+            }, 'user'])
+            ->whereHas('orders_products', function($q) use ($vendor_id) {
+                $q->where('vendor_id', $vendor_id);
+            })
+            ->orderBy('created_at', 'desc')
+            ->take(3)
+            ->get();
+            
+            // Transform for view
+            $recentOrders->transform(function($order) {
+                $order->items = $order->orders_products;
+                return $order;
+            });
+
+            // 3. Monthly Sales (Line Chart) - Current Year
+            $monthlySales = \App\Models\OrdersProduct::where('vendor_id', $vendor_id)
+                ->whereYear('created_at', date('Y'))
+                ->select(
+                    \Illuminate\Support\Facades\DB::raw('MONTH(created_at) as month'),
+                    \Illuminate\Support\Facades\DB::raw('SUM(product_price * product_qty) as total_sales')
+                )
+                ->groupBy('month')
+                ->orderBy('month')
+                ->pluck('total_sales', 'month')
+                ->all();
+            
+            // Fill missing months with 0
+            $chartData = [];
+            for ($i = 1; $i <= 12; $i++) {
+                $chartData[] = $monthlySales[$i] ?? 0;
+            }
+
+            return view('channel.index', [
+                'dep1_id' => '00',
+                'user' => $user,
+                'counts' => $data,
+                'recentOrders' => $recentOrders,
+                'chartData' => $chartData
+            ]);
         }
-        return view('channel.index', ['dep1_id' => '00']);
+        return redirect()->route('channel.login');
     }
 
     public function login()
@@ -107,24 +169,96 @@ class ChannelController extends Controller
     // 주문 관리 (Sub04)
     public function orderList()
     {
-        return view('channel.sub04.order_list', ['dep1_id' => '04']);
+        $vendor_id = \Illuminate\Support\Facades\Auth::guard('admin')->user()->vendor_id;
+        $orders = $this->fetchOrders($vendor_id);
+        return view('channel.sub04.order_list', ['dep1_id' => '04', 'orders' => $orders]);
     }
     
     public function orderCancelList()
     {
-        return view('channel.sub04.order_cancel_list', ['dep1_id' => '04']);
+        $vendor_id = \Illuminate\Support\Facades\Auth::guard('admin')->user()->vendor_id;
+        $orders = $this->fetchOrders($vendor_id, ['취소요청', '취소완료']);
+        return view('channel.sub04.order_list', ['dep1_id' => '04', 'orders' => $orders]);
     }
 
     public function orderReturnRequestList()
     {
-        return view('channel.sub04.order_return_request_list', ['dep1_id' => '04']);
+        $vendor_id = \Illuminate\Support\Facades\Auth::guard('admin')->user()->vendor_id;
+        $orders = $this->fetchOrders($vendor_id, ['반품요청', '반품완료']);
+        return view('channel.sub04.order_list', ['dep1_id' => '04', 'orders' => $orders]);
     }
 
     public function orderExchangeRequestList()
     {
-        return view('channel.sub04.order_exchange_request_list', ['dep1_id' => '04']);
+        $vendor_id = \Illuminate\Support\Facades\Auth::guard('admin')->user()->vendor_id;
+        $orders = $this->fetchOrders($vendor_id, ['교환요청', '교환완료']);
+        return view('channel.sub04.order_list', ['dep1_id' => '04', 'orders' => $orders]);
     }
-    
+
+    private function fetchOrders($vendor_id, $statusFilter = [])
+    {
+        $query = \App\Models\Order::with(['orders_products' => function($q) use ($vendor_id, $statusFilter) {
+            $q->where('vendor_id', $vendor_id);
+            if (!empty($statusFilter)) {
+                $q->whereIn('item_status', $statusFilter);
+            }
+        }, 'user']);
+
+        // Filter orders that have at least one product matching the criteria
+        $query->whereHas('orders_products', function($q) use ($vendor_id, $statusFilter) {
+            $q->where('vendor_id', $vendor_id);
+            if (!empty($statusFilter)) {
+                $q->whereIn('item_status', $statusFilter);
+            }
+        });
+
+        $orders = $query->orderBy('created_at', 'desc')->paginate(10);
+
+        // Transform
+        $orders->getCollection()->transform(function($order) {
+            $order->order_no = 'Me9-' . str_pad($order->id, 8, '0', STR_PAD_LEFT); 
+            $order->shop_name = 'Me9 Market'; 
+            $order->user_name = $order->name; 
+            
+            // Note: $order->orders_products will only contain the filtered items due to 'with' usage above
+            $vendorItems = $order->orders_products;
+            
+            $order->items = $vendorItems->map(function($item) {
+                return [
+                    'id' => $item->id,
+                    'status' => $item->item_status, 
+                    'product_name' => $item->product_name,
+                    'product_code' => $item->product_code,
+                    'option_name' => $item->product_color . '/' . $item->product_size,
+                    'qty' => $item->product_qty,
+                    'price' => $item->product_price,
+                    'product_type' => '자사', 
+                ];
+            });
+
+            $totalProductPrice = $vendorItems->sum(function($item) {
+                return $item->product_price * $item->product_qty;
+            });
+
+            $order->total_product_price = $totalProductPrice;
+            $order->total_sale_price = $totalProductPrice; 
+            $order->total_profit = 0; 
+            $order->total_selling_profit = 0; 
+            
+            $order->delivery_fee = 0; 
+            
+            $order->used_point = 0;
+            $order->total_payment_price = $totalProductPrice; 
+            $order->earned_point = 0;
+
+            $order->status = $order->items->first()['status'] ?? 'Pending';
+            
+            return $order;
+        });
+
+        return $orders;
+    }
+
     public function orderInfo()
     {
         return view('channel.sub04.inc.pop_order_info'); // 독립형 또는 팝업으로 사용될 수 있습니다.

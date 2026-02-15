@@ -157,7 +157,7 @@
                             </ul>
                         </div>
                         <div class="list_top1">
-                            <div class="count">총 <strong>00</strong> 건</div>
+                            <div class="count">총 <strong>{{ $orders->total() }}</strong> 건</div>
                         </div>
                         <div class="tb01 ovS">
                             <table>
@@ -212,54 +212,72 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td>2024-10-10 00:00:00</td>
-                                        <td><a class="fcol4 link pop_btn" data-pop="pop1_1">Me9-0002329</a></td>
-                                        <td>1</td>
-                                        <td>Shop 채널명</td>
-                                        <td>결제완료</td>
-                                        <td>홍길동</td>
-                                        <td>자사</td>
-                                        <td class="t_l"><a class="fcol2 link">BlueViolet a omnis</a></td>
-                                        <td>a0029</td>
-                                        <td>RD/S</td>
-                                        <td>2</td>
-                                        <td>0</td>
-                                        <td>0</td>
-                                        <td>0</td>
-                                        <td class="t_r">45,000 원</td>
-                                        <td class="t_r">25,000 원</td>
-                                        <td class="t_r">2,500 원</td>
-                                        <td class="t_r">17,500 원</td>
-                                        <td class="t_r">0 원</td>
-                                        <td class="t_r">3,000 p</td>
-                                        <td class="t_r"><span class="bold fcol4">42,000 원</span></td>
-                                        <td class="t_r">4,200 p</td>
-                                    </tr>
-                                    <tr>
-                                        <td>2024-10-10 00:00:00</td>
-                                        <td><a class="fcol4 link pop_btn" data-pop="pop1_1">Me9-0002329</a></td>
-                                        <td>1</td>
-                                        <td>Shop 채널명</td>
-                                        <td>결제완료</td>
-                                        <td>홍길동</td>
-                                        <td>부분공개</td>
-                                        <td class="t_l"><a class="fcol2 link">NavajoWhite ad voluptates</a></td>
-                                        <td>a0029</td>
-                                        <td>FREE/FREE</td>
-                                        <td>2</td>
-                                        <td>0</td>
-                                        <td>0</td>
-                                        <td>0</td>
-                                        <td class="t_r">45,000 원</td>
-                                        <td class="t_r">25,000 원</td>
-                                        <td class="t_r">2,500 원</td>
-                                        <td class="t_r">17,500 원</td>
-                                        <td class="t_r">0 원</td>
-                                        <td class="t_r">3,000 p</td>
-                                        <td class="t_r"><span class="bold fcol4">42,000 원</span></td>
-                                        <td class="t_r">4,200 p</td>
-                                    </tr>
+                                    @if($orders->count() > 0)
+                                        @foreach($orders as $order)
+                                            <tr>
+                                                <td>{{ $order->created_at }}</td>
+                                                <td><a class="fcol4 link pop_btn" data-pop="pop1_1">{{ $order->order_no }}</a>
+                                                </td>
+                                                <td>{{ $loop->iteration }}</td>
+                                                <td>{{ $order->shop_name }}</td>
+                                                <td>{{ $order->status }}</td>
+                                                <td>{{ $order->user_name }}</td>
+                                                <td>{{ $order->items->first()['product_type'] ?? '자사' }}</td>
+                                                <td class="t_l">
+                                                    @foreach($order->items as $item)
+                                                        <a class="fcol2 link">{{ $item['product_name'] }}</a><br>
+                                                    @endforeach
+                                                </td>
+                                                <td>
+                                                    @foreach($order->items as $item)
+                                                        {{ $item['product_code'] }}<br>
+                                                    @endforeach
+                                                </td>
+                                                <td>
+                                                    @foreach($order->items as $item)
+                                                        {{ $item['option_name'] }}<br>
+                                                    @endforeach
+                                                </td>
+                                                <td>
+                                                    @foreach($order->items as $item)
+                                                        {{ $item['qty'] }}<br>
+                                                    @endforeach
+                                                </td>
+                                                <td>0</td>
+                                                <td>0</td>
+                                                <td>0</td>
+                                                <td>0</td>
+                                                <td class="t_r">{{ number_format($order->total_sale_price) }} 원</td>
+                                                <td class="t_r">{{ number_format($order->total_product_price) }} 원</td>
+                                                <td class="t_r">{{ number_format($order->total_profit) }} 원</td>
+                                                <td class="t_r">{{ number_format($order->total_selling_profit) }} 원</td>
+                                                <td class="t_r">{{ number_format($order->delivery_fee) }} 원</td>
+                                                <td class="t_r">{{ number_format($order->used_point) }} p</td>
+                                                <td class="t_r"><span
+                                                        class="bold fcol4">{{ number_format($order->total_payment_price) }} 원</span>
+                                                </td>
+                                                <td class="t_r">{{ number_format($order->earned_point) }} p</td>
+                                            </tr>
+                                            <!-- 액션 버튼 행 -->
+                                            <tr>
+                                                <td colspan="22" style="text-align: left; padding: 5px 10px; background: #f9f9f9;">
+                                                    <strong>[관리]: </strong>
+                                                    <a href="#" onclick='openOrderModal("pop1_2_3", @json($order)); return false;'
+                                                        class="btn02">배송관리</a>
+                                                    <a href="#" onclick='openOrderModal("pop1_2_6", @json($order)); return false;'
+                                                        class="btn02">취소요청</a>
+                                                    <a href="#" onclick='openOrderModal("pop1_2_4", @json($order)); return false;'
+                                                        class="btn02">반품요청</a>
+                                                    <a href="#" onclick='openOrderModal("pop1_2_5", @json($order)); return false;'
+                                                        class="btn02">교환요청</a>
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    @else
+                                        <tr>
+                                            <td colspan="22" class="no_data">등록된 데이터가 없습니다.</td>
+                                        </tr>
+                                    @endif
                                 </tbody>
                             </table>
                         </div>
@@ -267,15 +285,7 @@
                         <!--<div class="no_data">등록된 데이터가 없습니다.</div>-->
 
                         <div class="page_bx1">
-                            <a href="#" class="page_first">first</a>
-                            <a href="#" class="page_prev">prev</a>
-                            <a href="#" class="num on">1</a>
-                            <a href="#" class="num">2</a>
-                            <a href="#" class="num">3</a>
-                            <a href="#" class="num">4</a>
-                            <a href="#" class="num">5</a>
-                            <a href="#" class="page_next">next</a>
-                            <a href="#" class="page_last">last</a>
+                            {{ $orders->links() }}
                         </div>
 
                         <!-- 팝업 -->
@@ -297,6 +307,7 @@
 @endsection
 
     @push('scripts')
+        <script src="/channel_assets/js/order_management.js"></script>
         <script type="text/javascript">
             $(".btn01.arrow").click(function () {
                 var thisId = $(this).attr("id");

@@ -14,7 +14,7 @@ class DeliveryAddress extends Model
 
     // 대량 할당: https://laravel.com/docs/10.x/eloquent#mass-assignment
     protected $fillable = [
-        'user_id', 'name', 'address', 'city', 'state', 'country', 'pincode', 'status', 'mobile'
+        'user_id', 'name', 'address', 'city', 'state', 'country', 'pincode', 'status', 'mobile', 'is_default'
     ];
 
 

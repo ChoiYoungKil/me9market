@@ -38,6 +38,26 @@ class Product extends Model
     }
 
 
+    protected $fillable = [
+        'section_id', 'category_id', 'brand_id', 'vendor_id', 'admin_id', 'admin_type',
+        'product_name', 'product_code', 'product_color', 'product_price', 'product_discount',
+        'product_weight', 'product_image', 'product_video', 'group_code', 'description',
+        'meta_title', 'meta_keywords', 'meta_description', 'is_featured', 'status',
+        'parent_id', 'is_public', 'is_partial', 'partial_approved'
+    ];
+
+    // Parent Product Relationship
+    public function parentProduct()
+    {
+        return $this->belongsTo(Product::class, 'parent_id');
+    }
+
+    // Children Products Relationship (Partial Products)
+    public function partialProducts()
+    {
+        return $this->hasMany(Product::class, 'parent_id');
+    }
+
     // 상품과 입점업체의 관계 (모든 상품은 하나의 입점업체에 속함)
     public function vendor() {    
         return $this->belongsTo('App\Models\Vendor', 'vendor_id')->with('vendorbusinessdetails'); 

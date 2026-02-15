@@ -1,276 +1,129 @@
 @extends('layouts.frontend')
 
-@section('page_type', 'sub')
-
 @section('content')
-<div id="container">
-    <div id="contents">
-        <div id="join" class="shopping_basket">
-            <div class="top_v">
-                <div class="title">주문 관리</div>
-                <div class="tab_bx">
-                    <ul>
-                        <li class="on"><a href="#">자사상품</a></li>
-                        <li><a href="#">공개상품</a></li>
+    <!-- Include Channel CSS for styling -->
+    <link href="/channel_assets/css/sub.css" rel="stylesheet" type="text/css" />
+    <link href="/channel_assets/css/board.css" rel="stylesheet" type="text/css" />
+
+    <div id="contents" style="padding: 120px 0; min-height: 600px;">
+        <div class="row">
+            <div class="box box1" style="max-width: 1200px; margin: 0 auto; background: #fff; padding: 30px;">
+                <div class="page_info">
+                    <div class="ttl" style="font-size: 28px; font-weight: bold; margin-bottom: 20px;">장바구니</div>
+                    <ul class="dep" style="display: flex; gap: 10px; color: #888; margin-bottom: 30px;">
+                        <li>HOME</li>
+                        <li>></li>
+                        <li>Shop</li>
+                        <li>></li>
+                        <li>장바구니</li>
                     </ul>
                 </div>
-            </div>
-            <div class="box box1">
-                <div class="inner_bx">
-                    <form>
-                        <div id="board">
-                            <div class="write02">
-                                <div class="f_bx fbx2">
-                                    <div class="order_info">
-                                        <div class="con_w con1">
-                                            <div class="ttl">
-                                                <ul class="chk02 dipI">
-                                                    <li>
-                                                        <input type="checkbox" id="chk1_all">
-                                                        <label for="chk1_all"></label>
-                                                    </li>
-                                                </ul>
-                                                <label for="chk1_all">전체선택</label>
-                                                <span>|</span>
-                                                <button>선택삭제</button>
+
+                <div class="conbx">
+                    <div class="con_w">
+                        <div class="tb01">
+                            <table style="width: 100%;">
+                                <colgroup>
+                                    <col width="50px">
+                                    <col width="100px">
+                                    <col width="">
+                                    <col width="150px">
+                                    <col width="100px">
+                                    <col width="150px">
+                                    <col width="100px">
+                                </colgroup>
+                                <thead>
+                                    <tr>
+                                        <th><input type="checkbox"></th>
+                                        <th>이미지</th>
+                                        <th>상품정보</th>
+                                        <th>수량</th>
+                                        <th>적립금</th>
+                                        <th>가격</th>
+                                        <th>삭제</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Example Data -->
+                                    <tr>
+                                        <td><input type="checkbox" checked></td>
+                                        <td class="t_c">
+                                            <div class="img_bx"
+                                                style="width: 80px; height: 80px; background: #f0f0f0; margin: 0 auto;">
                                             </div>
-                                        </div>
-                                        <div class="con_w con2">
-                                            <div class="ttl">
-                                                <ul class="chk02 dipI">
-                                                    <li>
-                                                        <input type="checkbox" id="chk1_1">
-                                                        <label for="chk1_1"></label>
-                                                    </li>
-                                                </ul>
-                                                <label for="chk1_1">판매자 <span>( txx2212 )</span></label>
+                                        </td>
+                                        <td class="t_l" style="padding-left: 20px;">
+                                            <strong style="font-size: 16px;">[예시] 편안한 코튼 티셔츠</strong>
+                                            <p style="color: #888; font-size: 13px; margin-top: 5px;">옵션: 화이트 / L</p>
+                                        </td>
+                                        <td>
+                                            <div class="qty_bx"
+                                                style="display: flex; justify-content: center; align-items: center; gap: 5px;">
+                                                <button
+                                                    style="width: 25px; height: 25px; border: 1px solid #ddd; background: #fff;">-</button>
+                                                <input type="text" value="1"
+                                                    style="width: 40px; text-align: center; border: 1px solid #ddd; height: 25px;">
+                                                <button
+                                                    style="width: 25px; height: 25px; border: 1px solid #ddd; background: #fff;">+</button>
                                             </div>
-                                            <ul class="pd_list">
-                                                <li>
-                                                    <div class="product01">
-                                                        <div class="img_bx"
-                                                            style="background-image:url(/me9market/images/sub/thum01.jpg)">
-                                                        </div>
-                                                        <div class="txt_bx">
-                                                            <div class="txt_w">
-                                                                <strong class="txt2">상품명 111111</strong>
-                                                                <div class="txt3">
-                                                                    <p>옵션옵션옵션옵션옵션옵션옵션옵션 1 / 2개</p>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="r_bx">
-                                                        <div class="txt_w">
-                                                            <div class="option">
-                                                                <a class="pop_btn" data-pop="pop1">옵션/수량변경</a>
-                                                            </div>
-                                                            <div class="txt">
-                                                                <strong>2,000</strong> 원
-                                                            </div>
-                                                            <div class="btn">
-                                                                <a class="col2">바로가기</a>
-                                                                <a>삭제</a>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </li>
-                                                <li>
-                                                    <div class="product01">
-                                                        <div class="img_bx"
-                                                            style="background-image:url(/me9market/images/sub/thum01.jpg)">
-                                                        </div>
-                                                        <div class="txt_bx">
-                                                            <div class="txt_w">
-                                                                <div class="txt1">상품명상품명</div>
-                                                                <strong
-                                                                    class="txt2">상품명상품명상품명상품명상품명상품명상품명상품명상품명상품명상품명상품명
-                                                                    111111</strong>
-                                                                <div class="txt3">
-                                                                    <p>옵션옵션옵션옵션옵션옵션옵션옵션 1 / 2개</p>
-                                                                    <p>옵션옵션옵션옵션옵션옵션옵션옵션 1 / 2개</p>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="r_bx">
-                                                        <div class="txt_w">
-                                                            <div class="option">
-                                                                <a class="pop_btn" data-pop="pop1">옵션/수량변경</a>
-                                                            </div>
-                                                            <div class="txt">
-                                                                <strong>2,000</strong> 원
-                                                            </div>
-                                                            <div class="btn">
-                                                                <a class="col2">바로가기</a>
-                                                                <a>삭제</a>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </li>
-                                            </ul>
-                                            <div class="all">
-                                                <div class="txt1">
-                                                    총 상품금액 <strong>2,000</strong> 원 + 배송비 <strong>2,500</strong> 원 =
-                                                    <span class="fs2"><strong>0,000,000</strong> 원</span>
-                                                </div>
-                                                <div class="txt2">30,000 원 이상 무료배송 ( 개별 상품 기준 )</div>
+                                        </td>
+                                        <td>150 p</td>
+                                        <td style="font-weight: bold; color: #333;">15,000 원</td>
+                                        <td><button class="btn02" style="padding: 5px 10px; font-size: 12px;">삭제</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><input type="checkbox" checked></td>
+                                        <td class="t_c">
+                                            <div class="img_bx"
+                                                style="width: 80px; height: 80px; background: #f0f0f0; margin: 0 auto;">
                                             </div>
-                                        </div>
-                                        <div class="con_w con3">
-                                            <div class="ttl">
-                                                <ul class="chk02 dipI">
-                                                    <li>
-                                                        <input type="checkbox" id="chk1_2">
-                                                        <label for="chk1_2"></label>
-                                                    </li>
-                                                </ul>
-                                                <label for="chk1_2">판매자2222 <span>( kkttxx02 )</span></label>
+                                        </td>
+                                        <td class="t_l" style="padding-left: 20px;">
+                                            <strong style="font-size: 16px;">[예시] 슬림핏 청바지</strong>
+                                            <p style="color: #888; font-size: 13px; margin-top: 5px;">옵션: 진청 / 30</p>
+                                        </td>
+                                        <td>
+                                            <div class="qty_bx"
+                                                style="display: flex; justify-content: center; align-items: center; gap: 5px;">
+                                                <button
+                                                    style="width: 25px; height: 25px; border: 1px solid #ddd; background: #fff;">-</button>
+                                                <input type="text" value="1"
+                                                    style="width: 40px; text-align: center; border: 1px solid #ddd; height: 25px;">
+                                                <button
+                                                    style="width: 25px; height: 25px; border: 1px solid #ddd; background: #fff;">+</button>
                                             </div>
-                                            <ul class="pd_list">
-                                                <li>
-                                                    <div class="product01">
-                                                        <div class="img_bx"
-                                                            style="background-image:url(/me9market/images/sub/thum01.jpg)">
-                                                        </div>
-                                                        <div class="txt_bx">
-                                                            <div class="txt_w">
-                                                                <strong class="txt2">상품명 111111</strong>
-                                                                <div class="txt3">
-                                                                    <p>옵션옵션옵션옵션옵션옵션옵션옵션 1 / 2개</p>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="r_bx">
-                                                        <div class="txt_w">
-                                                            <div class="option">
-                                                                <a class="pop_btn" data-pop="pop1">옵션/수량변경</a>
-                                                            </div>
-                                                            <div class="txt">
-                                                                <strong>0,000,000</strong> 원
-                                                            </div>
-                                                            <div class="btn">
-                                                                <a class="col2">바로가기</a>
-                                                                <a>삭제</a>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </li>
-                                            </ul>
-                                            <div class="all">
-                                                <div class="txt1">
-                                                    총 상품금액 <strong>0,000,000</strong> 원 + 배송비 <strong>0</strong> 원 =
-                                                    <span class="fs2"><strong>0,000,000</strong> 원</span>
-                                                </div>
-                                                <div class="txt2">30,000 원 이상 무료배송 ( 개별 상품 기준 )</div>
-                                            </div>
-                                        </div>
-                                        <div class="con_w con4">
-                                            <div class="ttl col2">최종 결제금액 <span>( 총 4 개 )</span></div>
-                                            <div class="price_bx02">
-                                                <div class="l_bx">
-                                                    <div class="txt_bx">
-                                                        <div class="txt1">총 상품금액</div>
-                                                        <div class="txt2"><strong>0,000,000</strong> 원</div>
-                                                    </div>
-                                                    <div class="txt_bx">
-                                                        <div class="txt1">배송비</div>
-                                                        <div class="txt2"><strong>2,500</strong> 원</div>
-                                                    </div>
-                                                </div>
-                                                <div class="r_bx">
-                                                    <div class="txt_bx">
-                                                        <div class="txt_w">
-                                                            <div class="txt1">최종 결제금액</div>
-                                                            <div class="txt2"><strong>0,000,000</strong> 원</div>
-                                                        </div>
-                                                    </div>
-                                                    <a href="{{ route('front.shop.order.form') }}" class="btn">구매하기</a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                        </td>
+                                        <td>390 p</td>
+                                        <td style="font-weight: bold; color: #333;">39,000 원</td>
+                                        <td><button class="btn02" style="padding: 5px 10px; font-size: 12px;">삭제</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div
+                            style="margin-top: 30px; display: flex; justify-content: flex-end; gap: 20px; align-items: center; border-top: 2px solid #333; padding-top: 20px;">
+                            <div style="text-align: right;">
+                                <p style="font-size: 16px; margin-bottom: 10px;">총 상품금액: <span
+                                        style="font-weight: bold; font-size: 20px;">54,000</span> 원</p>
+                                <p style="font-size: 16px; margin-bottom: 10px;">배송비: <span
+                                        style="font-weight: bold;">2,500</span> 원</p>
+                                <p style="font-size: 20px; font-weight: bold; color: #e91e63;">결제 예상 금액: 56,500 원</p>
                             </div>
                         </div>
 
-                        <!-- 팝업 -->
-                        <div class="popup_bx" data-id="pop1">
-                            <div class="pop_w">
-                                <div class="pop_inner">
-                                    <div class="pop_con w640">
-                                        <div class="close_btn close1">닫기</div>
-                                        <div class="ttl">옵션/수량변경</div>
-
-                                        <div class="conbx">
-                                            <select>
-                                                <option>옵션선택</option>
-                                            </select>
-                                            <ul class="option_list">
-                                                <li>
-                                                    <div class="txt">옵션옵션옵션옵션옵션옵션옵션옵션</div>
-                                                    <div class="counter01">
-                                                        <div class="m">-</div>
-                                                        <div class="num">1</div>
-                                                        <div class="p">+</div>
-                                                    </div>
-                                                    <div class="price"><strong>0,000,000</strong> 원</div>
-                                                    <div class="del">삭제</div>
-                                                </li>
-                                                <li>
-                                                    <div class="txt">옵션옵션옵션옵션옵션옵션옵션옵션</div>
-                                                    <div class="counter01">
-                                                        <div class="m">-</div>
-                                                        <div class="num">1</div>
-                                                        <div class="p">+</div>
-                                                    </div>
-                                                    <div class="price"><strong>0,000,000</strong> 원</div>
-                                                    <div class="del">삭제</div>
-                                                </li>
-                                                <li>
-                                                    <div class="txt">옵션옵션옵션옵션옵션옵션옵션옵션</div>
-                                                    <div class="counter01">
-                                                        <div class="m">-</div>
-                                                        <div class="num">1</div>
-                                                        <div class="p">+</div>
-                                                    </div>
-                                                    <div class="price"><strong>0,000,000</strong> 원</div>
-                                                    <div class="del">삭제</div>
-                                                </li>
-                                            </ul>
-                                        </div>
-
-                                        <!-- 하단버튼 -->
-                                        <div class="btm_btn">
-                                            <a href="#" class="col2">옵션변경</a>
-                                            <a href="#" class="close_btn">닫기</a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="btm_btn" style="text-align: center; margin-top: 40px;">
+                            <a href="/" class="btn02"
+                                style="width: 200px; height: 50px; line-height: 50px; display: inline-block; background: #fff; border: 1px solid #ccc; color: #333; font-size: 16px; margin-right: 10px;">쇼핑
+                                계속하기</a>
+                            <a href="{{ route('front.shop.order.form') }}" class="btn01"
+                                style="width: 200px; height: 50px; line-height: 50px; display: inline-block; background: #333; color: #fff; font-size: 16px;">주문하기</a>
                         </div>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>
-    </div><!-- //contents -->
-</div><!-- //container -->
-
-@push('scripts')
-    <script type="text/javascript">
-        /* 팝업 */
-        $(".pop_btn").click(function () {
-            var popId = $(this).attr("data-pop");
-            $(".popup_bx[data-id='" + popId + "']").stop().fadeIn(300);
-            $(".popup_bx[data-id='" + popId + "']").scrollTop(0);
-
-            return false;
-        });
-        $(".popup_bx .close_btn").click(function () {
-            $(this).parents(".popup_bx").stop().fadeOut(300);
-
-            return false;
-        });
-    </script>
-@endpush
+    </div>
+@endsection

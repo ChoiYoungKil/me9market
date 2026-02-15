@@ -31,6 +31,7 @@ class User extends Authenticatable
         'state',
         'country',
         'pincode',
+        'type',
     ];
 
     /**
