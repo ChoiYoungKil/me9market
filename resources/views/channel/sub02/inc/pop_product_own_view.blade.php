@@ -82,57 +82,65 @@
                                     <select>
                                         <option>-선택-</option>
                                     </select>
-                                    <div class="option_w">
+                                    <div class="option_w"
+                                        style="max-height: 150px; overflow-y: auto; margin-top: 10px; border-top: 1px solid #ddd;">
                                         <ul>
-                                            <li>
-                                                <div class="txt1">085</div>
-                                                <div class="count">
-                                                    <div class="plus">+</div>
-                                                    <input type="text" readonly value="1">
-                                                    <div class="minus">-</div>
+                                            <li
+                                                style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee;">
+                                                <div class="txt1" style="flex: 1; font-weight: bold;">085</div>
+                                                <div class="count"
+                                                    style="display: flex; align-items: center; border: 1px solid #ddd; margin: 0 10px;">
+                                                    <button type="button" class="minus"
+                                                        style="width: 25px; height: 25px; background: #fff; border: none; border-right: 1px solid #ddd; cursor: pointer;">-</button>
+                                                    <input type="text" readonly value="1"
+                                                        style="width: 30px; height: 25px; border: none; text-align: center; padding: 0;">
+                                                    <button type="button" class="plus"
+                                                        style="width: 25px; height: 25px; background: #fff; border: none; border-left: 1px solid #ddd; cursor: pointer;">+</button>
                                                 </div>
-                                                <div class="txt2"><strong>100</strong>원</div>
-                                                <div class="del">삭제</div>
+                                                <div class="txt2"
+                                                    style="width: 80px; text-align: right; font-weight: bold; margin-right: 10px;">
+                                                    100원</div>
+                                                <div class="del"
+                                                    style="cursor:pointer; width: 18px; height: 18px; line-height: 16px; text-align: center; background: #ccc; color: #fff; border-radius: 50%; font-size: 12px; font-weight: bold;">
+                                                    x</div>
                                             </li>
-                                            <li>
-                                                <div class="txt1">090</div>
-                                                <div class="count">
-                                                    <div class="plus">+</div>
-                                                    <input type="text" readonly value="1">
-                                                    <div class="minus">-</div>
+                                            <li
+                                                style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee;">
+                                                <div class="txt1" style="flex: 1; font-weight: bold;">090</div>
+                                                <div class="count"
+                                                    style="display: flex; align-items: center; border: 1px solid #ddd; margin: 0 10px;">
+                                                    <button type="button" class="minus"
+                                                        style="width: 25px; height: 25px; background: #fff; border: none; border-right: 1px solid #ddd; cursor: pointer;">-</button>
+                                                    <input type="text" readonly value="1"
+                                                        style="width: 30px; height: 25px; border: none; text-align: center; padding: 0;">
+                                                    <button type="button" class="plus"
+                                                        style="width: 25px; height: 25px; background: #fff; border: none; border-left: 1px solid #ddd; cursor: pointer;">+</button>
                                                 </div>
-                                                <div class="txt2"><strong>100</strong>원</div>
-                                                <div class="del">삭제</div>
+                                                <div class="txt2"
+                                                    style="width: 80px; text-align: right; font-weight: bold; margin-right: 10px;">
+                                                    100원</div>
+                                                <div class="del"
+                                                    style="cursor:pointer; width: 18px; height: 18px; line-height: 16px; text-align: center; background: #ccc; color: #fff; border-radius: 50%; font-size: 12px; font-weight: bold;">
+                                                    x</div>
                                             </li>
-                                            <li>
-                                                <div class="txt1">100</div>
-                                                <div class="count">
-                                                    <div class="plus">+</div>
-                                                    <input type="text" readonly value="1">
-                                                    <div class="minus">-</div>
+                                            <li
+                                                style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee;">
+                                                <div class="txt1" style="flex: 1; font-weight: bold;">100</div>
+                                                <div class="count"
+                                                    style="display: flex; align-items: center; border: 1px solid #ddd; margin: 0 10px;">
+                                                    <button type="button" class="minus"
+                                                        style="width: 25px; height: 25px; background: #fff; border: none; border-right: 1px solid #ddd; cursor: pointer;">-</button>
+                                                    <input type="text" readonly value="1"
+                                                        style="width: 30px; height: 25px; border: none; text-align: center; padding: 0;">
+                                                    <button type="button" class="plus"
+                                                        style="width: 25px; height: 25px; background: #fff; border: none; border-left: 1px solid #ddd; cursor: pointer;">+</button>
                                                 </div>
-                                                <div class="txt2"><strong>100</strong>원</div>
-                                                <div class="del">삭제</div>
-                                            </li>
-                                            <li>
-                                                <div class="txt1">110</div>
-                                                <div class="count">
-                                                    <div class="plus">+</div>
-                                                    <input type="text" readonly value="1">
-                                                    <div class="minus">-</div>
-                                                </div>
-                                                <div class="txt2"><strong>100</strong>원</div>
-                                                <div class="del">삭제</div>
-                                            </li>
-                                            <li>
-                                                <div class="txt1">120</div>
-                                                <div class="count">
-                                                    <div class="plus">+</div>
-                                                    <input type="text" readonly value="1">
-                                                    <div class="minus">-</div>
-                                                </div>
-                                                <div class="txt2"><strong>100</strong>원</div>
-                                                <div class="del">삭제</div>
+                                                <div class="txt2"
+                                                    style="width: 80px; text-align: right; font-weight: bold; margin-right: 10px;">
+                                                    100원</div>
+                                                <div class="del"
+                                                    style="cursor:pointer; width: 18px; height: 18px; line-height: 16px; text-align: center; background: #ccc; color: #fff; border-radius: 50%; font-size: 12px; font-weight: bold;">
+                                                    x</div>
                                             </li>
                                         </ul>
                                     </div>
@@ -224,8 +232,9 @@
                 </div>
 
                 <!-- 하단버튼 -->
-                <div class="btm_btn mt10">
-                    <a href="#" class="col5 close_btn">닫기</a>
+                <div class="btm_btn mt20" style="text-align: center;">
+                    <a href="#" class="close_btn"
+                        style="display: inline-block; width: 120px; height: 40px; line-height: 40px; background: #000; color: #fff; text-align: center; font-size: 14px; font-weight: bold;">창닫기</a>
                 </div>
             </div>
         </div>

@@ -30,10 +30,12 @@
                     <div class="conbx">
                         <div class="con_w">
                             <div class="list_top1 btn">
-                                <div class="count">총 <strong>00</strong> 건</div>
+                                <div class="count">총 <strong>{{ $products->total() }}</strong> 건</div>
                                 <div class="btn_bx">
-                                    <a href="#" class="btn01 col2">판매상품</a>
-                                    <a href="{{ route('channel.shop_product02') }}" class="btn01 col4">판매중지상품</a>
+                                    <a href="{{ route('channel.shop_product01', ['shop_id' => $shopId]) }}"
+                                        class="btn01 col2">판매상품</a>
+                                    <a href="{{ route('channel.shop_product02', ['shop_id' => $shopId]) }}"
+                                        class="btn01 col4">판매중지상품</a>
                                     <a href="#" class="btn01 col5 pop_btn" data-pop="pop1_1">판매상품 추가</a>
                                 </div>
                             </div>
@@ -67,78 +69,84 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr>
-                                            <td>00</td>
-                                            <td>지사</td>
-                                            <td class="t_l">
-                                                <div class="thum01">
-                                                    <div class="img_bx"
-                                                        style="background-image:url(../images/sub/thum01.jpg)"></div>
-                                                    <div class="txt_bx">
-                                                        <p>대분류 &gt; 중분류 &gt; 소분류</p>
-                                                        <strong>상품명 111111</strong>
+                                        @forelse($products as $index => $shopProduct)
+                                            @php
+                                                $product = $shopProduct->product;
+                                                $productTypeLabel = match ($shopProduct->product_type) {
+                                                    'own' => '지사',
+                                                    'public' => '공개',
+                                                    'partial' => '부분공개',
+                                                    default => '-'
+                                                };
+                                                $constraintLabel = match ($shopProduct->constraint_type) {
+                                                    'none' => '없음',
+                                                    'range' => '범위형',
+                                                    'fixed' => '고정형',
+                                                    default => '-'
+                                                };
+                                                $mainImage = $product->images->first();
+                                                $imageUrl = $mainImage ? asset('front/images/product_images/small/' . $mainImage->image) : asset('channel_assets/images/sub/thum01.jpg');
+
+                                                // 카테고리 경로 생성
+                                                $categoryPath = '';
+                                                if ($product->category) {
+                                                    $categoryPath = $product->category->category_name;
+                                                }
+
+                                                // 재고 표시
+                                                $stockDisplay = '수량제한없음';
+                                                if ($shopProduct->stock) {
+                                                    $stockDisplay = number_format($shopProduct->stock) . '개';
+                                                    if ($shopProduct->purchase_limit) {
+                                                        $stockDisplay .= '<br>(1회 ' . number_format($shopProduct->purchase_limit) . '개 제한)';
+                                                    }
+                                                }
+                                            @endphp
+                                            <tr>
+                                                <td>{{ $products->total() - ($products->currentPage() - 1) * $products->perPage() - $index }}
+                                                </td>
+                                                <td>{{ $productTypeLabel }}</td>
+                                                <td class="t_l">
+                                                    <div class="thum01">
+                                                        <div class="img_bx" style="background-image:url({{ $imageUrl }})"></div>
+                                                        <div class="txt_bx">
+                                                            <p>{{ $categoryPath }}</p>
+                                                            <strong>{{ $product->product_name }}</strong>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </td>
-                                            <td>판매</td>
-                                            <td>없음</td>
-                                            <td>수량제한없음</td>
-                                            <td class="t_r">2,000원</td>
-                                            <td class="t_r">3,500원</td>
-                                            <td class="t_r">1,500원</td>
-                                            <td>
-                                                <a href="#" class="btn02 col5 pop_btn" data-pop="pop2">보기</a>
-                                                <a href="#" class="btn02 col4">판매중지</a>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>00</td>
-                                            <td>공개</td>
-                                            <td class="t_l">
-                                                <div class="thum01">
-                                                    <div class="img_bx"
-                                                        style="background-image:url(../images/sub/thum01.jpg)"></div>
-                                                    <div class="txt_bx">
-                                                        <p>대분류 &gt; 중분류 &gt; 소분류</p>
-                                                        <strong>상품명 222222</strong>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>판매</td>
-                                            <td>범위형</td>
-                                            <td>10,000개</td>
-                                            <td class="t_r">5,000원</td>
-                                            <td class="t_r">7,000원</td>
-                                            <td class="t_r">2,000원</td>
-                                            <td>
-                                                <a href="#" class="btn02 col5 pop_btn" data-pop="pop2">보기</a>
-                                                <a href="#" class="btn02 col4">판매중지</a>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td>00</td>
-                                            <td>부분공개</td>
-                                            <td class="t_l">
-                                                <div class="thum01">
-                                                    <div class="img_bx"
-                                                        style="background-image:url(../images/sub/thum01.jpg)"></div>
-                                                    <div class="txt_bx">
-                                                        <p>대분류 &gt; 중분류 &gt; 소분류</p>
-                                                        <strong>상품명 333333</strong>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>판매</td>
-                                            <td>고정형</td>
-                                            <td>500,000개<br>(1회 100개 제한)</td>
-                                            <td class="t_r">4,000원</td>
-                                            <td class="t_r">4,300원</td>
-                                            <td class="t_r">300원</td>
-                                            <td>
-                                                <a href="#" class="btn02 col5 pop_btn" data-pop="pop2">보기</a>
-                                                <a href="#" class="btn02 col4">판매중지</a>
-                                            </td>
-                                        </tr>
+                                                </td>
+                                                <td>판매</td>
+                                                <td>{{ $constraintLabel }}</td>
+                                                <td>{!! $stockDisplay !!}</td>
+                                                <td class="t_r">{{ number_format($shopProduct->product_price) }}원</td>
+                                                <td class="t_r">{{ number_format($shopProduct->selling_price) }}원</td>
+                                                <td class="t_r">{{ number_format($shopProduct->profit) }}원</td>
+                                                <td>
+                                                    <a href="#" class="btn02 col5" onclick='openProductViewModal({
+                                                        "id": {{ $shopProduct->id }},
+                                                        "type_label": "{{ $productTypeLabel }}",
+                                                        "code": "{{ $product->product_code }}",
+                                                        "name": "{{ addslashes($product->product_name) }}",
+                                                        "category": "{{ addslashes($categoryPath) }}",
+                                                        "img": "{{ $imageUrl }}",
+                                                        "price_constraint": "{{ $constraintLabel }}",
+                                                        "profit_constraint": "{{ number_format($shopProduct->profit) }}원",
+                                                        "stock_text": "{!! strip_tags($stockDisplay) !!}",
+                                                        "purchase_limit": "{{ $shopProduct->purchase_limit ? number_format($shopProduct->purchase_limit).'개' : '제한없음' }}",
+                                                        "sales_period": "무기한",
+                                                        "selling_price": "{{ number_format($shopProduct->selling_price) }}"
+                                                    }); return false;'>보기</a>
+                                                    <a href="{{ route('channel.product.edit', $shopProduct->id) }}" class="btn02 col2">관리</a>
+                                                    <a href="#" class="btn02 col4" onclick='updateProductStatus("{{ route("channel.product.status.update") }}", {{ $shopProduct->id }}, 0, "판매중지"); return false;'>판매중지</a>
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="10" class="t_c" style="padding: 50px 0;">
+                                                    등록된 판매 상품이 없습니다.
+                                                </td>
+                                            </tr>
+                                        @endforelse
                                     </tbody>
                                 </table>
                             </div>
@@ -146,15 +154,7 @@
                             <!--<div class="no_data">등록된 데이터가 없습니다.</div>-->
 
                             <div class="page_bx1">
-                                <a href="#" class="page_first">first</a>
-                                <a href="#" class="page_prev">prev</a>
-                                <a href="#" class="num on">1</a>
-                                <a href="#" class="num">2</a>
-                                <a href="#" class="num">3</a>
-                                <a href="#" class="num">4</a>
-                                <a href="#" class="num">5</a>
-                                <a href="#" class="page_next">next</a>
-                                <a href="#" class="page_last">last</a>
+                                {{ $products->links() }}
                             </div>
 
                             <!-- 판매상품 추가 팝업 -->
@@ -188,7 +188,7 @@
                                                             <tbody class="textL">
                                                                 <tr>
                                                                     <th>판매 상품 코드</th>
-                                                                    <td>Me9-Shop-0032022</td>
+                                                                    <td id="view_product_code">Me9-Shop-0032022</td>
                                                                 </tr>
                                                             </tbody>
                                                         </table>
@@ -198,12 +198,12 @@
                                                         <ul>
                                                             <li>
                                                                 <a href="#">
-                                                                    <div class="img_bx"
+                                                                    <div class="img_bx" id="view_product_img"
                                                                         style="background-image:url(../images/sub/thum01.jpg)">
                                                                     </div>
                                                                     <div class="txt_bx">
-                                                                        <p>대분류 &gt; 중분류 &gt; 소분류</p>
-                                                                        <strong>상품명 111111</strong>
+                                                                        <p id="view_product_category">대분류 &gt; 중분류 &gt; 소분류</p>
+                                                                        <strong id="view_product_name">상품명 111111</strong>
                                                                     </div>
                                                                 </a>
                                                             </li>
@@ -224,23 +224,23 @@
                                                             <tbody class="textL">
                                                                 <tr>
                                                                     <th>가격제약조건</th>
-                                                                    <td>1,500 원 ~ 5,000 원</td>
+                                                                    <td id="view_price_constraint">1,500 원 ~ 5,000 원</td>
                                                                 </tr>
                                                                 <tr>
                                                                     <th>이익분배조건</th>
-                                                                    <td>판매 개당 500 원</td>
+                                                                    <td id="view_profit_constraint">판매 개당 500 원</td>
                                                                 </tr>
                                                                 <tr>
                                                                     <th>재고</th>
-                                                                    <td>20,000 개</td>
+                                                                    <td id="view_stock">20,000 개</td>
                                                                 </tr>
                                                                 <tr>
                                                                     <th>구매제한수량</th>
-                                                                    <td>1회 구매시 100개 까지</td>
+                                                                    <td id="view_purchase_limit">1회 구매시 100개 까지</td>
                                                                 </tr>
                                                                 <tr>
                                                                     <th>상품 판매 기간</th>
-                                                                    <td>무기한</td>
+                                                                    <td id="view_sales_period">무기한</td>
                                                                 </tr>
                                                             </tbody>
                                                         </table>
@@ -259,7 +259,7 @@
                                                             <tbody class="textL">
                                                                 <tr>
                                                                     <th>판매 설정 금액</th>
-                                                                    <td>3,500원</td>
+                                                                    <td id="view_selling_price">3,500원</td>
                                                                 </tr>
                                                             </tbody>
                                                         </table>

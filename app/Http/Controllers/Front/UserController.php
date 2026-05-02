@@ -37,8 +37,8 @@ class UserController extends Controller
                 return redirect()->back()->withErrors($validator)->withInput();
             }
 
-            // login_id가 이메일인지 사용자명인지 확인
-            $field = filter_var($data['login_id'], FILTER_VALIDATE_EMAIL) ? 'email' : 'username';
+            // 오직 아이디(username)로만 로그인 허용
+            $field = 'username';
 
             if (Auth::attempt([$field => $data['login_id'], 'password' => $data['password']])) {
                 if (Auth::user()->status == 0) {
@@ -158,11 +158,14 @@ class UserController extends Controller
             $user->status = 1; 
             $user->save();
 
-            // Axios를 위한 JSON 응답 반환
+            // 즉시 자동 로그인 처리
+            Auth::login($user);
+
+            // Axios를 위한 JSON 응답 반환 (로그인 화면이 아닌 1단계 기본정보 입력창으로 이동)
             return response()->json([
                 'status' => 'success',
-                'message' => '회원가입이 완료되었습니다. 로그인 해주세요.',
-                'redirect_url' => route('front.member.login')
+                'message' => '회원가입 약관 동의가 완료되었습니다. 기본 정보 입력 단계로 이동합니다.',
+                'redirect_url' => route('front.member.register.step1')
             ]);
     }
     }
@@ -1377,14 +1380,79 @@ class UserController extends Controller
 
 
 
-    public function findId()
+    /**
+     * 아이디 찾기 - GET: 폼 표시, POST: 회원번호+이메일로 아이디 검색
+     */
+    public function findId(Request $request)
     {
-        return view('front.member.find_id');
+        $result = null;
+
+        if ($request->isMethod('post')) {
+            $memberNumber = $request->input('member_number');
+            $email = $request->input('email');
+
+            // 회원번호와 이메일로 사용자 검색
+            $user = User::where('member_number', $memberNumber)
+                        ->where('email', $email)
+                        ->first();
+
+            if ($user) {
+                $result = [
+                    'type' => 'success',
+                    'username' => $user->username
+                ];
+            } else {
+                $result = [
+                    'type' => 'fail',
+                    'message' => '일치하는 정보가 없습니다.'
+                ];
+            }
+        }
+
+        return view('front.member.find_id', compact('result'));
     }
 
-    public function findPw()
+    /**
+     * 비밀번호 찾기 - GET: 폼 표시, POST: 아이디+이메일로 임시비밀번호 발급
+     */
+    public function findPw(Request $request)
     {
-        return view('front.member.find_pw');
+        $result = null;
+
+        if ($request->isMethod('post')) {
+            $username = $request->input('username');
+            $email = $request->input('email');
+
+            // 아이디와 이메일로 사용자 검색
+            $user = User::where('username', $username)
+                        ->where('email', $email)
+                        ->first();
+
+            if ($user) {
+                // 임시비밀번호 생성 (8자리 랜덤)
+                $tempPassword = \Str::random(8) . '!';
+
+                // 비밀번호 업데이트
+                $user->password = bcrypt($tempPassword);
+                $user->save();
+
+                $result = [
+                    'type' => 'success',
+                    'temp_password' => $tempPassword,
+                    'message' => '임시비밀번호가 발급되었습니다. 로그인 후 비밀번호를 변경해 주세요.'
+                ];
+
+                // TODO: 이메일 발송 기능 (SMTP 설정 후 활성화)
+                // Mail::to($user->email)->send(new TempPasswordMail($tempPassword));
+            } else {
+                $result = [
+                    'type' => 'fail',
+                    'message' => '일치하는 정보가 없습니다.'
+                ];
+            }
+        }
+
+        return view('front.member.find_pw', compact('result'));
     }
 
 
@@ -1559,6 +1627,61 @@ class UserController extends Controller
         ];
 
         return view('front.mypage.sub01.wishlist', compact('user', 'wishlistItems'));
+    }
+
+    /**
+     * 쿠폰 목록 (PPT Slide 48) - 사용자가 보유한 쿠폰 조회
+     */
+    public function couponList(Request $request)
+    {
+        $user = Auth::user();
+
+        // 기간 검색 필터
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+
+        // DB에서 활성 쿠폰 조회 (사용자에게 해당하는 쿠폰)
+        $query = \App\Models\Coupon::where('status', 1)
+                    ->where('expiry_date', '>=', now()->format('Y-m-d'));
+
+        // 기간 필터 적용
+        if ($startDate && $endDate) {
+            $query->whereBetween('created_at', [$startDate, $endDate . ' 23:59:59']);
+        }
+
+        $coupons = $query->orderBy('expiry_date', 'asc')->get();
+
+        // DB에 쿠폰이 없을 경우 Mock 데이터 표시
+        if ($coupons->isEmpty()) {
+            $coupons = collect([
+                (object)[
+                    'id' => 1,
+                    'coupon_code' => 'WELCOME2026',
+                    'coupon_option' => 'Manual',
+                    'coupon_type' => 'Single',
+                    'amount_type' => 'Percentage',
+                    'amount' => 10,
+                    'expiry_date' => '2026-12-31',
+                    'created_at' => now(),
+                    'status' => 1,
+                ],
+                (object)[
+                    'id' => 2,
+                    'coupon_code' => 'SUMMER5000',
+                    'coupon_option' => 'Manual',
+                    'coupon_type' => 'Multiple',
+                    'amount_type' => 'Fixed',
+                    'amount' => 5000,
+                    'expiry_date' => '2026-08-31',
+                    'created_at' => now(),
+                    'status' => 1,
+                ],
+            ]);
+        }
+
+        $totalCount = $coupons->count();
+
+        return view('front.mypage.sub01.coupon_list', compact('user', 'coupons', 'totalCount', 'startDate', 'endDate'));
     }
 
     public function orderList(Request $request)

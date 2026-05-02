@@ -15,8 +15,8 @@
                 <form action="{{ route('front.member.login.submit') }}" method="POST">
                     @csrf
                     <div class="f_bx">
-                        <input class="mt0" type="text" name="login_id" placeholder="아이디 또는 이메일을 입력 해 주세요" required>
-                        <input type="password" name="password" placeholder="비밀번호를 입력 해 주세요" required>
+                        <input class="mt0" type="text" name="login_id" placeholder="아이디를 입력해 주세요" required>
+                        <input type="password" name="password" placeholder="비밀번호를 입력해 주세요" required>
                         <ul class="chk01">
                             <li>
                                 <input type="checkbox" id="idSave" name="remember">

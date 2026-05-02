@@ -127,7 +127,7 @@
                 <div class="conbx">
                     <div class="con_w">
                         <div class="list_top1">
-                            <div class="count">총 <strong>00</strong> 건</div>
+                            <div class="count">총 <strong>{{ $products->total() }}</strong> 건</div>
                         </div>
 
                         <div class="tb01 ovS">
@@ -155,43 +155,47 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td>00</td>
-                                        <td>a20112</td>
-                                        <td class="t_l">
-                                            <div class="thum01">
-                                                <div class="img_bx"
-                                                    style="background-image:url(/images/channel/sub/thum01.jpg)"></div>
-                                                <div class="txt_bx">
-                                                    <p>대분류 &gt; 중분류 &gt; 소분류</p>
-                                                    <strong>상품명 111111</strong>
+                                    @forelse($products as $index => $product)
+                                        @php
+                                            $mainImage = $product->images->first();
+                                            $imageUrl = $mainImage ? asset('front/images/product_images/small/' . $mainImage->image) : asset('channel_assets/images/sub/thum01.jpg');
+                                            $categoryPath = ($product->parentCategory ? $product->parentCategory->category_name . ' > ' : '') . ($product->category->category_name ?? '');
+                                        @endphp
+                                        <tr>
+                                            <td>{{ $products->total() - ($products->currentPage() - 1) * $products->perPage() - $index }}</td>
+                                            <td>{{ $product->product_code }}</td>
+                                            <td class="t_l">
+                                                <div class="thum01">
+                                                    <div class="img_bx" style="background-image:url({{ $imageUrl }})"></div>
+                                                    <div class="txt_bx">
+                                                        <p>{{ $categoryPath }}</p>
+                                                        <strong>{{ $product->product_name }}</strong>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </td>
-                                        <td>Test1234</td>
-                                        <td>수량제한없음</td>
-                                        <td class="t_r">2,000원 ~ 5,000원</td>
-                                        <td class="t_l">채널 명<br>채널 코드</td>
-                                        <td>
-                                            <a href="#" class="btn02 col2 pop_btn" data-pop="pop3_1">보기</a>
-                                        </td>
-                                    </tr>
+                                            </td>
+                                            <td>{{ $product->vendor->vendorbusinessdetails->shop_name ?? ($product->vendor->name ?? '-') }}</td>
+                                            <td>수량제한없음</td>
+                                            <td class="t_r">₩ {{ number_format($product->product_price) }}</td>
+                                            <td class="t_l">
+                                                -
+                                            </td>
+                                            <td>
+                                                <a href="#" class="btn02 col2 pop_btn" data-pop="pop3_1" data-id="{{ $product->id }}">보기</a>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="8" class="t_c" style="padding: 100px 0;">
+                                                등록된 부분공개 상품이 없습니다.
+                                            </td>
+                                        </tr>
+                                    @endforelse
                                 </tbody>
                             </table>
                         </div>
 
-                        <!--<div class="no_data">등록된 데이터가 없습니다.</div>-->
-
                         <div class="page_bx1">
-                            <a href="#" class="page_first">first</a>
-                            <a href="#" class="page_prev">prev</a>
-                            <a href="#" class="num on">1</a>
-                            <a href="#" class="num">2</a>
-                            <a href="#" class="num">3</a>
-                            <a href="#" class="num">4</a>
-                            <a href="#" class="num">5</a>
-                            <a href="#" class="page_next">next</a>
-                            <a href="#" class="page_last">last</a>
+                            {{ $products->links() }}
                         </div>
 
                         <!-- 보기 팝업 -->
@@ -211,6 +215,33 @@
         /* 팝업 */
         $(".pop_btn").click(function () {
             var popId = $(this).attr("data-pop");
+            var productId = $(this).attr("data-id");
+
+            if (popId === 'pop3_1' && productId) {
+                $.get("/channel/product/base/detail/" + productId, function(response) {
+                    if (response.status) {
+                        var p = response.product;
+                        var $pop = $(".popup_bx[data-id='pop3_1']");
+                        
+                        $pop.find(".txt_bx p").text(response.category_path);
+                        $pop.find(".txt_bx strong").text(p.product_name);
+                        $pop.find(".txt_bx ul li:eq(0)").text("상품코드 : " + p.product_code);
+                        $pop.find(".tab_w.tab1 table tr:nth-child(3) td").text(parseFloat(p.product_price).toLocaleString() + " 원");
+                        
+                        if (p.images && p.images.length > 0) {
+                            var mainImgUrl = "/front/images/product_images/small/" + p.images[0].image;
+                            $pop.find(".l_bx .img_bx img").attr("src", mainImgUrl);
+                        }
+
+                        $pop.stop().fadeIn(300);
+                        $pop.scrollTop(0);
+                    } else {
+                        alert(response.message || '데이터를 불러오지 못했습니다.');
+                    }
+                });
+                return false;
+            }
+
             $(".popup_bx[data-id='" + popId + "']").stop().fadeIn(300);
             $(".popup_bx[data-id='" + popId + "']").scrollTop(0);
 

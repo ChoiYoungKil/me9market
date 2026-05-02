@@ -49,11 +49,11 @@
 
 			<div class="t_menu">
 				<ul>
-					<li><a href="{{ route('channel.shop_list') }}">Shop채널관리</a></li>
-					<li><a href="{{ route('channel.product_own') }}">상품관리</a></li>
-					<li><a href="#">공동구매관리</a></li>
-					<li><a href="{{ route('channel.order.list') }}">주문관리</a></li>
-					<li><a href="{{ route('channel.settlement.list') }}">정산관리</a></li>
+					<li><a href="{{ route('channel.shop_list') }}" class="{{ request()->is('channel/shop*') ? 'on' : '' }}">Shop채널관리</a></li>
+					<li><a href="{{ route('channel.product_own') }}" class="{{ request()->is('channel/product*') ? 'on' : '' }}">상품관리</a></li>
+					<li><a href="#" class="{{ request()->is('channel/group*') ? 'on' : '' }}">공동구매관리</a></li>
+					<li><a href="{{ route('channel.order.list') }}" class="{{ request()->is('channel/order*') ? 'on' : '' }}">주문관리</a></li>
+					<li><a href="{{ route('channel.settlement.list') }}" class="{{ request()->is('channel/settlement*') ? 'on' : '' }}">정산관리</a></li>
 				</ul>
 			</div>
 

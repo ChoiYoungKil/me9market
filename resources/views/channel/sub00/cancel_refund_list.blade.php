@@ -18,7 +18,7 @@
                 <div class="conbx">
                     <div class="con_w">
                         <div class="list_top1 btn">
-                            <div class="count">총 <strong>00</strong> 건</div>
+                            <div class="count">총 <strong>{{ $policies->count() }}</strong> 건</div>
                             <div class="btn_bx">
                                 <a href="#" class="btn01 col5 pop_btn" data-pop="pop1_1">취소/환불안내 등록</a>
                             </div>
@@ -42,37 +42,51 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td>기본</td>
-                                        <td>사용</td>
-                                        <td class="t_l">기본 취소/환불안내 명칭</td>
-                                        <td>12</td>
-                                        <td>
-                                            <a href="#" class="btn02 col5 pop_btn" data-pop="pop2_1">보기</a>
-                                            <a href="#" class="btn02 col2">복사</a>
-                                            <a href="#" class="btn02 col7 mt5 pop_btn" data-pop="pop3_1">수정</a>
-                                            <a href="#" class="btn02 mt5">삭제</a>
-                                        </td>
-                                    </tr>
+                                    @forelse($policies as $policy)
+                                        <tr>
+                                            <td>{{ $policy->type == 'default' ? '기본' : '사용자' }}</td>
+                                            <td>{{ $policy->status == 'active' ? '사용' : '중지' }}</td>
+                                            <td class="t_l">{{ $policy->name }}</td>
+                                            <td>{{ $policy->product_count }}</td>
+                                            <td>
+                                                <a href="#" class="btn02 col5 pop_btn view-policy" data-pop="pop2_1"
+                                                    data-id="{{ $policy->id }}">보기</a>
+                                                <a href="#" class="btn02 col2 copy-policy" data-id="{{ $policy->id }}">복사</a>
+                                                <a href="#" class="btn02 col7 mt5 pop_btn edit-policy" data-pop="pop3_1"
+                                                    data-id="{{ $policy->id }}">수정</a>
+                                                <a href="#" class="btn02 mt5 delete-policy" data-id="{{ $policy->id }}">삭제</a>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="5" class="no_data">등록된 데이터가 없습니다.</td>
+                                        </tr>
+                                    @endforelse
                                 </tbody>
                             </table>
                         </div>
 
-                        <!--<div class="no_data">등록된 데이터가 없습니다.</div>-->
+                        @if($policies->count() == 0)
+                            <!--<div class="no_data">등록된 데이터가 없습니다.</div>-->
+                        @endif
 
-                        <div class="page_bx1">
-                            <a href="#" class="page_first">first</a>
-                            <a href="#" class="page_prev">prev</a>
-                            <a href="#" class="num on">1</a>
-                            <a href="#" class="num">2</a>
-                            <a href="#" class="num">3</a>
-                            <a href="#" class="num">4</a>
-                            <a href="#" class="num">5</a>
-                            <a href="#" class="page_next">next</a>
-                            <a href="#" class="page_last">last</a>
-                        </div>
+                        @if($policies->count() > 0)
+                            <!-- 페이지네이션은 나중에 구현 -->
+                            <!--
+                                                        <div class="page_bx1">
+                                                            <a href="#" class="page_first">first</a>
+                                                            <a href="#" class="page_prev">prev</a>
+                                                            <a href="#" class="num on">1</a>
+                                                            <a href="#" class="num">2</a>
+                                                            <a href="#" class="num">3</a>
+                                                            <a href="#" class="num">4</a>
+                                                            <a href="#" class="num">5</a>
+                                                            <a href="#" class="page_next">next</a>
+                                                            <a href="#" class="page_last">last</a>
+                                                        </div>
+                                                        -->
+                        @endif
 
-                        <!-- 팝업 -->
                         <!-- 취소/환불안내 등록 팝업 -->
                         <div class="popup_bx" data-id="pop1_1">
                             <div class="pop_w">
@@ -84,70 +98,79 @@
                                         </div>
                                         <div class="conbx">
                                             <div class="con_w">
-                                                <div class="tb01">
-                                                    <table>
-                                                        <colgroup>
-                                                            <col width="170px">
-                                                            <col width="">
-                                                            <col width="170px">
-                                                            <col width="">
-                                                        </colgroup>
-                                                        <tbody class="textL">
-                                                            <tr>
-                                                                <th class="w160"><span>설정구분</span></th>
-                                                                <td colspan="3">
-                                                                    <ul class="chk01">
-                                                                        <li>
-                                                                            <input type="radio" name="pop1_1_radio1"
-                                                                                id="pop1_1_radio1_1" checked="">
-                                                                            <label for="pop1_1_radio1_1">기본</label>
-                                                                        </li>
-                                                                        <li>
-                                                                            <input type="radio" name="pop1_1_radio1"
-                                                                                id="pop1_1_radio1_2">
-                                                                            <label for="pop1_1_radio1_2">사용자</label>
-                                                                        </li>
-                                                                    </ul>
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <th class="w160"><span>상태</span></th>
-                                                                <td colspan="3">
-                                                                    <ul class="chk01">
-                                                                        <li>
-                                                                            <input type="radio" name="pop1_1_radio2"
-                                                                                id="pop1_1_radio2_1" checked="">
-                                                                            <label for="pop1_1_radio2_1">사용</label>
-                                                                        </li>
-                                                                        <li>
-                                                                            <input type="radio" name="pop1_1_radio2"
-                                                                                id="pop1_1_radio2_2">
-                                                                            <label for="pop1_1_radio2_2">중지</label>
-                                                                        </li>
-                                                                    </ul>
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <th class="w160"><span>취소/환불안내 명칭<em>필수</em></span></th>
-                                                                <td colspan="3">
-                                                                    <input type="text" value="" required="required">
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <th class="w160"><span>취소/환불안내 내용</span></th>
-                                                                <td colspan="3">
-                                                                    <textarea value="" required="required"></textarea>
-                                                                </td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
+                                                <form id="createPolicyForm">
+                                                    @csrf
+                                                    <div class="tb01">
+                                                        <table>
+                                                            <colgroup>
+                                                                <col width="170px">
+                                                                <col width="">
+                                                                <col width="170px">
+                                                                <col width="">
+                                                            </colgroup>
+                                                            <tbody class="textL">
+                                                                <tr>
+                                                                    <th class="w160"><span>설정구분</span></th>
+                                                                    <td colspan="3">
+                                                                        <ul class="chk01">
+                                                                            <li>
+                                                                                <input type="radio" name="type"
+                                                                                    value="default" id="create_type_default"
+                                                                                    checked="">
+                                                                                <label for="create_type_default">기본</label>
+                                                                            </li>
+                                                                            <li>
+                                                                                <input type="radio" name="type"
+                                                                                    value="custom" id="create_type_custom">
+                                                                                <label for="create_type_custom">사용자</label>
+                                                                            </li>
+                                                                        </ul>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th class="w160"><span>상태</span></th>
+                                                                    <td colspan="3">
+                                                                        <ul class="chk01">
+                                                                            <li>
+                                                                                <input type="radio" name="status"
+                                                                                    value="active" id="create_status_active"
+                                                                                    checked="">
+                                                                                <label for="create_status_active">사용</label>
+                                                                            </li>
+                                                                            <li>
+                                                                                <input type="radio" name="status"
+                                                                                    value="inactive"
+                                                                                    id="create_status_inactive">
+                                                                                <label
+                                                                                    for="create_status_inactive">중지</label>
+                                                                            </li>
+                                                                        </ul>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th class="w160"><span>취소/환불안내 명칭<em>필수</em></span></th>
+                                                                    <td colspan="3">
+                                                                        <input type="text" name="name" id="create_name"
+                                                                            value="" required="required">
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th class="w160"><span>취소/환불안내 내용</span></th>
+                                                                    <td colspan="3">
+                                                                        <textarea name="content" id="create_content"
+                                                                            required="required"></textarea>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </form>
                                             </div>
                                         </div>
 
                                         <!-- 하단버튼 -->
                                         <div class="btm_btn mt10">
-                                            <a href="#">취소/환불안내 등록</a>
+                                            <a href="#" id="submitCreatePolicy">취소/환불안내 등록</a>
                                             <a href="#" class="col5 close_btn">닫기</a>
                                         </div>
                                     </div>
@@ -177,20 +200,20 @@
                                                         <tbody class="textL">
                                                             <tr>
                                                                 <th class="w160"><span>설정구분</span></th>
-                                                                <td colspan="3">사용자</td>
+                                                                <td colspan="3" id="view_type"></td>
                                                             </tr>
                                                             <tr>
                                                                 <th class="w160"><span>상태</span></th>
-                                                                <td colspan="3">사용</td>
+                                                                <td colspan="3" id="view_status"></td>
                                                             </tr>
                                                             <tr>
                                                                 <th class="w160"><span>취소/환불안내 명칭</span></th>
-                                                                <td colspan="3">사용자 취소/환불 안내 명칭</td>
+                                                                <td colspan="3" id="view_name"></td>
                                                             </tr>
                                                             <tr>
-                                                                <th class="w160" rowspan="2"><span>취소/환불안내 내용</span>
-                                                                </th>
-                                                                <td colspan="3">사용자 취소/환불 안내 내용</td>
+                                                                <th class="w160"><span>취소/환불안내 내용</span></th>
+                                                                <td colspan="3" id="view_content"
+                                                                    style="white-space: pre-wrap;"></td>
                                                             </tr>
                                                         </tbody>
                                                     </table>
@@ -218,70 +241,80 @@
                                         </div>
                                         <div class="conbx">
                                             <div class="con_w">
-                                                <div class="tb01">
-                                                    <table>
-                                                        <colgroup>
-                                                            <col width="170px">
-                                                            <col width="">
-                                                            <col width="170px">
-                                                            <col width="">
-                                                        </colgroup>
-                                                        <tbody class="textL">
-                                                            <tr>
-                                                                <th class="w160"><span>설정구분</span></th>
-                                                                <td colspan="3">
-                                                                    <ul class="chk01">
-                                                                        <li>
-                                                                            <input type="radio" name="pop1_1_radio1"
-                                                                                id="pop1_1_radio1_1" checked="">
-                                                                            <label for="pop1_1_radio1_1">기본</label>
-                                                                        </li>
-                                                                        <li>
-                                                                            <input type="radio" name="pop1_1_radio1"
-                                                                                id="pop1_1_radio1_2">
-                                                                            <label for="pop1_1_radio1_2">사용자</label>
-                                                                        </li>
-                                                                    </ul>
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <th class="w160"><span>상태</span></th>
-                                                                <td colspan="3">
-                                                                    <ul class="chk01">
-                                                                        <li>
-                                                                            <input type="radio" name="pop1_1_radio2"
-                                                                                id="pop1_1_radio2_1" checked="">
-                                                                            <label for="pop1_1_radio2_1">사용</label>
-                                                                        </li>
-                                                                        <li>
-                                                                            <input type="radio" name="pop1_1_radio2"
-                                                                                id="pop1_1_radio2_2">
-                                                                            <label for="pop1_1_radio2_2">중지</label>
-                                                                        </li>
-                                                                    </ul>
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <th class="w160"><span>취소/환불안내 명칭<em>필수</em></span></th>
-                                                                <td colspan="3">
-                                                                    <input type="text" value="" required="required">
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <th class="w160"><span>취소/환불안내 내용</span></th>
-                                                                <td colspan="3">
-                                                                    <textarea value="" required="required"></textarea>
-                                                                </td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
+                                                <form id="updatePolicyForm">
+                                                    @csrf
+                                                    <input type="hidden" name="policy_id" id="update_policy_id">
+                                                    <div class="tb01">
+                                                        <table>
+                                                            <colgroup>
+                                                                <col width="170px">
+                                                                <col width="">
+                                                                <col width="170px">
+                                                                <col width="">
+                                                            </colgroup>
+                                                            <tbody class="textL">
+                                                                <tr>
+                                                                    <th class="w160"><span>설정구분</span></th>
+                                                                    <td colspan="3">
+                                                                        <ul class="chk01">
+                                                                            <li>
+                                                                                <input type="radio" name="type"
+                                                                                    value="default"
+                                                                                    id="update_type_default">
+                                                                                <label for="update_type_default">기본</label>
+                                                                            </li>
+                                                                            <li>
+                                                                                <input type="radio" name="type"
+                                                                                    value="custom" id="update_type_custom">
+                                                                                <label for="update_type_custom">사용자</label>
+                                                                            </li>
+                                                                        </ul>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th class="w160"><span>상태</span></th>
+                                                                    <td colspan="3">
+                                                                        <ul class="chk01">
+                                                                            <li>
+                                                                                <input type="radio" name="status"
+                                                                                    value="active"
+                                                                                    id="update_status_active">
+                                                                                <label for="update_status_active">사용</label>
+                                                                            </li>
+                                                                            <li>
+                                                                                <input type="radio" name="status"
+                                                                                    value="inactive"
+                                                                                    id="update_status_inactive">
+                                                                                <label
+                                                                                    for="update_status_inactive">중지</label>
+                                                                            </li>
+                                                                        </ul>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th class="w160"><span>취소/환불안내 명칭<em>필수</em></span></th>
+                                                                    <td colspan="3">
+                                                                        <input type="text" name="name" id="update_name"
+                                                                            value="" required="required">
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th class="w160"><span>취소/환불안내 내용</span></th>
+                                                                    <td colspan="3">
+                                                                        <textarea name="content" id="update_content"
+                                                                            required="required"></textarea>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </form>
                                             </div>
                                         </div>
 
                                         <!-- 하단버튼 -->
                                         <div class="btm_btn mt10">
-                                            <a href="#">취소/환불안내 수정</a>
+                                            <a href="#" id="submitUpdatePolicy">취소/환불안내 수정</a>
                                             <a href="#" class="col5 close_btn">닫기</a>
                                         </div>
                                     </div>
@@ -329,6 +362,214 @@
                 dayNames: ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'], //달력의 요일 Tooltip
                 minDate: "-5y", //최소 선택일자(-1D:하루전, -1M:한달전, -1Y:일년전)
                 maxDate: "+5y", //최대 선택일자(+1D:하루후, -1M:한달후, -1Y:일년후)  
+            });
+
+            // CSRF 토큰 설정
+            $.ajaxSetup({
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                }
+            });
+
+            // 정책 등록
+            $('#submitCreatePolicy').click(function (e) {
+                e.preventDefault();
+
+                var formData = {
+                    type: $('input[name="type"]:checked', '#createPolicyForm').val(),
+                    status: $('input[name="status"]:checked', '#createPolicyForm').val(),
+                    name: $('#create_name').val(),
+                    content: $('#create_content').val()
+                };
+
+                if (!formData.name) {
+                    alert('취소/환불안내 명칭을 입력해 주세요.');
+                    return;
+                }
+
+                $.ajax({
+                    url: '{{ route("channel.refund.store") }}',
+                    type: 'POST',
+                    data: formData,
+                    success: function (response) {
+                        if (response.status === 'success') {
+                            alert(response.message);
+                            location.reload();
+                        } else {
+                            alert('오류가 발생했습니다.');
+                        }
+                    },
+                    error: function (xhr) {
+                        if (xhr.status === 422) {
+                            var errors = xhr.responseJSON.errors;
+                            var errorMsg = '';
+                            $.each(errors, function (key, value) {
+                                errorMsg += value[0] + '\n';
+                            });
+                            alert(errorMsg);
+                        } else {
+                            alert('오류가 발생했습니다.');
+                        }
+                    }
+                });
+            });
+
+            // 정책 보기
+            $('.view-policy').click(function (e) {
+                e.preventDefault();
+                var policyId = $(this).data('id');
+
+                $.ajax({
+                    url: '/channel/settings/refund/' + policyId,
+                    type: 'GET',
+                    success: function (response) {
+                        if (response.status === 'success') {
+                            var policy = response.policy;
+                            $('#view_type').text(policy.type === 'default' ? '기본' : '사용자');
+                            $('#view_status').text(policy.status === 'active' ? '사용' : '중지');
+                            $('#view_name').text(policy.name);
+                            $('#view_content').text(policy.content || '');
+                        }
+                    },
+                    error: function () {
+                        alert('정책 정보를 불러오는데 실패했습니다.');
+                    }
+                });
+            });
+
+            // 정책 수정 - 데이터 로드
+            $('.edit-policy').click(function (e) {
+                e.preventDefault();
+                var policyId = $(this).data('id');
+
+                $.ajax({
+                    url: '/channel/settings/refund/' + policyId,
+                    type: 'GET',
+                    success: function (response) {
+                        if (response.status === 'success') {
+                            var policy = response.policy;
+                            $('#update_policy_id').val(policy.id);
+
+                            // 타입 설정
+                            if (policy.type === 'default') {
+                                $('#update_type_default').prop('checked', true);
+                            } else {
+                                $('#update_type_custom').prop('checked', true);
+                            }
+
+                            // 상태 설정
+                            if (policy.status === 'active') {
+                                $('#update_status_active').prop('checked', true);
+                            } else {
+                                $('#update_status_inactive').prop('checked', true);
+                            }
+
+                            $('#update_name').val(policy.name);
+                            $('#update_content').val(policy.content || '');
+                        }
+                    },
+                    error: function () {
+                        alert('정책 정보를 불러오는데 실패했습니다.');
+                    }
+                });
+            });
+
+            // 정책 수정 제출
+            $('#submitUpdatePolicy').click(function (e) {
+                e.preventDefault();
+
+                var policyId = $('#update_policy_id').val();
+                var formData = {
+                    type: $('input[name="type"]:checked', '#updatePolicyForm').val(),
+                    status: $('input[name="status"]:checked', '#updatePolicyForm').val(),
+                    name: $('#update_name').val(),
+                    content: $('#update_content').val()
+                };
+
+                if (!formData.name) {
+                    alert('취소/환불안내 명칭을 입력해 주세요.');
+                    return;
+                }
+
+                $.ajax({
+                    url: '/channel/settings/refund/' + policyId + '/update',
+                    type: 'POST',
+                    data: formData,
+                    success: function (response) {
+                        if (response.status === 'success') {
+                            alert(response.message);
+                            location.reload();
+                        } else {
+                            alert('오류가 발생했습니다.');
+                        }
+                    },
+                    error: function (xhr) {
+                        if (xhr.status === 422) {
+                            var errors = xhr.responseJSON.errors;
+                            var errorMsg = '';
+                            $.each(errors, function (key, value) {
+                                errorMsg += value[0] + '\n';
+                            });
+                            alert(errorMsg);
+                        } else {
+                            alert('오류가 발생했습니다.');
+                        }
+                    }
+                });
+            });
+
+            // 정책 삭제
+            $('.delete-policy').click(function (e) {
+                e.preventDefault();
+
+                if (!confirm('정말 삭제하시겠습니까?')) {
+                    return;
+                }
+
+                var policyId = $(this).data('id');
+
+                $.ajax({
+                    url: '/channel/settings/refund/' + policyId + '/delete',
+                    type: 'POST',
+                    success: function (response) {
+                        if (response.status === 'success') {
+                            alert(response.message);
+                            location.reload();
+                        } else {
+                            alert('오류가 발생했습니다.');
+                        }
+                    },
+                    error: function () {
+                        alert('삭제에 실패했습니다.');
+                    }
+                });
+            });
+
+            // 정책 복사
+            $('.copy-policy').click(function (e) {
+                e.preventDefault();
+
+                if (!confirm('이 정책을 복사하시겠습니까?')) {
+                    return;
+                }
+
+                var policyId = $(this).data('id');
+
+                $.ajax({
+                    url: '/channel/settings/refund/' + policyId + '/copy',
+                    type: 'POST',
+                    success: function (response) {
+                        if (response.status === 'success') {
+                            alert(response.message);
+                            location.reload();
+                        } else {
+                            alert('오류가 발생했습니다.');
+                        }
+                    },
+                    error: function () {
+                        alert('복사에 실패했습니다.');
+                    }
+                });
             });
         </script>
     @endpush

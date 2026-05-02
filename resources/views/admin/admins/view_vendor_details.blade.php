@@ -122,16 +122,21 @@
                                                     <tr>
                                                         <th class="w160"><span>판매인증</span></th>
                                                         <td>
-                                                            <ul class="chk01">
-                                                                <li>
-                                                                    <input type="radio" name="seller_status" id="status_1" value="1">
-                                                                    <label for="status_1">인증</label>
-                                                                </li>
-                                                                <li>
-                                                                    <input type="radio" name="seller_status" id="status_0" value="0" checked>
-                                                                    <label for="status_0">미인증</label>
-                                                                </li>
-                                                            </ul>
+                                                            <form method="post" action="{{ url('admin/update-vendor-certification') }}">
+                                                                @csrf
+                                                                <input type="hidden" name="vendor_id" value="{{ $vendorDetails['vendor_personal']['id'] }}">
+                                                                <ul class="chk01" style="display: inline-block; vertical-align: middle;">
+                                                                    <li>
+                                                                        <input type="radio" name="seller_status" id="status_1" value="1" {{ $vendorDetails['vendor_personal']['status'] == 1 ? 'checked' : '' }}>
+                                                                        <label for="status_1">인증</label>
+                                                                    </li>
+                                                                    <li>
+                                                                        <input type="radio" name="seller_status" id="status_0" value="0" {{ $vendorDetails['vendor_personal']['status'] == 0 ? 'checked' : '' }}>
+                                                                        <label for="status_0">미인증</label>
+                                                                    </li>
+                                                                </ul>
+                                                                <button type="submit" class="btn01 ml20">인증 상태 변경</button>
+                                                            </form>
                                                         </td>
                                                     </tr>
                                                     <tr>

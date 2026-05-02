@@ -270,9 +270,8 @@
 
                                 </div>
                                 <div class="btm_btn type2">
-                                    <a href="{{ route('front.member.register.step1') }}" class="col3">Step1 기본정보 신청</a>
-                                    <a href="javascript:;" onclick="submitStep2(false);" class="col2">저장</a>
-                                    <a href="javascript:;" onclick="submitStep2(true);" class="col4">Step3 판매권한 신청</a>
+                                    <a href="javascript:;" onclick="submitStep2(false);" class="col3">나중에 인증하기 (메인으로 이동)</a>
+                                    <a href="javascript:;" onclick="submitStep2(true);" class="col4" style="flex:2;">정보 저장 및 다음 단계 (판매권한 인증)</a>
                                 </div>
                             </div>
                         </form>
@@ -416,11 +415,11 @@
                     contentType: false,
                     success: function (response) {
                         if (response.status === 'success') {
-                            alert('기본정보가 저장되었습니다.');
+                            alert('정보가 성공적으로 저장되었습니다.');
                             if (goToStep3) {
                                 window.location.href = "{{ route('front.member.register.step3') }}";
                             } else {
-                                window.location.reload();
+                                window.location.href = "/";
                             }
                         } else {
                             alert('오류가 발생했습니다: ' + (response.message || '알 수 없는 오류'));

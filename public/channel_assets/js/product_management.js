@@ -65,3 +65,54 @@ function submitProductForm(formId, url) {
         }
     });
 }
+
+function openProductViewModal(productData) {
+    var $modal = $(".popup_bx[data-id='pop2']");
+    if ($modal.length === 0) return;
+
+    $modal.find(".ttl").text("판매 상품 정보 (" + productData.type_label + ")");
+    $modal.find("#view_product_code").text(productData.code);
+    $modal.find("#view_product_img").css("background-image", "url(" + productData.img + ")");
+    $modal.find("#view_product_category").text(productData.category);
+    $modal.find("#view_product_name").text(productData.name);
+
+    $modal.find("#view_price_constraint").text(productData.price_constraint);
+    $modal.find("#view_profit_constraint").text(productData.profit_constraint);
+    $modal.find("#view_stock").text(productData.stock_text);
+    $modal.find("#view_purchase_limit").text(productData.purchase_limit);
+    $modal.find("#view_sales_period").text(productData.sales_period);
+    $modal.find("#view_selling_price").text(productData.selling_price + "원");
+
+    $modal.stop().fadeIn(300);
+    $modal.scrollTop(0);
+}
+
+function updateProductStatus(url, shopProductId, status, actionName) {
+    if (!confirm('정말로 해당 상품을 ' + actionName + ' 하시겠습니까?')) {
+        return;
+    }
+
+    var token = $('meta[name="csrf-token"]').attr('content');
+
+    $.ajax({
+        url: url,
+        type: 'POST',
+        data: {
+            _token: token,
+            shop_product_id: shopProductId,
+            status: status
+        },
+        success: function (response) {
+            if (response.status) {
+                alert(response.message);
+                location.reload();
+            } else {
+                alert(response.message || '오류가 발생했습니다.');
+            }
+        },
+        error: function (xhr) {
+            alert('오류가 발생했습니다: ' + (xhr.responseJSON ? xhr.responseJSON.message : xhr.statusText));
+        }
+    });
+}
+

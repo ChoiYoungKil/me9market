@@ -14,36 +14,63 @@ class ChannelSettlementController extends Controller
 {
     public function index(Request $request)
     {
-        $vendor_id = Auth::guard('admin')->user()->vendor_id;
+        $admin = Auth::guard('admin')->user();
+        $vendor_id = $admin->vendor_id;
+
+        // Fetch the shop channel's settlement rate (using the first one as default if multiple exist)
+        $shop = \App\Models\ShopChannel::where('vendor_id', $vendor_id)->first();
+        $rate = $shop ? ($shop->settlement_rate / 100) : 0.10; // Fallback to 10%
 
         // Calculate monthly settlements
-        // Group orders by month (Y-m)
-        // Using Eloquent's query builder for aggregation
         $settlements = OrdersProduct::select(
-                DB::raw("DATE_FORMAT(updated_at, '%Y-%m') as settlement_period"), // Using updated_at as finalize date
+                DB::raw("DATE_FORMAT(updated_at, '%Y-%m') as settlement_period"),
                 DB::raw('SUM(product_price * product_qty) as total_sales'),
                 DB::raw('COUNT(id) as order_count')
             )
             ->where('vendor_id', $vendor_id)
-            ->whereIn('item_status', ['구매확정', '배송완료']) // Include 배송완료 for testing if needed, or stick to strict logic
+            ->whereIn('item_status', ['구매확정'])
             ->groupBy('settlement_period')
             ->orderBy('settlement_period', 'desc')
             ->paginate(10);
             
-        // Transform to add calculated fields
-        $settlements->getCollection()->transform(function($item) {
-             // Example commission rate 10%
-             $commissionRate = 0.10;
-             $item->commission = $item->total_sales * $commissionRate;
+        $settlements->getCollection()->transform(function($item) use ($rate) {
+             $item->commission = $item->total_sales * $rate;
              $item->settlement_amount = $item->total_sales - $item->commission;
-             $item->status = '정산예정'; // Default status for now
+             $item->status = '정산완료'; 
+             $item->rate = $rate * 100; // Store percentage for view
              
              return $item;
         });
 
-        // Pass data to view
-        $dep1_id = '05'; // Assuming 05 is settlement
-        
-        return view('channel.sub05.settlement_list', compact('settlements', 'dep1_id'));
+        return view('channel.sub05.settlement_list', [
+            'settlements' => $settlements,
+            'dep1_id' => '05',
+            'rate' => $rate * 100
+        ]);
+    }
+
+    public function view(Request $request, $period)
+    {
+        $admin = Auth::guard('admin')->user();
+        $vendor_id = $admin->vendor_id;
+
+        // Fetch the shop channel's settlement rate
+        $shop = \App\Models\ShopChannel::where('vendor_id', $vendor_id)->first();
+        $rate = $shop ? ($shop->settlement_rate / 100) : 0.10;
+
+        // Fetch orders for this period and vendor
+        $orders = OrdersProduct::where('vendor_id', $vendor_id)
+            ->where(DB::raw("DATE_FORMAT(updated_at, '%Y-%m')"), $period)
+            ->whereIn('item_status', ['구매확정'])
+            ->with(['product', 'order'])
+            ->orderBy('updated_at', 'desc')
+            ->paginate(20);
+
+        return view('channel.sub05.settlement_view', [
+            'orders' => $orders,
+            'period' => $period,
+            'dep1_id' => '05',
+            'rate' => $rate * 100
+        ]);
     }
 }

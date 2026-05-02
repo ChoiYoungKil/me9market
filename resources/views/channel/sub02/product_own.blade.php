@@ -1,6 +1,8 @@
 @extends('layouts.channel')
 
 @section('content')
+
+
     @php
         $page_type = "sub";
         $dep1_id = "02";
@@ -17,6 +19,13 @@
                         <li>자사상품관리</li>
                     </ul>
                 </div>
+                <div class="tab_bx1">
+                    <ul>
+                        <li><a href="{{ route('channel.shop_info') }}"><span>Shop채널 정보</span></a></li>
+                        <li><a href="{{ route('channel.product_own') }}" class="on"><span>판매상품</span></a></li>
+                        <li><a href="{{ route('channel.shop_community') }}"><span>커뮤니티</span></a></li>
+                    </ul>
+                </div>
                 <div class="conbx">
                     <div class="con_w">
                         <div class="tb01">
@@ -31,9 +40,11 @@
                                     <tr>
                                         <th class="w160"><span>상품명</span></th>
                                         <td colspan="3">
-                                            <div class="r_btn_w">
-                                                <input type="text" value="" required="required">
-                                                <a id="arrow1" class="btn01 arrow"><span>상세</span></a>
+                                            <div class="r_btn_w" style="display: flex; align-items: center; gap: 5px;">
+                                                <input type="text" value="" required="required" placeholder="상품명을 입력해 주세요."
+                                                    style="flex: 1; height: 34px; border: 1px solid #ddd; padding: 0 10px;">
+                                                <a id="arrow1" class="btn01 arrow"
+                                                    style="width: 100px; height: 34px; line-height: 32px;"><span>상세검색</span></a>
                                             </div>
                                         </td>
                                     </tr>
@@ -114,22 +125,29 @@
                             </table>
                         </div>
 
-                        <div class="btm_btn right mt10">
-                            <a href="#">검색</a>
+                        <div class="btm_btn right mt10" style="margin-bottom: 40px;">
+                            <button type="button" class="type2"
+                                style="border: none; cursor: pointer; width: 120px; height: 32px; line-height: 32px; font-size: 14px; font-weight: 700;">검색</button>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="row">
-            <div class="box box2">
-                <div class="conbx">
-                    <div class="con_w">
-                        <div class="list_top1 btn">
-                            <div class="count">총 <strong>00</strong> 건</div>
-                            <div class="btn_bx">
-                                <a href="#" class="btn01 col2">EXCEL</a>
-                                <a href="{{ route('channel.product_request') }}" class="btn01 col5">상품등록</a>
+
+                        <div class="list_top1"
+                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: none; padding-bottom: 0;">
+                            <div class="left_bx">
+                                <div class="count">총 <strong>{{ $products->total() }}</strong> 건</div>
+                            </div>
+                            <div class="right_bx" style="display: flex; gap: 10px; align-items: center;">
+                                <select id="perPageSelect" style="padding: 0 10px; border: 1px solid #ddd; height: 34px;">
+                                    <option value="20">20개씩 보기</option>
+                                    <option value="40">40개씩 보기</option>
+                                    <option value="60">60개씩 보기</option>
+                                    <option value="80">80개씩 보기</option>
+                                    <option value="100">100개씩 보기</option>
+                                </select>
+                                <a href="#" class="btn01 col2"
+                                    style="height: 34px; line-height: 32px; font-size: 12px; width: 140px; text-align: center; padding: 0;">EXCEL
+                                    다운로드</a>
+                                <a href="{{ route('channel.product_request') }}" class="btn01 col5"
+                                    style="height: 34px; line-height: 32px; font-size: 12px; width: 100px; text-align: center; padding: 0;">상품등록</a>
                             </div>
                         </div>
 
@@ -160,91 +178,55 @@
                                     </tr>
                                 </thead>
                                 <tbody class="textL">
-                                    <tr>
-                                        <td class="t_c">a20392</td>
-                                        <td class="t_c">판매</td>
-                                        <td>
-                                            <div class="thum01">
-                                                <div class="img_bx"
-                                                    style="background-image:url({{ asset('channel_assets/images/sub/thum01.jpg') }})">
+                                    @forelse($products as $product)
+                                        @php
+                                            $mainImage = $product->images->first();
+                                            $imageUrl = $mainImage ? asset('front/images/product_images/small/' . $mainImage->image) : asset('channel_assets/images/sub/thum01.jpg');
+                                            $statusText = $product->status == 1 ? '판매' : '중지';
+                                            $statusClass = $product->status == 1 ? '' : 'fcol1';
+                                        @endphp
+                                        <tr>
+                                            <td class="t_c">{{ $product->product_code }}</td>
+                                            <td class="t_c {{ $statusClass }}">{{ $statusText }}</td>
+                                            <td>
+                                                <div class="thum01">
+                                                    <div class="img_bx" style="background-image:url({{ $imageUrl }})"></div>
+                                                    <div class="txt_bx">
+                                                        <p>{{ $product->category->category_name ?? '카테고리 없음' }}</p>
+                                                        <strong>{{ $product->product_name }}</strong>
+                                                    </div>
                                                 </div>
-                                                <div class="txt_bx">
-                                                    <p>대분류 &gt; 중분류 &gt; 소분류</p>
-                                                    <strong>상품명 111111</strong>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="t_c">₩ 5,000</td>
-                                        <td class="t_c">공개, 회원용</td>
-                                        <td class="t_c"><a href="#" class="btn02 col3 pop_btn" data-pop="pop4_1">03</a></td>
-                                        <td class="t_c"><a href="#" class="btn02 col5 pop_btn" data-pop="pop1_1">판매요청목록</a>
-                                        </td>
-                                        <td class="t_c"><a href="#" class="btn02 col7 pop_btn" data-pop="pop2_1">판매중지
-                                                예고신청</a></td>
-                                        <td class="t_c">
-                                            <a href="#" class="btn02 col5 pop_btn" data-pop="pop3_1">보기</a>
-                                            <a href="#" class="btn02 col2">복사</a>
-                                            <a href="#" class="btn02 col4 mt5">수정</a>
-                                            <a href="#" class="btn02 mt5">삭제</a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td class="t_c">a20392</td>
-                                        <td class="t_c">중지</td>
-                                        <td>
-                                            <div class="thum01">
-                                                <div class="img_bx"
-                                                    style="background-image:url({{ asset('channel_assets/images/sub/thum01.jpg') }})">
-                                                </div>
-                                                <div class="txt_bx">
-                                                    <p>대분류 &gt; 중분류 &gt; 소분류</p>
-                                                    <strong>상품명 111111</strong>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="t_c">₩ 1,000</td>
-                                        <td class="t_c">비공개, 회원용</td>
-                                        <td class="t_c"><a href="#" class="btn02 col3 pop_btn" data-pop="pop4_1">--</a></td>
-                                        <td class="t_c"><a href="#" class="btn02 col4 pop_btn" data-pop="pop1_1">판매요청목록</a>
-                                        </td>
-                                        <td class="t_c"><a href="#" class="btn02 col7 pop_btn" data-pop="pop2_1">판매중지
-                                                예고신청</a></td>
-                                        <td class="t_c">
-                                            <a href="#" class="btn02 col5 pop_btn" data-pop="pop3_1">보기</a>
-                                            <a href="#" class="btn02 col2">복사</a>
-                                            <a href="#" class="btn02 col7 mt5">수정</a>
-                                            <a href="#" class="btn02 mt5">삭제</a>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td class="t_c">a20392</td>
-                                        <td class="t_c">판매중지예고</td>
-                                        <td>
-                                            <div class="thum01">
-                                                <div class="img_bx"
-                                                    style="background-image:url({{ asset('channel_assets/images/sub/thum01.jpg') }})">
-                                                </div>
-                                                <div class="txt_bx">
-                                                    <p>대분류 &gt; 중분류 &gt; 소분류</p>
-                                                    <strong>상품명 111111</strong>
-                                                </div>
-                                            </div>
-                                            <div class="mt10 fcol3">판매중지예고 &nbsp;&nbsp; <strong>0000.00.00</strong></div>
-                                        </td>
-                                        <td class="t_c">₩ 1,000</td>
-                                        <td class="t_c">공개, 일반용</td>
-                                        <td class="t_c"><a href="#" class="btn02 col3 pop_btn" data-pop="pop4_1">13</a></td>
-                                        <td class="t_c"><a href="#" class="btn02 col5 pop_btn" data-pop="pop1_1">판매요청목록</a>
-                                        </td>
-                                        <td class="t_c"><a href="#" class="btn02 col4 pop_btn" data-pop="pop2_1">판매중지
-                                                예고신청</a></td>
-                                        <td class="t_c">
-                                            <a href="#" class="btn02 col5 pop_btn" data-pop="pop3_1">보기</a>
-                                            <a href="#" class="btn02 col2">복사</a>
-                                            <a href="#" class="btn02 col4 mt5">수정</a>
-                                            <a href="#" class="btn02 mt5">삭제</a>
-                                        </td>
-                                    </tr>
+                                            </td>
+                                            <td class="t_c">₩ {{ number_format($product->product_price) }}</td>
+                                            <td class="t_c">
+                                                {{ $product->is_public ? '공개' : '비공개' }}, 
+                                                {{ $product->is_partial ? '부분공개' : '전체공개' }}
+                                            </td>
+                                            <td class="t_c">
+                                                <a href="#" class="btn02 col3 pop_btn" data-pop="pop4_1">
+                                                    {{ $product->shop_channels_count ?? '0' }}
+                                                </a>
+                                            </td>
+                                            <td class="t_c">
+                                                <a href="#" class="btn02 col5 pop_btn" data-pop="pop1_1">판매요청목록</a>
+                                            </td>
+                                            <td class="t_c">
+                                                <a href="#" class="btn02 col7 pop_btn" data-pop="pop2_1">판매중지 예고신청</a>
+                                            </td>
+                                            <td class="t_c">
+                                                <a href="#" class="btn02 col5 pop_btn" data-pop="pop3_1" data-id="{{ $product->id }}">보기</a>
+                                                <a href="#" class="btn02 col2" onclick="copyProduct('{{ $product->id }}'); return false;">복사</a>
+                                                <a href="{{ route('channel.product.base.edit', $product->id) }}" class="btn02 col4 mt5">수정</a>
+                                                <a href="#" class="btn02 mt5" onclick="deleteProduct('{{ $product->id }}'); return false;">삭제</a>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="9" class="t_c" style="padding: 100px 0;">
+                                                등록된 자사 상품이 없습니다.
+                                            </td>
+                                        </tr>
+                                    @endforelse
                                 </tbody>
                             </table>
 
@@ -253,15 +235,7 @@
 
                         <!-- 페이징 -->
                         <div class="page_bx1">
-                            <a href="#" class="page_first">first</a>
-                            <a href="#" class="page_prev">prev</a>
-                            <a href="#" class="num on">1</a>
-                            <a href="#" class="num">2</a>
-                            <a href="#" class="num">3</a>
-                            <a href="#" class="num">4</a>
-                            <a href="#" class="num">5</a>
-                            <a href="#" class="page_next">next</a>
-                            <a href="#" class="page_last">last</a>
+                            {{ $products->links() }}
                         </div>
 
 
@@ -655,6 +629,33 @@
         /* 팝업 */
         $(".pop_btn").click(function () {
             var popId = $(this).attr("data-pop");
+            var productId = $(this).attr("data-id");
+
+            if (popId === 'pop3_1' && productId) {
+                $.get("/channel/product/base/detail/" + productId, function(response) {
+                    if (response.status) {
+                        var p = response.product;
+                        var $pop = $(".popup_bx[data-id='pop3_1']");
+                        
+                        $pop.find(".txt_bx p").text(response.category_path);
+                        $pop.find(".txt_bx strong").text(p.product_name);
+                        $pop.find(".txt_bx ul li:eq(0)").text("상품코드 : " + p.product_code);
+                        $pop.find(".tab_w.tab1 table tr:nth-child(3) td").text(parseFloat(p.product_price).toLocaleString() + " 원");
+                        
+                        if (p.images && p.images.length > 0) {
+                            var mainImgUrl = "/front/images/product_images/small/" + p.images[0].image;
+                            $pop.find(".l_bx .img_bx img").attr("src", mainImgUrl);
+                        }
+
+                        $pop.stop().fadeIn(300);
+                        $pop.scrollTop(0);
+                    } else {
+                        alert(response.message || '데이터를 불러오지 못했습니다.');
+                    }
+                });
+                return false;
+            }
+
             if (popId == "pop1") {
                 var thisImg = $(this).children("img").clone();
                 $(".popup_bx[data-id='" + popId + "']").find(".img_bx").html(thisImg);
@@ -685,6 +686,53 @@
             dayNames: ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'], //달력의 요일 Tooltip
             minDate: "-5y", //최소 선택일자(-1D:하루전, -1M:한달전, -1Y:일년전)
             maxDate: "+5y", //최대 선택일자(+1D:하루후, -1M:한달후, -1Y:일년후)  
+        });
+
+        function deleteProduct(productId) {
+            if (!confirm('정말로 이 상품을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) return;
+
+            $.ajax({
+                url: "/channel/product/base/delete/" + productId,
+                type: 'POST',
+                data: {
+                    _token: $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    if (response.status) {
+                        alert(response.message);
+                        location.reload();
+                    } else {
+                        alert(response.message || '오류가 발생했습니다.');
+                    }
+                },
+                error: function(xhr) {
+                    alert('오류가 발생했습니다.');
+                }
+            });
+        }
+
+        function copyProduct(productId) {
+            if (!confirm('이 상품을 복사하시겠습니까?')) return;
+
+            $.ajax({
+                url: "/channel/product/base/copy/" + productId,
+                type: 'POST',
+                data: {
+                    _token: $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    if (response.status) {
+                        alert(response.message);
+                        location.reload();
+                    } else {
+                        alert(response.message || '오류가 발생했습니다.');
+                    }
+                },
+                error: function(xhr) {
+                    alert('오류가 발생했습니다.');
+                }
+            });
+        }
         });
     </script>
 @endpush

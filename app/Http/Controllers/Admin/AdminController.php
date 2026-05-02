@@ -503,6 +503,24 @@ class AdminController extends Controller
         }
     }
 
+    public function updateVendorCertification(Request $request) {
+        if ($request->isMethod('post')) {
+            $data = $request->all();
+            
+            // vendors 테이블 업데이트
+            Vendor::where('id', $data['vendor_id'])->update([
+                'status' => $data['seller_status'],
+            ]);
+
+            // admins 테이블도 같이 업데이트 (로그인 및 권한 연동을 위해)
+            Admin::where('vendor_id', $data['vendor_id'])->update([
+                'status' => $data['seller_status'],
+            ]);
+
+            return redirect()->back()->with('success_message', '판매 인증 상태가 성공적으로 업데이트되었습니다!');
+        }
+    }
+
     public function admins(Request $request, $type = null) { // $type is the `type` column in the `admins` which can only be: superadmin, admin, subadmin or vendor    // A default value of null (to allow not passing a {type} slug, and in this case, the page will view ALL of the superadmin, admins, subadmins and vendors at the same time)
         $query = Admin::query();
 

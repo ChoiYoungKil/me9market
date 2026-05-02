@@ -153,11 +153,7 @@
                                                         </tr>
                                                     </tbody>
                                                 </table>
-                                                <div class="btm_btn t_r pt10 type2">
-                                                    <a href="javascript:;" onclick="submitStep3(true);"
-                                                        class="col2">인증요청</a>
-                                                </div>
-                                            </div>
+
                                         </div>
                                         <div class="f_w">
                                             <div class="f_ttl">약관동의</div>
@@ -181,10 +177,8 @@
                                     </div>
 
                                 </div>
-                                <div class="btm_btn type2">
-                                    <a href="{{ route('front.member.register.step1') }}" class="col3">Step1 기본정보 신청</a>
-                                    <a href="{{ route('front.member.register.step2') }}" class="col3">Step2 회원사권한 신청</a>
-                                    <a href="javascript:;" onclick="submitStep3(false);" class="col2">저장</a>
+                                <div class="btm_btn type2" style="justify-content:center; display:flex;">
+                                    <a href="javascript:;" onclick="submitStep3(true);" class="col4" style="flex:1;">판매 권한 심사 요청하기 (가입 최종 완료)</a>
                                 </div>
                             </div>
                         </form>
@@ -284,11 +278,11 @@
                     success: function (response) {
                         if (response.status === 'success') {
                             if (isCertification) {
-                                alert('인증 요청이 접수되었습니다.');
+                                alert('인증 요청이 성공적으로 접수되었습니다.\n심사 후 판매 권한이 부여됩니다.');
                             } else {
                                 alert('저장되었습니다.');
                             }
-                            window.location.reload();
+                            window.location.href = "{{ route('mypage.dashboard') }}";
                         } else {
                             alert('오류가 발생했습니다: ' + (response.message || '알 수 없는 오류'));
                         }

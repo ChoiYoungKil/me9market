@@ -239,9 +239,8 @@
 
                                 </div>
                                 <div class="btm_btn type2">
-                                    <a href="/" class="col3">취소</a>
-                                    <a href="javascript:;" onclick="submitStep1(false);" class="col2">저장</a>
-                                    <a href="javascript:;" onclick="submitStep1(true);" class="col4">Step2 회원사 등록</a>
+                                    <a href="javascript:;" onclick="submitStep1(false);" class="col3">일반 가입 완료 및 메인으로 이동</a>
+                                    <a href="javascript:;" onclick="submitStep1(true);" class="col4" style="flex:2;">기본정보 저장 및 다음 단계 (회원사 등록)</a>
                                 </div>
                             </div>
                         </form>
@@ -431,7 +430,7 @@
                             if (goToStep2) {
                                 window.location.href = "{{ route('front.member.register.step2') }}";
                             } else {
-                                window.location.reload();
+                                window.location.href = "/";
                             }
                         } else {
                             alert('오류가 발생했습니다: ' + (response.message || '알 수 없는 오류'));

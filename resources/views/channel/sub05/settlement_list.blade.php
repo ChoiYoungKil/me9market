@@ -34,7 +34,7 @@
                                         <th>정산기간</th>
                                         <th>주문건수</th>
                                         <th>총 매출액</th>
-                                        <th>수수료 (10%)</th>
+                                        <th>수수료 ({{ $rate }}%)</th>
                                         <th>정산금액</th>
                                         <th>상태</th>
                                     </tr>
@@ -51,11 +51,15 @@
                                                         class="bold fcol4">{{ number_format($settlement->settlement_amount) }}
                                                         원</span></td>
                                                 <td>{{ $settlement->status }}</td>
+                                                <td>
+                                                    <a href="{{ route('channel.settlement.view', ['period' => $settlement->settlement_period]) }}" 
+                                                       class="btn02 col5">보기</a>
+                                                </td>
                                             </tr>
                                         @endforeach
                                     @else
                                         <tr>
-                                            <td colspan="6" class="no_data">정산 내역이 없습니다.</td>
+                                            <td colspan="7" class="no_data">정산 내역이 없습니다.</td>
                                         </tr>
                                     @endif
                                 </tbody>

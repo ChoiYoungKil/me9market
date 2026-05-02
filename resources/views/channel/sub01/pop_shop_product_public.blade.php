@@ -177,6 +177,7 @@
 
                 <form id="form_product_public_register">
                     <input type="hidden" name="product_id" id="public_product_id" value="">
+                    <input type="hidden" name="shop_id" value="{{ $shopId }}">
                     <div class="conbx">
                         <div class="con_w">
                             <div class="ttl01">판매 상품 코드</div>

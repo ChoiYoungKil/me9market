@@ -56,6 +56,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         
         Route::get('view-vendor-details/{id}', 'AdminController@viewVendorDetails'); // 관리자 관리 테이블에서 입점업체 상세 정보 보기 (superadmin, admin, subadmin인 경우)
         Route::post('update-admin-status', 'AdminController@updateAdminStatus'); // AJAX를 사용한 관리자 상태 업데이트 (admins.blade.php)
+        Route::post('update-vendor-certification', 'AdminController@updateVendorCertification'); // 판매자 인증 상태 업데이트 (view_vendor_details.blade.php)
 
 
         // 섹션 (Sections, Categories, Subcategories, Products, Attributes)
@@ -242,8 +243,10 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
     Route::post('/register/step2/update', 'UserController@updateMemberStep2')->name('front.member.register.step2.update'); // 새로운 라우트
     Route::get('/register/step3', 'UserController@registerStep3')->name('front.member.register.step3');
     Route::post('/register/step3/update', 'UserController@updateMemberStep3')->name('front.member.register.step3.update'); // 새로운 라우트
-    Route::get('/find/id', 'UserController@findId')->name('front.member.find_id');
-    Route::get('/find/pw', 'UserController@findPw')->name('front.member.find_pw');
+    // 아이디 찾기 (GET: 폼 표시, POST: 검색 처리)
+    Route::match(['get', 'post'], '/find/id', 'UserController@findId')->name('front.member.find_id');
+    // 비밀번호 찾기 (GET: 폼 표시, POST: 임시비밀번호 발급)
+    Route::match(['get', 'post'], '/find/pw', 'UserController@findPw')->name('front.member.find_pw');
 
     // 판매자 등록
     Route::get('/seller/register', 'UserController@vendorRegisterPage')->name('front.seller.register');
@@ -269,33 +272,47 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
     });
 
     // 채널 포털 라우트 (Channel Portal)
-    Route::prefix('channel')->group(function () {    
+    Route::prefix('channel')->group(function () {
+        // Guest Channel Routes
+        Route::get('/login', 'App\Http\Controllers\Front\ChannelController@login')->name('channel.login');
+        Route::get('/register', 'App\Http\Controllers\Front\ChannelController@register')->name('channel.register');
+        Route::post('/register', 'App\Http\Controllers\Front\ChannelController@registerSubmit')->name('channel.register.submit');
+
         // Protected Channel Routes
         Route::group(['middleware' => ['admin']], function () {
-            Route::get('/', 'ChannelController@index')->name('channel.index');
+            Route::get('/', 'App\Http\Controllers\Front\ChannelController@index')->name('channel.index');
 
             // 판매자 프로필 완성 (대기 중인 판매자용)
-            Route::get('/complete-profile', 'ChannelController@completeProfile')->name('channel.complete_profile');
-            Route::post('/complete-profile', 'ChannelController@completeProfileSubmit')->name('channel.complete_profile.submit');
+            Route::get('/complete-profile', 'App\Http\Controllers\Front\ChannelController@completeProfile')->name('channel.complete_profile');
+            Route::post('/complete-profile', 'App\Http\Controllers\Front\ChannelController@completeProfileSubmit')->name('channel.complete_profile.submit');
 
             // 상점 관리 (Sub01)
             Route::prefix('shop')->group(function () {
                 Route::get('/list', 'ChannelController@shopList')->name('channel.shop_list');
                 Route::get('/register', 'ChannelController@shopRegister')->name('channel.shop_register');
+                Route::post('/register', 'ChannelController@shopRegisterSubmit')->name('channel.shop_register.submit');
                 Route::get('/info', 'ChannelController@shopInfo')->name('channel.shop_info');
                 Route::get('/product01', 'ChannelController@shopProduct01')->name('channel.shop_product01');
                 Route::get('/product02', 'ChannelController@shopProduct02')->name('channel.shop_product02');
                 Route::get('/community', 'ChannelController@shopCommunity')->name('channel.shop_community');
 
                 Route::get('/community/register', 'ChannelController@communityRegister')->name('channel.community.register');
-                Route::get('/community/view', 'ChannelController@communityView')->name('channel.community.view');
-                Route::get('/community/update', 'ChannelController@communityUpdate')->name('channel.community.update');
-                Route::get('/info-update', 'ChannelController@infoUpdate')->name('channel.info_update');
+                Route::post('/community/register', 'ChannelController@communityRegisterSubmit')->name('channel.community.register.submit');
+                Route::get('/community/view/{id}', 'ChannelController@communityView')->name('channel.community.view');
+                Route::get('/community/update/{id}', 'ChannelController@communityUpdate')->name('channel.community.update');
+                Route::post('/community/update/{id}', 'ChannelController@communityUpdateSubmit')->name('channel.community.update.submit');
+                Route::post('/community/delete/{id}', 'ChannelController@communityDelete')->name('channel.community.delete');
+                Route::get('/info-update/{id}', 'ChannelController@infoUpdate')->name('channel.info_update');
+                Route::post('/info-update/{id}', 'ChannelController@infoUpdateSubmit')->name('channel.info_update.submit');
 
                 Route::post('/product/own/store', 'ChannelProductController@storeOwnProduct')->name('channel.product.own.store');
                 Route::post('/product/public/store', 'ChannelProductController@storePublicProduct')->name('channel.product.public.store');
                 Route::post('/product/partial/store', 'ChannelProductController@storePartialProduct')->name('channel.product.partial.store');
                 Route::post('/product/partial/request', 'ChannelProductController@requestPartialProduct')->name('channel.product.partial.request');
+                Route::post('/product/status/update', 'ChannelProductController@updateProductStatus')->name('channel.product.status.update');
+                Route::post('/product/request/update', 'ChannelProductController@updateRequestStatus')->name('channel.product.request.update');
+                Route::get('/product/edit/{id}', 'ChannelProductController@editShopProduct')->name('channel.product.edit');
+                Route::post('/product/edit/{id}', 'ChannelProductController@updateShopProduct')->name('channel.product.update');
             });
 
             // Product Management (Sub02)
@@ -304,6 +321,13 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
                 Route::get('/public', 'ChannelController@productPublic')->name('channel.product_public');
                 Route::get('/partial', 'ChannelController@productPartial')->name('channel.product_partial');
                 Route::get('/request', 'ChannelController@productRequest')->name('channel.product_request');
+
+                // Base Product Management actions
+                Route::get('/base/detail/{id}', 'ChannelProductController@getBaseProductDetail')->name('channel.product.base.detail');
+                Route::get('/base/edit/{id}', 'ChannelProductController@editBaseProduct')->name('channel.product.base.edit');
+                Route::post('/base/update/{id}', 'ChannelProductController@updateBaseProduct')->name('channel.product.base.update');
+                Route::post('/base/delete/{id}', 'ChannelProductController@deleteBaseProduct')->name('channel.product.base.delete');
+                Route::post('/base/copy/{id}', 'ChannelProductController@copyBaseProduct')->name('channel.product.base.copy');
             });
 
             // Order Management (Sub04)
@@ -323,6 +347,7 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
             // Settlement Management (Sub05)
             Route::prefix('settlement')->group(function () {
                 Route::get('/list', 'ChannelSettlementController@index')->name('channel.settlement.list');
+                Route::get('/view/{period}', 'ChannelSettlementController@view')->name('channel.settlement.view');
             });
         });
 
@@ -330,7 +355,17 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
         Route::prefix('settings')->group(function () {
             Route::get('/delivery', 'ChannelController@deliveryChargeList')->name('channel.delivery.list');
             Route::get('/refund', 'ChannelController@cancelRefundList')->name('channel.refund.list');
+            
+            // 취소/환불 정책 CRUD
+            Route::post('/refund/store', 'ChannelController@storeCancelRefundPolicy')->name('channel.refund.store');
+            Route::get('/refund/{id}', 'ChannelController@getCancelRefundPolicy')->name('channel.refund.get');
+            Route::post('/refund/{id}/update', 'ChannelController@updateCancelRefundPolicy')->name('channel.refund.update');
+            Route::post('/refund/{id}/delete', 'ChannelController@deleteCancelRefundPolicy')->name('channel.refund.delete');
+            Route::post('/refund/{id}/copy', 'ChannelController@copyCancelRefundPolicy')->name('channel.refund.copy');
+            
             Route::get('/info', 'ChannelController@infoManagement')->name('channel.info.management');
+            Route::post('/info/update', 'ChannelController@updateInfo')->name('channel.info.update');
+            Route::post('/update-password', 'ChannelController@updatePassword')->name('channel.update_password');
             Route::get('/order-manager', 'ChannelController@orderManagerList')->name('channel.order.manager');
             Route::get('/points', 'ChannelController@pointList')->name('channel.point.list');
             Route::get('/sub-accounts', 'ChannelController@subList')->name('channel.sub_accounts.list');
@@ -369,6 +404,9 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
 
         // 찜한 상품 목록
         Route::get('/wishlist', 'UserController@wishlist')->name('mypage.wishlist');
+
+        // 쿠폰 목록 (PPT Slide 48)
+        Route::get('/coupon', 'UserController@couponList')->name('mypage.coupon');
     });
 
 });

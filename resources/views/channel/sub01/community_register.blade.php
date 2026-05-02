@@ -24,89 +24,164 @@
                         <li><a href="#" class="on"><span>커뮤니티</span></a></li>
                     </ul>
                 </div>
+
+                @if ($errors->any())
+                    <div class="alert alert-danger"
+                        style="margin: 20px; padding: 15px; background: #f8d7da; border: 1px solid #f5c6cb; border-radius: 4px; color: #721c24;">
+                        <ul style="margin: 0; padding-left: 20px;">
+                            @foreach ($errors->all() as $error)
+                                <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+
+                @if (Session::has('success_message'))
+                    <div class="alert alert-success"
+                        style="margin: 20px; padding: 15px; background: #d4edda; border: 1px solid #c3e6cb; border-radius: 4px; color: #155724;">
+                        {{ Session::get('success_message') }}
+                    </div>
+                @endif
+
                 <div class="conbx">
                     <div class="con_w">
-                        <div class="tb01">
-                            <table>
-                                <colgroup>
-                                    <col width="160px">
-                                    <col width="">
-                                    <col width="160px">
-                                    <col width="">
-                                </colgroup>
-                                <tbody class="textL">
-                                    <tr>
-                                        <th class="w160"><span>등록일</span></th>
-                                        <td>0000.00.00</td>
-                                        <th class="w160"><span>작성자</span></th>
-                                        <td>
-                                            <input type="text" value="" required="required" placeholder="Shop 채널명">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th class="w160"><span>분류</span></th>
-                                        <td colspan="3">
-                                            <ul class="chk01">
-                                                <li>
-                                                    <input type="radio" name="radio1" id="radio1_1" checked="">
-                                                    <label for="radio1_1">공지</label>
-                                                </li>
-                                                <li>
-                                                    <input type="radio" name="radio1" id="radio1_2">
-                                                    <label for="radio1_2">일반</label>
-                                                </li>
-                                            </ul>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th class="w160"><span>제목</span></th>
-                                        <td colspan="3">
-                                            <input type="text" value="" required="required" placeholder="게시판 제목입니다">
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th class="w160"><span>내용</span></th>
-                                        <td colspan="3">
-                                            <textarea class="h2" value="" required="required"
-                                                placeholder="게시판 내용입니다"></textarea>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <th class="w160"><span>첨부파일</span></th>
-                                        <td colspan="3">
-                                            <div class="fileBox">
-                                                <input type="text" class="fileName" readonly="readonly">
-                                                <label for="uploadBtn" class="btn_file">찾아보기</label>
-                                                <input type="file" id="uploadBtn" class="uploadBtn" name="bbs_file1">
-                                                <div class="del_btn">삭제</div>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                        <form action="{{ route('channel.community.register.submit') }}" method="POST"
+                            enctype="multipart/form-data" id="communityForm">
+                            @csrf
+                            <input type="hidden" name="shop_id" value="{{ request('shop_id') }}">
 
-                        <div class="btm_btn mt10">
-                            <a href="{{ route('channel.community') }}" class="col5">목록</a>
-                            <a href="#">등록하기</a>
-                        </div>
+                            <div class="tb01">
+                                <table>
+                                    <colgroup>
+                                        <col width="160px">
+                                        <col width="">
+                                        <col width="160px">
+                                        <col width="">
+                                    </colgroup>
+                                    <tbody class="textL">
+                                        <tr>
+                                            <th class="w160"><span>등록일</span></th>
+                                            <td>{{ date('Y.m.d') }}</td>
+                                            <th class="w160"><span>작성자</span></th>
+                                            <td>
+                                                <input type="text" name="author"
+                                                    value="{{ Auth::guard('admin')->user()->name ?? '' }}"
+                                                    required="required" placeholder="Shop 채널명" readonly>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th class="w160"><span>분류</span></th>
+                                            <td colspan="3">
+                                                <ul class="chk01">
+                                                    <li>
+                                                        <input type="radio" name="type" id="radio1_1" value="notice"
+                                                            checked="">
+                                                        <label for="radio1_1">공지</label>
+                                                    </li>
+                                                    <li>
+                                                        <input type="radio" name="type" id="radio1_2" value="general">
+                                                        <label for="radio1_2">일반</label>
+                                                    </li>
+                                                </ul>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th class="w160"><span>제목</span></th>
+                                            <td colspan="3">
+                                                <input type="text" name="title" value="" required="required"
+                                                    placeholder="게시판 제목입니다">
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th class="w160"><span>내용</span></th>
+                                            <td colspan="3">
+                                                <textarea name="content" id="content" class="h2" required="required"
+                                                    placeholder="게시판 내용입니다"></textarea>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th class="w160"><span>첨부파일</span></th>
+                                            <td colspan="3">
+                                                <div class="fileBox">
+                                                    <input type="text" class="fileName" readonly="readonly">
+                                                    <label for="uploadBtn" class="btn_file">찾아보기</label>
+                                                    <input type="file" id="uploadBtn" class="uploadBtn" name="attachment">
+                                                    <div class="del_btn">삭제</div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="btm_btn mt10">
+                                <a href="{{ route('channel.shop_community', ['shop_id' => request('shop_id')]) }}"
+                                    class="col5">목록</a>
+                                <a href="#" id="submitCommunityForm">등록하기</a>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     </div>
+
+    <!-- CKEditor CDN -->
+    <script src="https://cdn.ckeditor.com/4.22.1/full/ckeditor.js"></script>
+
     <script type="text/javascript">
-        /* 파일 */
-        var uploadFile = $('.fileBox .uploadBtn');
-        uploadFile.on('change', function () {
-            if (window.FileReader) {
-                var filename = $(this)[0].files[0].name;
-            } else {
-                var filename = $(this).val().split('/').pop().split('\\').pop();
-            }
-            $(this).parents('.fileBox').find('.fileName').val(filename);
-            $(this).parents('.fileBox').find('.fileName').addClass("on");
+        $(document).ready(function () {
+            // CKEditor 초기화
+            CKEDITOR.replace('content', {
+                height: 400,
+                language: 'ko',
+                versionCheck: false,
+                toolbar: [
+                    { name: 'document', items: ['Source', '-', 'Preview'] },
+                    { name: 'clipboard', items: ['Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo'] },
+                    '/',
+                    { name: 'basicstyles', items: ['Bold', 'Italic', 'Underline', 'Strike', '-', 'RemoveFormat'] },
+                    { name: 'paragraph', items: ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'Blockquote'] },
+                    { name: 'links', items: ['Link', 'Unlink'] },
+                    { name: 'insert', items: ['Image', 'Table', 'HorizontalRule'] },
+                    '/',
+                    { name: 'styles', items: ['Format', 'Font', 'FontSize'] },
+                    { name: 'colors', items: ['TextColor', 'BGColor'] },
+                    { name: 'tools', items: ['Maximize'] }
+                ]
+            });
+
+            /* 파일 */
+            var uploadFile = $('.fileBox .uploadBtn');
+            uploadFile.on('change', function () {
+                if (window.FileReader) {
+                    var filename = $(this)[0].files[0].name;
+                } else {
+                    var filename = $(this).val().split('/').pop().split('\\').pop();
+                }
+                $(this).parents('.fileBox').find('.fileName').val(filename);
+                $(this).parents('.fileBox').find('.fileName').addClass("on");
+            });
+
+            // 파일 삭제 버튼
+            $('.fileBox .del_btn').on('click', function () {
+                $(this).siblings('.fileName').val('').removeClass('on');
+                $(this).siblings('.uploadBtn').val('');
+            });
+
+            // 등록하기 버튼
+            $('#submitCommunityForm').on('click', function (e) {
+                e.preventDefault();
+
+                // CKEditor 내용을 textarea에 업데이트
+                for (var instance in CKEDITOR.instances) {
+                    CKEDITOR.instances[instance].updateElement();
+                }
+
+                // 폼 제출
+                $('#communityForm').submit();
+            });
         });
     </script>
 @endsection

@@ -309,6 +309,7 @@
 
                 <form id="form_product_partial_register">
                     <input type="hidden" name="product_id" id="partial_product_id" value="">
+                    <input type="hidden" name="shop_id" value="{{ $shopId }}">
                     <div class="conbx">
                         <div class="con_w">
                             <div class="ttl01">판매 상품 코드</div>

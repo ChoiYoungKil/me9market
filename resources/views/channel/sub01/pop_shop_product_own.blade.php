@@ -75,9 +75,9 @@
 
                     <div class="con_w">
                         <div class="list_top1 btn">
-                            <div class="count">총 <strong>00</strong> 건</div>
+                            <div class="count">총 <strong>{{ $ownProducts->total() }}</strong> 건</div>
                             <div class="btn_bx">
-                                <a href="../sub02/product_own.php" class="btn01 col2">상품 관리</a>
+                                <a href="{{ route('channel.product_own') }}" class="btn01 col2">상품 관리</a>
                             </div>
                         </div>
 
@@ -85,7 +85,7 @@
                             <table>
                                 <colgroup>
                                     <col width="70px">
-                                    <col width="80px">
+                                    <col width="120px">
                                     <col width="">
                                     <col width="80px">
                                     <col width="80px">
@@ -105,83 +105,73 @@
                                         <th>상품추가</th>
                                     </tr>
                                 </thead>
-                                @php
-                                    $ownProducts = [
-                                        [
-                                            'id' => 201,
-                                            'code' => 'a20112',
-                                            'name' => 'Mock Product 111111',
-                                            'category' => '대분류 > 중분류 > 소분류',
-                                            'img' => '../images/sub/thum01.jpg',
-                                            'status' => '판매',
-                                            'constraint_type' => '없음',
-                                            'stock_text' => '수량제한없음',
-                                            'stock' => '99999',
-                                            'price' => '2,000',
-                                            'price_constraint' => '1,500 원 ~ 5,000 원',
-                                            'profit_constraint' => '판매 개당 500 원',
-                                            'purchase_limit' => '제한 없음',
-                                            'sales_period' => '무기한'
-                                        ],
-                                        [
-                                            'id' => 202,
-                                            'code' => 'a20393',
-                                            'name' => 'Mock Product 222222',
-                                            'category' => '대분류 > 중분류 > 소분류',
-                                            'img' => '../images/sub/thum01.jpg',
-                                            'status' => '판매',
-                                            'constraint_type' => '범위형',
-                                            'stock_text' => '10,000개',
-                                            'stock' => '10000',
-                                            'price' => '5,000',
-                                            'price_constraint' => '4,000 원 ~ 8,000 원',
-                                            'profit_constraint' => '판매 개당 1,000 원',
-                                            'purchase_limit' => '1회 100개',
-                                            'sales_period' => '2024-12-31 까지'
-                                        ]
-                                    ];
-                                @endphp
                                 <tbody>
-                                    @foreach($ownProducts as $product)
+                                    @forelse($ownProducts as $index => $product)
+                                        @php
+                                            $mainImage = $product->images->first();
+                                            $imageUrl = $mainImage ? asset('front/images/product_images/small/' . $mainImage->image) : asset('channel_assets/images/sub/thum01.jpg');
+
+                                            // 카테고리 경로
+                                            $categoryPath = '';
+                                            if ($product->category) {
+                                                $categoryPath = $product->category->category_name;
+                                            }
+
+                                            // 재고 표시
+                                            $stockDisplay = '수량제한없음';
+                                            if ($product->stock) {
+                                                $stockDisplay = number_format($product->stock) . '개';
+                                            }
+                                        @endphp
                                         <tr>
-                                            <td>00</td>
-                                            <td>{{ $product['code'] }}</td>
+                                            <td>{{ $ownProducts->total() - ($ownProducts->currentPage() - 1) * $ownProducts->perPage() - $index }}
+                                            </td>
+                                            <td>{{ $product->product_code }}</td>
                                             <td class="t_l">
                                                 <div class="thum01">
-                                                    <div class="img_bx" style="background-image:url({{ $product['img'] }})">
-                                                    </div>
+                                                    <div class="img_bx" style="background-image:url({{ $imageUrl }})"></div>
                                                     <div class="txt_bx">
-                                                        <p>{{ $product['category'] }}</p>
-                                                        <strong>{{ $product['name'] }}</strong>
+                                                        <p>{{ $categoryPath }}</p>
+                                                        <strong>{{ $product->product_name }}</strong>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td>{{ $product['status'] }}</td>
-                                            <td>{{ $product['constraint_type'] }}</td>
-                                            <td>{!! nl2br($product['stock_text']) !!}</td>
-                                            <td class="t_r">{{ $product['price'] }}원</td>
+                                            <td>판매</td>
+                                            <td>없음</td>
+                                            <td>{{ $stockDisplay }}</td>
+                                            <td class="t_r">{{ number_format($product->product_price) }}원</td>
                                             <td>
-                                                <a href="#" class="btn02 col5"
-                                                    onclick='openProductRegisterModal("pop1_1_2", @json($product)); return false;'>추가하기</a>
+                                                <a href="#" class="btn02 col5" onclick='openProductRegisterModal("pop1_1_2", {
+                                                            "id": {{ $product->id }},
+                                                            "code": "{{ $product->product_code }}",
+                                                            "name": "{{ addslashes($product->product_name) }}",
+                                                            "category": "{{ addslashes($categoryPath) }}",
+                                                            "img": "{{ $imageUrl }}",
+                                                            "status": "판매",
+                                                            "constraint_type": "없음",
+                                                            "stock_text": "{{ $stockDisplay }}",
+                                                            "stock": "{{ $product->stock ?? 99999 }}",
+                                                            "price": "{{ number_format($product->product_price) }}",
+                                                            "price_constraint": "제약 없음",
+                                                            "profit_constraint": "제약 없음",
+                                                            "purchase_limit": "제한 없음",
+                                                            "sales_period": "무기한"
+                                                        }); return false;'>추가하기</a>
                                             </td>
                                         </tr>
-                                    @endforeach
+                                    @empty
+                                        <tr>
+                                            <td colspan="8" class="t_c" style="padding: 50px 0;">
+                                                추가 가능한 지사 상품이 없습니다.
+                                            </td>
+                                        </tr>
+                                    @endforelse
                                 </tbody>
                             </table>
                         </div>
 
-                        <!--<div class="no_data">등록된 데이터가 없습니다.</div>-->
-
                         <div class="page_bx1">
-                            <a href="#" class="page_first">first</a>
-                            <a href="#" class="page_prev">prev</a>
-                            <a href="#" class="num on">1</a>
-                            <a href="#" class="num">2</a>
-                            <a href="#" class="num">3</a>
-                            <a href="#" class="num">4</a>
-                            <a href="#" class="num">5</a>
-                            <a href="#" class="page_next">next</a>
-                            <a href="#" class="page_last">last</a>
+                            {{ $ownProducts->appends(['shop_id' => $shopId])->links() }}
                         </div>
                     </div>
                 </div>
@@ -202,6 +192,7 @@
 
                 <form id="form_product_own_register">
                     <input type="hidden" name="product_id" id="own_product_id" value="">
+                    <input type="hidden" name="shop_id" value="{{ $shopId }}">
                     <div class="conbx">
                         <div class="con_w">
                             <div class="ttl01">판매 상품 코드</div>

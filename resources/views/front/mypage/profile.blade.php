@@ -35,7 +35,7 @@
                                     </tr>
                                     <tr>
                                         <th class="w160"><span>아이디</span></th>
-                                        <td>{{ Auth::user()->email }}</td>
+                                        <td>{{ Auth::user()->username }}</td>
                                         <th class="w160"><span>비밀번호</span></th>
                                         <td><a class="btn01 pop_btn" href="#" data-pop="pop1_1">비밀번호변경</a></td>
                                     </tr>
