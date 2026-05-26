@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('country')->after('state')->nullable();
             $table->string('pincode')->after('country')->nullable();
             $table->string('mobile')->after('pincode')->nullable();
-            $table->tinyInteger('status')->after('password'); // 0 is inactive/disabled/deactivated, 1 is active/enabled/activated
+            $table->tinyInteger('status')->default(1)->after('password'); // 0 is inactive/disabled/deactivated, 1 is active/enabled/activated
         });
     }
 
