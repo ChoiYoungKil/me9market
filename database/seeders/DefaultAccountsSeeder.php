@@ -29,11 +29,13 @@ class DefaultAccountsSeeder extends Seeder
                 'email'     => 'admin@admin.com',
                 'password'  => Hash::make('123456'), // bcrypt 패스워드 설정
                 'image'     => '',
+                'confirm'   => 'Yes',
                 'status'    => 1,
             ]);
         } else {
             $admin->update([
                 'password' => Hash::make('123456'),
+                'confirm'   => 'Yes',
                 'status'   => 1,
             ]);
         }
@@ -51,6 +53,12 @@ class DefaultAccountsSeeder extends Seeder
                 'pincode' => '12345',
                 'mobile'  => '01011112222',
                 'email'   => 'john@admin.com',
+                'confirm' => 'Yes',
+                'status'  => 1,
+            ]);
+        } else {
+            $vendor->update([
+                'confirm' => 'Yes',
                 'status'  => 1,
             ]);
         }
@@ -67,11 +75,13 @@ class DefaultAccountsSeeder extends Seeder
                 'email'     => 'john@admin.com',
                 'password'  => Hash::make('123456'),
                 'image'     => '',
+                'confirm'   => 'Yes',
                 'status'    => 1,
             ]);
         } else {
             $vendorAdmin->update([
                 'password' => Hash::make('123456'),
+                'confirm'   => 'Yes',
                 'status'   => 1,
                 'vendor_id' => 1,
             ]);
