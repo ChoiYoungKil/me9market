@@ -93,6 +93,7 @@ class DefaultAccountsSeeder extends Seeder
         if (!$user) {
             User::create([
                 'name'     => '일반사용자',
+                'username' => 'user@user.com',
                 'email'    => 'user@user.com',
                 'password' => Hash::make('123456'),
                 'mobile'   => '01033334444',
@@ -105,6 +106,7 @@ class DefaultAccountsSeeder extends Seeder
             ]);
         } else {
             $user->update([
+                'username' => 'user@user.com',
                 'password' => Hash::make('123456'),
                 'status'   => 1,
             ]);
