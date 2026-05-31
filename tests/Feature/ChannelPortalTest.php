@@ -18,7 +18,7 @@ class ChannelPortalTest extends TestCase
     {
         $response = $this->get('/channel');
 
-        $response->assertRedirect('/admin/login');
+        $response->assertRedirect(route('channel.login'));
     }
 
     public function test_authenticated_admin_can_access_channel_portal()
