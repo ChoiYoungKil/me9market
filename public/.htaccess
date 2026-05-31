@@ -15,7 +15,9 @@
     RewriteRule ^ %1 [L,R=301]
 
     # Send Requests To Front Controller...
-    RewriteCond %{REQUEST_FILENAME} !-d
+    # /admin 디렉토리 충돌 방지: 파일이 아닌 요청 중 /admin 경로이거나 디렉토리가 아닌 경우 라라벨로 전송
     RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d [OR]
+    RewriteCond %{REQUEST_URI} ^/admin
     RewriteRule ^ index.php [L]
 </IfModule>
