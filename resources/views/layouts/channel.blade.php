@@ -58,8 +58,8 @@
 			</div>
 
 			<div class="r_bx">
-				<div class="name">[상호명] {{ Auth::user()->name ?? 'Seller' }}</div>
-				<a href="#" class="btn icon1"></a>
+				<div class="name">[상호명] {{ Auth::guard('admin')->user()->name ?? 'Seller' }}</div>
+				<a href="/admin/logout" class="btn icon1" title="로그아웃"></a>
 				<a href="#" class="btn icon2"></a>
 				<div class="r_menu">
 					<div class="r_menu_btn"><span>채널목록</span></div>
