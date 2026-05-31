@@ -1,18 +1,50 @@
 /node_modules
-/storage/*.key
 /vendor
- .env
- .env.backup
- Me9_FileMap.xlsx
- M9-SB-Ver0.1.2.pptx
+.env
+.env.backup
+.env.production
+.env.*
+*.log
+.DS_Store
+Thumbs.db
+
+# Reports and Documents (특정 보고서 및 문서 파일)
+M9-SB-Ver0.1.2.pptx
+M9-SB-Ver2.0.0.pptx
+Me9_업무보고_260211.txt
+Me9_업무보고_260211.docx
+Me9_업무보고_260316.docx
+Me9_업무보고_260217.txt
+Me9_업무보고_260316.docx
+Me9_업무보고_260316.txt
+Me9_업무보고_260415.txt
+Me9_작업진척률_260211.xlsx
+Me9_작업진척률_상세_260217.txt
+Me9_통합_업무보고서_260217.txt
+Me9_FileMap.xlsx
+
+# PHP & Testing Cache
+.phpactor.json
 .phpunit.result.cache
+/.phpunit.cache
+
+# IDE and Editors
+/.codex
+/.cursor/
+/.idea
+/.nova
+/.vscode
+/.zed
+
+# Build & Laravel specific
+/auth.json
+/public/build
+/public/fonts-manifest.dev.json
+/public/hot
+/public/storage
+/storage/*.key
+/storage/pail
+
+_ide_helper.php
 Homestead.json
 Homestead.yaml
-auth.json
-npm-debug.log
-yarn-error.log
-/.idea
-/.vscode
-/.phpunit.cache
-/public/build
-
