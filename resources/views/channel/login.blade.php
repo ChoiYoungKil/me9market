@@ -5,7 +5,12 @@
         <div class="box box1">
             <div class="inner_bx">
                 <img src="{{ asset('channel_assets/images/common/logo1.png') }}" class="logo">
-                <form action="{{ route('admin.login') }}" method="POST">
+                @if (Session::has('error_message'))
+                    <div style="color: #ff4d4d; font-size: 0.85rem; text-align: center; margin-bottom: 15px;">
+                        {{ Session::get('error_message') }}
+                    </div>
+                @endif
+                <form action="{{ route('channel.login.submit') }}" method="POST">
                     @csrf
                     <div class="f_bx">
                         <input class="mt0" type="text" name="email" placeholder="아이디를 입력 해 주세요" required>

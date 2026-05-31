@@ -21,6 +21,50 @@ class ChannelPortalTest extends TestCase
         $response->assertRedirect(route('channel.login'));
     }
 
+    public function test_vendor_can_login_via_channel_portal()
+    {
+        $admin = new Admin;
+        $admin->name = 'Test Vendor';
+        $admin->type = 'vendor';
+        $admin->vendor_id = 1;
+        $admin->mobile = '01012345678';
+        $admin->email = 'john@admin.com';
+        $admin->password = bcrypt('123456');
+        $admin->confirm = 'Yes';
+        $admin->status = 1;
+        $admin->save();
+
+        $response = $this->post('/channel/login', [
+            'email' => 'john@admin.com',
+            'password' => '123456',
+        ]);
+
+        $response->assertRedirect(route('channel.index'));
+        $this->assertAuthenticatedAs($admin, 'admin');
+    }
+
+    public function test_non_vendor_cannot_login_via_channel_portal()
+    {
+        $admin = new Admin;
+        $admin->name = 'Test Superadmin';
+        $admin->type = 'superadmin';
+        $admin->vendor_id = 0;
+        $admin->mobile = '01012345678';
+        $admin->email = 'admin@admin.com';
+        $admin->password = bcrypt('123456');
+        $admin->confirm = 'Yes';
+        $admin->status = 1;
+        $admin->save();
+
+        $response = $this->post('/channel/login', [
+            'email' => 'admin@admin.com',
+            'password' => '123456',
+        ]);
+
+        $response->assertRedirect(route('channel.login'));
+        $this->assertGuest('admin');
+    }
+
     public function test_authenticated_admin_can_access_channel_portal()
     {
         $admin = new Admin;

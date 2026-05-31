@@ -93,6 +93,53 @@ class ChannelController extends Controller
         return view('channel.login');
     }
 
+    public function loginUser(Request $request)
+    {
+        if (Auth::guard('admin')->check()) {
+            if (Auth::guard('admin')->user()->type == 'vendor') {
+                return redirect()->route('channel.index');
+            }
+            return redirect('/admin/dashboard');
+        }
+
+        $rules = [
+            'email'    => 'required|email|max:255',
+            'password' => 'required',
+        ];
+
+        $customMessages = [
+            'email.required'    => '이메일 주소를 입력해 주세요!',
+            'email.email'       => '유효한 이메일 주소를 입력해 주세요',
+            'password.required' => '비밀번호를 입력해 주세요!',
+        ];
+
+        $request->validate($rules, $customMessages);
+
+        // Attempt login using 'admin' guard
+        if (Auth::guard('admin')->attempt(['email' => $request->email, 'password' => $request->password])) {
+            $user = Auth::guard('admin')->user();
+
+            if ($user->type !== 'vendor') {
+                Auth::guard('admin')->logout();
+                return redirect()->route('channel.login')->with('error_message', '판매자 전용 로그인 페이지입니다. 최고관리자 계정은 로그인할 수 없습니다.');
+            }
+
+            if ($user->confirm == 'No') {
+                Auth::guard('admin')->logout();
+                return redirect()->route('channel.login')->with('error_message', '판매자 계정 활성화를 위해 이메일 인증을 완료해 주세요.');
+            }
+
+            if ($user->status == 0) {
+                Auth::guard('admin')->logout();
+                return redirect()->route('channel.login')->with('error_message', '비활성화된 판매자 계정입니다. 관리자 승인을 대기해 주세요.');
+            }
+
+            return redirect()->route('channel.index');
+        } else {
+            return redirect()->route('channel.login')->with('error_message', '이메일 또는 비밀번호가 일치하지 않습니다.');
+        }
+    }
+
     // 상점 관리 (Sub01)
     public function shopList(Request $request)
     {
