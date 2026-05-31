@@ -22,7 +22,7 @@
                         {{ Session::get('success_message') }}
                     </div>
                 @endif
-                <form action="{{ route('front.member.login.submit') }}" method="POST">
+                <form action="/member/login" method="POST">
                     @csrf
                     <div class="f_bx">
                         <input class="mt0" type="text" name="login_id" placeholder="아이디를 입력해 주세요" required>

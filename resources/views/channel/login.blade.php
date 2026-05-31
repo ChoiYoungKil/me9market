@@ -10,7 +10,7 @@
                         {{ Session::get('error_message') }}
                     </div>
                 @endif
-                <form action="{{ route('channel.login.submit') }}" method="POST">
+                <form action="/channel/login" method="POST">
                     @csrf
                     <div class="f_bx">
                         <input class="mt0" type="text" name="email" placeholder="아이디를 입력 해 주세요" required>

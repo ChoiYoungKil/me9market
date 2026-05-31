@@ -70,7 +70,7 @@
                     <div class="box box1">
                         <div class="inner_bx">
                             <img src="{{ asset('master_assets/images/common/logo1.png') }}" class="logo">
-                            <form action="{{ route('admin.login') }}" method="POST">
+                            <form action="/admin/login" method="POST">
                                 @csrf
                                 <div class="f_bx">
                                     <input class="mt0" type="text" name="email" placeholder="아이디를 입력 해 주세요"
