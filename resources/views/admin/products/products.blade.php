@@ -75,8 +75,8 @@
                                                             src="{{ asset('front/images/product_images/small/no-image.png') }}">
                                                     @endif
                                                 </td>
-                                                <td>{{ $product['category']['category_name'] }}</td>
-                                                <td>{{ $product['section']['name'] }}</td>
+                                                <td>{{ $product['category']['category_name'] ?? '카테고리 없음' }}</td>
+                                                <td>{{ $product['section']['name'] ?? '섹션 없음' }}</td>
                                                 <td>
                                                     @if ($product['admin_type'] == 'vendor')
                                                         <a target="_blank"
