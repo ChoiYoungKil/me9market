@@ -24,6 +24,28 @@ Route::redirect('/login', '/member/login');
 
 Route::get('/test-route', function() { return 'Test Route OK'; });
 
+Route::get('/session-test', function() {
+    $sessionWritable = is_writable(storage_path('framework/sessions'));
+    $storageWritable = is_writable(storage_path());
+    
+    $sessionVal = session('test_key');
+    session(['test_key' => 'Hello-' . time()]);
+    
+    $info = [
+        'Host (Request)' => request()->getHost(),
+        'URL (Current)' => request()->fullUrl(),
+        'Session Writable' => $sessionWritable ? 'Yes' : 'No',
+        'Storage Writable' => $storageWritable ? 'Yes' : 'No',
+        'Session Value (from last request)' => $sessionVal ?? 'NONE (First visit or session lost)',
+        'Session Driver' => config('session.driver'),
+        'Session Domain' => config('session.domain') ?? 'NULL',
+        'Session Secure' => config('session.secure') ? 'Yes' : 'No',
+        'Cookies Received' => request()->cookies->all(),
+    ];
+    
+    return response()->json($info);
+});
+
 
 // 첫째: 관리자 패널 라우트:
 // 웹사이트 'ADMIN' 섹션: 'admin'으로 시작하는 라우트 그룹 (Admin 라우트 그룹)    // 참고: 모든 라우트는 'admin/'으로 시작하므로 접두어 내부에서는 '/admin'을 생략하고 정의합니다!!
