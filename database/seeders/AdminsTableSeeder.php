@@ -30,6 +30,7 @@ class AdminsTableSeeder extends Seeder
                 'email'     => 'admin@admin.com',
                 'password'  => '$2a$12$xvkjSScUPRexfcJTAy9ATutIeGUuRgJrjDIdL/.xlrddEvRZINpeC', // This is the encryption of '123456'    // using https://bcrypt-generator.com/
                 'image'     => '',
+                'confirm'   => 'Yes',
                 'status'    => 1,
             ],
 
@@ -43,6 +44,7 @@ class AdminsTableSeeder extends Seeder
                 'email'     => 'john@admin.com',
                 'password'  => '$2a$12$xvkjSScUPRexfcJTAy9ATutIeGUuRgJrjDIdL/.xlrddEvRZINpeC', // This is the encryption of '123456'    // using https://bcrypt-generator.com/
                 'image'     => '',
+                'confirm'   => 'Yes',
                 'status'    => 1, // Our authentication logic in the login() method in the AdminController won't allow this admin logging in in case of 'status' = 0
             ],
         ];

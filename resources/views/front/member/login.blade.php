@@ -12,6 +12,16 @@
         <div class="box box1">
             <div class="inner_bx">
                 <div class="ttl">로그인</div>
+                @if (Session::has('error_message'))
+                    <div style="color: #ff4d4d; font-size: 0.85rem; text-align: center; margin-bottom: 15px;">
+                        {{ Session::get('error_message') }}
+                    </div>
+                @endif
+                @if (Session::has('success_message'))
+                    <div style="color: #2ed573; font-size: 0.85rem; text-align: center; margin-bottom: 15px;">
+                        {{ Session::get('success_message') }}
+                    </div>
+                @endif
                 <form action="{{ route('front.member.login.submit') }}" method="POST">
                     @csrf
                     <div class="f_bx">
