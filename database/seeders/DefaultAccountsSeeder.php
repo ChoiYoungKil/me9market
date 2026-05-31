@@ -1,0 +1,103 @@
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use App\Models\Admin;
+use App\Models\User;
+use App\Models\Vendor;
+use Illuminate\Support\Facades\Hash;
+
+class DefaultAccountsSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     *
+     * @return void
+     */
+    public function run()
+    {
+        // 1. 최고 관리자 (Superadmin)
+        // 기존에 admin@admin.com이 있는지 확인 후 생성/업데이트
+        $admin = Admin::where('email', 'admin@admin.com')->first();
+        if (!$admin) {
+            Admin::create([
+                'name'      => 'System Administrator',
+                'type'      => 'superadmin',
+                'vendor_id' => 0,
+                'mobile'    => '01000000000',
+                'email'     => 'admin@admin.com',
+                'password'  => Hash::make('123456'), // bcrypt 패스워드 설정
+                'image'     => '',
+                'status'    => 1,
+            ]);
+        } else {
+            $admin->update([
+                'password' => Hash::make('123456'),
+                'status'   => 1,
+            ]);
+        }
+
+        // 2. 판매자 벤더 정보 생성 (vendor_id = 1 대응)
+        $vendor = Vendor::find(1);
+        if (!$vendor) {
+            Vendor::create([
+                'id'      => 1,
+                'name'    => 'Default Shop Vendor',
+                'address' => 'Seoul, Korea',
+                'city'    => 'Seoul',
+                'state'   => 'Seoul',
+                'country' => 'Korea',
+                'pincode' => '12345',
+                'mobile'  => '01011112222',
+                'email'   => 'john@admin.com',
+                'status'  => 1,
+            ]);
+        }
+
+        // 3. 채널관리자 (Vendor Admin)
+        // 기존에 john@admin.com이 있는지 확인 후 생성/업데이트
+        $vendorAdmin = Admin::where('email', 'john@admin.com')->first();
+        if (!$vendorAdmin) {
+            Admin::create([
+                'name'      => 'John Singh - Vendor',
+                'type'      => 'vendor',
+                'vendor_id' => 1,
+                'mobile'    => '01011112222',
+                'email'     => 'john@admin.com',
+                'password'  => Hash::make('123456'),
+                'image'     => '',
+                'status'    => 1,
+            ]);
+        } else {
+            $vendorAdmin->update([
+                'password' => Hash::make('123456'),
+                'status'   => 1,
+                'vendor_id' => 1,
+            ]);
+        }
+
+        // 4. 일반 사용자 (User / Member)
+        // 기존에 user@user.com이 있는지 확인 후 생성/업데이트
+        $user = User::where('email', 'user@user.com')->first();
+        if (!$user) {
+            User::create([
+                'name'     => '일반사용자',
+                'email'    => 'user@user.com',
+                'password' => Hash::make('123456'),
+                'mobile'   => '01033334444',
+                'address'  => 'Seoul, Korea',
+                'city'     => 'Seoul',
+                'state'    => 'Seoul',
+                'country'  => 'Korea',
+                'pincode'  => '12345',
+                'status'   => 1,
+            ]);
+        } else {
+            $user->update([
+                'password' => Hash::make('123456'),
+                'status'   => 1,
+            ]);
+        }
+    }
+}

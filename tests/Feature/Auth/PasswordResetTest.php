@@ -3,69 +3,104 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\User;
-use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class PasswordResetTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_reset_password_link_screen_can_be_rendered()
+    public function test_find_id_screen_can_be_rendered()
     {
-        $response = $this->get('/forgot-password');
+        $response = $this->get('/find/id');
 
         $response->assertStatus(200);
     }
 
-    public function test_reset_password_link_can_be_requested()
+    public function test_find_id_succeeds_with_correct_info()
     {
-        Notification::fake();
+        $user = User::factory()->create([
+            'member_number' => 'M9-260528-0001',
+            'email' => 'testuser@example.com',
+            'username' => 'testusername',
+        ]);
 
-        $user = User::factory()->create();
+        $response = $this->post('/find/id', [
+            'member_number' => 'M9-260528-0001',
+            'email' => 'testuser@example.com',
+        ]);
 
-        $this->post('/forgot-password', ['email' => $user->email]);
-
-        Notification::assertSentTo($user, ResetPassword::class);
+        $response->assertStatus(200);
+        $response->assertViewHas('result', [
+            'type' => 'success',
+            'username' => 'testusername',
+        ]);
     }
 
-    public function test_reset_password_screen_can_be_rendered()
+    public function test_find_id_fails_with_incorrect_info()
     {
-        Notification::fake();
+        $user = User::factory()->create([
+            'member_number' => 'M9-260528-0001',
+            'email' => 'testuser@example.com',
+        ]);
 
-        $user = User::factory()->create();
+        $response = $this->post('/find/id', [
+            'member_number' => 'wrong-number',
+            'email' => 'testuser@example.com',
+        ]);
 
-        $this->post('/forgot-password', ['email' => $user->email]);
-
-        Notification::assertSentTo($user, ResetPassword::class, function ($notification) {
-            $response = $this->get('/reset-password/'.$notification->token);
-
-            $response->assertStatus(200);
-
-            return true;
-        });
+        $response->assertStatus(200);
+        $response->assertViewHas('result', [
+            'type' => 'fail',
+            'message' => '일치하는 정보가 없습니다.',
+        ]);
     }
 
-    public function test_password_can_be_reset_with_valid_token()
+    public function test_find_pw_screen_can_be_rendered()
     {
-        Notification::fake();
+        $response = $this->get('/find/pw');
 
-        $user = User::factory()->create();
+        $response->assertStatus(200);
+    }
 
-        $this->post('/forgot-password', ['email' => $user->email]);
+    public function test_find_pw_succeeds_with_correct_info()
+    {
+        $user = User::factory()->create([
+            'username' => 'testusername',
+            'email' => 'testuser@example.com',
+        ]);
 
-        Notification::assertSentTo($user, ResetPassword::class, function ($notification) use ($user) {
-            $response = $this->post('/reset-password', [
-                'token' => $notification->token,
-                'email' => $user->email,
-                'password' => 'password',
-                'password_confirmation' => 'password',
-            ]);
+        $response = $this->post('/find/pw', [
+            'username' => 'testusername',
+            'email' => 'testuser@example.com',
+        ]);
 
-            $response->assertSessionHasNoErrors();
+        $response->assertStatus(200);
+        
+        $result = $response->original->getData()['result'];
+        $this->assertEquals('success', $result['type']);
+        $this->assertNotEmpty($result['temp_password']);
+        
+        $this->assertTrue(Hash::check($result['temp_password'], $user->fresh()->password));
+    }
 
-            return true;
-        });
+    public function test_find_pw_fails_with_incorrect_info()
+    {
+        $user = User::factory()->create([
+            'username' => 'testusername',
+            'email' => 'testuser@example.com',
+        ]);
+
+        $response = $this->post('/find/pw', [
+            'username' => 'wrongusername',
+            'email' => 'testuser@example.com',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertViewHas('result', [
+            'type' => 'fail',
+            'message' => '일치하는 정보가 없습니다.',
+        ]);
     }
 }

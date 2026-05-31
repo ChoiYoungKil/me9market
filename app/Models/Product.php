@@ -23,6 +23,17 @@ class Product extends Model
         return $this->belongsTo('App\Models\Category', 'category_id'); 
     }
 
+    public function parentCategory() {
+        return $this->hasOneThrough(
+            Category::class,
+            Category::class,
+            'id', // Foreign key on intermediate: intermediate.id = products.category_id
+            'id', // Foreign key on target: target.id = intermediate.parent_id
+            'category_id', // Local key on product
+            'parent_id' // Local key on intermediate
+        )->from('categories as parent_categories');
+    }
+
     public function brand() { // 모든 상품은 특정 브랜드에 속합니다.
         return $this->belongsTo('App\Models\Brand', 'brand_id'); 
     }

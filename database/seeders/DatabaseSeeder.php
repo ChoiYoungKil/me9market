@@ -30,6 +30,7 @@ class DatabaseSeeder extends Seeder
         // Database Seeding: Check    AdminsTableSeeder.php    // Calling Additional Seeders: https://laravel.com/docs/9.x/seeding#calling-additional-seeders
         // Databas Seeding
         
+        $this->call(DefaultAccountsSeeder::class);
         $this->call(AdminsTableSeeder::class);
         $this->call(VendorsTableSeeder::class);
         $this->call(VendorsBusinessDetailsTableSeeder::class);

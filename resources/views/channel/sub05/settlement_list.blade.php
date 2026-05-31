@@ -28,6 +28,7 @@
                                     <col width="150px">
                                     <col width="150px">
                                     <col width="100px">
+                                    <col width="100px">
                                 </colgroup>
                                 <thead>
                                     <tr>
@@ -37,6 +38,7 @@
                                         <th>수수료 ({{ $rate }}%)</th>
                                         <th>정산금액</th>
                                         <th>상태</th>
+                                        <th>상세보기</th>
                                     </tr>
                                 </thead>
                                 <tbody>

@@ -299,3 +299,4 @@
         display: none;
     }
 </style>
+@endsection

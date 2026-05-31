@@ -150,8 +150,6 @@
                                 </table>
                             </div>
 
-                            @include('channel.sub01.pop_product_view')
-
                             <!--<div class="no_data">등록된 데이터가 없습니다.</div>-->
 
                             <div class="page_bx1">

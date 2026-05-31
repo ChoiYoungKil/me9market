@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>라우터 및 기능 정의서 - me9market</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #151c2c;
+            --text-color: #f3f4f6;
+            --text-muted: #9ca3af;
+            --accent-color: #3b82f6;
+            --accent-hover: #2563eb;
+            --accent-success: #10b981;
+            --border-color: #1e293b;
+            --shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            --gradient-accent: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', 'Noto Sans KR', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 2rem 1.5rem;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: var(--gradient-accent);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-bottom: 1.5rem;
+        }
+
+        .download-btn-group {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            background: var(--gradient-accent);
+            color: #ffffff;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.6);
+        }
+
+        .btn-secondary {
+            background-color: #1e293b;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: #334155;
+            transform: translateY(-2px);
+        }
+
+        .btn svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+        }
+
+        section {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        h2::before {
+            content: "";
+            display: inline-block;
+            width: 4px;
+            height: 20px;
+            background: var(--gradient-accent);
+            border-radius: 2px;
+        }
+
+        .section-desc {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        th {
+            background-color: #0f172a;
+            color: #ffffff;
+            font-weight: 600;
+            padding: 1rem;
+            border-bottom: 2px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            color: #e2e8f0;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background-color: #1e293b;
+        }
+
+        /* HTTP Method Badges */
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge-get {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .badge-post {
+            background-color: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+
+        .badge-get-post {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(245, 158, 11, 0.2) 100%);
+            color: #38bdf8;
+        }
+
+        /* Route code styles */
+        code {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            color: #f472b6;
+        }
+
+        td code.url {
+            color: #38bdf8;
+            font-weight: 500;
+        }
+
+        td code.controller {
+            color: #a78bfa;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            margin-top: 4rem;
+            padding: 2rem 0;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        @media print {
+            body {
+                background-color: #ffffff;
+                color: #000000;
+                padding: 0;
+            }
+            .container {
+                max-width: 100%;
+            }
+            section {
+                box-shadow: none;
+                border: none;
+                background: none;
+                padding: 0;
+                margin-bottom: 3rem;
+                page-break-inside: avoid;
+            }
+            th {
+                background-color: #f1f5f9;
+                color: #000000;
+                border-bottom: 2px solid #cbd5e1;
+            }
+            td {
+                color: #000000;
+                border-bottom: 1px solid #e2e8f0;
+            }
+            .download-btn-group {
+                display: none;
+            }
+            h1 {
+                background: none;
+                -webkit-text-fill-color: initial;
+                color: #000000;
+            }
+            h2::before {
+                background: #000000;
+            }
+            code {
+                background-color: #f1f5f9;
+                color: #090d16;
+            }
+            .badge-get, .badge-post, .badge-get-post {
+                background: none;
+                border: 1px solid #000000;
+                color: #000000;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Route & Functional Specification</h1>
+            <p class="subtitle">me9market 쇼핑몰 플랫폼 라우터 기준 URL 및 기능 정의서</p>
+            <div class="download-btn-group">
+                <a href="/route_specification.md" download="route_specification.md" class="btn btn-primary">
+                    <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
+                    Markdown 원본 다운로드 (.md)
+                </a>
+                <button onclick="window.print();" class="btn btn-secondary">
+                    <svg viewBox="0 0 24 24"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/></svg>
+                    PDF로 저장 / 인쇄
+                </button>
+                <a href="/route_specification.html" download="route_specification.html" class="btn btn-secondary">
+                    <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                    HTML 파일 다운로드 (.html)
+                </a>
+            </div>
+        </header>
+
+        <!-- Section 1: Admin -->
+        <section>
+            <h2>1. 시스템 관리자 포털 라우트 (`/admin`)</h2>
+            <p class="section-desc">시스템 전체를 통제하고 판매자 가입 승인, 카테고리, 상품, 주문, 정산 수수료 등을 관리하는 최고 관리자 페이지입니다. (가드: <code>admin</code>, 네임스페이스: <code>App\Http\Controllers\Admin</code>)</p>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>URL 경로</th>
+                            <th>라우트 명</th>
+                            <th>매핑 컨트롤러 & 액션</th>
+                            <th>기능 설명</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="badge badge-get-post">GET|POST</span></td>
+                            <td><code class="url">/admin/login</code></td>
+                            <td><code>admin.login</code></td>
+                            <td><code class="controller">AdminController@login</code></td>
+                            <td>관리자 로그인 폼 노출 및 세션 생성</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/admin/logout</code></td>
+                            <td><code>-</code></td>
+                            <td><code class="controller">AdminController@logout</code></td>
+                            <td>관리자 세션 파기 및 로그아웃</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/admin/dashboard</code></td>
+                            <td><code>admin.dashboard</code></td>
+                            <td><code class="controller">AdminController@dashboard</code></td>
+                            <td>전체 통계 카운트(상품, 주문, 회원 등) 대시보드</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/admin/admins/{type?}</code></td>
+                            <td><code>admin.admins</code></td>
+                            <td><code class="controller">AdminController@admins</code></td>
+                            <td>관리자 등급별(superadmin, admin, subadmin, vendor) 목록 조회 및 검색</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get-post">GET|POST</span></td>
+                            <td><code class="url">/admin/add-edit-admin/{id?}</code></td>
+                            <td><code>-</code></td>
+                            <td><code class="controller">AdminController@addEditAdmin</code></td>
+                            <td>관리자/판매자 계정 신규 생성 및 정보 수정</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/admin/delete-admin/{id}</code></td>
+                            <td><code>-</code></td>
+                            <td><code class="controller">AdminController@deleteAdmin</code></td>
+                            <td>특정 관리자/판매자 레코드 및 연관 데이터(상점 등) 삭제</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/admin/view-vendor-details/{id}</code></td>
+                            <td><code>-</code></td>
+                            <td><code class="controller">AdminController@viewVendorDetails</code></td>
+                            <td>특정 입점업체의 개인/사업자/정산 계좌 상세 정보 확인</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-post">POST</span></td>
+                            <td><code class="url">/admin/update-admin-status</code></td>
+                            <td><code>-</code></td>
+                            <td><code class="controller">AdminController@updateAdminStatus</code></td>
+                            <td>AJAX를 통한 관리자 활성화/비활성화 상태 변경 및 승인 메일 발송</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-post">POST</span></td>
+                            <td><code class="url">/admin/update-vendor-certification</code></td>
+                            <td><code>-</code></td>
+                            <td><code class="controller">AdminController@updateVendorCertification</code></td>
+                            <td>판매자 승인 상태(상태값 1 또는 0)를 업데이트하여 활동 허용 설정</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-post">POST</span></td>
+                            <td><code class="url">/admin/update-vendor-commission</code></td>
+                            <td><code>-</code></td>
+                            <td><code class="controller">AdminController@updateVendorCommission</code></td>
+                            <td>특정 판매자에 대한 판매 수수료율(commission)을 관리자 기준으로 설정</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get-post">GET|POST</span></td>
+                            <td><code class="url">/admin/update-vendor-details/{slug}</code></td>
+                            <td><code>-</code></td>
+                            <td><code class="controller">AdminController@updateVendorDetails</code></td>
+                            <td>판매자용 프로필 수정 (<code>slug</code>: <code>personal</code>, <code>business</code>, <code>bank</code>)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/admin/sections</code></td>
+                            <td><code>admin.sections</code></td>
+                            <td><code class="controller">SectionController@sections</code></td>
+                            <td>대분류 섹션 목록 관리</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/admin/categories</code></td>
+                            <td><code>admin.categories</code></td>
+                            <td><code class="controller">CategoryController@categories</code></td>
+                            <td>중분류/소분류 다단계 카테고리 관리</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/admin/brands</code></td>
+                            <td><code>admin.brands</code></td>
+                            <td><code class="controller">BrandController@brands</code></td>
+                            <td>상품 브랜드 목록 관리</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/admin/products</code></td>
+                            <td><code>admin.products</code></td>
+                            <td><code class="controller">ProductsController@products</code></td>
+                            <td>전체 등록 상품 목록 관리 및 검색</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/admin/banners</code></td>
+                            <td><code>admin.banners</code></td>
+                            <td><code class="controller">BannersController@banners</code></td>
+                            <td>슬라이드/고정 배너 이미지 목록 관리</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/admin/notices</code></td>
+                            <td><code>admin.notices</code></td>
+                            <td><code class="controller">SupportController@notices</code></td>
+                            <td>관리자 전용 고객 공지사항 목록 관리</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/admin/faqs</code></td>
+                            <td><code>admin.faqs</code></td>
+                            <td><code class="controller">SupportController@faqs</code></td>
+                            <td>자주 묻는 질문(FAQ) 목록 관리</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/admin/contacts</code></td>
+                            <td><code>admin.contacts</code></td>
+                            <td><code class="controller">SupportController@contacts</code></td>
+                            <td>1:1 고객 문의 목록 조회</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/admin/coupons</code></td>
+                            <td><code>admin.coupons</code></td>
+                            <td><code class="controller">CouponsController@coupons</code></td>
+                            <td>쿠폰(정액/정률) 목록 조회 및 혜택 관리</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/admin/users</code></td>
+                            <td><code>admin.users</code></td>
+                            <td><code class="controller">UserController@users</code></td>
+                            <td>가입된 일반 회원 목록 관리</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/admin/orders</code></td>
+                            <td><code>admin.orders</code></td>
+                            <td><code class="controller">OrderController@orders</code></td>
+                            <td>플랫폼 전체 고객 주문 목록 확인</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/admin/subscribers</code></td>
+                            <td><code>admin.subscribers</code></td>
+                            <td><code class="controller">NewsletterController@subscribers</code></td>
+                            <td>뉴스레터 구독 신청자 목록 및 엑셀 다운로드 관리</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Section 2: Seller/Channel -->
+        <section>
+            <h2>2. 셀러/판매자 채널 포털 라우트 (`/channel`)</h2>
+            <p class="section-desc">입점 판매자들이 자신의 상점 정보를 관리하고, 상품 등록(자사/공유), 정산 상태 조회, 고객 주문 처리를 수행하는 영역입니다. (가드: <code>admin</code> 중 <code>type == 'vendor'</code>)</p>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>URL 경로</th>
+                            <th>라우트 명</th>
+                            <th>매핑 컨트롤러 & 액션</th>
+                            <th>기능 설명</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/channel</code></td>
+                            <td><code>channel.index</code></td>
+                            <td><code class="controller">Front\ChannelController@index</code></td>
+                            <td>셀러 전용 대시보드(월간 매출 그래프, 배송 현황 카운트 등)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/channel/login</code></td>
+                            <td><code>channel.login</code></td>
+                            <td><code class="controller">Front\ChannelController@login</code></td>
+                            <td>셀러 전용 로그인 화면</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get-post">GET|POST</span></td>
+                            <td><code class="url">/channel/register</code></td>
+                            <td><code>channel.register</code> / <code>.submit</code></td>
+                            <td><code class="controller">Front\ChannelController@register</code></td>
+                            <td>셀러 기본 회원가입 폼 제공 및 AJAX 가입 신청 처리</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get-post">GET|POST</span></td>
+                            <td><code class="url">/channel/complete-profile</code></td>
+                            <td><code>channel.complete_profile</code> / <code>.submit</code></td>
+                            <td><code class="controller">Front\ChannelController@completeProfile</code></td>
+                            <td>셀러 가입 승인 대기 단계에서 상점, 사업자, 계좌 등록</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/channel/shop/list</code></td>
+                            <td><code>channel.shop_list</code></td>
+                            <td><code class="controller">Front\ChannelController@shopList</code></td>
+                            <td>판매자가 보유한 Shop채널 목록 조회 및 검색</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get-post">GET|POST</span></td>
+                            <td><code class="url">/channel/shop/register</code></td>
+                            <td><code>channel.shop_register</code> / <code>.submit</code></td>
+                            <td><code class="controller">Front\ChannelController@shopRegister</code></td>
+                            <td>신규 판매 Shop채널 개설 신청</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/channel/shop/info</code></td>
+                            <td><code>channel.shop_info</code></td>
+                            <td><code class="controller">Front\ChannelController@shopInfo</code></td>
+                            <td>개설된 Shop채널 정보 조회 (상점명, 도메인, 로고 등)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get-post">GET|POST</span></td>
+                            <td><code class="url">/channel/shop/info-update/{id}</code></td>
+                            <td><code>channel.info_update</code> / <code>.submit</code></td>
+                            <td><code class="controller">Front\ChannelController@infoUpdate</code></td>
+                            <td>개설된 Shop채널 정보 수정</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/channel/shop/product01</code></td>
+                            <td><code>channel.shop_product01</code></td>
+                            <td><code class="controller">Front\ChannelController@shopProduct01</code></td>
+                            <td>채널 내 판매 중인 상품 목록 조회 및 판매 상품 추가 팝업 렌더링</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/channel/shop/product02</code></td>
+                            <td><code>channel.shop_product02</code></td>
+                            <td><code class="controller">Front\ChannelController@shopProduct02</code></td>
+                            <td>채널 내 판매 중지(정지)된 상품 목록 조회 및 복원/재개</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get-post">GET|POST</span></td>
+                            <td><code class="url">/channel/shop/product/edit/{id}</code></td>
+                            <td><code>channel.product.edit</code> / <code>.update</code></td>
+                            <td><code class="controller">Front\ChannelProductController@editShopProduct</code></td>
+                            <td>채널 판매 상품 상세 가격 조건, 마진액 설정 수정</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-post">POST</span></td>
+                            <td><code class="url">/channel/shop/product/own/store</code></td>
+                            <td><code>channel.product.own.store</code></td>
+                            <td><code class="controller">Front\ChannelProductController@storeOwnProduct</code></td>
+                            <td>셀러가 자체 보유한 지사 상품(Own)을 판매 채널에 등록</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-post">POST</span></td>
+                            <td><code class="url">/channel/shop/product/public/store</code></td>
+                            <td><code>channel.product.public.store</code></td>
+                            <td><code class="controller">Front\ChannelProductController@storePublicProduct</code></td>
+                            <td>공용 베이스 상품(Public)을 가져와 판매 채널에 공유 매핑</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-post">POST</span></td>
+                            <td><code class="url">/channel/shop/product/partial/store</code></td>
+                            <td><code>channel.product.partial.store</code></td>
+                            <td><code class="controller">Front\ChannelProductController@storePartialProduct</code></td>
+                            <td>일부 권한 상품(Partial)을 가져와 판매 채널에 공유 매핑</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-post">POST</span></td>
+                            <td><code class="url">/channel/shop/product/partial/request</code></td>
+                            <td><code>channel.product.partial.request</code></td>
+                            <td><code class="controller">Front\ChannelProductController@requestPartialProduct</code></td>
+                            <td>부분 권한 상품에 대해 입점사 판매 허가 신청 제출</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-post">POST</span></td>
+                            <td><code class="url">/channel/shop/product/status/update</code></td>
+                            <td><code>channel.product.status.update</code></td>
+                            <td><code class="controller">Front\ChannelProductController@updateProductStatus</code></td>
+                            <td>개별 채널 상품의 상태 변경(판매중/판매중지)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-post">POST</span></td>
+                            <td><code class="url">/channel/shop/product/request/update</code></td>
+                            <td><code>channel.product.request.update</code></td>
+                            <td><code class="controller">Front\ChannelProductController@updateRequestStatus</code></td>
+                            <td>판매 요청 승인 상태 처리</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/channel/product/own</code></td>
+                            <td><code>channel.product_own</code></td>
+                            <td><code class="controller">Front\ChannelController@productOwn</code></td>
+                            <td>판매자 본인이 직접 제조/등록한 기초 베이스 상품 리스트</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/channel/product/public</code></td>
+                            <td><code>channel.product_public</code></td>
+                            <td><code class="controller">Front\ChannelController@productPublic</code></td>
+                            <td>본사가 공개하여 아무나 판매할 수 있는 전체 기초 베이스 상품 리스트</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/channel/product/partial</code></td>
+                            <td><code>channel.product_partial</code></td>
+                            <td><code class="controller">Front\ChannelController@productPartial</code></td>
+                            <td>승인을 받아야만 판매할 수 있는 일부 공개용 기초 베이스 상품 리스트</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/channel/product/request</code></td>
+                            <td><code>channel.product_request</code></td>
+                            <td><code class="controller">Front\ChannelController@productRequest</code></td>
+                            <td>승인 요청 진행 중인 베이스 상품의 상태 조회 목록</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/channel/product/base/detail/{id}</code></td>
+                            <td><code>channel.product.base.detail</code></td>
+                            <td><code class="controller">Front\ChannelProductController@getBaseProductDetail</code></td>
+                            <td>등록 전 기초 베이스 상품 스펙 상세 정보 확인</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get-post">GET|POST</span></td>
+                            <td><code class="url">/channel/product/base/edit/{id}</code></td>
+                            <td><code>channel.product.base.edit</code> / <code>.update</code></td>
+                            <td><code class="controller">Front\ChannelProductController@editBaseProduct</code></td>
+                            <td>기초 베이스 상품 사양(이름, 단가 등) 수정</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-post">POST</span></td>
+                            <td><code class="url">/channel/product/base/delete/{id}</code></td>
+                            <td><code>channel.product.base.delete</code></td>
+                            <td><code class="controller">Front\ChannelProductController@deleteBaseProduct</code></td>
+                            <td>본인 소유의 베이스 상품 완전 삭제</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-post">POST</span></td>
+                            <td><code class="url">/channel/product/base/copy/{id}</code></td>
+                            <td><code>channel.product.base.copy</code></td>
+                            <td><code class="controller">Front\ChannelProductController@copyBaseProduct</code></td>
+                            <td>기존 베이스 상품 구성을 그대로 복사하여 복사본 신규 생성</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/channel/shop/community</code></td>
+                            <td><code>channel.shop_community</code></td>
+                            <td><code class="controller">Front\ChannelController@shopCommunity</code></td>
+                            <td>각 상점 채널별 커뮤니티(소식지/공지사항) 피드 목록</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get-post">GET|POST</span></td>
+                            <td><code class="url">/channel/shop/community/register</code></td>
+                            <td><code>channel.community.register</code> / <code>.submit</code></td>
+                            <td><code class="controller">Front\ChannelController@communityRegister</code></td>
+                            <td>공지사항 소식 글 작성 및 저장</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/channel/shop/community/view/{id}</code></td>
+                            <td><code>channel.community.view</code></td>
+                            <td><code class="controller">Front\ChannelController@communityView</code></td>
+                            <td>공지사항 게시글 상세 보기 및 조회수 증가</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get-post">GET|POST</span></td>
+                            <td><code class="url">/channel/shop/community/update/{id}</code></td>
+                            <td><code>channel.community.update</code> / <code>.submit</code></td>
+                            <td><code class="controller">Front\ChannelController@communityUpdate</code></td>
+                            <td>작성한 공지사항 수정</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-post">POST</span></td>
+                            <td><code class="url">/channel/shop/community/delete/{id}</code></td>
+                            <td><code>channel.community.delete</code></td>
+                            <td><code class="controller">Front\ChannelController@communityDelete</code></td>
+                            <td>작성한 공지사항 삭제</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/channel/order/list</code></td>
+                            <td><code>channel.order.list</code></td>
+                            <td><code class="controller">Front\ChannelController@orderList</code></td>
+                            <td>해당 판매자 상품이 포함된 전체 신규 주문 내역 조회</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/channel/order/cancel/list</code></td>
+                            <td><code>channel.order.cancel_list</code></td>
+                            <td><code class="controller">Front\ChannelController@orderCancelList</code></td>
+                            <td>판매 취소 처리된 주문 목록 조회</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/channel/order/return/list</code></td>
+                            <td><code>channel.order.return_list</code></td>
+                            <td><code class="controller">Front\ChannelController@orderReturnRequestList</code></td>
+                            <td>반품 요청(반품 중/완료) 목록 조회</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/channel/order/exchange/list</code></td>
+                            <td><code>channel.order.exchange_list</code></td>
+                            <td><code class="controller">Front\ChannelController@orderExchangeRequestList</code></td>
+                            <td>교환 요청 목록 조회</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-post">POST</span></td>
+                            <td><code class="url">/channel/order/status/update</code></td>
+                            <td><code>channel.order.status.update</code></td>
+                            <td><code class="controller">Front\ChannelOrderController@updateStatus</code></td>
+                            <td>주문 상품에 택배 배송사 및 송장(Tracking) 정보 매핑 및 배송중 처리</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-post">POST</span></td>
+                            <td><code class="url">/channel/order/cancel/request</code></td>
+                            <td><code>channel.order.cancel.request</code></td>
+                            <td><code class="controller">Front\ChannelOrderController@requestCancel</code></td>
+                            <td>판매자 사유 취소 처리 및 취소 <code>OrderClaim</code> 강제 등록</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-post">POST</span></td>
+                            <td><code class="url">/channel/order/return/request</code></td>
+                            <td><code>channel.order.return.request</code></td>
+                            <td><code class="controller">Front\ChannelOrderController@requestReturn</code></td>
+                            <td>반품 건에 대한 수령 및 동의 <code>OrderClaim</code> 처리</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-post">POST</span></td>
+                            <td><code class="url">/channel/order/exchange/request</code></td>
+                            <td><code>channel.order.exchange.request</code></td>
+                            <td><code class="controller">Front\ChannelOrderController@requestExchange</code></td>
+                            <td>교환 대상 접수 및 교환 <code>OrderClaim</code> 처리</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/channel/settlement/list</code></td>
+                            <td><code>channel.settlement.list</code></td>
+                            <td><code class="controller">Front\ChannelSettlementController@index</code></td>
+                            <td>판매자별 월별 구매확정 기준 정산 리스트 및 마진 분배 요약</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/channel/settlement/view/{period}</code></td>
+                            <td><code>channel.settlement.view</code></td>
+                            <td><code class="controller">Front\ChannelSettlementController@view</code></td>
+                            <td>해당 정산 월(<code>YYYY-MM</code>)의 상세 주문 건별 수수료 차감 내역 정보</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/channel/settings/delivery</code></td>
+                            <td><code>channel.delivery.list</code></td>
+                            <td><code class="controller">Front\ChannelController@deliveryChargeList</code></td>
+                            <td>기본 배송 정책 및 도서산간 배송비 설정</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/channel/settings/refund</code></td>
+                            <td><code>channel.refund.list</code></td>
+                            <td><code class="controller">Front\ChannelController@cancelRefundList</code></td>
+                            <td>취소 및 환불 안내 가이드 목록 관리</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-post">POST</span></td>
+                            <td><code class="url">/channel/settings/refund/store</code></td>
+                            <td><code>channel.refund.store</code></td>
+                            <td><code class="controller">Front\ChannelController@storeCancelRefundPolicy</code></td>
+                            <td>신규 취소/환불 기준 작성 등록</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/channel/settings/refund/{id}</code></td>
+                            <td><code>channel.refund.get</code></td>
+                            <td><code class="controller">Front\ChannelController@getCancelRefundPolicy</code></td>
+                            <td>특정 취소/환불 기준 정보 상세 조회</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-post">POST</span></td>
+                            <td><code class="url">/channel/settings/refund/{id}/update</code></td>
+                            <td><code>channel.refund.update</code></td>
+                            <td><code class="controller">Front\ChannelController@updateCancelRefundPolicy</code></td>
+                            <td>취소/환불 기준 정책 정보 수정</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-post">POST</span></td>
+                            <td><code class="url">/channel/settings/refund/{id}/delete</code></td>
+                            <td><code>channel.refund.delete</code></td>
+                            <td><code class="controller">Front\ChannelController@deleteCancelRefundPolicy</code></td>
+                            <td>지정한 취소/환불 정책 삭제</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-post">POST</span></td>
+                            <td><code class="url">/channel/settings/refund/{id}/copy</code></td>
+                            <td><code>channel.refund.copy</code></td>
+                            <td><code class="controller">Front\ChannelController@copyCancelRefundPolicy</code></td>
+                            <td>기존 취소/환불 안내 정책 복제 추가</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/channel/settings/info</code></td>
+                            <td><code>channel.info.management</code></td>
+                            <td><code class="controller">Front\ChannelController@infoManagement</code></td>
+                            <td>판매자 개인 정보 수정 화면</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-post">POST</span></td>
+                            <td><code class="url">/channel/settings/info/update</code></td>
+                            <td><code>channel.info.update</code></td>
+                            <td><code class="controller">Front\ChannelController@updateInfo</code></td>
+                            <td>비밀번호 및 연락처 정보 수정 처리</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-post">POST</span></td>
+                            <td><code class="url">/channel/settings/update-password</code></td>
+                            <td><code>channel.update_password</code></td>
+                            <td><code class="controller">Front\ChannelController@updatePassword</code></td>
+                            <td>비밀번호 변경 AJAX 처리</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/channel/settings/sub-accounts</code></td>
+                            <td><code>channel.sub_accounts.list</code></td>
+                            <td><code class="controller">Front\ChannelController@subList</code></td>
+                            <td>부관리자(Sub-Account) 계정 목록 관리</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Section 3: Users/Mypage -->
+        <section>
+            <h2>3. 일반 사용자 및 마이페이지 라우트 (`/mypage` 및 공통)</h2>
+            <p class="section-desc">구매자들의 로그인, 비밀번호 찾기, 주문 확인 및 배송 주소 관리를 수행하는 영역입니다. (가드: <code>web</code>)</p>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>URL 경로</th>
+                            <th>라우트 명</th>
+                            <th>매핑 컨트롤러 & 액션</th>
+                            <th>기능 설명</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/register/member</code></td>
+                            <td><code>front.member.register.member</code></td>
+                            <td><code class="controller">Front\UserController@register</code></td>
+                            <td>다단계 회원가입 기본 진입점</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-post">POST</span></td>
+                            <td><code class="url">/register/step1/update</code></td>
+                            <td><code>front.member.register.step1.update</code></td>
+                            <td><code class="controller">Front\UserController@updateMemberStep1</code></td>
+                            <td>회원가입 1단계: 아이디/휴대폰 점검 및 정보 등록</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-post">POST</span></td>
+                            <td><code class="url">/register/step2/update</code></td>
+                            <td><code>front.member.register.step2.update</code></td>
+                            <td><code class="controller">Front\UserController@updateMemberStep2</code></td>
+                            <td>회원가입 2단계: 회원 주소지 정보 등록</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-post">POST</span></td>
+                            <td><code class="url">/register/step3/update</code></td>
+                            <td><code>front.member.register.step3.update</code></td>
+                            <td><code class="controller">Front\UserController@updateMemberStep3</code></td>
+                            <td>회원가입 3단계: 가입 완료 및 동의 정보 기록</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get-post">GET|POST</span></td>
+                            <td><code class="url">/find/id</code></td>
+                            <td><code>front.member.find_id</code></td>
+                            <td><code class="controller">Front\UserController@findId</code></td>
+                            <td>휴대폰 번호 기반 아이디 찾기</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get-post">GET|POST</span></td>
+                            <td><code class="url">/find/pw</code></td>
+                            <td><code>front.member.find_pw</code></td>
+                            <td><code class="controller">Front\UserController@findPw</code></td>
+                            <td>이메일 기반 임시 비밀번호 발송</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/mypage/main</code></td>
+                            <td><code>mypage.dashboard</code></td>
+                            <td><code class="controller">Front\UserController@dashboard</code></td>
+                            <td>마이페이지 대시보드(최근 주문 요약, 포인트 현황 노출)</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/mypage/profile</code></td>
+                            <td><code>mypage.profile</code></td>
+                            <td><code class="controller">Front\UserController@profileEdit</code></td>
+                            <td>본인 개인 프로필 편집</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-post">POST</span></td>
+                            <td><code class="url">/mypage/profile</code></td>
+                            <td><code>mypage.profile.update</code></td>
+                            <td><code class="controller">Front\UserController@profileUpdate</code></td>
+                            <td>이메일, 주소, 이름 정보 최종 업데이트</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/mypage/delivery</code></td>
+                            <td><code>mypage.delivery</code></td>
+                            <td><code class="controller">Front\UserController@delivery</code></td>
+                            <td>등록된 배송 주소록 전체 관리 목록</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-post">POST</span></td>
+                            <td><code class="url">/mypage/delivery/add</code></td>
+                            <td><code>mypage.delivery.add</code></td>
+                            <td><code class="controller">Front\UserController@addDeliveryAddress</code></td>
+                            <td>신규 배송지 등록</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-post">POST</span></td>
+                            <td><code class="url">/mypage/delivery/update</code></td>
+                            <td><code>mypage.delivery.update</code></td>
+                            <td><code class="controller">Front\UserController@updateDeliveryAddress</code></td>
+                            <td>저장된 배송지 정보(수령인, 주소 등) 수정</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-post">POST</span></td>
+                            <td><code class="url">/mypage/delivery/update/default</code></td>
+                            <td><code>mypage.delivery.update_default</code></td>
+                            <td><code class="controller">Front\UserController@setDefaultDeliveryAddress</code></td>
+                            <td>기본 배송지로 선택 지정</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-post">POST</span></td>
+                            <td><code class="url">/mypage/delivery/delete</code></td>
+                            <td><code>mypage.delivery.delete</code></td>
+                            <td><code class="controller">Front\UserController@deleteDeliveryAddress</code></td>
+                            <td>주소록에서 특정 배송지 삭제</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-get">GET</span></td>
+                            <td><code class="url">/mypage/withdraw</code></td>
+                            <td><code>mypage.withdraw</code></td>
+                            <td><code class="controller">Front\UserController@withdraw</code></td>
+                            <td>회원 자진 탈퇴 동의 페이지</td>
+                        </tr>
+                        <tr>
+                            <td><span class="badge badge-post">POST</span></td>
+                            <td><code class="url">/mypage/withdraw/submit</code></td>
+                            <td><code>mypage.withdraw.submit</code></td>
+                            <td><code class="controller">Front\UserController@withdrawSubmit</code></td>
+                            <td>탈퇴 정보 최종 제출 및 회원 상태 삭제(Withdrawal) 처리</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </div>
+    <footer>
+        <p>&copy; me9market. All Rights Reserved. 본 문서는 시스템 개발 및 테스트 검증용 사양서입니다.</p>
+    </footer>
+</body>
+</html>
