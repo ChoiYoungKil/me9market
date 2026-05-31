@@ -276,6 +276,7 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
         // Guest Channel Routes
         Route::get('/login', 'App\Http\Controllers\Front\ChannelController@login')->name('channel.login');
         Route::post('/login', 'App\Http\Controllers\Front\ChannelController@loginUser')->name('channel.login.submit');
+        Route::get('/logout', 'App\Http\Controllers\Front\ChannelController@logout')->name('channel.logout');
         Route::get('/register', 'App\Http\Controllers\Front\ChannelController@register')->name('channel.register');
         Route::post('/register', 'App\Http\Controllers\Front\ChannelController@registerSubmit')->name('channel.register.submit');
 

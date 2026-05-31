@@ -140,6 +140,12 @@ class ChannelController extends Controller
         }
     }
 
+    public function logout()
+    {
+        Auth::guard('admin')->logout();
+        return redirect()->route('channel.login');
+    }
+
     // 상점 관리 (Sub01)
     public function shopList(Request $request)
     {
