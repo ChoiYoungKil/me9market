@@ -123,6 +123,9 @@
             <div class="con_w dep02">
                 <div class="c_ttl">주요메뉴</div>
                 <ul class="dep1_wrap">
+                    <li class="dep1 icon1_5 {{ request()->routeIs('mypage.dashboard') ? 'on' : '' }}">
+                        <a href="{{ route('mypage.dashboard') }}">마이페이지 홈 (대시보드)</a>
+                    </li>
                     <li
                         class="dep1 icon1_1 arrow {{ request()->routeIs('mypage.profile', 'mypage.delivery', 'mypage.withdraw') ? 'on' : '' }}">
                         <!-- on -->

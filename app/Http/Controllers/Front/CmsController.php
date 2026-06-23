@@ -9,8 +9,11 @@ use App\Models\Contact;
 class CmsController extends Controller
 {
     // GET 요청으로 Contact Us 페이지(front/pages/contact.blade.php)를 렌더링하거나 POST 요청으로 HTML 폼 제출 처리    
-    // GET 요청으로 Contact Us 페이지(front/pages/contact.blade.php)를 렌더링하거나 POST 요청으로 HTML 폼 제출 처리    
     public function contact(Request $request) {
+        if (!\Illuminate\Support\Facades\Auth::check()) {
+            return redirect()->route('front.member.login')->with('error_message', '제휴/문의는 회원만 작성할 수 있습니다. 로그인 후 이용해주세요.');
+        }
+
         // front/pages/contact.blade.php의 HTML 폼이 제출된 경우
         if ($request->isMethod('post')) {
             $data = $request->all();

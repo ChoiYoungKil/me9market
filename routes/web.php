@@ -61,6 +61,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::get('view', 'AdminController@view')->name('admin.view');
         Route::get('newpage', 'AdminController@newpage')->name('admin.newpage');
         Route::get('loading', 'AdminController@loading')->name('admin.loading');
+        Route::get('sub/layer-large', 'AdminController@layerLarge')->name('admin.layer_large');
         Route::get('dashboard', 'AdminController@dashboard')->name('admin.dashboard'); // 관리자 로그인
         Route::get('logout', 'AdminController@logout'); // 관리자 로그아웃
         Route::match(['get', 'post'], 'update-admin-password', 'AdminController@updateAdminPassword'); // 비밀번호 변경 폼 보기(GET) 및 제출(POST)
@@ -280,6 +281,37 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
     Route::get('/faq', 'FrontController@faq')->name('cs.faq');
     Route::match(['get', 'post'], '/contact', 'CmsController@contact')->name('cs.contact');
 
+    // 홈페이지 소개 및 비회원 주문조회 (RF-01-02 ~ 04, RF-01-06)
+    Route::get('/service', 'FrontController@service')->name('front.service');
+    Route::get('/features', 'FrontController@features')->name('front.features');
+    Route::get('/subscription-information', 'FrontController@subscriptionInfo')->name('front.subscription_info');
+    Route::get('/nonmember/order/check', 'FrontController@nonmemberOrderCheck')->name('front.nonmember.order_check');
+    Route::post('/nonmember/order/check', 'FrontController@nonmemberOrderCheckSubmit')->name('front.nonmember.order_check.submit');
+    Route::get('/nonmember/order/details', 'FrontController@nonmemberOrderDetails')->name('front.nonmember.order_details');
+    Route::post('/nonmember/order/claim', 'FrontController@nonmemberOrderClaimSubmit')->name('front.nonmember.order_claim.submit');
+    Route::post('/nonmember/order/inquiry', 'FrontController@nonmemberOrderInquirySubmit')->name('front.nonmember.order_inquiry.submit');
+
+    // 소셜 로그인 후 동의가입 (RF-01-07-02)
+    Route::get('/member/social-join', 'UserController@socialJoin')->name('front.member.social_join');
+    Route::post('/member/social-join', 'UserController@socialJoinSubmit')->name('front.member.social_join.submit');
+
+    // shop 채널 (RF-03)
+    Route::prefix('shop-channel')->group(function () {
+        Route::get('/gate', 'FrontController@shopGate')->name('shop.gate');
+        Route::post('/gate', 'FrontController@shopGateSubmit')->name('shop.gate.submit');
+        Route::get('/register', 'FrontController@shopRegister')->name('shop.register');
+        Route::post('/register', 'FrontController@shopRegisterSubmit')->name('shop.register.submit');
+        Route::get('/main', 'FrontController@shopMain')->name('shop.channel_main');
+        Route::get('/products', 'FrontController@shopProducts')->name('shop.products_list');
+        Route::get('/products/{id}', 'FrontController@shopProductDetails')->name('shop.product_details');
+        Route::get('/joint-purchases', 'FrontController@shopJointPurchases')->name('shop.joint_purchases_list');
+        Route::get('/joint-purchases/{id}', 'FrontController@shopJointPurchaseDetails')->name('shop.joint_purchase_details');
+        Route::get('/notices', 'FrontController@shopNotices')->name('shop.notices');
+    });
+
+    // 통합 테스트베드 (Index)
+    Route::get('/storyboard-test', 'FrontController@storyboardTestbed')->name('front.storyboard_testbed');
+
     // Shop 라우트
     Route::prefix('shop')->name('front.shop.')->group(function () {
         Route::get('/cart', 'ShopController@cart')->name('cart.index');
@@ -373,6 +405,15 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
                 Route::get('/list', 'ChannelSettlementController@index')->name('channel.settlement.list');
                 Route::get('/view/{period}', 'ChannelSettlementController@view')->name('channel.settlement.view');
             });
+
+            // Joint Purchase Management (Sub03) (RF-02-06-XX)
+            Route::prefix('joint-purchase')->group(function () {
+                Route::get('/list', 'ChannelController@jointPurchaseList')->name('channel.joint_purchase.list');
+                Route::get('/create', 'ChannelController@jointPurchaseCreate')->name('channel.joint_purchase.create');
+                Route::post('/store', 'ChannelController@jointPurchaseStore')->name('channel.joint_purchase.store');
+                Route::get('/edit/{id}', 'ChannelController@jointPurchaseEdit')->name('channel.joint_purchase.edit');
+                Route::post('/update/{id}', 'ChannelController@jointPurchaseUpdate')->name('channel.joint_purchase.update');
+            });
         });
 
         // Settings / Additional Info (Sub00)
@@ -406,6 +447,7 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
 
         Route::get('/profile', 'UserController@profileEdit')->name('mypage.profile');
         Route::post('/profile', 'UserController@profileUpdate')->name('mypage.profile.update');
+        Route::get('/order/cancel-return-list', 'UserController@cancelReturnList')->name('mypage.order.cancel_return_list');
         Route::get('/delivery', 'UserController@delivery')->name('mypage.delivery');
             Route::post('/delivery/add', 'UserController@addDelivery')->name('mypage.delivery.add');
             Route::post('/delivery/update/default', 'UserController@updateDefaultDelivery')->name('mypage.delivery.update_default');
@@ -430,9 +472,17 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
         Route::get('/wishlist', 'UserController@wishlist')->name('mypage.wishlist');
 
         // 쿠폰 목록 (PPT Slide 48)
-        Route::get('/coupon', 'UserController@couponList')->name('mypage.coupon');
     });
 
+});
+
+// Member Logout & Legacy Redirects
+Route::namespace('App\Http\Controllers\Front')->group(function () {
+    Route::match(['get', 'post'], '/logout', 'UserController@userLogout')->name('logout');
+    Route::redirect('/user/account', '/mypage/main');
+    Route::redirect('/user/orders', '/mypage/order/list');
+    Route::redirect('/user/login-register', '/member/login');
+    Route::redirect('/user/logout', '/logout');
 });
 
 // Master (Admin) Portal Routes
@@ -446,6 +496,19 @@ Route::group(['prefix' => 'master', 'namespace' => 'App\Http\Controllers\Master'
 
 // Admin routes (aliases for master routes)
 // Admin routes (aliases for master routes) - REMOVED (Conflicting with main admin/ routes)
+
+// Distributor Portal Routes (RF-04)
+Route::prefix('distributor')->namespace('App\Http\Controllers\Distributor')->group(function () {
+    Route::get('/login', 'DistributorController@login')->name('distributor.login');
+    Route::post('/login', 'DistributorController@loginSubmit')->name('distributor.login.submit');
+    Route::get('/logout', 'DistributorController@logout')->name('distributor.logout');
+
+    Route::get('/orders/pending', 'DistributorController@ordersPending')->name('distributor.orders.pending');
+    Route::get('/orders/completed', 'DistributorController@ordersCompleted')->name('distributor.orders.completed');
+    Route::get('/orders/{id}', 'DistributorController@orderDetails')->name('distributor.order.details');
+    Route::post('/orders/{id}/update', 'DistributorController@updateOrder')->name('distributor.order.update');
+    Route::post('/orders/upload-invoice', 'DistributorController@uploadInvoice')->name('distributor.orders.upload_invoice');
+});
 
 // Legacy Admin Routes (Below)
 // Routes ...

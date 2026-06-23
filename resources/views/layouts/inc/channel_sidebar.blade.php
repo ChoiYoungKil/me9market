@@ -97,11 +97,11 @@
                                     상품등록</a></li>
                         </ul>
                     </li>
-                    <li class="dep1">
+                    <li class="dep1 {{ request()->routeIs('channel.joint_purchase.*') ? 'on' : '' }}">
                         <a href="javascript:void(0);" class="toggle-btn">공동구매 관리 <span class="arrow">▼</span></a>
-                        <ul class="dep2_wrap" style="display: none;">
-                            <li><a href="#">- 공동구매 상품목록</a></li>
-                            <li><a href="#">- 공동구매 상품등록</a></li>
+                        <ul class="dep2_wrap" style="{{ request()->routeIs('channel.joint_purchase.*') ? 'display: block;' : 'display: none;' }}">
+                            <li><a href="{{ route('channel.joint_purchase.list') }}" class="{{ request()->routeIs('channel.joint_purchase.list') ? 'active-link' : '' }}">- 공동구매 상품목록</a></li>
+                            <li><a href="{{ route('channel.joint_purchase.create') }}" class="{{ request()->routeIs('channel.joint_purchase.create') ? 'active-link' : '' }}">- 공동구매 상품등록</a></li>
                         </ul>
                     </li>
                     <li class="dep1 {{ request()->routeIs('channel.order.*') ? 'on' : '' }}">

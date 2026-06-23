@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 // Auth without a namespace here works fine because the Admin.php model extends Authenticatable
-use Illuminate\Support\FacadesAuth;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Intervention\Image\Facades\Image;
@@ -797,4 +796,7 @@ class AdminController extends Controller
         return redirect()->back()->with('success_message', 'Admin/Vendor deleted successfully!');
     }
 
+    public function layerLarge() {
+        return view('admin.sub.layer_large');
+    }
 }

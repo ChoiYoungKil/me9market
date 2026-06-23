@@ -1647,4 +1647,100 @@ class ChannelController extends Controller
             'policy' => $newPolicy
         ]);
     }
+
+    public function jointPurchaseList()
+    {
+        $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
+        if (!$admin) return redirect()->route('channel.login');
+
+        // Fetch joint purchases
+        $jointPurchases = \Illuminate\Support\Facades\DB::table('joint_purchases')
+            ->leftJoin('products', 'joint_purchases.product_id', '=', 'products.id')
+            ->select('joint_purchases.*', 'products.product_name', 'products.product_code')
+            ->orderBy('joint_purchases.id', 'desc')
+            ->paginate(10);
+
+        return view('channel.sub03.joint_purchase_list', [
+            'dep1_id' => '03',
+            'jointPurchases' => $jointPurchases
+        ]);
+    }
+
+    public function jointPurchaseCreate()
+    {
+        $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
+        if (!$admin) return redirect()->route('channel.login');
+
+        // Fetch vendor products to choose from
+        $products = \App\Models\Product::where('vendor_id', $admin->vendor_id)->get();
+        return view('channel.sub03.joint_purchase_create', [
+            'dep1_id' => '03',
+            'products' => $products
+        ]);
+    }
+
+    public function jointPurchaseStore(Request $request)
+    {
+        $request->validate([
+            'product_id' => 'required',
+            'min_quantity' => 'required|numeric',
+            'discount_price' => 'required|numeric',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date'
+        ]);
+
+        \Illuminate\Support\Facades\DB::table('joint_purchases')->insert([
+            'product_id' => $request->product_id,
+            'min_quantity' => $request->min_quantity,
+            'current_quantity' => 0,
+            'discount_price' => $request->discount_price,
+            'start_date' => $request->start_date,
+            'end_date' => $request->end_date,
+            'status' => 1,
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+
+        return redirect()->route('channel.joint_purchase.list')->with('success_message', '공동구매 상품이 성공적으로 등록되었습니다.');
+    }
+
+    public function jointPurchaseEdit($id)
+    {
+        $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
+        if (!$admin) return redirect()->route('channel.login');
+
+        $jointPurchase = \Illuminate\Support\Facades\DB::table('joint_purchases')->where('id', $id)->first();
+        if (!$jointPurchase) abort(404);
+
+        $products = \App\Models\Product::where('vendor_id', $admin->vendor_id)->get();
+
+        return view('channel.sub03.joint_purchase_edit', [
+            'dep1_id' => '03',
+            'jointPurchase' => $jointPurchase,
+            'products' => $products
+        ]);
+    }
+
+    public function jointPurchaseUpdate(Request $request, $id)
+    {
+        $request->validate([
+            'product_id' => 'required',
+            'min_quantity' => 'required|numeric',
+            'discount_price' => 'required|numeric',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date'
+        ]);
+
+        \Illuminate\Support\Facades\DB::table('joint_purchases')->where('id', $id)->update([
+            'product_id' => $request->product_id,
+            'min_quantity' => $request->min_quantity,
+            'discount_price' => $request->discount_price,
+            'start_date' => $request->start_date,
+            'end_date' => $request->end_date,
+            'updated_at' => now()
+        ]);
+
+        return redirect()->route('channel.joint_purchase.list')->with('success_message', '공동구매 정보가 성공적으로 수정되었습니다.');
+    }
 }
+

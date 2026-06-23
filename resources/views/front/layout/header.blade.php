@@ -63,7 +63,7 @@ $sections = \App\Models\Section::sections();
                                 https://laravel.com/docs/9.x/authentication#determining-if-the-current-user-is-authenticated
                                 --}}
                                 <li>
-                                    <a href="{{ url('user/account') }}">
+                                    <a href="{{ url('mypage/main') }}">
                                         <i class="fas fa-sign-in-alt u-s-m-r-9"></i>
                                         My Account
                                     </a>
@@ -71,21 +71,21 @@ $sections = \App\Models\Section::sections();
 
 
                                 <li>
-                                    <a href="{{ url('user/orders') }}">
+                                    <a href="{{ url('mypage/order/list') }}">
                                         <i class="fas fa-sign-in-alt u-s-m-r-9"></i>
                                         My Orders
                                     </a>
                                 </li>
 
                                 <li>
-                                    <a href="{{ url('user/logout') }}">
+                                    <a href="{{ url('logout') }}">
                                         <i class="fas fa-sign-in-alt u-s-m-r-9"></i>
                                         Logout
                                     </a>
                                 </li>
                             @else
                                 <li>
-                                    <a href="{{ url('user/login-register') }}">
+                                    <a href="{{ url('member/login') }}">
                                         <i class="fas fa-sign-in-alt u-s-m-r-9"></i>
                                         Customer Login
                                     </a>
@@ -356,10 +356,10 @@ $sections = \App\Models\Section::sections();
                                 <ul>
                                     <li class="menu-title">ACCOUNT</li>
                                     <li>
-                                        <a href="{{ url('user/account') }}">My Account</a>
+                                        <a href="{{ url('mypage/main') }}">My Account</a>
                                     </li>
                                     <li>
-                                        <a href="{{ url('user/orders') }}">My Orders</a>
+                                        <a href="{{ url('mypage/order/list') }}">My Orders</a>
                                     </li>
                                 </ul>
                             </div>

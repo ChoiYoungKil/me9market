@@ -70,12 +70,17 @@
                     <div class="box box1">
                         <div class="inner_bx">
                             <img src="{{ asset('master_assets/images/common/logo1.png') }}" class="logo">
+                            <div style="background: rgba(0,0,0,0.03); border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; font-size: 12px; color: #475569; text-align: left; line-height: 1.5; margin-bottom: 15px;">
+                                <strong>💡 테스트 정보:</strong><br>
+                                - 아이디: <code style="background: #e2e8f0; padding: 2px 4px; border-radius: 4px; font-weight: bold; color: #000;">admin@admin.com</code><br>
+                                - 비밀번호: <code style="background: #e2e8f0; padding: 2px 4px; border-radius: 4px; font-weight: bold; color: #000;">123456</code>
+                            </div>
                             <form action="/admin/login" method="POST">
                                 @csrf
                                 <div class="f_bx">
                                     <input class="mt0" type="text" name="email" placeholder="아이디를 입력 해 주세요"
-                                        value="{{ old('email') }}" required autofocus>
-                                    <input type="password" name="password" placeholder="비밀번호를 입력 해 주세요" required>
+                                        value="{{ old('email', 'admin@admin.com') }}" required autofocus>
+                                    <input type="password" name="password" value="123456" placeholder="비밀번호를 입력 해 주세요" required>
                                     <ul class="chk01">
                                         <li>
                                             <input type="checkbox" id="idSave" name="remember">
