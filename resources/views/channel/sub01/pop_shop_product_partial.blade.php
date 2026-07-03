@@ -663,6 +663,7 @@
 
                 <form id="form_product_partial_request">
                     <input type="hidden" name="product_id" id="partial_req_product_id" value="">
+                    <input type="hidden" name="shop_id" value="{{ $shopId }}">
                     <div class="conbx">
                         <div class="con_w">
                             <div class="ttl01">판매 요청 상태</div>

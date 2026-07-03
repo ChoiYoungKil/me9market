@@ -234,7 +234,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($orders as $order)
+                    @forelse($orders as $order)
                         <tr>
                             <td style="font-weight: 700; color: #60a5fa;">{{ $order['order_id'] }}</td>
                             <td>{{ $order['channel_name'] }}</td>
@@ -245,7 +245,7 @@
                             <td>{{ $order['receiver'] }}</td>
                             <td>{{ $order['courier'] }}</td>
                             <td style="font-family: monospace; font-weight: 600; color: #34d399;">{{ $order['tracking_no'] }}</td>
-                            <td style="color: var(--text-muted);">{{ $order['request_date'] }}</td>
+                            <td style="color: var(--text-muted);">{{ $order['shipped_date'] }}</td>
                             <td>
                                 <span class="badge-status">{{ $order['status'] }}</span>
                             </td>
@@ -253,7 +253,11 @@
                                 <a href="{{ route('distributor.order.details', ['id' => $order['id']]) }}" class="btn">상세관리</a>
                             </td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="12" style="text-align: center; color: var(--text-muted); padding: 40px;">발주 완료 주문상품이 없습니다.</td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>

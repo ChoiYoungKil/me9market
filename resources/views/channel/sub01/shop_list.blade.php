@@ -160,7 +160,9 @@
                                                 <ul class="tag_list"
                                                     style="display: flex; gap: 5px; list-style: none; padding: 0; flex-wrap: wrap;">
                                                     @php
-                                                        $keywords = json_decode($shop->keywords, true) ?? [];
+                                                        $keywords = is_array($shop->keywords)
+                                                            ? $shop->keywords
+                                                            : (json_decode($shop->keywords ?? '[]', true) ?: []);
                                                     @endphp
                                                     @foreach($keywords as $keyword)
                                                         <li

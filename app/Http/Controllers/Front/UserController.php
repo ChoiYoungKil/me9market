@@ -18,6 +18,7 @@ use App\Models\VendorsBankDetail;
 use App\Models\DeliveryAddress;
 use App\Models\Product;
 use App\Models\VisitedChannel;
+use App\Support\OrderItemStatus;
 
 class UserController extends Controller
 {
@@ -37,11 +38,21 @@ class UserController extends Controller
                 return redirect()->back()->withErrors($validator)->withInput();
             }
 
-            // 오직 아이디(username)로만 로그인 허용
-            $field = 'username';
+            $credentials = [
+                ['username' => $data['login_id'], 'password' => $data['password']],
+                ['email' => $data['login_id'], 'password' => $data['password']],
+            ];
 
-            if (Auth::attempt([$field => $data['login_id'], 'password' => $data['password']])) {
-                if (Auth::user()->status == 0) {
+            $authenticated = false;
+            foreach ($credentials as $credential) {
+                if (Auth::attempt($credential, $request->boolean('remember'))) {
+                    $authenticated = true;
+                    break;
+                }
+            }
+
+            if ($authenticated) {
+                if ((string) Auth::user()->status === '0') {
                     Auth::logout();
                     return redirect()->back()->with('error_message', '계정이 아직 활성화되지 않았습니다. 관리자에게 문의하세요.');
                 }
@@ -581,9 +592,18 @@ class UserController extends Controller
             return redirect()->route('front.member.login');
         }
 
+        $this->ensureMypageDevDataExists($user->id);
+
+        // Format mobile number with dashes if missing
+        $mobileWithDashes = $user->mobile;
+        if (strlen($user->mobile) === 11 && !str_contains($user->mobile, '-')) {
+            $mobileWithDashes = substr($user->mobile, 0, 3) . '-' . substr($user->mobile, 3, 4) . '-' . substr($user->mobile, 7);
+        }
+
         // Fetch user's inquiries from contacts table (matching email or phone)
         $inquiries = \App\Models\Contact::where('email', $user->email)
             ->orWhere('phone', $user->mobile)
+            ->orWhere('phone', $mobileWithDashes)
             ->orWhere('phone', str_replace('-', '', $user->mobile))
             ->orderBy('id', 'desc')
             ->get();
@@ -597,9 +617,200 @@ class UserController extends Controller
         return view('front.mypage.index', compact('user', 'inquiries', 'ordersCount', 'confirmedCount', 'cancelCount', 'returnCount'));
     }
 
-    public function orderView()
+    private function ensureMypageDevDataExists($userId)
     {
-        return view('front.mypage.order.view');
+        $shop = app(\App\Services\ShopChannelRuntime::class)->ensureDemoData();
+        $vendorId = $shop->vendor_id;
+
+        // 1. Ensure vendors_business_details exists for the demo shop vendor
+        $vendorBusiness = \Illuminate\Support\Facades\DB::table('vendors_business_details')->where('vendor_id', $vendorId)->first();
+        if (!$vendorBusiness) {
+            \Illuminate\Support\Facades\DB::table('vendors_business_details')->insert([
+                'vendor_id' => $vendorId,
+                'shop_name' => 'Me9 브랜드 전용관',
+                'shop_address' => '서울시 마포구 공덕동 100',
+                'shop_mobile' => '010-1111-2222',
+                'shop_website' => 'http://127.0.0.1:8000/shop-channel/main',
+                'shop_email' => 'john@admin.com',
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+        }
+
+        // 2. Ensure visited_channels exists for this user and the demo vendor
+        $visited = \Illuminate\Support\Facades\DB::table('visited_channels')->where(['user_id' => $userId, 'vendor_id' => $vendorId])->first();
+        if (!$visited) {
+            \Illuminate\Support\Facades\DB::table('visited_channels')->insert([
+                'user_id' => $userId,
+                'vendor_id' => $vendorId,
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+        }
+
+        $shopProduct = \App\Models\ShopChannelProduct::with('product')
+            ->where('shop_channel_id', $shop->id)
+            ->where('status', 1)
+            ->first();
+
+        if ($shopProduct && $shopProduct->product) {
+            $cartExists = \App\Models\Cart::where('user_id', $userId)
+                ->where('product_id', $shopProduct->product_id)
+                ->exists();
+
+            if (!$cartExists) {
+                \Illuminate\Support\Facades\DB::table('carts')->insert([
+                    'session_id' => 'mypage-' . $userId,
+                    'user_id' => $userId,
+                    'product_id' => $shopProduct->product_id,
+                    'size' => $shopProduct->product->product_color ?: '기본옵션',
+                    'quantity' => 1,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+
+            \App\Models\Wishlist::firstOrCreate([
+                'user_id' => $userId,
+                'shop_channel_product_id' => $shopProduct->id,
+            ]);
+
+            \App\Models\PointTransaction::firstOrCreate(
+                [
+                    'user_id' => $userId,
+                    'shop_channel_id' => $shop->id,
+                    'type' => 'earn',
+                    'description' => 'Me9 테스트 Shop 채널 방문 적립',
+                ],
+                [
+                    'points' => 100,
+                ]
+            );
+        }
+    }
+
+    public function orderView(Request $request)
+    {
+        $user = Auth::user();
+        if (!$user) {
+            return redirect()->route('front.member.login');
+        }
+
+        $id = $request->get('id');
+        if (!$id) {
+            $order = \App\Models\Order::where('user_id', $user->id)->orderBy('id', 'desc')->first();
+        } else {
+            $order = \App\Models\Order::where('user_id', $user->id)->find($id);
+        }
+
+        if (!$order) {
+            return redirect()->route('mypage.order.list')->with('error_message', '주문 정보를 찾을 수 없습니다.');
+        }
+
+        // Eager load order products and claims
+        $order->load(['orders_products.product', 'claims']);
+
+        return view('front.mypage.order.view', compact('user', 'order'));
+    }
+
+    public function orderClaimSubmit(Request $request)
+    {
+        $request->validate([
+            'order_item_id' => 'required',
+            'type' => 'required|in:cancel,return,exchange,confirm',
+            'reason' => 'required_unless:type,confirm'
+        ]);
+
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => '로그인이 필요합니다.'], 401);
+        }
+
+        // Find the orders_product item belonging to the current user
+        $item = \App\Models\OrdersProduct::where('id', $request->order_item_id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (!$item) {
+            return response()->json(['success' => false, 'message' => '주문 상품 정보를 찾을 수 없습니다.'], 404);
+        }
+
+        // Find the associated order
+        $order = \App\Models\Order::find($item->order_id);
+        if (!$order) {
+            return response()->json(['success' => false, 'message' => '주문 정보를 찾을 수 없습니다.'], 404);
+        }
+
+        if ($request->type === 'confirm') {
+            $item->item_status = 'Confirmed';
+            $item->status_code = OrderItemStatus::CONFIRMED;
+            $item->confirmed_at = now();
+            $item->updated_at = now();
+            $item->save();
+
+            // Save rating and review to ratings table
+            \Illuminate\Support\Facades\DB::table('ratings')->insert([
+                'user_id' => $user->id,
+                'product_id' => $item->product_id,
+                'rating' => intval($request->rating ?? 5),
+                'review' => $request->review ?? '이 상품을 구매하겠습니다.',
+                'status' => 1,
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => '구매 확정이 완료되었습니다.'
+            ]);
+        } else {
+            $claimType = $request->type;
+            $statusMap = [
+                'cancel' => 'Cancel Requested',
+                'return' => 'Return Requested',
+                'exchange' => 'Exchange Requested'
+            ];
+            $statusCodeMap = [
+                'cancel' => OrderItemStatus::CANCEL_REQUESTED,
+                'return' => OrderItemStatus::RETURN_REQUESTED,
+                'exchange' => OrderItemStatus::EXCHANGE_REQUESTED,
+            ];
+
+            $item->item_status = $statusMap[$claimType];
+            $item->status_code = $statusCodeMap[$claimType];
+            $item->updated_at = now();
+            $item->save();
+
+            $detailReason = $request->detail_reason ?? '';
+            if ($claimType === 'return' || $claimType === 'exchange') {
+                $recoveryMethod = $request->recovery_method ?? '자동회수';
+                $recoveryAddress = $request->recovery_address ?? '';
+                $detailReason = "[회수방법: {$recoveryMethod}] 주소: {$recoveryAddress}";
+                if ($request->detail_reason) {
+                    $detailReason .= " | 상세사유: " . $request->detail_reason;
+                }
+            }
+
+            \App\Models\OrderClaim::create([
+                'order_id' => $order->id,
+                'user_id' => $user->id,
+                'vendor_id' => $item->vendor_id,
+                'order_product_id' => $item->id,
+                'type' => $claimType,
+                'reason' => $request->reason,
+                'detail_reason' => $detailReason,
+                'status' => 'requested',
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+
+            $label = $claimType === 'cancel' ? '취소' : ($claimType === 'return' ? '반품' : '교환');
+
+            return response()->json([
+                'success' => true,
+                'message' => $label . ' 신청이 완료되었습니다.'
+            ]);
+        }
     }
 
     public function profileEdit()
@@ -880,6 +1091,8 @@ class UserController extends Controller
 
     // 방문한 채널 목록
     public function visitedChannels(Request $request) {
+        $this->ensureMypageDevDataExists(Auth::id());
+
         $query = VisitedChannel::with('vendor.vendorbusinessdetails') // 입점업체 정보 로드
             ->where('user_id', Auth::id());
 
@@ -893,6 +1106,15 @@ class UserController extends Controller
 
         $visitedChannels = $query->orderBy('updated_at', 'desc')
             ->paginate(10);
+
+        // Calculate actual orders count for each visited channel
+        $visitedChannels->getCollection()->transform(function ($visit) {
+            $visit->orders_count = \Illuminate\Support\Facades\DB::table('orders_products')
+                ->where('user_id', Auth::id())
+                ->where('vendor_id', $visit->vendor_id)
+                ->count();
+            return $visit;
+        });
 
         return view('front.mypage.sub01.visited_channels', compact('visitedChannels'));
     }
@@ -1477,90 +1699,74 @@ class UserController extends Controller
     public function pointStatus()
     {
         $user = Auth::user();
-        
-        // Mock data for point status based on the image
-        $channelPoints = 1009; // Total channel points
-        $me9Points = $user->point ?? 300; // Me9 points from user table
-        
-        $pointsList = [
-            [
-                'no' => 20,
-                'seller_name' => '회원사 명',
-                'channel_code' => '채널코드',
-                'status' => '운영',
-                'available_points' => 42,
-                'has_shop' => true,
-                'can_convert' => false,
-            ],
-            [
-                'no' => 19,
-                'seller_name' => 'Test',
-                'channel_code' => 'H347',
-                'status' => '중지',
-                'available_points' => 100,
-                'has_shop' => false,
-                'can_convert' => true,
-            ]
-        ];
+        $this->ensureMypageDevDataExists($user->id);
 
-        return view('front.mypage.sub01.point_status', compact('user', 'channelPoints', 'me9Points', 'pointsList'));
+        $channelPoints = \App\Models\PointTransaction::where('user_id', $user->id)
+            ->whereNotNull('shop_channel_id')
+            ->sum('points');
+        $me9Points = \App\Models\PointTransaction::where('user_id', $user->id)
+            ->whereNull('shop_channel_id')
+            ->sum('points');
+
+        $visitedVendorIds = \App\Models\VisitedChannel::where('user_id', $user->id)->pluck('vendor_id');
+        $shops = \App\Models\ShopChannel::whereIn('vendor_id', $visitedVendorIds)
+            ->with('vendor')
+            ->orderByDesc('id')
+            ->get();
+
+        $pointsList = $shops->values()->map(function ($shop, $index) use ($user) {
+            $availablePoints = \App\Models\PointTransaction::where('user_id', $user->id)
+                ->where('shop_channel_id', $shop->id)
+                ->sum('points');
+
+            return [
+                'no' => $index + 1,
+                'seller_name' => $shop->vendor?->name ?? $shop->channel_name,
+                'channel_code' => $shop->channel_code,
+                'status' => (int) $shop->status === 1 ? '운영' : '중지',
+                'available_points' => $availablePoints,
+                'has_shop' => true,
+                'can_convert' => $availablePoints > 0,
+            ];
+        })->all();
+
+        $shopChannels = $shops->values()->map(function ($shop, $index) {
+            $url = route('shop.channel_main');
+
+            return [
+                'no' => $index + 1,
+                'name' => $shop->channel_name,
+                'info' => $shop->channel_code,
+                'qr' => 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=' . urlencode($url),
+                'url' => $url,
+            ];
+        })->all();
+
+        return view('front.mypage.sub01.point_status', compact('user', 'channelPoints', 'me9Points', 'pointsList', 'shopChannels'));
     }
 
     public function pointHistory(Request $request)
     {
         $user = Auth::user();
+        $this->ensureMypageDevDataExists($user->id);
 
-        // Mock data for point history based on the image
-        // In a real application, you would fetch this from a database, likely filtering by request parameters
-        $pointHistory = [
-            [
-                'no' => 1,
-                'created_at' => '2025-02-15',
-                'channel_name' => '채널명1',
-                'channel_code' => 'Code1',
-                'type' => '적립',
-                'points' => 1000,
-                'description' => '리뷰 작성으로 인한 포인트 적립'
-            ],
-            [
-                'no' => 2,
-                'created_at' => '2025-02-14',
-                'channel_name' => '채널명2',
-                'channel_code' => 'Code2',
-                'type' => '소진',
-                'points' => -2000,
-                'description' => '주문 번호 asd1234 주문 결제 시 포인트 사용'
-            ],
-            [
-                'no' => 3,
-                'created_at' => '2025-02-10',
-                'channel_name' => '채널명3',
-                'channel_code' => 'Code3',
-                'type' => '적립',
-                'points' => 3000,
-                'description' => '이벤트 참여로 인한 포인트 적립'
-            ],
-             [
-                'no' => 4,
-                'created_at' => '2025-02-01',
-                'channel_name' => '채널명1',
-                'channel_code' => 'Code1',
-                'type' => '적립',
-                'points' => 500,
-                'description' => '로그인 보너스'
-            ],
-        ];
-
-        // Pagination mock (using LengthAwarePaginator manually if needed, or just array slicing for demo)
-        // For simple display without real DB pagination, we can just pass the array.
-        // If real pagination is needed later:
-        // $page = $request->get('page', 1);
-        // $perPage = 10;
-        // $offset = ($page * $perPage) - $perPage;
-        // $items = array_slice($pointHistory, $offset, $perPage);
-        // $paginatedItems = new \Illuminate\Pagination\LengthAwarePaginator($items, count($pointHistory), $perPage, $page);
-        
-        // For now, passing the array directly
+        $pointHistory = \App\Models\PointTransaction::with('shopChannel')
+            ->where('user_id', $user->id)
+            ->orderByDesc('created_at')
+            ->get()
+            ->values()
+            ->map(function ($transaction, $index) {
+                return [
+                    'no' => $index + 1,
+                    'created_at' => optional($transaction->created_at)->format('Y-m-d'),
+                    'channel_name' => $transaction->shopChannel?->channel_name ?? 'Me9 통합',
+                    'channel_code' => $transaction->shopChannel?->channel_code ?? 'ME9',
+                    'type' => $transaction->points >= 0 ? '적립' : '소진',
+                    'points' => $transaction->points,
+                    'description' => $transaction->description ?: '포인트 이력',
+                ];
+            })
+            ->all();
         
         return view('front.mypage.sub01.point_history', compact('user', 'pointHistory'));
     }
@@ -1568,43 +1774,16 @@ class UserController extends Controller
     public function cartList(Request $request)
     {
         $user = Auth::user();
+        $this->ensureMypageDevDataExists($user->id);
 
-        // Mock data for cart list
-        $cartItems = [
-            [
-                'id' => 1,
-                'image' => 'https://placehold.co/100', // Placeholder
-                'code' => 'a11111',
-                'name' => '상품명 111111',
-                'option' => '옵션 1',
-                'quantity' => 1,
-                'price' => 10000,
-                'qr_code' => 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=Item1',
-                'shop_channel' => '채널명'
-            ],
-             [
-                'id' => 2,
-                'image' => 'https://placehold.co/100', // Placeholder
-                'code' => 'a22222',
-                'name' => '상품명 111111',
-                'option' => '옵션 1',
-                'quantity' => 1,
-                'price' => 20000,
-                'qr_code' => 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=Item2',
-                'shop_channel' => '채널명2'
-            ],
-             [
-                'id' => 3,
-                'image' => 'https://placehold.co/100', // Placeholder
-                'code' => 'a33333',
-                'name' => '상품명 111111',
-                'option' => '옵션 1',
-                'quantity' => 1,
-                'price' => 30000,
-                'qr_code' => 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=Item3',
-                'shop_channel' => '채널명3'
-            ],
-        ];
+        $cartItems = \App\Models\Cart::with('product')
+            ->where('user_id', $user->id)
+            ->orderByDesc('id')
+            ->get()
+            ->map(fn ($cart) => $this->mypageProductRow($cart->product, $cart->id, $cart->size, $cart->quantity))
+            ->filter()
+            ->values()
+            ->all();
 
         return view('front.mypage.sub01.cart_list', compact('user', 'cartItems'));
     }
@@ -1612,39 +1791,73 @@ class UserController extends Controller
     public function wishlist(Request $request)
     {
         $user = Auth::user();
+        $this->ensureMypageDevDataExists($user->id);
 
-        // Mock data for wishlist
-        $wishlistItems = [
-            [
-                'id' => 1,
-                'image' => 'https://placehold.co/100', // Placeholder
-                'code' => 'a11111',
-                'name' => '상품명 111111',
-                'option' => '옵션 1',
-                'price' => 10000,
-                'shop_channel' => '채널명'
-            ],
-             [
-                'id' => 2,
-                'image' => 'https://placehold.co/100', // Placeholder
-                'code' => 'a22222',
-                'name' => '상품명 111111',
-                'option' => '옵션 1',
-                'price' => 20000,
-                'shop_channel' => '채널명2'
-            ],
-             [
-                'id' => 3,
-                'image' => 'https://placehold.co/100', // Placeholder
-                'code' => 'a33333',
-                'name' => '상품명 111111',
-                'option' => '옵션 1',
-                'price' => 30000,
-                'shop_channel' => '채널명3'
-            ],
-        ];
+        $wishlistItems = \App\Models\Wishlist::with('shopChannelProduct.product')
+            ->where('user_id', $user->id)
+            ->orderByDesc('id')
+            ->get()
+            ->map(function ($wishlist) {
+                $shopProduct = $wishlist->shopChannelProduct;
+                $row = $this->mypageProductRow($shopProduct?->product, $wishlist->id, '기본옵션', 1, $shopProduct);
+                if ($row) {
+                    unset($row['quantity'], $row['qr_code']);
+                }
+
+                return $row;
+            })
+            ->filter()
+            ->values()
+            ->all();
 
         return view('front.mypage.sub01.wishlist', compact('user', 'wishlistItems'));
+    }
+
+    public function deleteCartItem($id)
+    {
+        \App\Models\Cart::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->delete();
+
+        return redirect()->route('mypage.cart')->with('success_message', '장바구니 상품을 삭제했습니다.');
+    }
+
+    public function deleteWishlistItem($id)
+    {
+        \App\Models\Wishlist::where('id', $id)
+            ->where('user_id', Auth::id())
+            ->delete();
+
+        return redirect()->route('mypage.wishlist')->with('success_message', '찜한 상품을 삭제했습니다.');
+    }
+
+    private function mypageProductRow($product, int $id, string $option = '기본옵션', int $quantity = 1, $shopProduct = null): ?array
+    {
+        if (!$product) {
+            return null;
+        }
+
+        $shopProduct = $shopProduct ?: \App\Models\ShopChannelProduct::with('shopChannel')
+            ->where('product_id', $product->id)
+            ->first();
+        $shop = $shopProduct?->shopChannel;
+        $visitUrl = $shopProduct ? route('shop.product_details', ['id' => $shopProduct->id]) : route('shop.products_list');
+        $price = $shopProduct?->selling_price ?: $product->product_price;
+
+        return [
+            'id' => $id,
+            'image' => $product->product_image
+                ? asset('front/images/product_images/small/' . $product->product_image)
+                : 'https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=' . urlencode($product->product_code),
+            'code' => $product->product_code,
+            'name' => $product->product_name,
+            'option' => $option ?: '기본옵션',
+            'quantity' => $quantity,
+            'price' => $price,
+            'qr_code' => 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' . urlencode($visitUrl),
+            'shop_channel' => $shop?->channel_name ?? 'Me9 Shop',
+            'visit_url' => $visitUrl,
+        ];
     }
 
     /**
@@ -1706,223 +1919,71 @@ class UserController extends Controller
     {
         $user = Auth::user();
 
+        // Ensure user is loaded
+        if (!$user) {
+            return redirect()->route('front.member.login');
+        }
+
         // Status filter from request
         $status = $request->input('status', 'all');
         $tab = $request->input('tab', 'order');
+        $vendorId = $request->input('vendor_id'); // Optional filter by channel
 
-        // Mock data matching the user's image structure
-        $orders = [
-            [
-                'order_no' => 'Me9-00929423',
-                'created_at' => '2024.10.14',
-                'items' => [
-                    [
-                        'id' => 1,
-                        'shop_name' => 'Shop 채널명',
-                        'seller_name' => 'txx2212',
-                        'product_image' => 'https://placehold.co/100',
-                        'product_name' => '상품명 111111',
-                        'option' => '옵션 1 / 2개',
-                        'price' => 2000,
-                        'status' => '결제 완료',
-                        'shipping_fee' => '무료배송',
-                        'buttons' => ['cancel']
-                    ],
-                    [
-                        'id' => 2,
-                        'shop_name' => 'Shop 채널명',
-                        'seller_name' => 'txx2212',
-                        'product_image' => 'https://placehold.co/100',
-                        'product_name' => '상품명 111111',
-                        'option' => '옵션 2 / 1개',
-                        'price' => 1000,
-                        'status' => '배송 준비중',
-                        'shipping_fee' => '무료배송',
-                        'buttons' => ['cancel']
-                    ]
-                ]
-            ],
-            [
-                'order_no' => 'Me9-00929111',
-                'created_at' => '2024.10.12',
-                'items' => [
-                    [
-                        'id' => 3,
-                        'shop_name' => 'Shop 채널명',
-                        'seller_name' => 'txx2212',
-                        'product_image' => 'https://placehold.co/100',
-                        'product_name' => '상품명 111111',
-                        'option' => '옵션 1 / 2개',
-                        'price' => 2000,
-                        'status' => '배송 중',
-                        'shipping_fee' => '30,000원 미만 : 2,500 원',
-                        'buttons' => ['return']
-                    ]
-                ]
-            ],
-            [
-                'order_no' => 'Me9-00929111',
-                'created_at' => '2024.10.11',
-                'items' => [
-                    [
-                        'id' => 4,
-                        'shop_name' => 'Shop 채널명',
-                        'seller_name' => 'txx2212',
-                        'product_image' => 'https://placehold.co/100',
-                        'product_name' => '상품명 111111',
-                        'option' => '옵션 1 / 2개',
-                        'price' => 2000,
-                        'status' => '배송완료',
-                        'shipping_fee' => '30,000원 미만 : 2,500 원',
-                        'buttons' => ['return', 'exchange', 'confirm']
-                    ]
-                ]
-            ],
-            [
-                'order_no' => 'Me9-00929111',
-                'created_at' => '2024.10.09',
-                'items' => [
-                    [
-                        'id' => 5,
-                        'shop_name' => 'Shop 채널명',
-                        'seller_name' => 'txx2212',
-                        'product_image' => 'https://placehold.co/100',
-                        'product_name' => '상품명 111111',
-                        'option' => '옵션 1 / 2개',
-                        'price' => 2000,
-                        'status' => '구매 확정',
-                        'confirmed_at' => '2024.10.16',
-                        'shipping_fee' => '30,000원 미만 : 2,500 원',
-                        'buttons' => ['review']
-                    ]
-                ]
-            ],
-            // Cancelled Items
-            [
-                'order_no' => 'Me9-00929999',
-                'created_at' => '2024.10.12',
-                'items' => [
-                    [
-                        'id' => 6,
-                        'shop_name' => 'Shop 채널명',
-                        'seller_name' => 'txx2212',
-                        'product_image' => 'https://placehold.co/100',
-                        'product_name' => '상품명 111111',
-                        'option' => '옵션 1 / 2개',
-                        'price' => 2000,
-                        'status' => '취소신청중',
-                        'cancel_request_date' => '2024.10.16',
-                        'shipping_fee' => '30,000원 미만 : 2,500 원',
-                        'buttons' => []
-                    ],
-                     [
-                        'id' => 7,
-                        'shop_name' => 'Shop 채널명',
-                        'seller_name' => 'txx2212',
-                        'product_image' => 'https://placehold.co/100',
-                        'product_name' => '상품명 111111',
-                        'option' => '옵션 1 / 2개',
-                        'price' => 2000,
-                        'status' => '취소완료',
-                        'cancel_complete_date' => '2024.10.16',
-                        'shipping_fee' => '30,000원 미만 : 2,500 원',
-                        'buttons' => []
-                    ]
-                ]
-            ],
-            // Return Items
-            [
-                'order_no' => 'Me9-00928888',
-                'created_at' => '2024.10.12',
-                'items' => [
-                    [
-                        'id' => 8,
-                        'shop_name' => 'Shop 채널명',
-                        'seller_name' => 'txx2212',
-                        'product_image' => 'https://placehold.co/100',
-                        'product_name' => '상품명 111111',
-                        'option' => '옵션 1 / 2개',
-                        'price' => 2000,
-                        'status' => '반품신청중',
-                        'return_request_date' => '2024.10.16',
-                        'shipping_fee' => '30,000원 미만 : 2,500 원',
-                        'buttons' => []
-                    ],
-                     [
-                        'id' => 9,
-                        'shop_name' => 'Shop 채널명',
-                        'seller_name' => 'txx2212',
-                        'product_image' => 'https://placehold.co/100',
-                        'product_name' => '상품명 111111',
-                        'option' => '옵션 1 / 2개',
-                        'price' => 2000,
-                        'status' => '반품완료',
-                        'return_complete_date' => '2024.10.16',
-                        'shipping_fee' => '30,000원 미만 : 2,500 원',
-                        'buttons' => []
-                    ]
-                ]
-            ],
-            // Exchange Items
-            [
-                'order_no' => 'Me9-00927777',
-                'created_at' => '2024.10.12',
-                'items' => [
-                    [
-                        'id' => 10,
-                        'shop_name' => 'Shop 채널명',
-                        'seller_name' => 'txx2212',
-                        'product_image' => 'https://placehold.co/100',
-                        'product_name' => '상품명 111111',
-                        'option' => '옵션 1 / 2개',
-                        'price' => 2000,
-                        'status' => '교환신청중',
-                        'exchange_request_date' => '2024.10.16',
-                        'shipping_fee' => '30,000원 미만 : 2,500 원',
-                        'buttons' => []
-                    ],
-                     [
-                        'id' => 11,
-                        'shop_name' => 'Shop 채널명',
-                        'seller_name' => 'txx2212',
-                        'product_image' => 'https://placehold.co/100',
-                        'product_name' => '상품명 111111',
-                        'option' => '옵션 1 / 2개',
-                        'price' => 2000,
-                        'status' => '교환완료',
-                        'exchange_complete_date' => '2024.10.16',
-                        'original_order_no' => 'Me9-00929111',
-                        'exchange_order_no' => 'Me9-RE-00929111',
-                        'shipping_fee' => '30,000원 미만 : 2,500 원',
-                        'buttons' => []
-                    ]
-                ]
-            ]
+        // Fetch real orders from database
+        $ordersQuery = \App\Models\Order::with(['orders_products.product'])
+            ->where('user_id', $user->id);
+
+        // Filter by vendor if requested (for organic visited channel orders link)
+        if (!empty($vendorId)) {
+            $ordersQuery->whereHas('orders_products', function ($q) use ($vendorId) {
+                $q->where('vendor_id', $vendorId);
+            });
+        }
+
+        $dbOrders = $ordersQuery->orderBy('id', 'desc')->get();
+
+        $statusMap = [
+            'New' => '결제 완료',
+            'In Process' => '배송 준비중',
+            'Shipped' => '배송 중',
+            'Delivered' => '배송완료',
+            'Confirmed' => '구매 확정',
+            'Cancel Requested' => '취소신청중',
+            'Cancelled' => '취소완료',
+            'Return Requested' => '반품신청중',
+            'Returned' => '반품완료',
+            'Exchange Requested' => '교환신청중',
+            'Exchanged' => '교환완료'
         ];
 
-        // Filter orders based on Tab and Status
-        $filteredOrders = [];
-        foreach ($orders as $order) {
-            $filteredItems = [];
-            foreach ($order['items'] as $item) {
-                $itemStatus = $item['status'];
+        // Format and map database orders to the structure expected by the view
+        $formattedOrders = [];
+        foreach ($dbOrders as $order) {
+            $items = [];
+            foreach ($order->orders_products as $item) {
+                // If filtering by vendor, only keep items for that vendor
+                if (!empty($vendorId) && $item->vendor_id != $vendorId) {
+                    continue;
+                }
+
+                $itemStatus = $statusMap[$item->item_status] ?? $item->item_status;
                 $keepItem = false;
 
                 // 1. Tab Filtering
                 if ($tab === 'order') {
-                    if (in_array($itemStatus, ['결제 완료', '배송 준비중', '배송 중', '배송중', '배송완료', '구매 확정'])) {
+                    if (in_array($item->item_status, ['New', 'In Process', 'Shipped', 'Delivered', 'Confirmed'])) {
                         $keepItem = true;
                     }
                 } elseif ($tab === 'cancel') {
-                    if (in_array($itemStatus, ['취소신청중', '취소완료'])) {
+                    if (in_array($item->item_status, ['Cancel Requested', 'Cancelled'])) {
                         $keepItem = true;
                     }
                 } elseif ($tab === 'return') {
-                     if (in_array($itemStatus, ['반품신청', '반품신청중', '반품완료'])) {
+                     if (in_array($item->item_status, ['Return Requested', 'Returned'])) {
                         $keepItem = true;
                     }
                 } elseif ($tab === 'exchange') {
-                     if (in_array($itemStatus, ['교환신청', '교환신청중', '교환완료'])) {
+                     if (in_array($item->item_status, ['Exchange Requested', 'Exchanged'])) {
                         $keepItem = true;
                     }
                 }
@@ -1931,52 +1992,95 @@ class UserController extends Controller
 
                 // 2. Status Filtering (Sub-filter)
                 if ($status !== 'all') {
-                    $keepItem = false; // Reset to check specific status
+                    $keepItem = false;
                     switch ($status) {
                         case 'payment_completed':
-                            if ($itemStatus === '결제 완료') $keepItem = true;
+                            if ($item->item_status === 'New') $keepItem = true;
                             break;
                         case 'preparing_shipment':
-                            if ($itemStatus === '배송 준비중') $keepItem = true;
+                            if ($item->item_status === 'In Process') $keepItem = true;
                             break;
                         case 'shipping':
-                            if ($itemStatus === '배송 중' || $itemStatus === '배송중') $keepItem = true;
+                            if ($item->item_status === 'Shipped') $keepItem = true;
                             break;
                         case 'purchase_confirmed':
-                            if ($itemStatus === '구매 확정') $keepItem = true;
+                            if ($item->item_status === 'Confirmed') $keepItem = true;
                             break;
                         case 'cancel_request':
-                            if ($itemStatus === '취소신청중' || $itemStatus === '취소신청') $keepItem = true;
+                            if ($item->item_status === 'Cancel Requested') $keepItem = true;
                             break;
                         case 'cancel_completed':
-                            if ($itemStatus === '취소완료') $keepItem = true;
+                            if ($item->item_status === 'Cancelled') $keepItem = true;
                             break;
                         case 'return_request':
-                            if ($itemStatus === '반품신청중' || $itemStatus === '반품신청') $keepItem = true;
+                            if ($item->item_status === 'Return Requested') $keepItem = true;
                             break;
                         case 'return_completed':
-                            if ($itemStatus === '반품완료') $keepItem = true;
+                            if ($item->item_status === 'Returned') $keepItem = true;
                             break;
                         case 'exchange_request':
-                            if ($itemStatus === '교환신청중' || $itemStatus === '교환신청') $keepItem = true;
+                            if ($item->item_status === 'Exchange Requested') $keepItem = true;
                             break;
                         case 'exchange_completed':
-                            if ($itemStatus === '교환완료') $keepItem = true;
+                            if ($item->item_status === 'Exchanged') $keepItem = true;
                             break;
                     }
                 }
 
-                if ($keepItem) {
-                    $filteredItems[] = $item;
+                if (!$keepItem) continue;
+
+                // Button rendering rules
+                $buttons = [];
+                if (in_array($item->item_status, ['New', 'In Process'])) {
+                    $buttons[] = 'cancel';
+                } elseif (in_array($item->item_status, ['Shipped', 'Delivered'])) {
+                    $buttons[] = 'return';
+                    $buttons[] = 'exchange';
+                    $buttons[] = 'confirm';
+                } elseif ($item->item_status === 'Confirmed') {
+                    $buttons[] = 'review';
                 }
+
+                $shopName = \Illuminate\Support\Facades\DB::table('vendors_business_details')
+                    ->where('vendor_id', $item->vendor_id)
+                    ->value('shop_name') ?? 'Me9 브랜드 전용관';
+
+                $productImage = 'https://placehold.co/100';
+                if ($item->product && !empty($item->product->product_image)) {
+                    $productImage = asset('front/images/product_images/small/' . $item->product->product_image);
+                }
+
+                $items[] = [
+                    'id' => $item->id,
+                    'order_item_id' => $item->id,
+                    'shop_name' => $shopName,
+                    'seller_name' => 'Seller',
+                    'product_image' => $productImage,
+                    'product_name' => $item->product_name,
+                    'option' => '옵션: ' . $item->product_size . ' / ' . $item->product_qty . '개',
+                    'price' => $item->product_price * $item->product_qty,
+                    'status' => $itemStatus,
+                    'shipping_fee' => $order->shipping_charges > 0 ? '배송비: ' . number_format($order->shipping_charges) . ' 원' : '무료배송',
+                    'buttons' => $buttons,
+                    // Additional dates for UI output
+                    'cancel_request_date' => $item->item_status === 'Cancel Requested' ? $item->updated_at->format('Y.m.d') : null,
+                    'cancel_complete_date' => $item->item_status === 'Cancelled' ? $item->updated_at->format('Y.m.d') : null,
+                    'return_request_date' => $item->item_status === 'Return Requested' ? $item->updated_at->format('Y.m.d') : null,
+                    'exchange_request_date' => $item->item_status === 'Exchange Requested' ? $item->updated_at->format('Y.m.d') : null,
+                ];
             }
 
-            if (!empty($filteredItems)) {
-                $order['items'] = $filteredItems;
-                $filteredOrders[] = $order;
+            if (!empty($items)) {
+                $formattedOrders[] = [
+                    'id' => $order->id,
+                    'order_no' => 'Me9-' . sprintf('%08d', $order->id),
+                    'created_at' => $order->created_at->format('Y.m.d'),
+                    'items' => $items
+                ];
             }
         }
-        $orders = $filteredOrders;
+
+        $orders = $formattedOrders;
 
         return view('front.mypage.order.list', compact('user', 'orders', 'status', 'tab'));
     }

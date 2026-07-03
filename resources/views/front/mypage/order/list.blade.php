@@ -428,7 +428,7 @@
                                             @endif
                                             <span class="no">주문번호 {{ $order['order_no'] }}</span>
                                         </div>
-                                        <a href="{{ route('mypage.order.view') }}" class="link">주문상세 ></a>
+                                        <a href="{{ route('mypage.order.view', ['id' => $order['id']]) }}" class="link">주문상세 ></a>
                                     </div>
 
                                     <div class="prd_group">
@@ -647,7 +647,6 @@
                         </div>
 
                         <form id="cancel_form">
-                            <!-- 실제 구현시 action과 method 설정 필요 -->
                             <input type="hidden" name="order_item_id" id="cancel_order_item_id">
 
                             <div class="con">
@@ -1028,6 +1027,144 @@
                 var d = $(this).data();
                 console.log('Confirm Popup Data:', d);
                 openConfirmPopup(d.id, d.name, d.image, d.shop, d.option);
+            });
+
+            // Cancel Submit
+            $("#cancel_form .col5").on("click", function (e) {
+                e.preventDefault();
+                var reason = $("#cancel_reason_select").val();
+                if (!reason) {
+                    alert("취소 사유를 선택해 주세요.");
+                    return;
+                }
+
+                var data = {
+                    _token: "{{ csrf_token() }}",
+                    order_item_id: $("#cancel_order_item_id").val(),
+                    type: 'cancel',
+                    reason: reason,
+                    detail_reason: $("#cancel_detail_reason").val()
+                };
+
+                $.ajax({
+                    url: "{{ route('mypage.order.claim.submit') }}",
+                    method: "POST",
+                    data: data,
+                    success: function (res) {
+                        if (res.success) {
+                            alert(res.message);
+                            location.reload();
+                        } else {
+                            alert(res.message);
+                        }
+                    },
+                    error: function (xhr) {
+                        alert(xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : "오류가 발생했습니다.");
+                    }
+                });
+            });
+
+            // Return Submit
+            $("#return_form .col4").on("click", function (e) {
+                e.preventDefault();
+                var reason = $("#return_reason_select").val();
+                if (!reason) {
+                    alert("반품 사유를 선택해 주세요.");
+                    return;
+                }
+
+                var data = {
+                    _token: "{{ csrf_token() }}",
+                    order_item_id: $("#return_order_item_id").val(),
+                    type: 'return',
+                    reason: reason,
+                    detail_reason: $("#return_detail_reason").val(),
+                    recovery_method: $("input[name='return_method']:checked").val() === 'auto' ? '자동회수' : '수동회수',
+                    recovery_address: "{{ $user->address ?? '' }} {{ $user->city ?? '' }}"
+                };
+
+                $.ajax({
+                    url: "{{ route('mypage.order.claim.submit') }}",
+                    method: "POST",
+                    data: data,
+                    success: function (res) {
+                        if (res.success) {
+                            alert(res.message);
+                            location.reload();
+                        } else {
+                            alert(res.message);
+                        }
+                    },
+                    error: function (xhr) {
+                        alert(xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : "오류가 발생했습니다.");
+                    }
+                });
+            });
+
+            // Exchange Submit
+            $("#exchange_form .col3").on("click", function (e) {
+                e.preventDefault();
+                var reason = $("#exchange_reason_select").val();
+                if (!reason) {
+                    alert("교환 사유를 선택해 주세요.");
+                    return;
+                }
+
+                var data = {
+                    _token: "{{ csrf_token() }}",
+                    order_item_id: $("#exchange_order_item_id").val(),
+                    type: 'exchange',
+                    reason: reason,
+                    detail_reason: $("#exchange_detail_reason").val(),
+                    recovery_method: $("input[name='exchange_method']:checked").val() === 'auto' ? '자동회수' : '수동회수',
+                    recovery_address: "{{ $user->address ?? '' }} {{ $user->city ?? '' }}"
+                };
+
+                $.ajax({
+                    url: "{{ route('mypage.order.claim.submit') }}",
+                    method: "POST",
+                    data: data,
+                    success: function (res) {
+                        if (res.success) {
+                            alert(res.message);
+                            location.reload();
+                        } else {
+                            alert(res.message);
+                        }
+                    },
+                    error: function (xhr) {
+                        alert(xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : "오류가 발생했습니다.");
+                    }
+                });
+            });
+
+            // Confirm Submit
+            $("#confirm_form .col2").on("click", function (e) {
+                e.preventDefault();
+                var data = {
+                    _token: "{{ csrf_token() }}",
+                    order_item_id: $("#confirm_order_item_id").val(),
+                    type: 'confirm',
+                    rating: $("#confirm_rating_value").val(),
+                    review: '이 상품을 구매하겠습니다.'
+                };
+
+                $.ajax({
+                    url: "{{ route('mypage.order.claim.submit') }}",
+                    method: "POST",
+                    data: data,
+                    success: function (res) {
+                        if (res.success) {
+                            alert(res.message);
+                            location.reload();
+                        } else {
+                            alert(res.message);
+                        }
+                    },
+                    error: function (xhr) {
+                        alert(xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : "오류가 발생했습니다.");
+                    }
+                });
             });
 
             // Datepicker (safe check)

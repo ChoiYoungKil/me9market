@@ -136,8 +136,31 @@
                                                     {{ $visit->updated_at->format('Y.m.d') }}
                                                 </td>
                                                 <td class="textC">
-                                                    <img src="/mypage_assets/images/common/qr_sample.png" alt="QR"
-                                                        style="width: 40px; height: 40px; border: 1px solid #ddd;">
+                                                    @php
+                                                        $qr_data = '#';
+                                                        if ($visit->vendor && $visit->vendor->vendorbusinessdetails && $visit->vendor->vendorbusinessdetails->shop_website) {
+                                                            $qr_data = $visit->vendor->vendorbusinessdetails->shop_website;
+                                                            if (!Str::startsWith($qr_data, ['http://', 'https://', '//'])) {
+                                                                $qr_data = 'http://' . $qr_data;
+                                                            }
+                                                        }
+                                                    @endphp
+                                                    @if($qr_data !== '#')
+                                                        @php
+                                                            $shopName = $visit->vendor && $visit->vendor->vendorbusinessdetails ? $visit->vendor->vendorbusinessdetails->shop_name : '알 수 없음';
+                                                            $qrImageSrc = "data:image/png;base64," . DNS2D::getBarcodePNG($qr_data, 'QRCODE', 4, 4);
+                                                            $largeQrImageSrc = "data:image/png;base64," . DNS2D::getBarcodePNG($qr_data, 'QRCODE', 10, 10);
+                                                        @endphp
+                                                        <img src="{{ $qrImageSrc }}" alt="QR Code" 
+                                                             class="js-qr-click"
+                                                             data-shop="{{ $shopName }}"
+                                                             data-url="{{ $qr_data }}"
+                                                             data-large-qr="{{ $largeQrImageSrc }}"
+                                                             style="width: 50px; height: 50px; border: 1px solid #ddd; padding: 2px; background: white; display: inline-block; cursor: pointer;"
+                                                             title="클릭하여 크게 보기">
+                                                    @else
+                                                        -
+                                                    @endif
                                                 </td>
                                                 <td class="textL">
                                                     <div class="shop_info_cell">
@@ -146,13 +169,15 @@
                                                             {{ $visit->vendor && $visit->vendor->vendorbusinessdetails ? $visit->vendor->vendorbusinessdetails->shop_name : '알 수 없음' }}
                                                         </div>
                                                         <div class="shop_desc">
-                                                            채널에 대한 간략 설명 적는 부분
+                                                            {{ $visit->vendor && $visit->vendor->vendorbusinessdetails && $visit->vendor->vendorbusinessdetails->shop_address ? $visit->vendor->vendorbusinessdetails->shop_address : '미구마켓 공식 파트너 브랜드 채널입니다.' }}
                                                         </div>
                                                     </div>
                                                 </td>
                                                 <td class="textL">
                                                     @if ($visit->vendor && $visit->vendor->vendorbusinessdetails && $visit->vendor->vendorbusinessdetails->shop_website)
-                                                        {{ $visit->vendor->vendorbusinessdetails->shop_website }}
+                                                        <a href="{{ $visit->vendor->vendorbusinessdetails->shop_website }}" target="_blank" style="color: #6366f1; text-decoration: underline;">
+                                                            {{ $visit->vendor->vendorbusinessdetails->shop_website }}
+                                                        </a>
                                                     @else
                                                         -
                                                     @endif
@@ -167,7 +192,10 @@
                                                             }
                                                         }
                                                     @endphp
-                                                    <a href="{{ $visit_url }}" class="btn_visit">방문하기</a>
+                                                    <div style="display: flex; flex-direction: column; gap: 6px; align-items: center; justify-content: center;">
+                                                        <a href="{{ $visit_url }}" class="btn_visit" style="width: 90px; text-align: center; padding: 4px 0; display: block; box-sizing: border-box;">방문하기</a>
+                                                        <a href="{{ route('mypage.order.list', ['vendor_id' => $visit->vendor_id]) }}" class="btn_visit" style="width: 90px; text-align: center; padding: 4px 0; display: block; box-sizing: border-box; background: #6366f1; color: white; border-color: #6366f1; font-weight: bold;">주문내역 ({{ $visit->orders_count }})</a>
+                                                    </div>
                                                 </td>
                                             </tr>
                                         @empty
@@ -191,6 +219,20 @@
             </div>
         </div>
     </div><!-- //contents -->
+
+    <!-- QR Code Modal Popup Layer -->
+    <div id="qrModal" class="modal_bg" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:9999; backdrop-filter: blur(4px); transition: all 0.3s ease;">
+        <div class="modal_content" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:#fff; padding:30px; border-radius:16px; text-align:center; min-width:280px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid #eee; box-sizing: border-box;">
+            <div style="font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 8px;" id="qrModalShopName">Shop Name</div>
+            <div style="font-size: 13px; color: #64748b; margin-bottom: 20px; word-break: break-all;" id="qrModalShopUrl">Shop Url</div>
+            
+            <div style="display: inline-block; padding: 15px; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                <img id="qrModalImage" src="" alt="QR Code" style="width: 200px; height: 200px; display: block;">
+            </div>
+            
+            <button onclick="closeQrModal()" style="display: block; width: 100%; padding: 12px 0; background:#3470f7; color:#fff; border:none; border-radius:8px; cursor:pointer; font-size: 14px; font-weight: 700; transition: background 0.2s; box-shadow: 0 4px 6px -1px rgba(52, 112, 247, 0.2);" onmouseover="this.style.background='#1e56d4'" onmouseout="this.style.background='#3470f7'">닫기</button>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
@@ -210,6 +252,19 @@
                 document.body.appendChild(form);
                 form.submit();
             }
+        }
+
+        // QR Code Modal Trigger
+        $(document).on('click', '.js-qr-click', function() {
+            var data = $(this).data();
+            $('#qrModalShopName').text(data.shop);
+            $('#qrModalShopUrl').text(data.url);
+            $('#qrModalImage').attr('src', data.largeQr);
+            $('#qrModal').fadeIn(200);
+        });
+
+        function closeQrModal() {
+            $('#qrModal').fadeOut(200);
         }
     </script>
     @if(Session::has('success_message'))

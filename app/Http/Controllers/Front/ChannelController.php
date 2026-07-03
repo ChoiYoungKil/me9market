@@ -7,6 +7,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use App\Models\Contact;
+use App\Services\ChannelOrderMetrics;
+use App\Services\ShopChannelRuntime;
+use App\Support\OrderItemStatus;
 
 class ChannelController extends Controller
 {
@@ -24,23 +28,7 @@ class ChannelController extends Controller
             $vendor_id = $user->vendor_id;
 
             // 1. Order Status Counts
-            $statusCounts = \App\Models\OrdersProduct::where('vendor_id', $vendor_id)
-                ->select('item_status', \Illuminate\Support\Facades\DB::raw('count(*) as total'))
-                ->groupBy('item_status')
-                ->pluck('total', 'item_status')
-                ->all();
-
-            $data = [
-                'total' => array_sum($statusCounts),
-                'paid' => $statusCounts['결제완료'] ?? 0,
-                'shipping_ready' => $statusCounts['배송대기'] ?? 0,
-                'shipping' => $statusCounts['배송중'] ?? 0,
-                'complete' => $statusCounts['구매확정'] ?? 0,
-                'cancel_request' => $statusCounts['취소요청'] ?? 0,
-                'return_request' => $statusCounts['반품요청'] ?? 0,
-                'settlement_wait' => \App\Models\OrdersProduct::where('vendor_id', $vendor_id)->where('item_status', '구매확정')->count(),
-                'settlement_complete' => 0, // Placeholder until settlement_status exists
-            ];
+            $data = app(ChannelOrderMetrics::class)->counts($vendor_id);
 
             // 2. Recent Orders (Top 3)
             $recentOrders = \App\Models\Order::with(['orders_products' => function($q) use ($vendor_id) {
@@ -64,7 +52,7 @@ class ChannelController extends Controller
                 ->whereYear('created_at', date('Y'))
                 ->select(
                     \Illuminate\Support\Facades\DB::raw('MONTH(created_at) as month'),
-                    \Illuminate\Support\Facades\DB::raw('SUM(product_price * product_qty) as total_sales')
+                    \Illuminate\Support\Facades\DB::raw('SUM(CASE WHEN line_total > 0 THEN line_total ELSE product_price * product_qty END) as total_sales')
                 )
                 ->groupBy('month')
                 ->orderBy('month')
@@ -77,12 +65,38 @@ class ChannelController extends Controller
                 $chartData[] = $monthlySales[$i] ?? 0;
             }
 
+            $categoryRows = \App\Models\OrdersProduct::where('orders_products.vendor_id', $vendor_id)
+                ->leftJoin('products', 'orders_products.product_id', '=', 'products.id')
+                ->leftJoin('categories', 'products.category_id', '=', 'categories.id')
+                ->select(
+                    \Illuminate\Support\Facades\DB::raw('COALESCE(categories.category_name, "미분류") as category_name'),
+                    \Illuminate\Support\Facades\DB::raw('SUM(CASE WHEN orders_products.line_total > 0 THEN orders_products.line_total ELSE orders_products.product_price * orders_products.product_qty END) as total_sales')
+                )
+                ->groupBy('category_name')
+                ->orderByDesc('total_sales')
+                ->limit(6)
+                ->get();
+
+            $categoryChart = [
+                'labels' => $categoryRows->pluck('category_name')->values(),
+                'data' => $categoryRows->pluck('total_sales')->map(fn ($value) => (float) $value)->values(),
+            ];
+
+            $recentInquiries = Contact::with(['orderProduct', 'shopChannel'])
+                ->where('vendor_id', $vendor_id)
+                ->whereNotNull('order_product_id')
+                ->orderByDesc('created_at')
+                ->take(5)
+                ->get();
+
             return view('channel.index', [
                 'dep1_id' => '00',
                 'user' => $user,
                 'counts' => $data,
                 'recentOrders' => $recentOrders,
-                'chartData' => $chartData
+                'recentInquiries' => $recentInquiries,
+                'chartData' => $chartData,
+                'categoryChart' => $categoryChart,
             ]);
         }
         return redirect()->route('channel.login');
@@ -90,11 +104,15 @@ class ChannelController extends Controller
 
     public function login()
     {
+        app(ShopChannelRuntime::class)->ensureDemoData();
+
         return view('channel.login');
     }
 
     public function loginUser(Request $request)
     {
+        app(ShopChannelRuntime::class)->ensureDemoData();
+
         if (Auth::guard('admin')->check()) {
             if (Auth::guard('admin')->user()->type == 'vendor') {
                 return redirect()->route('channel.index');
@@ -534,7 +552,21 @@ class ChannelController extends Controller
         if (!$admin) return redirect()->route('channel.login');
 
         $products = \App\Models\Product::where('vendor_id', $admin->vendor_id)
-            ->with(['category', 'images'])
+            ->with([
+                'category',
+                'images',
+                'shopChannelProducts' => function ($query) {
+                    $query->with(['shopChannel.vendor'])->orderByDesc('created_at');
+                },
+            ])
+            ->withCount([
+                'shopChannelProducts as shop_channels_count' => function ($query) {
+                    $query->where('approval_status', 'approved');
+                },
+                'shopChannelProducts as sales_request_count' => function ($query) {
+                    $query->where('product_type', 'partial');
+                },
+            ])
             ->orderBy('id', 'desc')
             ->paginate(20);
 
@@ -549,7 +581,7 @@ class ChannelController extends Controller
         $admin = Auth::guard('admin')->user();
         if (!$admin) return redirect()->route('channel.login');
 
-        $products = \App\Models\Product::where('is_public', 1)
+        $products = \App\Models\Product::where('is_public', 'Yes')
             ->with(['category', 'images', 'vendor.vendorbusinessdetails'])
             ->orderBy('id', 'desc')
             ->paginate(20);
@@ -565,7 +597,7 @@ class ChannelController extends Controller
         $admin = Auth::guard('admin')->user();
         if (!$admin) return redirect()->route('channel.login');
 
-        $products = \App\Models\Product::where('is_partial', 1)
+        $products = \App\Models\Product::where('is_partial', 'Yes')
             ->with(['category', 'images', 'vendor.vendorbusinessdetails'])
             ->orderBy('id', 'desc')
             ->paginate(20);
@@ -999,47 +1031,86 @@ class ChannelController extends Controller
 
     private function fetchOrders($vendor_id, $statusFilter = [])
     {
-        $query = \App\Models\Order::with(['orders_products' => function($q) use ($vendor_id, $statusFilter) {
-            $q->where('vendor_id', $vendor_id);
-            if (!empty($statusFilter)) {
-                $q->whereIn('item_status', $statusFilter);
+        $statusFilterMap = [
+            '취소요청' => 'Cancel Requested',
+            '취소완료' => 'Cancelled',
+            '반품요청' => 'Return Requested',
+            '반품완료' => 'Returned',
+            '교환요청' => 'Exchange Requested',
+            '교환완료' => 'Exchanged'
+        ];
+
+        $fullStatusFilter = [];
+        foreach ($statusFilter as $sf) {
+            $fullStatusFilter[] = $sf;
+            if (isset($statusFilterMap[$sf])) {
+                $fullStatusFilter[] = $statusFilterMap[$sf];
             }
-        }, 'user']);
+        }
+
+        $query = \App\Models\Order::with(['orders_products' => function($q) use ($vendor_id, $fullStatusFilter) {
+            $q->where('vendor_id', $vendor_id);
+            if (!empty($fullStatusFilter)) {
+                $q->whereIn('item_status', $fullStatusFilter);
+            }
+            $q->with('shopChannelProduct');
+        }, 'user', 'claims']);
 
         // Filter orders that have at least one product matching the criteria
-        $query->whereHas('orders_products', function($q) use ($vendor_id, $statusFilter) {
+        $query->whereHas('orders_products', function($q) use ($vendor_id, $fullStatusFilter) {
             $q->where('vendor_id', $vendor_id);
-            if (!empty($statusFilter)) {
-                $q->whereIn('item_status', $statusFilter);
+            if (!empty($fullStatusFilter)) {
+                $q->whereIn('item_status', $fullStatusFilter);
             }
         });
 
         $orders = $query->orderBy('created_at', 'desc')->paginate(10);
 
+        $statusMap = [
+            'New' => '결제완료',
+            'In Process' => '배송준비중',
+            'Shipped' => '배송중',
+            'Delivered' => '배송완료',
+            'Confirmed' => '구매확정',
+            'Cancel Requested' => '취소요청',
+            'Cancelled' => '취소완료',
+            'Return Requested' => '반품요청',
+            'Returned' => '반품완료',
+            'Exchange Requested' => '교환요청',
+            'Exchanged' => '교환완료'
+        ];
+
         // Transform
-        $orders->getCollection()->transform(function($order) {
+        $orders->getCollection()->transform(function($order) use ($statusMap) {
             $order->order_no = 'Me9-' . str_pad($order->id, 8, '0', STR_PAD_LEFT); 
             $order->shop_name = 'Me9 Market'; 
             $order->user_name = $order->name; 
+            $order->claims_data = $order->claims; 
             
             // Note: $order->orders_products will only contain the filtered items due to 'with' usage above
             $vendorItems = $order->orders_products;
             
-            $order->items = $vendorItems->map(function($item) {
+            $order->items = $vendorItems->map(function($item) use ($statusMap) {
+                $lineTotal = $item->line_total > 0
+                    ? $item->line_total
+                    : $item->product_price * $item->product_qty;
+
                 return [
                     'id' => $item->id,
-                    'status' => $item->item_status, 
+                    'status' => $item->status_code ?: $item->item_status,
+                    'status_label' => $item->status_label ?: ($statusMap[$item->item_status] ?? $item->item_status),
                     'product_name' => $item->product_name,
                     'product_code' => $item->product_code,
                     'option_name' => $item->product_color . '/' . $item->product_size,
                     'qty' => $item->product_qty,
-                    'price' => $item->product_price,
-                    'product_type' => '자사', 
+                    'price' => $item->selling_price ?: $item->product_price,
+                    'line_total' => $lineTotal,
+                    'product_type' => $item->shopChannelProduct?->product_type === 'public' ? '공유' : ($item->shopChannelProduct?->product_type === 'partial' ? '부분공유' : '자사'),
                 ];
             });
 
             $totalProductPrice = $vendorItems->sum(function($item) {
-                return $item->product_price * $item->product_qty;
+                return $item->line_total > 0 ? $item->line_total : $item->product_price * $item->product_qty;
             });
 
             $order->total_product_price = $totalProductPrice;
@@ -1053,12 +1124,91 @@ class ChannelController extends Controller
             $order->total_payment_price = $totalProductPrice; 
             $order->earned_point = 0;
 
-            $order->status = $order->items->first()['status'] ?? 'Pending';
+            $order->status = $order->items->first()['status_label'] ?? 'Pending';
             
             return $order;
         });
 
         return $orders;
+    }
+
+    public function inquiryList(Request $request)
+    {
+        $vendorId = Auth::guard('admin')->user()->vendor_id;
+
+        $query = Contact::with(['order', 'orderProduct', 'shopChannel'])
+            ->where('vendor_id', $vendorId)
+            ->whereNotNull('order_product_id');
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('keyword')) {
+            $keyword = $request->keyword;
+            $query->where(function ($q) use ($keyword) {
+                $q->where('subject', 'like', '%' . $keyword . '%')
+                    ->orWhere('message', 'like', '%' . $keyword . '%')
+                    ->orWhere('name', 'like', '%' . $keyword . '%')
+                    ->orWhere('email', 'like', '%' . $keyword . '%');
+            });
+        }
+
+        $inquiries = $query->orderByDesc('created_at')->paginate(15)->withQueryString();
+
+        return view('channel.inquiries.index', [
+            'dep1_id' => '04',
+            'inquiries' => $inquiries,
+            'statusLabels' => $this->contactStatusLabels(),
+        ]);
+    }
+
+    public function inquiryView(int $id)
+    {
+        $vendorId = Auth::guard('admin')->user()->vendor_id;
+
+        $inquiry = Contact::with(['order', 'orderProduct', 'shopChannel'])
+            ->where('vendor_id', $vendorId)
+            ->whereNotNull('order_product_id')
+            ->findOrFail($id);
+
+        return view('channel.inquiries.show', [
+            'dep1_id' => '04',
+            'inquiry' => $inquiry,
+            'statusLabels' => $this->contactStatusLabels(),
+        ]);
+    }
+
+    public function inquiryReply(Request $request, int $id)
+    {
+        $request->validate([
+            'admin_reply' => 'required|string',
+            'status' => 'required|in:processing,completed',
+        ]);
+
+        $vendorId = Auth::guard('admin')->user()->vendor_id;
+
+        $inquiry = Contact::where('vendor_id', $vendorId)
+            ->whereNotNull('order_product_id')
+            ->findOrFail($id);
+
+        $inquiry->admin_reply = $request->admin_reply;
+        $inquiry->status = $request->status;
+        $inquiry->replied_at = now();
+        $inquiry->save();
+
+        return redirect()
+            ->route('channel.inquiries.show', $inquiry->id)
+            ->with('success_message', '상품문의 답변이 저장되었습니다.');
+    }
+
+    private function contactStatusLabels(): array
+    {
+        return [
+            'pending' => '대기중',
+            'processing' => '처리중',
+            'completed' => '답변완료',
+        ];
     }
 
     public function orderInfo()
@@ -1221,7 +1371,16 @@ class ChannelController extends Controller
 
     public function orderManagerList()
     {
-        return view('channel.sub00.order_manager_list', ['dep1_id' => '00']);
+        app(\App\Services\ShopChannelRuntime::class)->ensureDemoData();
+
+        $managers = \App\Models\Distributor::withCount('products')
+            ->orderByDesc('id')
+            ->get();
+
+        return view('channel.sub00.order_manager_list', [
+            'dep1_id' => '00',
+            'managers' => $managers,
+        ]);
     }
 
     public function pointList()
@@ -1743,4 +1902,3 @@ class ChannelController extends Controller
         return redirect()->route('channel.joint_purchase.list')->with('success_message', '공동구매 정보가 성공적으로 수정되었습니다.');
     }
 }
-

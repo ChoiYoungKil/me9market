@@ -78,7 +78,11 @@
                                             <th class="w160"><span>그룹 keyword</span></th>
                                             <td colspan="3">
                                                 <ul class="tag_list" style="display: flex; gap: 5px; list-style: none; padding: 0;">
-                                                    @php $keywords = json_decode($shop->keywords, true) ?? []; @endphp
+                                                    @php
+                                                        $keywords = is_array($shop->keywords)
+                                                            ? $shop->keywords
+                                                            : (json_decode($shop->keywords ?? '[]', true) ?: []);
+                                                    @endphp
                                                     @foreach($keywords as $keyword)
                                                         <li style="background-color: #eeeeee; color: #666; padding: 2px 10px; border-radius: 10px; font-size: 11px;">#{{ $keyword }}</li>
                                                     @endforeach
@@ -188,7 +192,11 @@
                                         @endif
 
                                         @if($shop->use_banner == 1)
-                                            @php $banners = json_decode($shop->banner_images, true) ?? []; @endphp
+                                            @php
+                                                $banners = is_array($shop->banner_images)
+                                                    ? $shop->banner_images
+                                                    : (json_decode($shop->banner_images ?? '[]', true) ?: []);
+                                            @endphp
                                             <tr>
                                                 <th class="w160" rowspan="{{ max(1, count($banners)) }}"><span>배너 이미지</span></th>
                                                 @forelse($banners as $index => $banner)
@@ -211,7 +219,7 @@
 
                 <div class="btm_btn" style="display: flex; justify-content: center; gap: 10px; margin-top: 20px;">
                     <a href="{{ route('channel.info_update', ['id' => $shop->id]) }}" class="col2" style="width: 140px; height: 40px; line-height: 40px; text-align: center; border-radius: 5px; color: #fff; font-weight: bold;">정보수정</a>
-                    <a href="#" onclick="alert('준비중입니다'); return false;" class="col7" style="width: 140px; height: 40px; line-height: 40px; text-align: center; border-radius: 5px; color: #fff; font-weight: bold; background: #007bff;">Shop채널보기</a>
+                    <a href="{{ route('shop.enter', ['channelCode' => $shop->channel_code]) }}" target="_blank" class="col7" style="width: 140px; height: 40px; line-height: 40px; text-align: center; border-radius: 5px; color: #fff; font-weight: bold; background: #007bff;">Shop채널보기</a>
                     <a href="{{ route('channel.shop_list') }}" class="col5" style="width: 140px; height: 40px; line-height: 40px; text-align: center; border-radius: 5px; color: #fff; font-weight: bold;">목록</a>
                 </div>
             </div>

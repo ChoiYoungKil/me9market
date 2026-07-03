@@ -4,6 +4,14 @@
 
 @section('content')
 <style>
+    #container {
+        padding-top: 100px;
+    }
+    @media all and (max-width: 1024px) {
+        #container {
+            padding-top: 70px;
+        }
+    }
     /* Premium style additions for modals */
     .modal-backdrop {
         position: fixed;

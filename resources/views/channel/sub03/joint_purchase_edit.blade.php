@@ -48,11 +48,8 @@
                                                     @foreach($products as $prod)
                                                         <option value="{{ $prod->id }}" {{ $jointPurchase->product_id == $prod->id ? 'selected' : '' }}>{{ $prod->product_name }} (코드: {{ $prod->product_code }})</option>
                                                     @endforeach
-                                                    {{-- Fallback mock products for testing if DB table is empty --}}
                                                     @if(count($products) == 0)
-                                                        <option value="1" {{ $jointPurchase->product_id == 1 ? 'selected' : '' }}>BlueViolet a omnis (샘플상품 A)</option>
-                                                        <option value="2" {{ $jointPurchase->product_id == 2 ? 'selected' : '' }}>Comfortable Cotton T-Shirt (샘플상품 B)</option>
-                                                        <option value="3" {{ $jointPurchase->product_id == 3 ? 'selected' : '' }}>Premium Leather Wallet (샘플상품 C)</option>
+                                                        <option value="" disabled>등록 가능한 실제 상품이 없습니다.</option>
                                                     @endif
                                                 </select>
                                             </td>

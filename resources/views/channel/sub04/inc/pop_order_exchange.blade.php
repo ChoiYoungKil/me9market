@@ -42,9 +42,9 @@
                                 <tbody class="textL">
                                     <tr>
                                         <th class="w160"><span>주문번호</span></th>
-                                        <td>Me9-000939393</td>
+                                        <td id="pop_exchange_order_no">Me9-000939393</td>
                                         <th class="w160"><span>교환 주문번호</span></th>
-                                        <td>Me9-12222112121</td>
+                                        <td id="pop_exchange_claim_no">Me9-12222112121</td>
                                     </tr>
                                     <tr>
                                         <th class="w160"><span>신규 교환 주문번호</span></th>
@@ -52,35 +52,35 @@
                                     </tr>
                                     <tr>
                                         <th class="w160"><span>판매처</span></th>
-                                        <td colspan="3">Shop채널명</td>
+                                        <td colspan="3" id="pop_exchange_shop_name">Shop채널명</td>
                                     </tr>
                                     <tr>
                                         <th class="w160"><span>교환 요청일시</span></th>
-                                        <td colspan="3">2024-10-01 10:02:12</td>
+                                        <td colspan="3" id="pop_exchange_request_date">2024-10-01 10:02:12</td>
                                     </tr>
                                     <tr>
                                         <th class="w160"><span>교환 사유</span></th>
-                                        <td colspan="3">마음이 변했어요</td>
+                                        <td colspan="3" id="pop_exchange_reason">마음이 변했어요</td>
                                     </tr>
                                     <tr>
                                         <th class="w160"><span>교환 수거지</span></th>
-                                        <td colspan="3">(13487)경기도 성남시 분당구 판교로 242(삼평동) 401호</td>
+                                        <td colspan="3" id="pop_exchange_address">(13487)경기도 성남시 분당구 판교로 242(삼평동) 401호</td>
                                     </tr>
                                     <tr>
                                         <th class="w160"><span>교환 상품 수취인</span></th>
-                                        <td>홍길동</td>
+                                        <td id="pop_exchange_recipient_name">홍길동</td>
                                         <th class="w160"><span>수취인 연락처</span></th>
-                                        <td>01011223344</td>
+                                        <td id="pop_exchange_recipient_mobile">01011223344</td>
                                     </tr>
                                     <tr>
                                         <th class="w160"><span>교환 배송지</span></th>
-                                        <td colspan="3">(13487)경기도 성남시 분당구 판교로 242(삼평동) 401호</td>
+                                        <td colspan="3" id="pop_exchange_recipient_address">(13487)경기도 성남시 분당구 판교로 242(삼평동) 401호</td>
                                     </tr>
                                     <tr>
                                         <th class="w160"><span>추가 결제 금액</span></th>
-                                        <td>8,000 원 (교환 배송비)</td>
+                                        <td id="pop_exchange_fee">8,000 원 (교환 배송비)</td>
                                         <th class="w160"><span>결제 방식</span></th>
-                                        <td>판매처 협의</td>
+                                        <td id="pop_exchange_payment_method">판매처 협의</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -116,7 +116,7 @@
                                         <th>상품금액</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="pop_exchange_order_items_body">
                                     <tr>
                                         <td><input type="checkbox"></td>
                                         <td>
@@ -186,7 +186,7 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="#">확인</a>
+                    <a href="#" id="btn_exchange_approve_confirm">확인</a>
                     <a href="#" class="col5 close_btn">닫기</a>
                 </div>
             </div>
@@ -308,7 +308,7 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="#">확인</a>
+                    <a href="#" id="btn_exchange_reject_confirm">확인</a>
                     <a href="#" class="col5 close_btn">닫기</a>
                 </div>
             </div>
@@ -333,7 +333,7 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="#">확인</a>
+                    <a href="#" id="btn_exchange_received_confirm">확인</a>
                     <a href="#" class="col5 close_btn">닫기</a>
                 </div>
             </div>
@@ -358,7 +358,7 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="#">확인</a>
+                    <a href="#" id="btn_exchange_complete_confirm">확인</a>
                     <a href="#" class="col5 close_btn">닫기</a>
                 </div>
             </div>
@@ -480,7 +480,7 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="#">확인</a>
+                    <a href="#" id="btn_exchange_to_return_confirm">확인</a>
                     <a href="#" class="col5 close_btn">닫기</a>
                 </div>
             </div>

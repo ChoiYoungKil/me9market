@@ -191,10 +191,10 @@
         <div>
             <div class="sidebar-logo">Partner Portal</div>
             <ul class="menu-list">
-                <li class="menu-item {{ $order['status'] == '배송대기' ? 'active' : '' }}">
+                <li class="menu-item {{ $order['can_edit_shipping'] ? 'active' : '' }}">
                     <a href="{{ route('distributor.orders.pending') }}">📦 발주 대기 목록</a>
                 </li>
-                <li class="menu-item {{ $order['status'] != '배송대기' ? 'active' : '' }}">
+                <li class="menu-item {{ !$order['can_edit_shipping'] ? 'active' : '' }}">
                     <a href="{{ route('distributor.orders.completed') }}">✅ 발주 완료 목록</a>
                 </li>
             </ul>
@@ -211,12 +211,17 @@
     <div class="main-content">
         <div class="header-bar">
             <h1 class="page-title">발주 상세 정보 관리</h1>
-            <a href="{{ $order['status'] == '배송대기' ? route('distributor.orders.pending') : route('distributor.orders.completed') }}" class="btn btn-secondary">&larr; 목록으로 돌아가기</a>
+            <a href="{{ $order['can_edit_shipping'] ? route('distributor.orders.pending') : route('distributor.orders.completed') }}" class="btn btn-secondary">&larr; 목록으로 돌아가기</a>
         </div>
 
         @if(session('flash_message_success'))
             <div style="background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.25); color: #34d399; padding: 15px; border-radius: 12px; margin-bottom: 25px; font-size: 14px; font-weight: 600;">
                 {{ session('flash_message_success') }}
+            </div>
+        @endif
+        @if(session('flash_message_error'))
+            <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.25); color: #f87171; padding: 15px; border-radius: 12px; margin-bottom: 25px; font-size: 14px; font-weight: 600;">
+                {{ session('flash_message_error') }}
             </div>
         @endif
 
@@ -245,29 +250,17 @@
                 <div class="grid-details">
                     <div class="detail-label">수령인</div>
                     <div class="detail-value">
-                        @if($order['status'] == '배송대기')
-                            <input type="text" name="receiver" value="{{ $order['receiver'] }}" class="form-control" required style="max-width: 250px;">
-                        @else
-                            {{ $order['receiver'] }}
-                        @endif
+                        <input type="text" name="receiver" value="{{ $order['receiver'] }}" class="form-control" required style="max-width: 250px;">
                     </div>
 
                     <div class="detail-label">우편번호</div>
                     <div class="detail-value">
-                        @if($order['status'] == '배송대기')
-                            <input type="text" name="zipcode" value="{{ $order['zipcode'] }}" class="form-control" required style="max-width: 150px;">
-                        @else
-                            {{ $order['zipcode'] }}
-                        @endif
+                        <input type="text" name="zipcode" value="{{ $order['zipcode'] }}" class="form-control" required style="max-width: 150px;">
                     </div>
 
                     <div class="detail-label">배송지 주소</div>
                     <div class="detail-value">
-                        @if($order['status'] == '배송대기')
-                            <input type="text" name="address" value="{{ $order['address'] }}" class="form-control" required>
-                        @else
-                            {{ $order['address'] }}
-                        @endif
+                        <input type="text" name="address" value="{{ $order['address'] }}" class="form-control" required>
                     </div>
 
                     <div class="detail-label">발송 상태</div>
@@ -279,34 +272,34 @@
 
                     <div class="detail-label">택배사 선택</div>
                     <div class="detail-value">
-                        @if($order['status'] == '배송대기')
-                            <select name="courier" class="form-control" style="max-width: 250px;">
-                                <option value="CJ대한통운" {{ $order['courier'] == 'CJ대한통운' ? 'selected' : '' }}>CJ대한통운</option>
-                                <option value="우체국택배" {{ $order['courier'] == '우체국택배' ? 'selected' : '' }}>우체국택배</option>
-                                <option value="한진택배" {{ $order['courier'] == '한진택배' ? 'selected' : '' }}>한진택배</option>
-                                <option value="롯데택배" {{ $order['courier'] == '롯데택배' ? 'selected' : '' }}>롯데택배</option>
-                            </select>
-                        @else
-                            {{ $order['courier'] }}
-                        @endif
+                        <select name="courier" class="form-control" style="max-width: 250px;">
+                            <option value="">선택</option>
+                            <option value="CJ대한통운" {{ $order['courier'] == 'CJ대한통운' ? 'selected' : '' }}>CJ대한통운</option>
+                            <option value="우체국택배" {{ $order['courier'] == '우체국택배' ? 'selected' : '' }}>우체국택배</option>
+                            <option value="한진택배" {{ $order['courier'] == '한진택배' ? 'selected' : '' }}>한진택배</option>
+                            <option value="롯데택배" {{ $order['courier'] == '롯데택배' ? 'selected' : '' }}>롯데택배</option>
+                        </select>
                     </div>
 
                     <div class="detail-label">운송장 번호</div>
                     <div class="detail-value">
-                        @if($order['status'] == '배송대기')
-                            <input type="text" name="tracking_no" value="" placeholder="숫자만 입력해 주세요" class="form-control" style="max-width: 250px;">
-                        @else
-                            <span style="font-family: monospace; font-weight: 700; color: #10b981;">{{ $order['tracking_no'] }}</span>
-                        @endif
+                        <input type="text" name="tracking_no" value="{{ $order['tracking_no'] === '-' ? '' : $order['tracking_no'] }}" placeholder="숫자만 입력해 주세요" class="form-control" style="max-width: 250px;">
+                    </div>
+
+                    <div class="detail-label">처리 상태</div>
+                    <div class="detail-value">
+                        <select name="status_code" class="form-control" style="max-width: 250px;">
+                            @foreach($order['status_options'] as $code => $label)
+                                <option value="{{ $code }}" {{ $order['status_code'] === $code ? 'selected' : '' }}>{{ $label }}</option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
 
                 <!-- Footer 버튼 -->
                 <div style="border-top: 1px solid var(--border); padding-top: 25px; display: flex; justify-content: flex-end; gap: 10px;">
-                    @if($order['status'] == '배송대기')
-                        <button type="submit" class="btn">배송지 및 송장 정보 수정</button>
-                    @endif
-                    <a href="{{ $order['status'] == '배송대기' ? route('distributor.orders.pending') : route('distributor.orders.completed') }}" class="btn btn-secondary">닫기</a>
+                    <button type="submit" class="btn">배송지 및 송장 정보 저장</button>
+                    <a href="{{ $order['can_edit_shipping'] ? route('distributor.orders.pending') : route('distributor.orders.completed') }}" class="btn btn-secondary">닫기</a>
                 </div>
             </form>
         </div>

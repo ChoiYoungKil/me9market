@@ -143,10 +143,10 @@
                                     <option value="80">80개씩 보기</option>
                                     <option value="100">100개씩 보기</option>
                                 </select>
-                                <a href="#" class="btn01 col2"
+                                <a href="{{ route('channel.product.own.export') }}" class="btn01 col2"
                                     style="height: 34px; line-height: 32px; font-size: 12px; width: 140px; text-align: center; padding: 0;">EXCEL
                                     다운로드</a>
-                                <a href="{{ route('channel.product_request') }}" class="btn01 col5"
+                                <a href="{{ route('channel.product.base.create') }}" class="btn01 col5"
                                     style="height: 34px; line-height: 32px; font-size: 12px; width: 100px; text-align: center; padding: 0;">상품등록</a>
                             </div>
                         </div>
@@ -184,6 +184,13 @@
                                             $imageUrl = $mainImage ? asset('front/images/product_images/small/' . $mainImage->image) : asset('channel_assets/images/sub/thum01.jpg');
                                             $statusText = $product->status == 1 ? '판매' : '중지';
                                             $statusClass = $product->status == 1 ? '' : 'fcol1';
+                                            $stopNoticePayload = [
+                                                'id' => $product->id,
+                                                'name' => $product->product_name,
+                                                'code' => $product->product_code,
+                                                'stop_notice_at' => optional($product->stop_notice_at)->format('Y-m-d'),
+                                                'stop_notice_reason' => $product->stop_notice_reason,
+                                            ];
                                         @endphp
                                         <tr>
                                             <td class="t_c">{{ $product->product_code }}</td>
@@ -192,15 +199,15 @@
                                                 <div class="thum01">
                                                     <div class="img_bx" style="background-image:url({{ $imageUrl }})"></div>
                                                     <div class="txt_bx">
-                                                        <p>{{ $product->category->category_name ?? '카테고리 없음' }}</p>
+                                                        <p>{{ $product->category_path }}</p>
                                                         <strong>{{ $product->product_name }}</strong>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td class="t_c">₩ {{ number_format($product->product_price) }}</td>
                                             <td class="t_c">
-                                                {{ $product->is_public ? '공개' : '비공개' }}, 
-                                                {{ $product->is_partial ? '부분공개' : '전체공개' }}
+                                                {{ in_array($product->is_public, ['Yes', 1, '1'], true) ? '공개' : '비공개' }},
+                                                {{ in_array($product->is_partial, ['Yes', 1, '1'], true) ? '부분공개' : '전체공개' }}
                                             </td>
                                             <td class="t_c">
                                                 <a href="#" class="btn02 col3 pop_btn" data-pop="pop4_1">
@@ -208,10 +215,16 @@
                                                 </a>
                                             </td>
                                             <td class="t_c">
-                                                <a href="#" class="btn02 col5 pop_btn" data-pop="pop1_1">판매요청목록</a>
+                                                <a href="#" class="btn02 col5 pop_btn" data-pop="pop_request_{{ $product->id }}">
+                                                    판매요청목록
+                                                    @if(($product->sales_request_count ?? 0) > 0)
+                                                        ({{ $product->sales_request_count }})
+                                                    @endif
+                                                </a>
                                             </td>
                                             <td class="t_c">
-                                                <a href="#" class="btn02 col7 pop_btn" data-pop="pop2_1">판매중지 예고신청</a>
+                                                <a href="#" class="btn02 col7"
+                                                    onclick='openStopNoticeModal(@json($stopNoticePayload)); return false;'>판매중지 예고신청</a>
                                             </td>
                                             <td class="t_c">
                                                 <a href="#" class="btn02 col5 pop_btn" data-pop="pop3_1" data-id="{{ $product->id }}">보기</a>
@@ -408,156 +421,121 @@
                         </script>
 
                         <!-- 판매요청목록 팝업 -->
-                        <div class="popup_bx" data-id="pop1_1">
-                            <div class="pop_w">
-                                <div class="pop_inner">
-                                    <div class="pop_con">
-                                        <div class="close_btn close1">닫기</div>
-                                        <div class="page_info type2">
-                                            <div class="ttl">판매요청목록</div>
-                                        </div>
-
-                                        <div class="conbx">
-                                            <div class="con_w">
-                                                <div class="tb01">
-                                                    <table>
-                                                        <colgroup>
-                                                            <col width="160px">
-                                                            <col width="">
-                                                        </colgroup>
-                                                        <tbody class="textL">
-                                                            <tr>
-                                                                <th class="w160"><span>상품명</span></th>
-                                                                <td>
-                                                                    <input type="text" value="" required="required">
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <th class="w160"><span>상품분류</span></th>
-                                                                <td>
-                                                                    <ul class="type_bx w600">
-                                                                        <li>
-                                                                            <select required="required">
-                                                                                <option value="" disabled="" selected="">대분류
-                                                                                </option>
-                                                                                <option value="1">대분류1</option>
-                                                                            </select>
-                                                                        </li>
-                                                                        <li>
-                                                                            <select required="required">
-                                                                                <option value="" disabled="" selected="">중분류
-                                                                                </option>
-                                                                                <option value="1">중분류1</option>
-                                                                            </select>
-                                                                        </li>
-                                                                        <li>
-                                                                            <select required="required">
-                                                                                <option value="" disabled="" selected="">세분류
-                                                                                </option>
-                                                                                <option value="1">세분류1</option>
-                                                                            </select>
-                                                                        </li>
-                                                                    </ul>
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <th class="w160"><span>신청자</span></th>
-                                                                <td>
-                                                                    <input type="text" value="" required="required">
-                                                                </td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                                <div class="btm_btn right mt10">
-                                                    <a href="#">검색</a>
-                                                </div>
+                        @foreach($products as $requestProduct)
+                            @php
+                                $salesRequests = $requestProduct->shopChannelProducts
+                                    ->where('product_type', 'partial')
+                                    ->values();
+                            @endphp
+                            <div class="popup_bx" data-id="pop_request_{{ $requestProduct->id }}">
+                                <div class="pop_w">
+                                    <div class="pop_inner">
+                                        <div class="pop_con">
+                                            <div class="close_btn close1">닫기</div>
+                                            <div class="page_info type2">
+                                                <div class="ttl">판매요청목록</div>
                                             </div>
 
-                                            <div class="con_w">
-                                                <div class="list_top1">
-                                                    <div class="count">총 <strong>00</strong> 건</div>
+                                            <div class="conbx">
+                                                <div class="con_w">
+                                                    <div class="tb01">
+                                                        <table>
+                                                            <colgroup>
+                                                                <col width="160px">
+                                                                <col width="">
+                                                            </colgroup>
+                                                            <tbody class="textL">
+                                                                <tr>
+                                                                    <th class="w160"><span>상품명</span></th>
+                                                                    <td>{{ $requestProduct->product_name }}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th class="w160"><span>상품분류</span></th>
+                                                                    <td>{{ $requestProduct->category->category_name ?? '카테고리 없음' }}</td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
                                                 </div>
 
-                                                <div class="tb01 ovS">
-                                                    <table>
-                                                        <colgroup>
-                                                            <col width="70px">
-                                                            <col width="70px">
-                                                            <col width="150">
-                                                            <col width="17%">
-                                                            <col width="100px">
-                                                            <col width="">
-                                                            <col width="100px">
-                                                        </colgroup>
-                                                        <thead>
-                                                            <tr>
-                                                                <th><input type="checkbox"></th>
-                                                                <th>번호</th>
-                                                                <th>신청일지</th>
-                                                                <th>상품명</th>
-                                                                <th>신청자</th>
-                                                                <th>신청사유</th>
-                                                                <th>상태</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                            <tr>
-                                                                <td><input type="checkbox"></td>
-                                                                <td>00</td>
-                                                                <td>0000-00-00 00:00</td>
-                                                                <td class="t_l">나이키 운동화</td>
-                                                                <td>아무개</td>
-                                                                <td class="t_l">신청사유 신청사유 신청사유 신청사유</td>
-                                                                <td>미승인</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td><input type="checkbox"></td>
-                                                                <td>00</td>
-                                                                <td>0000-00-00 00:00</td>
-                                                                <td class="t_l">고추 비료 DDT 3호</td>
-                                                                <td>아무개</td>
-                                                                <td class="t_l">신청사유 신청사유 <br>신청사유 신청사유 신청사유 </td>
-                                                                <td>승인</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td><input type="checkbox"></td>
-                                                                <td>00</td>
-                                                                <td>0000-00-00 00:00</td>
-                                                                <td class="t_l">나이키 운동화</td>
-                                                                <td>홍길동</td>
-                                                                <td class="t_l">신청사유</td>
-                                                                <td>승인거절</td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-
-                                                <!--<div class="no_data">등록된 데이터가 없습니다.</div>-->
-
-                                                <div class="btm_btn right mt10">
-                                                    <!-- 페이징 -->
-                                                    <div class="page_bx1">
-                                                        <a href="#" class="page_first">first</a>
-                                                        <a href="#" class="page_prev">prev</a>
-                                                        <a href="#" class="num on">1</a>
-                                                        <a href="#" class="num">2</a>
-                                                        <a href="#" class="num">3</a>
-                                                        <a href="#" class="num">4</a>
-                                                        <a href="#" class="num">5</a>
-                                                        <a href="#" class="page_next">next</a>
-                                                        <a href="#" class="page_last">last</a>
+                                                <div class="con_w">
+                                                    <div class="list_top1">
+                                                        <div class="count">총 <strong>{{ $salesRequests->count() }}</strong> 건</div>
                                                     </div>
 
-                                                    <a href="#" class="col5 close_btn">승인거절</a>
-                                                    <a href="#">판매승인</a>
+                                                    <div class="tb01 ovS">
+                                                        <table>
+                                                            <colgroup>
+                                                                <col width="50px">
+                                                                <col width="60px">
+                                                                <col width="150px">
+                                                                <col width="17%">
+                                                                <col width="130px">
+                                                                <col width="">
+                                                                <col width="100px">
+                                                            </colgroup>
+                                                            <thead>
+                                                                <tr>
+                                                                    <th><input type="checkbox" onclick="toggleSalesRequestChecks({{ $requestProduct->id }}, this.checked)"></th>
+                                                                    <th>번호</th>
+                                                                    <th>신청일시</th>
+                                                                    <th>상품명</th>
+                                                                    <th>신청자</th>
+                                                                    <th>신청사유</th>
+                                                                    <th>상태</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                @forelse($salesRequests as $index => $salesRequest)
+                                                                    @php
+                                                                        $statusLabel = match($salesRequest->approval_status) {
+                                                                            'approved' => '승인',
+                                                                            'rejected' => '승인거절',
+                                                                            default => '미승인',
+                                                                        };
+                                                                        $isPending = $salesRequest->approval_status === 'pending';
+                                                                        $requesterName = $salesRequest->shopChannel->channel_name ?? '-';
+                                                                        $vendorName = $salesRequest->shopChannel->vendor->name ?? null;
+                                                                    @endphp
+                                                                    <tr>
+                                                                        <td>
+                                                                            <input type="checkbox"
+                                                                                class="sales-request-check sales-request-check-{{ $requestProduct->id }}"
+                                                                                value="{{ $salesRequest->id }}"
+                                                                                @if(!$isPending) disabled @endif>
+                                                                        </td>
+                                                                        <td>{{ $salesRequests->count() - $index }}</td>
+                                                                        <td>{{ optional($salesRequest->requested_at ?? $salesRequest->created_at)->format('Y-m-d H:i') }}</td>
+                                                                        <td class="t_l">{{ $requestProduct->product_name }}</td>
+                                                                        <td>
+                                                                            {{ $requesterName }}
+                                                                            @if($vendorName)
+                                                                                <br>({{ $vendorName }})
+                                                                            @endif
+                                                                        </td>
+                                                                        <td class="t_l">{{ $salesRequest->request_reason ?: '-' }}</td>
+                                                                        <td>{{ $statusLabel }}</td>
+                                                                    </tr>
+                                                                @empty
+                                                                    <tr>
+                                                                        <td colspan="7" class="t_c" style="padding: 40px 0;">판매요청 내역이 없습니다.</td>
+                                                                    </tr>
+                                                                @endforelse
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+
+                                                    <div class="btm_btn right mt10">
+                                                        <a href="#" class="col5" onclick="handleSalesRequests({{ $requestProduct->id }}, 2); return false;">승인거절</a>
+                                                        <a href="#" onclick="handleSalesRequests({{ $requestProduct->id }}, 1); return false;">판매승인</a>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        @endforeach
 
                         <!-- 판매중지 예고신청 팝업 -->
                         <div class="popup_bx" data-id="pop2_1">
@@ -569,40 +547,55 @@
                                             <div class="ttl">판매중지예고 설정</div>
                                         </div>
 
-                                        <div class="conbx">
-                                            <div class="con_w">
-                                                <div class="imp_bx01">
-                                                    <div class="txt1"><span>유의사항</span></div>
-                                                    <div class="txt2">
-                                                        판매중지 예고설정 시 <br>해당 상품이 게시 된 상세페이지에 중지 예정일이 표기되지만 <br>상품이 자동으로 판매중지
-                                                        되지는 않습니다.
+                                        <form id="stop_notice_form">
+                                            <input type="hidden" name="product_id" id="stop_notice_product_id">
+                                            <div class="conbx">
+                                                <div class="con_w">
+                                                    <div class="imp_bx01">
+                                                        <div class="txt1"><span>유의사항</span></div>
+                                                        <div class="txt2">
+                                                            판매중지 예고설정 시 <br>해당 상품이 게시 된 상세페이지에 중지 예정일이 표기되지만 <br>상품이 자동으로 판매중지
+                                                            되지는 않습니다.
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="tb01 mt10">
+                                                        <table>
+                                                            <colgroup>
+                                                                <col width="180px">
+                                                                <col width="">
+                                                            </colgroup>
+                                                            <tbody class="textL">
+                                                                <tr>
+                                                                    <th class="w160"><span>상품</span></th>
+                                                                    <td id="stop_notice_product_name">-</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th class="w160"><span>판매중지 예고일자 설정</span></th>
+                                                                    <td>
+                                                                        <input class="datepicker w160" type="text"
+                                                                            name="stop_notice_at" id="stop_notice_at"
+                                                                            required="required" readonly="">
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th class="w160"><span>예고 사유</span></th>
+                                                                    <td>
+                                                                        <textarea name="stop_notice_reason" id="stop_notice_reason"
+                                                                            style="width:100%; min-height:90px;"></textarea>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
                                                     </div>
                                                 </div>
-
-                                                <div class="tb01 mt10">
-                                                    <table>
-                                                        <colgroup>
-                                                            <col width="180px">
-                                                            <col width="">
-                                                        </colgroup>
-                                                        <tbody class="textL">
-                                                            <tr>
-                                                                <th class="w160"><span>판매중지 예고일자 설정</span></th>
-                                                                <td>
-                                                                    <input class="datepicker w160" type="text"
-                                                                        required="required" readonly="">
-                                                                </td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
                                             </div>
-                                        </div>
+                                        </form>
 
                                         <!-- 하단버튼 -->
                                         <div class="btm_btn mt10">
                                             <a href="#" class="col5 close_btn">취소</a>
-                                            <a href="#">확인</a>
+                                            <a href="#" onclick="submitStopNotice(); return false;">확인</a>
                                         </div>
                                     </div>
                                 </div>
@@ -620,6 +613,8 @@
 
 @push('scripts')
     <script type="text/javascript">
+        var csrfToken = $('meta[name="csrf-token"]').attr('content');
+
         $(".btn01.arrow").click(function () {
             var thisId = $(this).attr("id");
             $(this).toggleClass("on");
@@ -640,11 +635,18 @@
                         $pop.find(".txt_bx p").text(response.category_path);
                         $pop.find(".txt_bx strong").text(p.product_name);
                         $pop.find(".txt_bx ul li:eq(0)").text("상품코드 : " + p.product_code);
+                        $pop.find(".txt_bx ul li:eq(1)").text("판매자 : " + @json(Auth::guard('admin')->user()->name ?? '채널관리자'));
                         $pop.find(".tab_w.tab1 table tr:nth-child(3) td").text(parseFloat(p.product_price).toLocaleString() + " 원");
+                        $pop.find(".tab_w.tab1 table tr:nth-child(4) td").text("상품가 기준");
+                        $pop.find(".tab_w.tab1 table tr:nth-child(5) td").text("-");
+                        $pop.find(".tab_w.tab1 table tr:nth-child(6) td").text("-");
+                        $pop.find(".tab_w.tab2 table tr:first td").html(p.description || '등록된 상세 설명이 없습니다.');
                         
                         if (p.images && p.images.length > 0) {
                             var mainImgUrl = "/front/images/product_images/small/" + p.images[0].image;
                             $pop.find(".l_bx .img_bx img").attr("src", mainImgUrl);
+                        } else {
+                            $pop.find(".l_bx .img_bx img").attr("src", "/channel_assets/images/sub/thum01.jpg");
                         }
 
                         $pop.stop().fadeIn(300);
@@ -688,14 +690,30 @@
             maxDate: "+5y", //최대 선택일자(+1D:하루후, -1M:한달후, -1Y:일년후)  
         });
 
-        function deleteProduct(productId) {
-            if (!confirm('정말로 이 상품을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) return;
+        function toggleSalesRequestChecks(productId, checked) {
+            $(".sales-request-check-" + productId + ":not(:disabled)").prop("checked", checked);
+        }
+
+        function handleSalesRequests(productId, status) {
+            var ids = $(".sales-request-check-" + productId + ":checked").map(function () {
+                return $(this).val();
+            }).get();
+
+            if (ids.length === 0) {
+                alert('처리할 판매요청을 선택해 주세요.');
+                return;
+            }
+
+            var actionName = status == 1 ? '판매승인' : '승인거절';
+            if (!confirm('선택한 판매요청을 ' + actionName + ' 처리하시겠습니까?')) return;
 
             $.ajax({
-                url: "/channel/product/base/delete/" + productId,
+                url: "{{ route('channel.product.request.update') }}",
                 type: 'POST',
                 data: {
-                    _token: $('meta[name="csrf-token"]').attr('content')
+                    _token: csrfToken,
+                    request_ids: ids,
+                    status: status
                 },
                 success: function(response) {
                     if (response.status) {
@@ -706,7 +724,70 @@
                     }
                 },
                 error: function(xhr) {
-                    alert('오류가 발생했습니다.');
+                    alert('오류가 발생했습니다: ' + (xhr.responseJSON ? xhr.responseJSON.message : xhr.statusText));
+                }
+            });
+        }
+
+        function openStopNoticeModal(product) {
+            $("#stop_notice_product_id").val(product.id);
+            $("#stop_notice_product_name").text(product.name + " (" + product.code + ")");
+            $("#stop_notice_at").val(product.stop_notice_at || "");
+            $("#stop_notice_reason").val(product.stop_notice_reason || "");
+            $(".popup_bx[data-id='pop2_1']").stop().fadeIn(300);
+            $(".popup_bx[data-id='pop2_1']").scrollTop(0);
+        }
+
+        function submitStopNotice() {
+            var productId = $("#stop_notice_product_id").val();
+            var noticeAt = $("#stop_notice_at").val();
+
+            if (!productId || !noticeAt) {
+                alert('판매중지 예고일자를 선택해 주세요.');
+                return;
+            }
+
+            $.ajax({
+                url: "/channel/product/base/stop-notice/" + productId,
+                type: 'POST',
+                data: {
+                    _token: csrfToken,
+                    stop_notice_at: noticeAt,
+                    stop_notice_reason: $("#stop_notice_reason").val()
+                },
+                success: function(response) {
+                    if (response.status) {
+                        alert(response.message);
+                        location.reload();
+                    } else {
+                        alert(response.message || '오류가 발생했습니다.');
+                    }
+                },
+                error: function(xhr) {
+                    alert('오류가 발생했습니다: ' + (xhr.responseJSON ? xhr.responseJSON.message : xhr.statusText));
+                }
+            });
+        }
+
+        function deleteProduct(productId) {
+            if (!confirm('정말로 이 상품을 삭제하시겠습니까?\n이 작업은 되돌릴 수 없습니다.')) return;
+
+            $.ajax({
+                url: "/channel/product/base/delete/" + productId,
+                type: 'POST',
+                data: {
+                    _token: csrfToken
+                },
+                success: function(response) {
+                    if (response.status) {
+                        alert(response.message);
+                        location.reload();
+                    } else {
+                        alert(response.message || '오류가 발생했습니다.');
+                    }
+                },
+                error: function(xhr) {
+                    alert('오류가 발생했습니다: ' + (xhr.responseJSON ? xhr.responseJSON.message : xhr.statusText));
                 }
             });
         }
@@ -718,7 +799,7 @@
                 url: "/channel/product/base/copy/" + productId,
                 type: 'POST',
                 data: {
-                    _token: $('meta[name="csrf-token"]').attr('content')
+                    _token: csrfToken
                 },
                 success: function(response) {
                     if (response.status) {
@@ -729,10 +810,9 @@
                     }
                 },
                 error: function(xhr) {
-                    alert('오류가 발생했습니다.');
+                    alert('오류가 발생했습니다: ' + (xhr.responseJSON ? xhr.responseJSON.message : xhr.statusText));
                 }
             });
         }
-        });
     </script>
 @endpush

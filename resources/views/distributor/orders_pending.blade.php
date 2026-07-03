@@ -315,20 +315,25 @@
                 {{ session('flash_message_success') }}
             </div>
         @endif
+        @if(session('flash_message_error'))
+            <div style="background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.25); color: #f87171; padding: 15px; border-radius: 12px; margin-bottom: 25px; font-size: 14px; font-weight: 600;">
+                {{ session('flash_message_error') }}
+            </div>
+        @endif
 
         <!-- Stat summaries -->
         <div class="stat-grid">
             <div class="stat-card">
                 <span class="stat-title">배송 대기 (발주접수)</span>
-                <span class="stat-val" style="color: #3b82f6;">2 건</span>
+                <span class="stat-val" style="color: #3b82f6;">{{ $stats['pending'] ?? 0 }} 건</span>
             </div>
             <div class="stat-card">
                 <span class="stat-title">배송 중 (송장입력완료)</span>
-                <span class="stat-val" style="color: #a855f7;">1 건</span>
+                <span class="stat-val" style="color: #a855f7;">{{ $stats['shipping'] ?? 0 }} 건</span>
             </div>
             <div class="stat-card">
                 <span class="stat-title">배송 완료</span>
-                <span class="stat-val" style="color: #10b981;">48 건</span>
+                <span class="stat-val" style="color: #10b981;">{{ $stats['delivered'] ?? 0 }} 건</span>
             </div>
         </div>
 
@@ -355,7 +360,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($orders as $order)
+                    @forelse($orders as $order)
                         <tr>
                             <td style="font-weight: 700; color: #60a5fa;">{{ $order['order_id'] }}</td>
                             <td>{{ $order['channel_name'] }}</td>
@@ -364,7 +369,7 @@
                             <td>{{ $order['option'] }}</td>
                             <td style="text-align: center; font-weight: 700;">{{ $order['quantity'] }}</td>
                             <td>{{ $order['receiver'] }}</td>
-                            <td style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ $order['address'] }}">{{ $order['address'] }}</td>
+                            <td style="max-width: 250px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="{{ $order['full_address'] }}">{{ $order['full_address'] }}</td>
                             <td style="color: var(--text-muted);">{{ $order['request_date'] }}</td>
                             <td>
                                 <span class="badge-status">{{ $order['status'] }}</span>
@@ -375,7 +380,11 @@
                                 </div>
                             </td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="11" style="text-align: center; color: var(--text-muted); padding: 40px;">발주 대기 주문상품이 없습니다.</td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
@@ -392,11 +401,8 @@
                 @csrf
                 <div class="modal-body">
                     <p style="color: var(--text-muted); font-size: 13px; line-height: 1.5; margin-bottom: 20px;">
-                        발주 대기중인 주문 목록을 엑셀 폼에 맞게 편집하여 한 번에 운송장을 일괄 등록할 수 있습니다. 템플릿 양식을 확인해 주세요.
+                        CSV 또는 XLSX 파일의 첫 행에 order_item_id, courier_name, tracking_number 컬럼을 넣으면 발주 대기 주문상품에 운송장이 일괄 등록됩니다.
                     </p>
-                    <div style="margin-bottom: 15px;">
-                        <a href="#" style="color: #60a5fa; font-size: 13px; font-weight: 600; text-decoration: underline;">엑셀 업로드 템플릿 다운로드</a>
-                    </div>
                     <div style="background: rgba(0,0,0,0.2); border: 1px dashed rgba(255,255,255,0.1); border-radius: 12px; padding: 25px; text-align: center; cursor: pointer;">
                         <input type="file" name="invoice_file" id="invoice_file" required style="display: none;" onchange="$('#file-selected-text').text(this.files[0].name)">
                         <label for="invoice_file" style="cursor: pointer;">

@@ -12,8 +12,8 @@
                 <ul class="order_list01">
                     <li class="icon0">
                         <div class="txt_w">
-                            <div class="txt1">전체</div>
-                            <div class="txt2"><strong>{{ $counts['total'] }}</strong> 건</div>
+                            <div class="txt1">금일주문</div>
+                            <div class="txt2"><strong>{{ $counts['today_orders'] ?? 0 }}</strong> 건</div>
                         </div>
                     </li>
                     <li class="icon1">
@@ -24,7 +24,7 @@
                     </li>
                     <li class="icon2">
                         <div class="txt_w">
-                            <div class="txt1">배송대기중</div>
+                            <div class="txt1">발주대기건</div>
                             <div class="txt2"><strong>{{ $counts['shipping_ready'] ?? 0 }}</strong> 건</div>
                         </div>
                     </li>
@@ -152,7 +152,7 @@
                                 @foreach($recentOrders as $order)
                                     <tr>
                                         <td>{{ $order->created_at->format('Y-m-d') }}</td>
-                                        <td>{{ $order->items->first()->item_status ?? '-' }}</td>
+                                        <td>{{ $order->items->first()->status_label ?? $order->items->first()->item_status ?? '-' }}</td>
                                         <td>일반</td>
                                         <td>Me9 Market</td>
                                         <td>{{ $order->items->first()->product_name ?? '상품정보 없음' }} 외
@@ -188,18 +188,21 @@
                             </tr>
                         </thead>
                         <tbody class="textL">
-                            <tr>
-                                <td colspan="3" class="t_c">등록된 문의사항이 없습니다.</td>
-                            </tr>
-                            <!--
+                            @forelse($recentInquiries ?? [] as $inquiry)
                                 <tr>
-                                    <td class="t_c">00</td>
+                                    <td class="t_c">{{ $inquiry->id }}</td>
                                     <td class="ovH">
-                                        <a href="#" class="subject on fcol1">문의 공지 입니다.</a>
+                                        <a href="{{ route('channel.inquiries.show', $inquiry->id) }}" class="subject on fcol1">
+                                            {{ \Illuminate\Support\Str::limit($inquiry->subject, 36) }}
+                                        </a>
                                     </td>
-                                    <td class="t_c">0000-00-00</td>
+                                    <td class="t_c">{{ $inquiry->created_at->format('Y-m-d') }}</td>
                                 </tr>
-                                -->
+                            @empty
+                                <tr>
+                                    <td colspan="3" class="t_c">등록된 문의사항이 없습니다.</td>
+                                </tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
@@ -210,18 +213,22 @@
 
 @push('scripts')
     <script type="text/javascript">
-        // Pie Chart (Mock Data for Shop Categories or similar - since we lack breakdown in controller right now)
-        // You can update controller later to pass this data.
         const ctx1 = document.getElementById('myChart1').getContext('2d');
+        const categoryChart = @json($categoryChart ?? ['labels' => ['데이터 없음'], 'data' => [0]]);
         const myChart1 = new Chart(ctx1, {
             type: 'pie',
             data: {
-                labels: ['자사몰'], // Single channel for now in this context
+                labels: categoryChart.labels.length ? categoryChart.labels : ['데이터 없음'],
                 datasets: [{
                     label: '판매 비중',
-                    data: [100],
+                    data: categoryChart.data.length ? categoryChart.data : [0],
                     backgroundColor: [
                         'rgba(51, 102, 204, 1)',
+                        'rgba(16, 185, 129, 1)',
+                        'rgba(245, 158, 11, 1)',
+                        'rgba(239, 68, 68, 1)',
+                        'rgba(124, 58, 237, 1)',
+                        'rgba(20, 184, 166, 1)',
                     ]
                 }]
             }

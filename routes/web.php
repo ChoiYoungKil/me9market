@@ -301,6 +301,7 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
         Route::post('/gate', 'FrontController@shopGateSubmit')->name('shop.gate.submit');
         Route::get('/register', 'FrontController@shopRegister')->name('shop.register');
         Route::post('/register', 'FrontController@shopRegisterSubmit')->name('shop.register.submit');
+        Route::get('/enter/{channelCode}', 'FrontController@shopEnter')->name('shop.enter');
         Route::get('/main', 'FrontController@shopMain')->name('shop.channel_main');
         Route::get('/products', 'FrontController@shopProducts')->name('shop.products_list');
         Route::get('/products/{id}', 'FrontController@shopProductDetails')->name('shop.product_details');
@@ -315,11 +316,15 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
     // Shop 라우트
     Route::prefix('shop')->name('front.shop.')->group(function () {
         Route::get('/cart', 'ShopController@cart')->name('cart.index');
+        Route::post('/cart/add', 'ShopController@addToCart')->name('cart.add');
+        Route::post('/cart/remove', 'ShopController@removeFromCart')->name('cart.remove');
         Route::get('/order', 'ShopController@order')->name('order.form');
+        Route::post('/order', 'ShopController@checkout')->name('order.checkout');
         Route::get('/order/complete', 'ShopController@orderComplete')->name('order.complete');
         
         // 상세 페이지 라우트 (추가됨)
         Route::get('/order/details', 'ShopController@orderDetails')->name('order.details');
+        Route::post('/order/item/{id}/status', 'ShopController@updateOrderItem')->name('order.item.status');
         Route::get('/cancel/details', 'ShopController@cancelDetails')->name('cancel.details');
         Route::get('/exchange/details', 'ShopController@exchangeDetails')->name('exchange.details');
         Route::get('/return/details', 'ShopController@returnDetails')->name('return.details');
@@ -374,14 +379,22 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
             // Product Management (Sub02)
             Route::prefix('product')->group(function () {
                 Route::get('/own', 'ChannelController@productOwn')->name('channel.product_own');
+                Route::get('/own/export', 'ChannelProductController@exportOwnProducts')->name('channel.product.own.export');
                 Route::get('/public', 'ChannelController@productPublic')->name('channel.product_public');
                 Route::get('/partial', 'ChannelController@productPartial')->name('channel.product_partial');
                 Route::get('/request', 'ChannelController@productRequest')->name('channel.product_request');
+                Route::get('/categories', 'ChannelProductController@productCategories')->name('channel.product.categories');
+                Route::post('/categories', 'ChannelProductController@storeProductCategory')->name('channel.product.categories.store');
+                Route::post('/categories/{id}/update', 'ChannelProductController@updateProductCategory')->name('channel.product.categories.update');
+                Route::post('/categories/{id}/delete', 'ChannelProductController@deleteProductCategory')->name('channel.product.categories.delete');
 
                 // Base Product Management actions
                 Route::get('/base/detail/{id}', 'ChannelProductController@getBaseProductDetail')->name('channel.product.base.detail');
+                Route::get('/base/create', 'ChannelProductController@createBaseProduct')->name('channel.product.base.create');
+                Route::post('/base/store', 'ChannelProductController@storeBaseProduct')->name('channel.product.base.store');
                 Route::get('/base/edit/{id}', 'ChannelProductController@editBaseProduct')->name('channel.product.base.edit');
                 Route::post('/base/update/{id}', 'ChannelProductController@updateBaseProduct')->name('channel.product.base.update');
+                Route::post('/base/stop-notice/{id}', 'ChannelProductController@updateStopNotice')->name('channel.product.base.stop_notice');
                 Route::post('/base/delete/{id}', 'ChannelProductController@deleteBaseProduct')->name('channel.product.base.delete');
                 Route::post('/base/copy/{id}', 'ChannelProductController@copyBaseProduct')->name('channel.product.base.copy');
             });
@@ -398,6 +411,13 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
                 Route::post('/cancel/request', 'ChannelOrderController@requestCancel')->name('channel.order.cancel.request');
                 Route::post('/return/request', 'ChannelOrderController@requestReturn')->name('channel.order.return.request');
                 Route::post('/exchange/request', 'ChannelOrderController@requestExchange')->name('channel.order.exchange.request');
+            });
+
+            // Customer Product Inquiries
+            Route::prefix('inquiries')->group(function () {
+                Route::get('/', 'ChannelController@inquiryList')->name('channel.inquiries.index');
+                Route::get('/{id}', 'ChannelController@inquiryView')->name('channel.inquiries.show');
+                Route::post('/{id}/reply', 'ChannelController@inquiryReply')->name('channel.inquiries.reply');
             });
 
             // Settlement Management (Sub05)
@@ -444,6 +464,7 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
         // Order Management
         Route::get('/order/list', 'UserController@orderList')->name('mypage.order.list'); // Check list of orders
         Route::get('/order/view', 'UserController@orderView')->name('mypage.order.view'); // Check specific order details
+        Route::post('/order/claim', 'UserController@orderClaimSubmit')->name('mypage.order.claim.submit'); // Submit cancel/return/exchange/confirm claims
 
         Route::get('/profile', 'UserController@profileEdit')->name('mypage.profile');
         Route::post('/profile', 'UserController@profileUpdate')->name('mypage.profile.update');
@@ -467,9 +488,11 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
 
         // 장바구니 목록
         Route::get('/cart', 'UserController@cartList')->name('mypage.cart');
+        Route::post('/cart/delete/{id}', 'UserController@deleteCartItem')->name('mypage.cart.delete');
 
         // 찜한 상품 목록
         Route::get('/wishlist', 'UserController@wishlist')->name('mypage.wishlist');
+        Route::post('/wishlist/delete/{id}', 'UserController@deleteWishlistItem')->name('mypage.wishlist.delete');
 
         // 쿠폰 목록 (PPT Slide 48)
     });
@@ -478,7 +501,7 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
 
 // Member Logout & Legacy Redirects
 Route::namespace('App\Http\Controllers\Front')->group(function () {
-    Route::match(['get', 'post'], '/logout', 'UserController@userLogout')->name('logout');
+    Route::get('/logout', 'UserController@userLogout')->name('front.logout');
     Route::redirect('/user/account', '/mypage/main');
     Route::redirect('/user/orders', '/mypage/order/list');
     Route::redirect('/user/login-register', '/member/login');

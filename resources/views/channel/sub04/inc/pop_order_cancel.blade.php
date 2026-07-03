@@ -42,25 +42,25 @@
                                 <tbody class="textL">
                                     <tr>
                                         <th class="w160"><span>주문번호</span></th>
-                                        <td>Me9-000939393</td>
+                                        <td id="pop_cancel_order_no">Me9-000939393</td>
                                         <th class="w160"><span>취소 주문번호</span></th>
-                                        <td>Me9-12222112121</td>
+                                        <td id="pop_cancel_claim_no">Me9-12222112121</td>
                                     </tr>
                                     <tr>
                                         <th class="w160"><span>취소 요청일시</span></th>
-                                        <td>2024-10-01 10:02:12</td>
+                                        <td id="pop_cancel_request_date">2024-10-01 10:02:12</td>
                                         <th class="w160"><span>취소 사유</span></th>
-                                        <td>동일 상품 재주문</td>
+                                        <td id="pop_cancel_reason">동일 상품 재주문</td>
                                     </tr>
                                     <tr>
                                         <th class="w160"><span>환불 금액</span></th>
-                                        <td>90,000 원</td>
+                                        <td id="pop_cancel_refund_amount">90,000 원</td>
                                         <th class="w160"><span>환불 계좌 정보</span></th>
-                                        <td>카카오뱅크 / 33333333301222 / 홍길동</td>
+                                        <td id="pop_cancel_refund_account">카카오뱅크 / 33333333301222 / 홍길동</td>
                                     </tr>
                                     <tr>
                                         <th class="w160"><span>판매처</span></th>
-                                        <td colspan="3">Shop채널명</td>
+                                        <td colspan="3" id="pop_cancel_shop_name">Shop채널명</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -104,7 +104,7 @@
                                         <th>배송비</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="pop_cancel_order_items_body">
                                     <tr>
                                         <td><input type="checkbox"></td>
                                         <td>배송대기</td>
@@ -160,7 +160,7 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="#">확인</a>
+                    <a href="#" id="btn_cancel_reject_confirm">확인</a>
                     <a href="#" class="col5 close_btn">닫기</a>
                 </div>
             </div>
@@ -185,7 +185,7 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="#">확인</a>
+                    <a href="#" id="btn_cancel_approve_confirm">확인</a>
                     <a href="#" class="col5 close_btn">닫기</a>
                 </div>
             </div>

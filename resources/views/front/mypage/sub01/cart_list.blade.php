@@ -191,8 +191,11 @@
                                                 <td>{{ $item['shop_channel'] }}</td>
                                                 <td>
                                                     <div class="btn_group">
-                                                        <a href="#" class="btn01 btn_green">방문</a>
-                                                        <a href="#" class="btn01 btn_red">비우기</a>
+                                                        <a href="{{ $item['visit_url'] }}" class="btn01 btn_green">방문</a>
+                                                        <form action="{{ route('mypage.cart.delete', ['id' => $item['id']]) }}" method="POST">
+                                                            @csrf
+                                                            <button type="submit" class="btn01 btn_red" style="border:0;">비우기</button>
+                                                        </form>
                                                     </div>
                                                 </td>
                                             </tr>

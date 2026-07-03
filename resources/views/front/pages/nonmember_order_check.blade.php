@@ -3,6 +3,16 @@
 @section('page_type', 'sub')
 
 @section('content')
+<style>
+    #container {
+        padding-top: 100px;
+    }
+    @media all and (max-width: 1024px) {
+        #container {
+            padding-top: 70px;
+        }
+    }
+</style>
 <div id="container">
     <div id="contents">
         <div class="row" style="padding: 60px 0;">

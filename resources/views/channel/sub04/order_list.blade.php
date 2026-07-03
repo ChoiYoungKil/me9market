@@ -216,7 +216,7 @@
                                         @foreach($orders as $order)
                                             <tr>
                                                 <td>{{ $order->created_at }}</td>
-                                                <td><a class="fcol4 link pop_btn" data-pop="pop1_1">{{ $order->order_no }}</a>
+                                                <td><a href="#" onclick='openOrderModal("pop1_1", @json($order)); return false;' class="fcol4 link">{{ $order->order_no }}</a>
                                                 </td>
                                                 <td>{{ $loop->iteration }}</td>
                                                 <td>{{ $order->shop_name }}</td>

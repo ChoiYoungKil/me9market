@@ -21,6 +21,10 @@ class Order extends Model
         return $this->hasMany('App\Models\OrdersProduct', 'order_id'); 
     }
 
+    public function user() {
+        return $this->belongsTo('App\Models\User', 'user_id');
+    }
+
     public function claims()
     {
         return $this->hasMany(OrderClaim::class);

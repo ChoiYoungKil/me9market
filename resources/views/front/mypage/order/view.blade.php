@@ -2,6 +2,38 @@
 
 @section('page_type', 'sub')
 
+@php
+    $statusMap = [
+        'New' => '결제 완료',
+        'In Process' => '배송 준비중',
+        'Shipped' => '배송 중',
+        'Delivered' => '배송완료',
+        'Confirmed' => '구매 확정',
+        'Cancel Requested' => '취소신청중',
+        'Cancelled' => '취소완료',
+        'Return Requested' => '반품신청중',
+        'Returned' => '반품완료',
+        'Exchange Requested' => '교환신청중',
+        'Exchanged' => '교환완료'
+    ];
+
+    $purchasedItems = $order->orders_products->filter(function($p) {
+        return !in_array($p->item_status, ['Cancelled', 'Cancel Requested', 'Return Requested', 'Returned', 'Exchange Requested', 'Exchanged']);
+    });
+
+    $cancelledItems = $order->orders_products->filter(function($p) {
+        return in_array($p->item_status, ['Cancel Requested', 'Cancelled']);
+    });
+
+    $returnedItems = $order->orders_products->filter(function($p) {
+        return in_array($p->item_status, ['Return Requested', 'Returned']);
+    });
+
+    $exchangedItems = $order->orders_products->filter(function($p) {
+        return in_array($p->item_status, ['Exchange Requested', 'Exchanged']);
+    });
+@endphp
+
 @section('content')
     <div id="contents">
         <div id="order">
@@ -16,22 +48,22 @@
                         </ul>
                     </div>
 
-                    <div class="ttl01">주문자 정보 <span class="col2">2024.10.14 ( 주문번호: Me9-00929423 )</span></div>
+                    <div class="ttl01">주문자 정보 <span class="col2">{{ $order->created_at->format('Y.m.d') }} ( 주문번호: Me9-{{ sprintf('%08d', $order->id) }} )</span></div>
 
                     <div class="tb01">
                         <table>
                             <tbody class="textL">
                                 <tr>
                                     <th class="w160">주문자 이름</th>
-                                    <td>홍길동</td>
+                                    <td>{{ $order->name }}</td>
                                 </tr>
                                 <tr>
                                     <th class="w160">휴대폰 번호</th>
-                                    <td>010-0000-0000</td>
+                                    <td>{{ $order->mobile }}</td>
                                 </tr>
                                 <tr>
                                     <th class="w160">이메일 주소</th>
-                                    <td>test1234@naver.com</td>
+                                    <td>{{ $order->email }}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -46,19 +78,19 @@
                             <tbody class="textL">
                                 <tr>
                                     <th class="w160">받는 사람</th>
-                                    <td>홍길동</td>
+                                    <td>{{ $order->name }}</td>
                                 </tr>
                                 <tr>
                                     <th class="w160">휴대폰 번호</th>
-                                    <td>010-0000-0000</td>
+                                    <td>{{ $order->mobile }}</td>
                                 </tr>
                                 <tr>
                                     <th class="w160">주소</th>
-                                    <td>22012 서울특별시 광진구 가나다동 119-12</td>
+                                    <td>[{{ $order->pincode }}] {{ $order->address }} {{ $order->city }} {{ $order->state }}</td>
                                 </tr>
                                 <tr>
                                     <th class="w160">배송메모</th>
-                                    <td>배송메모 <br>1122</td>
+                                    <td>{{ $order->delivery_instruction ?? '-' }}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -66,7 +98,7 @@
                 </div>
 
                 <div class="box box3">
-                    <div class="ttl01">구매 상품 <span class="col3">판매자 ( txx2212 )</span></div>
+                    <div class="ttl01">구매 상품</div>
 
                     <div class="tb02">
                         <table>
@@ -77,71 +109,40 @@
                                 <col width="111px">
                             </colgroup>
                             <tbody>
-                                <tr>
-                                    <td class="status col1">구매확정</td>
-                                    <td class="info">
-                                        <div class="con_w">
-                                            <div class="img_bx"
-                                                style="background:url({{ asset('mypage/images/sub/thumbnail01.jpg') }})">
+                                @forelse($purchasedItems as $item)
+                                    @php
+                                        $shopName = \Illuminate\Support\Facades\DB::table('vendors_business_details')
+                                            ->where('vendor_id', $item->vendor_id)
+                                            ->value('shop_name') ?? 'Me9 브랜드 전용관';
+                                    @endphp
+                                    <tr>
+                                        <td class="status col1">{{ $statusMap[$item->item_status] ?? $item->item_status }}</td>
+                                        <td class="info">
+                                            <div class="con_w">
+                                                <div class="img_bx"
+                                                    style="background-image: url('{{ $item->product && !empty($item->product->product_image) ? asset('front/images/product_images/small/' . $item->product->product_image) : 'https://placehold.co/100' }}'); background-size: cover; background-position: center; width: 70px; height: 70px; border: 1px solid #eee;">
+                                                </div>
+                                                <div class="txt_w">
+                                                    <div style="font-size: 11px; color: #888; margin-bottom: 3px;">{{ $shopName }}</div>
+                                                    <strong class="subject">{{ $item->product_name }}</strong>
+                                                    <p>옵션: {{ $item->product_size }} / {{ $item->product_qty }}개</p>
+                                                </div>
                                             </div>
-                                            <div class="txt_w">
-                                                <strong class="subject">상품명 111111</strong>
-                                                <p>옵션 1 / 2개</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="price t_r">2,000 원</td>
-                                    <td class="t_r">구매확정일<br> 2024.10.16</td>
-                                </tr>
-                                <tr>
-                                    <td class="status col2">취소완료</td>
-                                    <td class="info">
-                                        <div class="con_w">
-                                            <div class="img_bx"
-                                                style="background:url({{ asset('mypage/images/sub/thumbnail01.jpg') }})">
-                                            </div>
-                                            <div class="txt_w">
-                                                <strong class="subject">상품명 111111</strong>
-                                                <p>옵션 1 / 2개</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="price t_r">2,000 원</td>
-                                    <td class="t_r">취소완료일<br> 2024.10.16</td>
-                                </tr>
-                                <tr>
-                                    <td class="status col3">반품완료</td>
-                                    <td class="info">
-                                        <div class="con_w">
-                                            <div class="img_bx"
-                                                style="background:url({{ asset('mypage/images/sub/thumbnail01.jpg') }})">
-                                            </div>
-                                            <div class="txt_w">
-                                                <strong class="subject">상품명 111111</strong>
-                                                <p>옵션 1 / 2개</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="price t_r">2,000 원</td>
-                                    <td class="t_r">반품완료일<br> 2024.10.16</td>
-                                </tr>
-                                <tr>
-                                    <td class="status col4">교환완료</td>
-                                    <td class="info">
-                                        <div class="con_w">
-                                            <div class="img_bx"
-                                                style="background:url({{ asset('mypage/images/sub/thumbnail01.jpg') }})">
-                                            </div>
-                                            <div class="txt_w">
-                                                <p class="col2">교환 주문번호: Me9-RE-00929111</p>
-                                                <strong class="subject">상품명 111111</strong>
-                                                <p>옵션 1 / 2개</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="price t_r">1,000 원</td>
-                                    <td class="t_r">교환완료일<br> 2024.10.16</td>
-                                </tr>
+                                        </td>
+                                        <td class="price t_r">{{ number_format($item->product_price * $item->product_qty) }} 원</td>
+                                        <td class="t_r">
+                                            @if($item->item_status == 'Confirmed')
+                                                구매확정일<br> {{ $item->updated_at->format('Y.m.d') }}
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="textC" style="padding: 40px 0; color: #888;">구매 진행 중인 상품이 없습니다.</td>
+                                    </tr>
+                                @endforelse
                             </tbody>
                         </table>
                     </div>
@@ -156,19 +157,15 @@
                                 <tbody>
                                     <tr>
                                         <th>결제수단</th>
-                                        <td>카드결제</td>
+                                        <td>{{ $order->payment_method }}</td>
                                     </tr>
                                     <tr>
-                                        <th>카드종류</th>
-                                        <td>현대카드</td>
-                                    </tr>
-                                    <tr>
-                                        <th>카드번호</th>
-                                        <td>22030222-******</td>
+                                        <th>결제대행사</th>
+                                        <td>{{ $order->payment_gateway }}</td>
                                     </tr>
                                     <tr>
                                         <th>적립포인트</th>
-                                        <td>+ 1000 point</td>
+                                        <td>+ 0 point</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -178,180 +175,193 @@
                                 <tbody>
                                     <tr>
                                         <th>총 상품금액</th>
-                                        <td>3,000 원</td>
+                                        <td>{{ number_format($order->grand_total - $order->shipping_charges) }} 원</td>
                                     </tr>
                                     <tr>
                                         <th>배송비</th>
-                                        <td>+ 2,500 원</td>
-                                    </tr>
-                                    <tr>
-                                        <th>포인트 사용</th>
-                                        <td>- 2,000 p</td>
+                                        <td>+ {{ number_format($order->shipping_charges) }} 원</td>
                                     </tr>
                                     <tr class="last">
                                         <th>최종 결제금액</th>
-                                        <td><strong>4,500</strong> 원</td>
+                                        <td><strong>{{ number_format($order->grand_total) }}</strong> 원</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
-                    <div class="txt01 t_r">( 배송비 ) 30,000원 미만 : 2,500 원</div>
+                    <div class="txt01 t_r">( 배송비 ) {{ $order->shipping_charges > 0 ? number_format($order->shipping_charges) . ' 원' : '무료배송' }}</div>
                 </div>
 
-                <div class="box box5">
-                    <div class="ttl01">취소 상품 <span class="col3">판매자 ( txx2212 )</span></div>
+                @if($cancelledItems->count() > 0)
+                    @foreach($cancelledItems as $item)
+                        @php
+                            $shopName = \Illuminate\Support\Facades\DB::table('vendors_business_details')
+                                ->where('vendor_id', $item->vendor_id)
+                                ->value('shop_name') ?? 'Me9 브랜드 전용관';
+                            $claim = $order->claims->where('order_product_id', $item->id)->where('type', 'cancel')->first();
+                        @endphp
+                        <div class="box box5">
+                            <div class="ttl01">취소 상품 <span class="col3">판매자 ( {{ $shopName }} )</span></div>
 
-                    <div class="tb02">
-                        <table>
-                            <colgroup>
-                                <col width="96px">
-                                <col width="">
-                                <col width="150px">
-                            </colgroup>
-                            <tbody>
-                                <tr>
-                                    <td class="status col2">취소완료</td>
-                                    <td class="info">
-                                        <div class="con_w">
-                                            <div class="img_bx"
-                                                style="background:url({{ asset('mypage/images/sub/thumbnail01.jpg') }})">
-                                            </div>
-                                            <div class="txt_w">
-                                                <strong class="subject">상품명 111111</strong>
-                                                <p>옵션 1 / 2개</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="price t_r">2,000 원</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="txt01 t_r">( 배송비 ) 무료</div>
+                            <div class="tb02">
+                                <table>
+                                    <colgroup>
+                                        <col width="96px">
+                                        <col width="">
+                                        <col width="150px">
+                                    </colgroup>
+                                    <tbody>
+                                        <tr>
+                                            <td class="status col2">{{ $statusMap[$item->item_status] ?? $item->item_status }}</td>
+                                            <td class="info">
+                                                <div class="con_w">
+                                                    <div class="img_bx"
+                                                        style="background-image: url('{{ $item->product && !empty($item->product->product_image) ? asset('front/images/product_images/small/' . $item->product->product_image) : 'https://placehold.co/100' }}'); background-size: cover; background-position: center; width: 70px; height: 70px; border: 1px solid #eee;">
+                                                    </div>
+                                                    <div class="txt_w">
+                                                        <strong class="subject">{{ $item->product_name }}</strong>
+                                                        <p>옵션: {{ $item->product_size }} / {{ $item->product_qty }}개</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="price t_r">{{ number_format($item->product_price * $item->product_qty) }} 원</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
 
-                    <div class="tb04">
-                        <table>
-                            <tbody>
-                                <tr>
-                                    <th>취소 사유</th>
-                                    <td>단순변심</td>
-                                </tr>
-                                <tr>
-                                    <th>결제 수단</th>
-                                    <td>카드취소 2,000 원</td>
-                                </tr>
-                                <tr>
-                                    <th>포인트 환불</th>
-                                    <td>200 point </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                            <div class="tb04">
+                                <table>
+                                    <tbody>
+                                        <tr>
+                                            <th>취소 사유</th>
+                                            <td>{{ $claim ? config('array.order_cancel_reasons.' . $claim->reason, $claim->reason) : '정보 없음' }}@if($claim && $claim->detail_reason) ({{ $claim->detail_reason }})@endif</td>
+                                        </tr>
+                                        <tr>
+                                            <th>처리 상태</th>
+                                            <td>{{ $claim ? $claim->status : '완료' }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    @endforeach
+                @endif
 
-                <div class="box box6">
-                    <div class="ttl01">반품 상품 <span class="col3">판매자 ( txx2212 )</span></div>
+                @if($returnedItems->count() > 0)
+                    @foreach($returnedItems as $item)
+                        @php
+                            $shopName = \Illuminate\Support\Facades\DB::table('vendors_business_details')
+                                ->where('vendor_id', $item->vendor_id)
+                                ->value('shop_name') ?? 'Me9 브랜드 전용관';
+                            $claim = $order->claims->where('order_product_id', $item->id)->where('type', 'return')->first();
+                        @endphp
+                        <div class="box box6">
+                            <div class="ttl01">반품 상품 <span class="col3">판매자 ( {{ $shopName }} )</span></div>
 
-                    <div class="tb02">
-                        <table>
-                            <colgroup>
-                                <col width="96px">
-                                <col width="">
-                                <col width="150px">
-                            </colgroup>
-                            <tbody>
-                                <tr>
-                                    <td class="status col3">반품완료</td>
-                                    <td class="info">
-                                        <div class="con_w">
-                                            <div class="img_bx"
-                                                style="background:url({{ asset('mypage/images/sub/thumbnail01.jpg') }})">
-                                            </div>
-                                            <div class="txt_w">
-                                                <strong class="subject">상품명 111111</strong>
-                                                <p>옵션 1 / 2개</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="price t_r">2,000 원</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="txt01 t_r">( 배송비 ) 무료</div>
+                            <div class="tb02">
+                                <table>
+                                    <colgroup>
+                                        <col width="96px">
+                                        <col width="">
+                                        <col width="150px">
+                                    </colgroup>
+                                    <tbody>
+                                        <tr>
+                                            <td class="status col3">{{ $statusMap[$item->item_status] ?? $item->item_status }}</td>
+                                            <td class="info">
+                                                <div class="con_w">
+                                                    <div class="img_bx"
+                                                        style="background-image: url('{{ $item->product && !empty($item->product->product_image) ? asset('front/images/product_images/small/' . $item->product->product_image) : 'https://placehold.co/100' }}'); background-size: cover; background-position: center; width: 70px; height: 70px; border: 1px solid #eee;">
+                                                    </div>
+                                                    <div class="txt_w">
+                                                        <strong class="subject">{{ $item->product_name }}</strong>
+                                                        <p>옵션: {{ $item->product_size }} / {{ $item->product_qty }}개</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="price t_r">{{ number_format($item->product_price * $item->product_qty) }} 원</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
 
-                    <div class="tb04">
-                        <table>
-                            <tbody>
-                                <tr>
-                                    <th>반품 사유</th>
-                                    <td>처음 사려고 했던 상품이 상품표기 이상으로 구매를 잘 못 하였습니다. <br>그래서 반품을 신청합니다.</td>
-                                </tr>
-                                <tr>
-                                    <th>결제 수단</th>
-                                    <td>무통장입금 환불 2,000 원</td>
-                                </tr>
-                                <tr>
-                                    <th>포인트 환불</th>
-                                    <td>200 point </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                            <div class="tb04">
+                                <table>
+                                    <tbody>
+                                        <tr>
+                                            <th>반품 사유</th>
+                                            <td>{{ $claim ? config('array.order_return_reasons.' . $claim->reason, $claim->reason) : '정보 없음' }}@if($claim && $claim->detail_reason) ({{ $claim->detail_reason }})@endif</td>
+                                        </tr>
+                                        <tr>
+                                            <th>처리 상태</th>
+                                            <td>{{ $claim ? $claim->status : '완료' }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    @endforeach
+                @endif
 
-                <div class="box box7">
-                    <div class="ttl01">교환 상품 <span class="col3">판매자 ( txx2212 )</span></div>
+                @if($exchangedItems->count() > 0)
+                    @foreach($exchangedItems as $item)
+                        @php
+                            $shopName = \Illuminate\Support\Facades\DB::table('vendors_business_details')
+                                ->where('vendor_id', $item->vendor_id)
+                                ->value('shop_name') ?? 'Me9 브랜드 전용관';
+                            $claim = $order->claims->where('order_product_id', $item->id)->where('type', 'exchange')->first();
+                        @endphp
+                        <div class="box box7">
+                            <div class="ttl01">교환 상품 <span class="col3">판매자 ( {{ $shopName }} )</span></div>
 
-                    <div class="tb02">
-                        <table>
-                            <colgroup>
-                                <col width="96px">
-                                <col width="">
-                                <col width="150px">
-                            </colgroup>
-                            <tbody>
-                                <tr>
-                                    <td class="status col4">교환완료</td>
-                                    <td class="info">
-                                        <div class="con_w">
-                                            <div class="img_bx"
-                                                style="background:url({{ asset('mypage/images/sub/thumbnail01.jpg') }})">
-                                            </div>
-                                            <div class="txt_w">
-                                                <p class="col2">교환 주문번호: Me9-RE-00929111</p>
-                                                <strong class="subject">상품명 111111</strong>
-                                                <p>옵션 1 / 2개</p>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td class="price t_r">2,000 원</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="txt01 t_r">( 배송비 ) 무료</div>
+                            <div class="tb02">
+                                <table>
+                                    <colgroup>
+                                        <col width="96px">
+                                        <col width="">
+                                        <col width="150px">
+                                    </colgroup>
+                                    <tbody>
+                                        <tr>
+                                            <td class="status col4">{{ $statusMap[$item->item_status] ?? $item->item_status }}</td>
+                                            <td class="info">
+                                                <div class="con_w">
+                                                    <div class="img_bx"
+                                                        style="background-image: url('{{ $item->product && !empty($item->product->product_image) ? asset('front/images/product_images/small/' . $item->product->product_image) : 'https://placehold.co/100' }}'); background-size: cover; background-position: center; width: 70px; height: 70px; border: 1px solid #eee;">
+                                                    </div>
+                                                    <div class="txt_w">
+                                                        @if($claim)
+                                                            <p class="col2">교환 주문번호: Me9-EX-{{ sprintf('%08d', $claim->id) }}</p>
+                                                        @endif
+                                                        <strong class="subject">{{ $item->product_name }}</strong>
+                                                        <p>옵션: {{ $item->product_size }} / {{ $item->product_qty }}개</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="price t_r">{{ number_format($item->product_price * $item->product_qty) }} 원</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
 
-                    <div class="tb04">
-                        <table>
-                            <tbody>
-                                <tr>
-                                    <th>교환 사유</th>
-                                    <td>다른 상품이 배송되었습니다.</td>
-                                </tr>
-                                <tr>
-                                    <th>결제 수단</th>
-                                    <td>2,500 원</td>
-                                </tr>
-                                <tr>
-                                    <th>포인트 환불</th>
-                                    <td>200 point </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                            <div class="tb04">
+                                <table>
+                                    <tbody>
+                                        <tr>
+                                            <th>교환 사유</th>
+                                            <td>{{ $claim ? config('array.order_return_reasons.' . $claim->reason, $claim->reason) : '정보 없음' }}@if($claim && $claim->detail_reason) ({{ $claim->detail_reason }})@endif</td>
+                                        </tr>
+                                        <tr>
+                                            <th>처리 상태</th>
+                                            <td>{{ $claim ? $claim->status : '완료' }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    @endforeach
+                @endif
             </div>
         </div>
     </div>

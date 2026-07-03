@@ -7,38 +7,18 @@
                 <div class="conbx">
                     <div class="con_w">
                         <div class="info_bx01">
-                            <div class="l_bx">
-                                <div class="img_bx">
-                                    <img src="/images/channel/sub/thum03.jpg">
-                                </div>
-                                <div class="img_slide">
-                                    <ul>
-                                        <li>
-                                            <div class="con on">
-                                                <img src="/images/channel/sub/thum01.jpg">
-                                            </div>
-                                        </li>
-                                        <li>
-                                            <div class="con">
-                                                <img src="/images/channel/sub/thum02.jpg">
-                                            </div>
-                                        </li>
-                                        <li>
-                                            <div class="con">
-                                                <img src="/images/channel/sub/thum03.jpg">
-                                            </div>
-                                        </li>
-                                        <li>
-                                            <div class="con">
-                                                <img src="/images/channel/sub/thum01.jpg">
-                                            </div>
-                                        </li>
-                                        <li>
-                                            <div class="con">
-                                                <img src="/images/channel/sub/thum02.jpg">
-                                            </div>
-                                        </li>
-                                    </ul>
+	                            <div class="l_bx">
+	                                <div class="img_bx">
+	                                    <img src="{{ asset('channel_assets/images/sub/thum01.jpg') }}" class="product-detail-main-image">
+	                                </div>
+	                                <div class="img_slide">
+	                                    <ul class="product-detail-image-list">
+	                                        <li>
+	                                            <div class="con on">
+	                                                <img src="{{ asset('channel_assets/images/sub/thum01.jpg') }}">
+	                                            </div>
+	                                        </li>
+	                                    </ul>
                                 </div>
                                 <script type="text/javascript">
 
@@ -69,81 +49,25 @@
                                 </script>
                             </div>
                             <div class="r_bx">
-                                <div class="txt_bx">
-                                    <p>대분류 &gt; 중분류 &gt; 소분류</p>
-                                    <strong>상품명 333333</strong>
-                                    <ul>
-                                        <li>상품코드 : a200392</li>
-                                        <li>판매자 : aabbds</li>
-                                    </ul>
-                                </div>
-                                <div class="option_bx">
-                                    <div class="ttl">옵션</div>
-                                    <select>
-                                        <option>-선택-</option>
-                                    </select>
-                                    <div class="option_w"
-                                        style="max-height: 150px; overflow-y: auto; margin-top: 10px; border-top: 1px solid #ddd;">
-                                        <ul>
-                                            <li
-                                                style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee;">
-                                                <div class="txt1" style="flex: 1; font-weight: bold;">085</div>
-                                                <div class="count"
-                                                    style="display: flex; align-items: center; border: 1px solid #ddd; margin: 0 10px;">
-                                                    <button type="button" class="minus"
-                                                        style="width: 25px; height: 25px; background: #fff; border: none; border-right: 1px solid #ddd; cursor: pointer;">-</button>
-                                                    <input type="text" readonly value="1"
-                                                        style="width: 30px; height: 25px; border: none; text-align: center; padding: 0;">
-                                                    <button type="button" class="plus"
-                                                        style="width: 25px; height: 25px; background: #fff; border: none; border-left: 1px solid #ddd; cursor: pointer;">+</button>
-                                                </div>
-                                                <div class="txt2"
-                                                    style="width: 80px; text-align: right; font-weight: bold; margin-right: 10px;">
-                                                    100원</div>
-                                                <div class="del"
-                                                    style="cursor:pointer; width: 18px; height: 18px; line-height: 16px; text-align: center; background: #ccc; color: #fff; border-radius: 50%; font-size: 12px; font-weight: bold;">
-                                                    x</div>
-                                            </li>
-                                            <li
-                                                style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee;">
-                                                <div class="txt1" style="flex: 1; font-weight: bold;">090</div>
-                                                <div class="count"
-                                                    style="display: flex; align-items: center; border: 1px solid #ddd; margin: 0 10px;">
-                                                    <button type="button" class="minus"
-                                                        style="width: 25px; height: 25px; background: #fff; border: none; border-right: 1px solid #ddd; cursor: pointer;">-</button>
-                                                    <input type="text" readonly value="1"
-                                                        style="width: 30px; height: 25px; border: none; text-align: center; padding: 0;">
-                                                    <button type="button" class="plus"
-                                                        style="width: 25px; height: 25px; background: #fff; border: none; border-left: 1px solid #ddd; cursor: pointer;">+</button>
-                                                </div>
-                                                <div class="txt2"
-                                                    style="width: 80px; text-align: right; font-weight: bold; margin-right: 10px;">
-                                                    100원</div>
-                                                <div class="del"
-                                                    style="cursor:pointer; width: 18px; height: 18px; line-height: 16px; text-align: center; background: #ccc; color: #fff; border-radius: 50%; font-size: 12px; font-weight: bold;">
-                                                    x</div>
-                                            </li>
-                                            <li
-                                                style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee;">
-                                                <div class="txt1" style="flex: 1; font-weight: bold;">100</div>
-                                                <div class="count"
-                                                    style="display: flex; align-items: center; border: 1px solid #ddd; margin: 0 10px;">
-                                                    <button type="button" class="minus"
-                                                        style="width: 25px; height: 25px; background: #fff; border: none; border-right: 1px solid #ddd; cursor: pointer;">-</button>
-                                                    <input type="text" readonly value="1"
-                                                        style="width: 30px; height: 25px; border: none; text-align: center; padding: 0;">
-                                                    <button type="button" class="plus"
-                                                        style="width: 25px; height: 25px; background: #fff; border: none; border-left: 1px solid #ddd; cursor: pointer;">+</button>
-                                                </div>
-                                                <div class="txt2"
-                                                    style="width: 80px; text-align: right; font-weight: bold; margin-right: 10px;">
-                                                    100원</div>
-                                                <div class="del"
-                                                    style="cursor:pointer; width: 18px; height: 18px; line-height: 16px; text-align: center; background: #ccc; color: #fff; border-radius: 50%; font-size: 12px; font-weight: bold;">
-                                                    x</div>
-                                            </li>
-                                        </ul>
-                                    </div>
+	                                <div class="txt_bx">
+	                                    <p class="product-detail-category">대분류 &gt; 중분류 &gt; 소분류</p>
+	                                    <strong class="product-detail-name">상품명</strong>
+	                                    <ul>
+	                                        <li class="product-detail-code">상품코드 : -</li>
+	                                        <li class="product-detail-seller">판매자 : -</li>
+	                                    </ul>
+	                                </div>
+	                                <div class="option_bx">
+	                                    <div class="ttl">옵션</div>
+	                                    <select class="product-detail-option-select">
+	                                        <option>-선택-</option>
+	                                    </select>
+	                                    <div class="option_w"
+	                                        style="max-height: 150px; overflow-y: auto; margin-top: 10px; border-top: 1px solid #ddd;">
+	                                        <ul class="product-detail-option-list">
+	                                            <li style="padding: 10px 0; border-bottom: 1px solid #eee;">등록된 옵션이 없습니다.</li>
+	                                        </ul>
+	                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -163,30 +87,30 @@
                                             <col width="">
                                         </colgroup>
                                         <tbody class="textL">
-                                            <tr>
-                                                <th>지급포인트</th>
-                                                <td>1,000 point</td>
-                                            </tr>
-                                            <tr>
-                                                <th>과세구분</th>
-                                                <td>과세</td>
-                                            </tr>
-                                            <tr>
-                                                <th>판매가격</th>
-                                                <td>5,000 원 ~ 11,000 원</td>
-                                            </tr>
-                                            <tr>
-                                                <th>이익분배</th>
-                                                <td>판매개당 4,000 원</td>
-                                            </tr>
-                                            <tr>
-                                                <th>재고</th>
-                                                <td>3,223 개</td>
-                                            </tr>
-                                            <tr>
-                                                <th>구매제한수량</th>
-                                                <td>1회 구매에 100 개까지 구매가능</td>
-                                            </tr>
+	                                            <tr>
+	                                                <th>지급포인트</th>
+	                                                <td class="product-detail-reward">-</td>
+	                                            </tr>
+	                                            <tr>
+	                                                <th>과세구분</th>
+	                                                <td class="product-detail-tax">-</td>
+	                                            </tr>
+	                                            <tr>
+	                                                <th>판매가격</th>
+	                                                <td class="product-detail-price">-</td>
+	                                            </tr>
+	                                            <tr>
+	                                                <th>이익분배</th>
+	                                                <td class="product-detail-profit">-</td>
+	                                            </tr>
+	                                            <tr>
+	                                                <th>재고</th>
+	                                                <td class="product-detail-stock">-</td>
+	                                            </tr>
+	                                            <tr>
+	                                                <th>구매제한수량</th>
+	                                                <td class="product-detail-purchase-limit">-</td>
+	                                            </tr>
                                         </tbody>
                                     </table>
                                 </div>
@@ -199,10 +123,10 @@
                                             <col width="">
                                         </colgroup>
                                         <tbody class="textL">
-                                            <tr>
-                                                <th>상품 상세 정보1</th>
-                                                <td>내용입니다.</td>
-                                            </tr>
+	                                            <tr>
+	                                                <th>상품 상세 정보1</th>
+	                                                <td class="product-detail-html">등록된 상세 설명이 없습니다.</td>
+	                                            </tr>
                                         </tbody>
                                     </table>
                                 </div>

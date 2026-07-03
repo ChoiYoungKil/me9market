@@ -159,7 +159,7 @@
                                         @php
                                             $mainImage = $product->images->first();
                                             $imageUrl = $mainImage ? asset('front/images/product_images/small/' . $mainImage->image) : asset('channel_assets/images/sub/thum01.jpg');
-                                            $categoryPath = ($product->parentCategory ? $product->parentCategory->category_name . ' > ' : '') . ($product->category->category_name ?? '');
+                                            $categoryPath = $product->category_path;
                                         @endphp
                                         <tr>
                                             <td>{{ $products->total() - ($products->currentPage() - 1) * $products->perPage() - $index }}</td>

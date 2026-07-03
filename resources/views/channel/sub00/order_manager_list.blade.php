@@ -49,7 +49,7 @@
                         <div class="conbx">
                             <div class="con_w">
                                 <div class="list_top1 btn">
-                                    <div class="count">총 <strong>00</strong> 건</div>
+                                    <div class="count">총 <strong>{{ $managers->count() }}</strong> 건</div>
                                     <div class="btn_bx">
                                         <a href="#" class="btn01 col5 pop_btn" data-pop="pop1_1">발주담당 등록</a>
                                     </div>
@@ -77,19 +77,25 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <tr>
-                                                <td>00</td>
-                                                <td>운영</td>
-                                                <td>email_id001@email_domain.com</td>
-                                                <td>홍길동</td>
-                                                <td>2024.10.01 01시 ~ 2024.11.01 23시</td>
-                                                <td>12</td>
-                                                <td>
-                                                    <a href="#" class="btn02 col5 pop_btn" data-pop="pop2_1">보기</a>
-                                                    <a href="#" class="btn02 col7 pop_btn" data-pop="pop3_1">수정</a>
-                                                    <a href="#" class="btn02">삭제</a>
-                                                </td>
-                                            </tr>
+                                            @forelse($managers as $index => $manager)
+                                                <tr>
+                                                    <td>{{ $index + 1 }}</td>
+                                                    <td>{{ (int) $manager->status === 1 ? '운영' : '중지' }}</td>
+                                                    <td>{{ $manager->email }}</td>
+                                                    <td>{{ $manager->name }}</td>
+                                                    <td>{{ optional($manager->created_at)->format('Y.m.d H시') }} ~ 상시</td>
+                                                    <td>{{ number_format($manager->products_count) }}</td>
+                                                    <td>
+                                                        <a href="#" class="btn02 col5 pop_btn" data-pop="pop2_1">보기</a>
+                                                        <a href="#" class="btn02 col7 pop_btn" data-pop="pop3_1">수정</a>
+                                                        <a href="{{ route('distributor.orders.pending') }}" class="btn02">발주확인</a>
+                                                    </td>
+                                                </tr>
+                                            @empty
+                                                <tr>
+                                                    <td colspan="7" class="no_data" style="padding: 80px 0;">등록된 발주담당자가 없습니다.</td>
+                                                </tr>
+                                            @endforelse
                                         </tbody>
                                     </table>
                                 </div>

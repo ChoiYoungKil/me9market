@@ -246,7 +246,11 @@
                                         <tr class="banner_img_bx" style="display: {{ old('use_banner', $shop->use_banner) == '1' ? 'table-row' : 'none' }};">
                                             <th class="w160"><span>배너 이미지</span></th>
                                             <td id="banner_container">
-                                                @php $banners = json_decode($shop->banner_images, true) ?? []; @endphp
+                                                @php
+                                                    $banners = is_array($shop->banner_images)
+                                                        ? $shop->banner_images
+                                                        : (json_decode($shop->banner_images ?? '[]', true) ?: []);
+                                                @endphp
                                                 @if(count($banners) > 0)
                                                     @foreach($banners as $index => $banner)
                                                         <div class="file_bx banner_row" style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px;">
@@ -590,7 +594,7 @@
             });
 
             // 기존 키워드(shop data) 복구 처리
-            var existingKeywords = @json(json_decode($shop->keywords, true) ?? []);
+            var existingKeywords = @json(is_array($shop->keywords) ? $shop->keywords : (json_decode($shop->keywords ?? '[]', true) ?: []));
             if (existingKeywords && existingKeywords.length > 0) {
                 existingKeywords.forEach(function(kw) {
                     // 유효한 키워드만 추가 (✕, 빈 문자열, 공백만 있는 문자열 제외)

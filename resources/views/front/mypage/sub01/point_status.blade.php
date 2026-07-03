@@ -187,15 +187,7 @@
                                         </tr>
                                     </thead>
                                     <tbody class="t_c">
-                                        @php
-                                            $mockChannels = [
-                                                ['no' => 4, 'name' => 'Shop 채널명 1', 'info' => 'Shop 채널 정보', 'qr' => 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=channel1'],
-                                                ['no' => 3, 'name' => 'Shop 채널명 2', 'info' => 'Shop 채널 정보', 'qr' => 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=channel2'],
-                                                ['no' => 2, 'name' => 'Shop 채널명 3', 'info' => 'Shop 채널 정보', 'qr' => 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=channel3'],
-                                                ['no' => 1, 'name' => 'Shop 채널명 4', 'info' => 'Shop 채널 정보', 'qr' => 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=channel4'],
-                                            ];
-                                        @endphp
-                                        @foreach($mockChannels as $channel)
+                                        @forelse($shopChannels as $channel)
                                             <tr>
                                                 <td>{{ $channel['no'] }}</td>
                                                 <td class="t_l pl20">
@@ -207,11 +199,15 @@
                                                         style="cursor: pointer;" onclick="window.open(this.src)">
                                                 </td>
                                                 <td>
-                                                    <a href="#" class="btn01"
+                                                    <a href="{{ $channel['url'] }}" class="btn01"
                                                         style="background-color: #ffb400; border-color: #ffb400; color: #fff;">바로가기</a>
                                                 </td>
                                             </tr>
-                                        @endforeach
+                                        @empty
+                                            <tr>
+                                                <td colspan="4" class="no_data" style="padding: 60px 0;">방문한 Shop 채널이 없습니다.</td>
+                                            </tr>
+                                        @endforelse
                                     </tbody>
                                 </table>
                             </div>

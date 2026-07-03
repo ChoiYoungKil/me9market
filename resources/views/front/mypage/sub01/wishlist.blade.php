@@ -181,9 +181,11 @@
                                                 <td>{{ $item['shop_channel'] }}</td>
                                                 <td>
                                                     <div class="btn_group">
-                                                        <a href="#" class="btn01 btn_green">방문</a>
-                                                        {{-- Note: Different label from Cart --}}
-                                                        <a href="#" class="btn01 btn_red">삭제</a>
+                                                        <a href="{{ $item['visit_url'] }}" class="btn01 btn_green">방문</a>
+                                                        <form action="{{ route('mypage.wishlist.delete', ['id' => $item['id']]) }}" method="POST">
+                                                            @csrf
+                                                            <button type="submit" class="btn01 btn_red" style="border:0;">삭제</button>
+                                                        </form>
                                                     </div>
                                                 </td>
                                             </tr>

@@ -4,18 +4,34 @@ namespace Tests\Feature;
 
 use Tests\TestCase;
 use App\Models\Admin;
+use Illuminate\Support\Facades\Hash;
 
 class AdminLoginTest extends TestCase
 {
     public function test_admin_login_success(): void
     {
-        // 1. admin@admin.com 이 존재하고 활성 상태인지 확인
+        // 1. 테스트가 seed 데이터에 의존하지 않도록 관리자 계정을 준비
         $admin = Admin::where('email', 'admin@admin.com')->first();
+        if (!$admin) {
+            $admin = new Admin();
+            $admin->name = 'Test Admin';
+            $admin->type = 'admin';
+            $admin->vendor_id = 0;
+            $admin->mobile = '01000000000';
+            $admin->email = 'admin@admin.com';
+            $admin->password = Hash::make('123456');
+            $admin->confirm = 'Yes';
+            $admin->status = 1;
+            $admin->save();
+        }
+
         $this->assertNotNull($admin, 'Admin account does not exist in DB');
         $this->assertEquals(1, $admin->status, 'Admin account is inactive');
 
         // 2. /admin/login POST 요청
-        $response = $this->post('/admin/login', [
+        $token = 'admin-login-test-token';
+        $response = $this->withSession(['_token' => $token])->post('/admin/login', [
+            '_token' => $token,
             'email' => 'admin@admin.com',
             'password' => '123456',
         ]);

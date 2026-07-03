@@ -183,7 +183,7 @@
         </form>
 
         <div class="hint">
-            * 테스트 아이디는 아무 이메일/비밀번호나 입력해도 즉시 로그인 가능합니다.
+            * 테스트 계정: partner@main.com / 123456
         </div>
     </div>
 

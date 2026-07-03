@@ -23,6 +23,25 @@ class Product extends Model
         return $this->belongsTo('App\Models\Category', 'category_id'); 
     }
 
+    public function getCategoryPathAttribute(): string
+    {
+        $category = $this->relationLoaded('category') ? $this->category : $this->category()->first();
+        if (!$category) {
+            return '카테고리 없음';
+        }
+
+        $path = [];
+        while ($category) {
+            array_unshift($path, $category->category_name);
+            if ((int) $category->parent_id === 0) {
+                break;
+            }
+            $category = Category::select('id', 'parent_id', 'category_name')->find($category->parent_id);
+        }
+
+        return implode(' > ', $path);
+    }
+
     public function parentCategory() {
         return $this->hasOneThrough(
             Category::class,
@@ -54,7 +73,25 @@ class Product extends Model
         'product_name', 'product_code', 'product_color', 'product_price', 'product_discount',
         'product_weight', 'product_image', 'product_video', 'group_code', 'description',
         'meta_title', 'meta_keywords', 'meta_description', 'is_featured', 'status',
-        'parent_id', 'is_public', 'is_partial', 'partial_approved'
+        'parent_id', 'is_public', 'is_partial', 'partial_approved', 'distributor_id',
+        'stop_notice_at', 'stop_notice_reason', 'stop_notice_requested_at',
+        'product_notice_type', 'product_notice_items', 'sale_scope', 'reward_points',
+        'tax_type', 'price_constraint_enabled', 'price_constraint_type', 'price_min',
+        'price_max', 'price_fixed', 'profit_share_type', 'profit_share_value',
+        'purchase_limit_enabled', 'purchase_min_qty', 'purchase_max_qty', 'stock_usage',
+        'detail_display_type', 'detail_text', 'detail_pc_image', 'detail_mobile_image',
+        'order_manager_enabled', 'shipping_policy_type', 'shipping_policy_name',
+        'shipping_payment_type', 'shipping_base_fee', 'shipping_free_threshold',
+        'cancel_refund_policy_id'
+    ];
+
+    protected $casts = [
+        'stop_notice_at' => 'date',
+        'stop_notice_requested_at' => 'datetime',
+        'product_notice_items' => 'array',
+        'price_constraint_enabled' => 'boolean',
+        'purchase_limit_enabled' => 'boolean',
+        'order_manager_enabled' => 'boolean',
     ];
 
     // Parent Product Relationship
@@ -72,6 +109,16 @@ class Product extends Model
     // 상품과 입점업체의 관계 (모든 상품은 하나의 입점업체에 속함)
     public function vendor() {    
         return $this->belongsTo('App\Models\Vendor', 'vendor_id')->with('vendorbusinessdetails'); 
+    }
+
+    public function distributor()
+    {
+        return $this->belongsTo(Distributor::class);
+    }
+
+    public function shopChannelProducts()
+    {
+        return $this->hasMany(ShopChannelProduct::class);
     }
 
 

@@ -41,19 +41,19 @@
                                 <tbody class="textL">
                                     <tr>
                                         <th class="w160"><span>주문번호</span></th>
-                                        <td>Me9-000939393</td>
+                                        <td id="pop_info_order_no">Me9-000939393</td>
                                         <th class="w160"><span>주문일시</span></th>
-                                        <td>2024-10-01 09:02:12</td>
+                                        <td id="pop_info_order_date">2024-10-01 09:02:12</td>
                                     </tr>
                                     <tr>
                                         <th class="w160"><span>판매처</span></th>
-                                        <td>Shop채널명</td>
+                                        <td id="pop_info_shop_name">Shop채널명</td>
                                         <th class="w160"><span>결제일시</span></th>
-                                        <td>2024-10-01 10:02:12</td>
+                                        <td id="pop_info_payment_date">2024-10-01 10:02:12</td>
                                     </tr>
                                     <tr>
                                         <th class="w160"><span>원 주문번호</span></th>
-                                        <td colspan="3"><span class="bold fcol4">Me9-088776768</span></td>
+                                        <td colspan="3"><span class="bold fcol4" id="pop_info_orig_order_no">Me9-088776768</span></td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -109,7 +109,7 @@
                                         <th>송장번호</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="pop_info_order_items_body">
                                     <tr>
                                         <td>자사</td>
                                         <td class="t_l"><span class="fcol2">BlueViolet a omnis</span></td>
@@ -149,26 +149,26 @@
                                 <tbody class="textL">
                                     <tr>
                                         <th class="w160"><span>회원정보</span></th>
-                                        <td><a class="fcol2 link" href="mailto:user@domain.com">user@domain.com</a>
+                                        <td id="pop_info_user_email"><a class="fcol2 link" href="mailto:user@domain.com">user@domain.com</a>
                                             (A992029202)</td>
                                         <th class="w160"><span>주문자명</span></th>
-                                        <td>홍길동</td>
+                                        <td id="pop_info_user_name">홍길동</td>
                                     </tr>
                                     <tr>
                                         <th class="w160"><span>주문자 연락처</span></th>
-                                        <td>010-1122-3344</td>
+                                        <td id="pop_info_user_mobile">010-1122-3344</td>
                                         <th class="w160"><span>주문자 이메일</span></th>
-                                        <td><a class="fcol2 link" href="mailto:user@domain.com">user@domain.com</a></td>
+                                        <td id="pop_info_user_email2"><a class="fcol2 link" href="mailto:user@domain.com">user@domain.com</a></td>
                                     </tr>
                                     <tr>
                                         <th class="w160"><span>수취인</span></th>
-                                        <td>홍길동</td>
+                                        <td id="pop_info_recipient_name">홍길동</td>
                                         <th class="w160"><span>수취인 연락처</span></th>
-                                        <td>010-1122-3344</td>
+                                        <td id="pop_info_recipient_mobile">010-1122-3344</td>
                                     </tr>
                                     <tr>
                                         <th class="w160"><span>배송지 주소</span></th>
-                                        <td colspan="3">[06151] 서울특별시 강남구 테헤란로 112233 (역삼동) 132435</td>
+                                        <td colspan="3" id="pop_info_recipient_address">[06151] 서울특별시 강남구 테헤란로 112233 (역삼동) 132435</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -188,32 +188,32 @@
                                 <tbody class="textL">
                                     <tr>
                                         <th class="w160"><span>총 상품 판매가</span></th>
-                                        <td>90,000 원</td>
+                                        <td id="pop_info_total_sale_price">90,000 원</td>
                                         <th class="w160"><span>총 상품 기본가</span></th>
-                                        <td>50,000 원</td>
+                                        <td id="pop_info_total_product_price">50,000 원</td>
                                     </tr>
                                     <tr>
                                         <th class="w160"><span>총 이익금</span></th>
-                                        <td>5,000 원</td>
+                                        <td id="pop_info_total_profit">5,000 원</td>
                                         <th class="w160"><span>총 판매이익금</span></th>
-                                        <td>35,000 원</td>
+                                        <td id="pop_info_total_selling_profit">35,000 원</td>
                                     </tr>
                                     <tr>
                                         <th class="w160"><span>총 배송비</span></th>
-                                        <td colspan="3">0 원</td>
+                                        <td colspan="3" id="pop_info_delivery_fee">0 원</td>
                                     </tr>
                                     <tr>
                                         <th class="w160"><span>총 사용 포인트</span></th>
-                                        <td>3,000 point</td>
+                                        <td id="pop_info_used_point">3,000 point</td>
                                         <th class="w160"><span>총 적립 포인트</span></th>
-                                        <td>90 point</td>
+                                        <td id="pop_info_earned_point">90 point</td>
                                     </tr>
                                     <tr>
                                         <th class="w160"><span>최종 결제가</span></th>
-                                        <td>87,000 원</td>
+                                        <td id="pop_info_total_payment_price">87,000 원</td>
                                         <th class="w160"><span>결제 수단</span></th>
                                         <td>
-                                            카드 <a class="btn02 col5 ml10 pop_btn" data-pop="pop1_1_2">연동 로그</a>
+                                            <span id="pop_info_payment_method">카드</span> <a class="btn02 col5 ml10 pop_btn" data-pop="pop1_1_2">연동 로그</a>
                                         </td>
                                     </tr>
                                 </tbody>

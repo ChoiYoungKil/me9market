@@ -1,212 +1,101 @@
 @extends('layouts.frontend')
 
 @section('content')
-    <!-- Include Channel CSS for styling to match Legacy Order Form -->
-    <link href="/channel_assets/css/sub.css" rel="stylesheet" type="text/css" />
-    <link href="/channel_assets/css/board.css" rel="stylesheet" type="text/css" />
-
-    <div id="contents" style="padding: 120px 0; min-height: 600px;">
-        <div class="row">
-            <div class="box box1" style="max-width: 1200px; margin: 0 auto; background: #fff; padding: 30px;">
-                <!-- Page Info -->
-                <div class="page_info">
-                    <div class="ttl" style="font-size: 28px; font-weight: bold; margin-bottom: 20px;">주문 상세 내역</div>
-                    <ul class="dep" style="display: flex; gap: 10px; color: #888; margin-bottom: 30px;">
-                        <li>HOME</li>
-                        <li>></li>
-                        <li>Shop</li>
-                        <li>></li>
-                        <li>주문 상세</li>
-                    </ul>
-                </div>
-
-                <div class="conbx">
-                    <!-- Order Information -->
-                    <div class="con_w" style="margin-bottom: 40px;">
-                        <div class="ttl01"
-                            style="font-size: 20px; font-weight: bold; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 10px;">
-                            주문자 정보 <span style="font-size: 14px; color: #666; margin-left:10px;">2024.10.14 ( 주문번호:
-                                Me9-00929423 )</span></div>
-                        <div class="tb01">
-                            <table style="width: 100%;">
-                                <colgroup>
-                                    <col width="160px">
-                                    <col width="">
-                                </colgroup>
-                                <tbody class="textL">
-                                    <tr>
-                                        <th style="padding: 15px; background: #f9f9f9; border-bottom: 1px solid #ddd;">주문자
-                                            이름</th>
-                                        <td style="padding: 15px; border-bottom: 1px solid #ddd;">홍길동</td>
-                                    </tr>
-                                    <tr>
-                                        <th style="padding: 15px; background: #f9f9f9; border-bottom: 1px solid #ddd;">휴대폰
-                                            번호</th>
-                                        <td style="padding: 15px; border-bottom: 1px solid #ddd;">010-0000-0000</td>
-                                    </tr>
-                                    <tr>
-                                        <th style="padding: 15px; background: #f9f9f9; border-bottom: 1px solid #ddd;">이메일
-                                            주소</th>
-                                        <td style="padding: 15px; border-bottom: 1px solid #ddd;">test1234@naver.com</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Delivery Information -->
-                    <div class="con_w" style="margin-bottom: 40px;">
-                        <div class="ttl01"
-                            style="font-size: 20px; font-weight: bold; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 10px;">
-                            배송 정보</div>
-                        <div class="tb01">
-                            <table style="width: 100%;">
-                                <colgroup>
-                                    <col width="160px">
-                                    <col width="">
-                                </colgroup>
-                                <tbody class="textL">
-                                    <tr>
-                                        <th style="padding: 15px; background: #f9f9f9; border-bottom: 1px solid #ddd;">받는 사람
-                                        </th>
-                                        <td style="padding: 15px; border-bottom: 1px solid #ddd;">홍길동</td>
-                                    </tr>
-                                    <tr>
-                                        <th style="padding: 15px; background: #f9f9f9; border-bottom: 1px solid #ddd;">휴대폰
-                                            번호</th>
-                                        <td style="padding: 15px; border-bottom: 1px solid #ddd;">010-0000-0000</td>
-                                    </tr>
-                                    <tr>
-                                        <th style="padding: 15px; background: #f9f9f9; border-bottom: 1px solid #ddd;">주소
-                                        </th>
-                                        <td style="padding: 15px; border-bottom: 1px solid #ddd;">22012 서울특별시 광진구 가나다동
-                                            119-12</td>
-                                    </tr>
-                                    <tr>
-                                        <th style="padding: 15px; background: #f9f9f9; border-bottom: 1px solid #ddd;">배송메모
-                                        </th>
-                                        <td style="padding: 15px; border-bottom: 1px solid #ddd;">문 앞에 놓아주세요</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Product Information -->
-                    <div class="con_w" style="margin-bottom: 40px;">
-                        <div class="ttl01"
-                            style="font-size: 20px; font-weight: bold; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 10px;">
-                            구매 상품 <span style="font-size: 14px; color: #e91e63;">판매자 ( txx2212 )</span></div>
-                        <div class="tb01">
-                            <table style="width: 100%; border-top: 2px solid #333;">
-                                <colgroup>
-                                    <col width="100px">
-                                    <col width="">
-                                    <col width="150px">
-                                    <col width="150px">
-                                </colgroup>
-                                <tbody>
-                                    <tr>
-                                        <td style="padding: 15px; border-bottom: 1px solid #ddd; text-align:center;">
-                                            <span
-                                                style="display:inline-block; padding: 5px 10px; background:#eee; font-size:12px;">구매확정</span>
-                                        </td>
-                                        <td style="padding: 15px; border-bottom: 1px solid #ddd;">
-                                            <div style="display:flex; align-items:center;">
-                                                <div
-                                                    style="width:80px; height:80px; background:#f4f4f4; margin-right:20px; background-size:cover; background-position:center; background-image:url('/me9market/images/sub/thumbnail01.jpg');">
-                                                </div>
-                                                <div>
-                                                    <strong style="display:block; font-size:16px; margin-bottom:5px;">상품명
-                                                        111111</strong>
-                                                    <p style="color:#888;">옵션 1 / 2개</p>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td
-                                            style="padding: 15px; border-bottom: 1px solid #ddd; text-align:right; font-weight:bold;">
-                                            2,000 원</td>
-                                        <td
-                                            style="padding: 15px; border-bottom: 1px solid #ddd; text-align:center; color:#888; font-size:14px;">
-                                            구매확정일<br> 2024.10.16</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <!-- Payment Information -->
-                    <div class="con_w" style="margin-bottom: 40px;">
-                        <div class="ttl01"
-                            style="font-size: 20px; font-weight: bold; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 10px;">
-                            결제 정보</div>
-                        <div style="display: flex; gap: 40px; justify-content: space-between;">
-                            <div style="width: 60%;">
-                                <div class="tb01">
-                                    <table style="width: 100%;">
-                                        <tbody class="textL">
-                                            <tr>
-                                                <th
-                                                    style="padding: 15px; background: #f9f9f9; border-bottom: 1px solid #ddd; width: 160px;">
-                                                    결제수단</th>
-                                                <td style="padding: 15px; border-bottom: 1px solid #ddd;">카드결제</td>
-                                            </tr>
-                                            <tr>
-                                                <th
-                                                    style="padding: 15px; background: #f9f9f9; border-bottom: 1px solid #ddd; width: 160px;">
-                                                    카드종류</th>
-                                                <td style="padding: 15px; border-bottom: 1px solid #ddd;">현대카드</td>
-                                            </tr>
-                                            <tr>
-                                                <th
-                                                    style="padding: 15px; background: #f9f9f9; border-bottom: 1px solid #ddd; width: 160px;">
-                                                    카드번호</th>
-                                                <td style="padding: 15px; border-bottom: 1px solid #ddd;">22030222-******
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <th
-                                                    style="padding: 15px; background: #f9f9f9; border-bottom: 1px solid #ddd; width: 160px;">
-                                                    적립포인트</th>
-                                                <td style="padding: 15px; border-bottom: 1px solid #ddd;">+ 1000 point</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-
-                            <div style="width: 35%; background: #f8f8f8; padding: 20px; border: 1px solid #ddd;">
-                                <div
-                                    style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 15px; border-bottom: 1px solid #ccc; padding-bottom:10px;">
-                                    <span>총 상품금액</span>
-                                    <span>3,000 원</span>
-                                </div>
-                                <div
-                                    style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 15px; border-bottom: 1px solid #ccc; padding-bottom:10px;">
-                                    <span>배송비</span>
-                                    <span>+ 2,500 원</span>
-                                </div>
-                                <div
-                                    style="display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 15px; border-bottom: 1px solid #ccc; padding-bottom:10px;">
-                                    <span>포인트 사용</span>
-                                    <span>- 2,000 p</span>
-                                </div>
-                                <div
-                                    style="display: flex; justify-content: space-between; margin-top: 10px; font-weight: bold; font-size: 20px; color: #e91e63;">
-                                    <span>최종 결제금액</span>
-                                    <span>4,500 원</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="btn_area" style="text-align:center; margin-top:50px;">
-                        <a href="/" class="btn01"
-                            style="width: 200px; height: 50px; line-height: 50px; display: inline-block; background: #333; color: #fff; font-size: 16px;">쇼핑
-                            계속하기</a>
-                    </div>
-                </div>
+<div id="contents" style="padding: 100px 0; min-height: 640px; background:#f6f7f9;">
+    <div style="max-width:1180px; margin:0 auto; padding:0 20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:20px;">
+            <div>
+                <div style="color:#667085; font-weight:800;">{{ $shop->channel_name }}</div>
+                <h1 style="margin:4px 0 0; font-size:30px;">주문 상세 내역</h1>
             </div>
+            <a href="{{ route('shop.channel_main') }}" style="height:42px; padding:0 18px; display:inline-flex; align-items:center; border:1px solid #111827; border-radius:6px; color:#111827; text-decoration:none; font-weight:900;">쇼핑 계속하기</a>
         </div>
+
+        @if(!$order)
+            <div style="background:#fff; border:1px solid #d9dee7; border-radius:8px; padding:40px; text-align:center; color:#667085;">
+                조회할 주문 내역이 없습니다.
+            </div>
+        @else
+            @if(session('flash_message_success'))
+                <div style="background:#dcfae6; color:#087443; border:1px solid #abefc6; padding:12px 16px; border-radius:6px; margin-bottom:16px; font-weight:800;">{{ session('flash_message_success') }}</div>
+            @endif
+
+            <section style="background:#fff; border:1px solid #d9dee7; border-radius:8px; padding:24px; margin-bottom:18px;">
+                <div style="display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; border-bottom:1px solid #eef1f5; padding-bottom:16px; margin-bottom:18px;">
+                    <div>
+                        <div style="color:#667085; font-size:13px; font-weight:800;">주문번호</div>
+                        <strong style="font-size:20px;">Me9-Shop-{{ str_pad($order->id, 7, '0', STR_PAD_LEFT) }}</strong>
+                    </div>
+                    <div>
+                        <div style="color:#667085; font-size:13px; font-weight:800;">주문일시</div>
+                        <strong>{{ optional($order->created_at)->format('Y-m-d H:i') }}</strong>
+                    </div>
+                    <div>
+                        <div style="color:#667085; font-size:13px; font-weight:800;">주문상태</div>
+                        <strong>{{ $order->order_status }}</strong>
+                    </div>
+                </div>
+
+                <div style="display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:18px;">
+                    <div>
+                        <h2 style="font-size:18px; margin:0 0 12px;">주문자 정보</h2>
+                        <div style="display:grid; gap:8px; color:#344054;">
+                            <div><strong>이름</strong> {{ $order->name }}</div>
+                            <div><strong>연락처</strong> {{ $order->mobile }}</div>
+                            <div><strong>이메일</strong> {{ $order->email }}</div>
+                        </div>
+                    </div>
+                    <div>
+                        <h2 style="font-size:18px; margin:0 0 12px;">배송 정보</h2>
+                        <div style="display:grid; gap:8px; color:#344054;">
+                            <div><strong>받는 사람</strong> {{ $order->name }}</div>
+                            <div><strong>주소</strong> {{ $order->pincode }} {{ $order->address }}</div>
+                            <div><strong>지역</strong> {{ $order->city }} {{ $order->state }}</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section style="background:#fff; border:1px solid #d9dee7; border-radius:8px; padding:24px; margin-bottom:18px;">
+                <h2 style="font-size:18px; margin:0 0 12px;">구매 상품</h2>
+                @forelse($order->orders_products as $item)
+                    <div style="display:grid; grid-template-columns:120px minmax(0,1fr) 160px 150px; gap:14px; align-items:center; border-top:1px solid #eef1f5; padding:14px 0;">
+                        <div style="height:86px; background:#eef1f5; border-radius:6px; display:flex; align-items:center; justify-content:center; color:#667085; font-weight:900; font-size:12px; text-align:center;">{{ $item->product_code }}</div>
+                        <div>
+                            <span style="display:inline-flex; padding:4px 8px; border-radius:999px; background:#eef4ff; color:#3538cd; font-size:12px; font-weight:900;">{{ $item->status_label }}</span>
+                            <strong style="display:block; margin-top:8px; font-size:17px;">{{ $item->product_name }}</strong>
+                            <div style="color:#667085; font-size:13px;">{{ $item->product_color }} / {{ $item->product_size }} / {{ $item->product_qty }}개</div>
+                            @if($item->tracking_number)
+                                <div style="color:#067647; font-size:13px; margin-top:4px;">{{ $item->courier_name }} {{ $item->tracking_number }}</div>
+                            @endif
+                        </div>
+                        <div style="text-align:right; font-weight:900;">{{ number_format($item->line_total ?: $item->product_price * $item->product_qty) }}원</div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+                            @foreach(['cancel' => '취소요청', 'return' => '반품요청', 'exchange' => '교환요청', 'confirm' => '구매확정'] as $action => $label)
+                                <form action="{{ route('front.shop.order.item.status', ['id' => $item->id]) }}" method="POST">
+                                    @csrf
+                                    <input type="hidden" name="action" value="{{ $action }}">
+                                    <input type="hidden" name="reason" value="Shop 채널 주문상세 요청">
+                                    <button type="submit" style="width:100%; height:34px; border:1px solid #d0d5dd; border-radius:6px; background:#fff; color:#344054; font-weight:800; cursor:pointer;">{{ $label }}</button>
+                                </form>
+                            @endforeach
+                        </div>
+                    </div>
+                @empty
+                    <div style="padding:20px; background:#f8fafc; border-radius:6px; color:#667085;">이 채널의 주문상품이 없습니다.</div>
+                @endforelse
+            </section>
+
+            <section style="background:#fff; border:1px solid #d9dee7; border-radius:8px; padding:24px;">
+                <h2 style="font-size:18px; margin:0 0 12px;">결제 정보</h2>
+                <div style="display:grid; gap:8px; max-width:420px; margin-left:auto;">
+                    <div style="display:flex; justify-content:space-between;"><span>상품금액</span><strong>{{ number_format(max(0, $order->grand_total - $order->shipping_charges)) }}원</strong></div>
+                    <div style="display:flex; justify-content:space-between;"><span>배송비</span><strong>{{ number_format($order->shipping_charges) }}원</strong></div>
+                    <div style="display:flex; justify-content:space-between; border-top:1px solid #d9dee7; padding-top:12px; font-size:20px;"><span>최종 결제금액</span><strong>{{ number_format($order->grand_total) }}원</strong></div>
+                    <div style="display:flex; justify-content:space-between; color:#667085;"><span>결제수단</span><span>{{ $order->payment_method }}</span></div>
+                </div>
+            </section>
+        @endif
     </div>
+</div>
 @endsection

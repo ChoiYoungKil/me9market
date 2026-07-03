@@ -1,4 +1,7 @@
 <div id="l_menu">
+    @php
+        $formatSidebarCount = fn ($value) => ($value ?? 0) > 99 ? '99+' : (string) ($value ?? 0);
+    @endphp
     <div class="con_bx">
         <div class="con1">
             <div class="ttl">주문관리</div>
@@ -6,7 +9,7 @@
                 <li>
                     <a href="{{ route('channel.order.list') }}">
                         <div class="icon icon1">
-                            <span class="num">99+</span>
+                            <span class="num">{{ $formatSidebarCount($sidebar_order_counts['today_orders'] ?? 0) }}</span>
                         </div>
                         <div class="txt">금일주문</div>
                     </a>
@@ -14,7 +17,7 @@
                 <li>
                     <a href="{{ route('channel.order.list') }}">
                         <div class="icon icon2">
-                            <span class="num">20</span>
+                            <span class="num">{{ $formatSidebarCount($sidebar_order_counts['paid'] ?? 0) }}</span>
                         </div>
                         <div class="txt">결제완료</div>
                     </a>
@@ -22,7 +25,7 @@
                 <li>
                     <a href="{{ route('channel.order.list') }}">
                         <div class="icon icon3">
-                            <!--<span class="num">99+</span>-->
+                            <span class="num">{{ $formatSidebarCount($sidebar_order_counts['shipping_ready'] ?? 0) }}</span>
                         </div>
                         <div class="txt">발주대기건</div>
                     </a>
@@ -30,7 +33,7 @@
                 <li>
                     <a href="{{ route('channel.order.cancel_list') }}">
                         <div class="icon icon4">
-                            <!--<span class="num">99+</span>-->
+                            <span class="num">{{ $formatSidebarCount($sidebar_order_counts['cancel_request'] ?? 0) }}</span>
                         </div>
                         <div class="txt">취소 요청건</div>
                     </a>
@@ -38,7 +41,7 @@
                 <li>
                     <a href="{{ route('channel.order.return_list') }}">
                         <div class="icon icon5">
-                            <!--<span class="num">99+</span>-->
+                            <span class="num">{{ $formatSidebarCount($sidebar_order_counts['return_request'] ?? 0) }}</span>
                         </div>
                         <div class="txt">반품 요청건</div>
                     </a>
@@ -79,10 +82,10 @@
                                     Shop 채널등록</a></li>
                         </ul>
                     </li>
-                    <li class="dep1 {{ request()->routeIs('channel.product_*') ? 'on' : '' }}">
+                    <li class="dep1 {{ request()->routeIs('channel.product_*') || request()->routeIs('channel.product.*') ? 'on' : '' }}">
                         <a href="javascript:void(0);" class="toggle-btn">상품관리 <span class="arrow">▼</span></a>
                         <ul class="dep2_wrap"
-                            style="{{ request()->routeIs('channel.product_*') ? 'display: block;' : 'display: none;' }}">
+                            style="{{ request()->routeIs('channel.product_*') || request()->routeIs('channel.product.*') ? 'display: block;' : 'display: none;' }}">
                             <li><a href="{{ route('channel.product_own') }}"
                                     class="{{ request()->routeIs('channel.product_own') ? 'active-link' : '' }}">-
                                     자사상품목록</a></li>
@@ -92,6 +95,9 @@
                             <li><a href="{{ route('channel.product_partial') }}"
                                     class="{{ request()->routeIs('channel.product_partial') ? 'active-link' : '' }}">-
                                     부분공개상품목록</a></li>
+                            <li><a href="{{ route('channel.product.categories') }}"
+                                    class="{{ request()->routeIs('channel.product.categories*') ? 'active-link' : '' }}">-
+                                    분류관리</a></li>
                             <li><a href="{{ route('channel.product_request') }}"
                                     class="{{ request()->routeIs('channel.product_request') ? 'active-link' : '' }}">-
                                     상품등록</a></li>
@@ -104,14 +110,16 @@
                             <li><a href="{{ route('channel.joint_purchase.create') }}" class="{{ request()->routeIs('channel.joint_purchase.create') ? 'active-link' : '' }}">- 공동구매 상품등록</a></li>
                         </ul>
                     </li>
-                    <li class="dep1 {{ request()->routeIs('channel.order.*') ? 'on' : '' }}">
+                    <li class="dep1 {{ request()->routeIs('channel.order.*') || request()->routeIs('channel.inquiries.*') ? 'on' : '' }}">
                         <a href="javascript:void(0);" class="toggle-btn">주문관리 <span class="arrow">▼</span></a>
                         <ul class="dep2_wrap"
-                            style="{{ request()->routeIs('channel.order.*') ? 'display: block;' : 'display: none;' }}">
+                            style="{{ request()->routeIs('channel.order.*') || request()->routeIs('channel.inquiries.*') ? 'display: block;' : 'display: none;' }}">
                             <li><a href="{{ route('channel.order.list') }}"
                                     class="{{ request()->routeIs('channel.order.list') ? 'active-link' : '' }}">- 일반
                                     주문목록</a></li>
                             <li><a href="#">- 공동구매 주문목록</a></li>
+                            <li><a href="{{ route('channel.inquiries.index') }}"
+                                    class="{{ request()->routeIs('channel.inquiries.*') ? 'active-link' : '' }}">- 상품문의</a></li>
                         </ul>
                     </li>
                     <li class="dep1">

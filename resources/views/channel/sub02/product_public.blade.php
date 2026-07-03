@@ -136,7 +136,7 @@
                                         @php
                                             $mainImage = $product->images->first();
                                             $imageUrl = $mainImage ? asset('front/images/product_images/small/' . $mainImage->image) : asset('channel_assets/images/sub/thum01.jpg');
-                                            $categoryPath = ($product->parentCategory ? $product->parentCategory->category_name . ' > ' : '') . ($product->category->category_name ?? '');
+                                            $categoryPath = $product->category_path;
                                         @endphp
                                         <tr>
                                             <td>{{ $products->total() - ($products->currentPage() - 1) * $products->perPage() - $index }}</td>
@@ -190,6 +190,100 @@
             $(".arrowbx[data-arrowbx='" + thisId + "']").stop().slideToggle(300);
         });
 
+        function numberFormat(value) {
+            var number = parseFloat(value || 0);
+            return number.toLocaleString();
+        }
+
+        function rebuildProductImages($pop, images) {
+            var fallback = "{{ asset('channel_assets/images/sub/thum01.jpg') }}";
+            var imageUrls = images && images.length ? images : [fallback];
+            var $mainImage = $pop.find(".product-detail-main-image");
+            var $slider = $pop.find(".product-detail-image-list");
+
+            if ($slider.hasClass("slick-initialized")) {
+                $slider.slick("unslick");
+            }
+
+            $slider.empty();
+            imageUrls.forEach(function (url, index) {
+                $slider.append(
+                    '<li><div class="con ' + (index === 0 ? 'on' : '') + '"><img src="' + url + '"></div></li>'
+                );
+            });
+            $mainImage.attr("src", imageUrls[0] || fallback);
+
+            $slider.slick({
+                dots: false,
+                arrows: true,
+                autoplay: false,
+                infinite: false,
+                autoplaySpeed: 4000,
+                slidesToShow: 4,
+                slidesToScroll: 1,
+                draggable: true,
+                focusOnSelect: false,
+                pauseOnFocus: false,
+                pauseOnHover: false,
+                swipe: false,
+            });
+
+            $slider.find(".con").off("click").on("click", function () {
+                $slider.find(".con").removeClass("on");
+                $(this).addClass("on");
+                $mainImage.attr("src", $(this).find("img").attr("src"));
+            });
+        }
+
+        function renderProductOptions($pop, options) {
+            var $select = $pop.find(".product-detail-option-select");
+            var $list = $pop.find(".product-detail-option-list");
+            $select.empty();
+            $list.empty();
+
+            if (!options || !options.length) {
+                $select.append('<option>-선택-</option>');
+                $list.append('<li style="padding:10px 0; border-bottom:1px solid #eee;">등록된 옵션이 없습니다.</li>');
+                return;
+            }
+
+            $select.append('<option>-선택-</option>');
+            options.forEach(function (option) {
+                var label = (option.name ? option.name + ' : ' : '') + (option.value || '-');
+                $select.append('<option>' + label + '</option>');
+                $list.append(
+                    '<li style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #eee;">' +
+                        '<div class="txt1" style="flex:1; font-weight:bold;">' + label + '</div>' +
+                        '<div class="txt2" style="width:90px; text-align:right; font-weight:bold; margin-right:10px;">' + numberFormat(option.price) + '원</div>' +
+                        '<div style="width:70px; text-align:right; color:#777;">재고 ' + numberFormat(option.stock) + '</div>' +
+                    '</li>'
+                );
+            });
+        }
+
+        function applyProductDetail(response) {
+            var p = response.product;
+            var $pop = $(".popup_bx[data-id='pop3_1']");
+
+            $pop.find(".product-detail-category").text(response.category_path || '카테고리 없음');
+            $pop.find(".product-detail-name").text(p.product_name || '-');
+            $pop.find(".product-detail-code").text("상품코드 : " + (p.product_code || '-'));
+            $pop.find(".product-detail-seller").text("판매자 : " + (p.seller_name || '-'));
+            $pop.find(".product-detail-reward").text(p.reward_points_label || '0 point');
+            $pop.find(".product-detail-tax").text(p.tax_label || '-');
+            $pop.find(".product-detail-price").text(p.price_condition_label || (numberFormat(p.product_price) + ' 원'));
+            $pop.find(".product-detail-profit").text(p.profit_share_label || '-');
+            $pop.find(".product-detail-stock").text(p.stock_label || '-');
+            $pop.find(".product-detail-purchase-limit").text(p.purchase_limit_label || '-');
+            $pop.find(".product-detail-html").html(p.detail_html || p.description || '등록된 상세 설명이 없습니다.');
+
+            rebuildProductImages($pop, p.image_urls || []);
+            renderProductOptions($pop, p.option_rows || []);
+
+            $pop.stop().fadeIn(300);
+            $pop.scrollTop(0);
+        }
+
         /* 팝업 */
         $(".pop_btn").click(function () {
             var popId = $(this).attr("data-pop");
@@ -198,21 +292,7 @@
             if (popId === 'pop3_1' && productId) {
                 $.get("/channel/product/base/detail/" + productId, function(response) {
                     if (response.status) {
-                        var p = response.product;
-                        var $pop = $(".popup_bx[data-id='pop3_1']");
-                        
-                        $pop.find(".txt_bx p").text(response.category_path);
-                        $pop.find(".txt_bx strong").text(p.product_name);
-                        $pop.find(".txt_bx ul li:eq(0)").text("상품코드 : " + p.product_code);
-                        $pop.find(".tab_w.tab1 table tr:nth-child(3) td").text(parseFloat(p.product_price).toLocaleString() + " 원");
-                        
-                        if (p.images && p.images.length > 0) {
-                            var mainImgUrl = "/front/images/product_images/small/" + p.images[0].image;
-                            $pop.find(".l_bx .img_bx img").attr("src", mainImgUrl);
-                        }
-
-                        $pop.stop().fadeIn(300);
-                        $pop.scrollTop(0);
+                        applyProductDetail(response);
                     } else {
                         alert(response.message || '데이터를 불러오지 못했습니다.');
                     }

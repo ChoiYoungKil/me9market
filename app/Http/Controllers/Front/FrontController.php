@@ -5,7 +5,11 @@ namespace App\Http\Controllers\Front;
 use App\Http\Controllers\Controller;
 use App\Models\Notice;
 use App\Models\Faq;
+use App\Services\ShopChannelRuntime;
+use App\Support\OrderItemStatus;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 class FrontController extends Controller
 {
@@ -110,123 +114,152 @@ class FrontController extends Controller
     private function ensureSampleOrderExists()
     {
         $orderId = 32022;
-        $order = \App\Models\Order::find($orderId);
+        $now = now();
+        $shop = app(ShopChannelRuntime::class)->ensureDemoData();
+        $vendorId = (int) $shop->vendor_id;
+        $adminId = (int) (DB::table('admins')
+            ->where('vendor_id', $vendorId)
+            ->where('type', 'vendor')
+            ->value('id') ?: 1);
+
+        $user = DB::table('users')->where('email', 'user@user.com')->first();
+        if (!$user) {
+            $userId = DB::table('users')->insertGetId([
+                'name' => '일반사용자',
+                'username' => 'user@user.com',
+                'email' => 'user@user.com',
+                'password' => Hash::make('123456'),
+                'mobile' => '01033334444',
+                'address' => 'Seoul, Korea',
+                'city' => 'Seoul',
+                'state' => 'Seoul',
+                'country' => 'Korea',
+                'pincode' => '12345',
+                'status' => 1,
+                'created_at' => $now,
+                'updated_at' => $now
+            ]);
+        } else {
+            $userId = $user->id;
+        }
+
+        $sectionId = DB::table('sections')->where('name', '의류')->value('id');
+        if (!$sectionId) {
+            $sectionId = DB::table('sections')->insertGetId([
+                'name' => '의류',
+                'status' => 1,
+                'created_at' => $now,
+                'updated_at' => $now
+            ]);
+        }
+
+        $brandId = DB::table('brands')->where('name', 'Me9 브랜드')->value('id');
+        if (!$brandId) {
+            $brandId = DB::table('brands')->insertGetId([
+                'name' => 'Me9 브랜드',
+                'status' => 1,
+                'created_at' => $now,
+                'updated_at' => $now
+            ]);
+        }
+
+        $categoryId = DB::table('categories')->where('url', 't-shirts')->value('id');
+        if (!$categoryId) {
+            $categoryId = DB::table('categories')->insertGetId([
+                'parent_id' => 0,
+                'section_id' => $sectionId,
+                'category_name' => '티셔츠',
+                'category_image' => '',
+                'url' => 't-shirts',
+                'status' => 1,
+                'created_at' => $now,
+                'updated_at' => $now
+            ]);
+        }
+
+        $products = [
+            'a0029' => [
+                'product_name' => 'BlueViolet a omnis',
+                'product_color' => 'BlueViolet',
+                'product_price' => 3500,
+                'description' => 'Sample product',
+            ],
+            'a0030' => [
+                'product_name' => 'Red Rose T-Shirt',
+                'product_color' => 'Red',
+                'product_price' => 4500,
+                'description' => 'Sample product 2',
+            ],
+        ];
+
+        $productIds = [];
+        foreach ($products as $code => $product) {
+            $productId = DB::table('products')->where('product_code', $code)->value('id');
+            if (!$productId) {
+                $productId = DB::table('products')->insertGetId([
+                    'section_id' => $sectionId,
+                    'category_id' => $categoryId,
+                    'brand_id' => $brandId,
+                    'vendor_id' => $vendorId,
+                    'admin_id' => $adminId,
+                    'admin_type' => 'vendor',
+                    'product_name' => $product['product_name'],
+                    'product_code' => $code,
+                    'product_color' => $product['product_color'],
+                    'product_price' => $product['product_price'],
+                    'product_discount' => 0,
+                    'product_weight' => 1,
+                    'description' => $product['description'],
+                    'is_featured' => 'No',
+                    'status' => 1,
+                    'created_at' => $now,
+                    'updated_at' => $now
+                ]);
+            } else {
+                DB::table('products')->where('id', $productId)->update([
+                    'vendor_id' => $vendorId,
+                    'admin_id' => $adminId,
+                    'admin_type' => 'vendor',
+                    'updated_at' => $now,
+                ]);
+            }
+
+            $productIds[$code] = $productId;
+        }
+
+        $shopProductIds = [];
+        foreach ($products as $code => $product) {
+            $shopProductId = DB::table('shop_channel_products')
+                ->where('shop_channel_id', $shop->id)
+                ->where('product_id', $productIds[$code])
+                ->value('id');
+
+            if (!$shopProductId) {
+                $shopProductId = DB::table('shop_channel_products')->insertGetId([
+                    'shop_channel_id' => $shop->id,
+                    'product_id' => $productIds[$code],
+                    'product_type' => 'own',
+                    'approval_status' => 'approved',
+                    'status' => 1,
+                    'constraint_type' => 'none',
+                    'stock' => 100,
+                    'purchase_limit' => 10,
+                    'product_price' => $product['product_price'],
+                    'selling_price' => $product['product_price'],
+                    'profit' => 0,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ]);
+            }
+
+            $shopProductIds[$code] = $shopProductId;
+        }
+
+        $order = DB::table('orders')->where('id', $orderId)->first();
         if (!$order) {
-            // Ensure User 1 exists
-            $user = \App\Models\User::find(1);
-            if (!$user) {
-                \Illuminate\Support\Facades\DB::table('users')->insert([
-                    'id' => 1,
-                    'name' => '일반사용자',
-                    'username' => 'user@user.com',
-                    'email' => 'user@user.com',
-                    'password' => \Illuminate\Support\Facades\Hash::make('123456'),
-                    'mobile' => '01033334444',
-                    'address' => 'Seoul, Korea',
-                    'city' => 'Seoul',
-                    'state' => 'Seoul',
-                    'country' => 'Korea',
-                    'pincode' => '12345',
-                    'status' => 1,
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]);
-            }
-
-            // Ensure Section 1 exists
-            $section = \Illuminate\Support\Facades\DB::table('sections')->where('id', 1)->first();
-            if (!$section) {
-                \Illuminate\Support\Facades\DB::table('sections')->insert([
-                    'id' => 1,
-                    'name' => '의류',
-                    'status' => 1,
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]);
-            }
-
-            // Ensure Brand 1 exists
-            $brand = \Illuminate\Support\Facades\DB::table('brands')->where('id', 1)->first();
-            if (!$brand) {
-                \Illuminate\Support\Facades\DB::table('brands')->insert([
-                    'id' => 1,
-                    'name' => 'Me9 브랜드',
-                    'status' => 1,
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]);
-            }
-
-            // Ensure Category 1 exists
-            $category = \Illuminate\Support\Facades\DB::table('categories')->where('id', 1)->first();
-            if (!$category) {
-                \Illuminate\Support\Facades\DB::table('categories')->insert([
-                    'id' => 1,
-                    'parent_id' => 0,
-                    'section_id' => 1,
-                    'category_name' => '티셔츠',
-                    'category_image' => '',
-                    'url' => 't-shirts',
-                    'status' => 1,
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]);
-            }
-
-            // Ensure Product 1 exists
-            $product = \App\Models\Product::find(1);
-            if (!$product) {
-                \Illuminate\Support\Facades\DB::table('products')->insert([
-                    'id' => 1,
-                    'section_id' => 1,
-                    'category_id' => 1,
-                    'brand_id' => 1,
-                    'vendor_id' => 1,
-                    'admin_id' => 1,
-                    'admin_type' => 'admin',
-                    'product_name' => 'BlueViolet a omnis',
-                    'product_code' => 'a0029',
-                    'product_color' => 'BlueViolet',
-                    'product_price' => 3500,
-                    'product_discount' => 0,
-                    'product_weight' => 1,
-                    'description' => 'Sample product',
-                    'is_featured' => 'No',
-                    'status' => 1,
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]);
-            }
-
-            // Ensure Product 2 exists
-            $product2 = \App\Models\Product::find(2);
-            if (!$product2) {
-                \Illuminate\Support\Facades\DB::table('products')->insert([
-                    'id' => 2,
-                    'section_id' => 1,
-                    'category_id' => 1,
-                    'brand_id' => 1,
-                    'vendor_id' => 1,
-                    'admin_id' => 1,
-                    'admin_type' => 'admin',
-                    'product_name' => 'Red Rose T-Shirt',
-                    'product_code' => 'a0030',
-                    'product_color' => 'Red',
-                    'product_price' => 4500,
-                    'product_discount' => 0,
-                    'product_weight' => 1,
-                    'description' => 'Sample product 2',
-                    'is_featured' => 'No',
-                    'status' => 1,
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]);
-            }
-
-            // Create sample order
-            \Illuminate\Support\Facades\DB::table('orders')->insert([
+            DB::table('orders')->insert([
                 'id' => $orderId,
-                'user_id' => 1,
+                'user_id' => $userId,
                 'name' => '홍길동',
                 'address' => '서울시 마포구 공덕동 1118-12 B112',
                 'city' => '서울시',
@@ -242,47 +275,69 @@ class FrontController extends Controller
                 'payment_method' => 'Credit Card',
                 'payment_gateway' => 'KCP',
                 'grand_total' => 10500,
-                'created_at' => now(),
-                'updated_at' => now()
+                'created_at' => $now,
+                'updated_at' => $now
             ]);
+        }
 
-            // Create sample order_products
-            \Illuminate\Support\Facades\DB::table('orders_products')->insert([
-                [
-                    'id' => 101,
-                    'order_id' => $orderId,
-                    'user_id' => 1,
-                    'vendor_id' => 1,
-                    'admin_id' => 1,
-                    'product_id' => 1,
-                    'product_code' => 'a0029',
-                    'product_name' => 'BlueViolet a omnis',
-                    'product_color' => 'BlueViolet',
-                    'product_size' => 'RD/S',
-                    'product_price' => 3500,
-                    'product_qty' => 1,
-                    'item_status' => 'New',
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ],
-                [
-                    'id' => 102,
-                    'order_id' => $orderId,
-                    'user_id' => 1,
-                    'vendor_id' => 1,
-                    'admin_id' => 1,
-                    'product_id' => 2,
-                    'product_code' => 'a0030',
-                    'product_name' => 'Red Rose T-Shirt',
-                    'product_color' => 'Red',
-                    'product_size' => 'RD/M',
-                    'product_price' => 4500,
-                    'product_qty' => 1,
-                    'item_status' => 'Shipped',
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]
-            ]);
+        $orderItems = [
+            [
+                'product_id' => $productIds['a0029'],
+                'product_code' => 'a0029',
+                'product_name' => 'BlueViolet a omnis',
+                'product_color' => 'BlueViolet',
+                'product_size' => 'RD/S',
+                'product_price' => 3500,
+                'product_qty' => 1,
+                'item_status' => 'New',
+                'status_code' => OrderItemStatus::PAID,
+            ],
+            [
+                'product_id' => $productIds['a0030'],
+                'product_code' => 'a0030',
+                'product_name' => 'Red Rose T-Shirt',
+                'product_color' => 'Red',
+                'product_size' => 'RD/M',
+                'product_price' => 4500,
+                'product_qty' => 1,
+                'item_status' => 'Shipped',
+                'status_code' => OrderItemStatus::SHIPPING,
+            ],
+        ];
+
+        foreach ($orderItems as $item) {
+            $existing = DB::table('orders_products')
+                ->where('order_id', $orderId)
+                ->where('product_code', $item['product_code'])
+                ->first();
+
+            if ($existing) {
+                DB::table('orders_products')->where('id', $existing->id)->update([
+                    'user_id' => $userId,
+                    'vendor_id' => $vendorId,
+                    'shop_channel_id' => $shop->id,
+                    'shop_channel_product_id' => $shopProductIds[$item['product_code']],
+                    'admin_id' => $adminId,
+                    'product_id' => $item['product_id'],
+                    'status_code' => OrderItemStatus::normalize($existing->item_status ?: $existing->status_code),
+                    'updated_at' => $now,
+                ]);
+                continue;
+            }
+
+            DB::table('orders_products')->insert(array_merge($item, [
+                'order_id' => $orderId,
+                'user_id' => $userId,
+                'vendor_id' => $vendorId,
+                'shop_channel_id' => $shop->id,
+                'shop_channel_product_id' => $shopProductIds[$item['product_code']],
+                'admin_id' => $adminId,
+                'supply_price' => $item['product_price'],
+                'selling_price' => $item['product_price'],
+                'line_total' => $item['product_price'] * $item['product_qty'],
+                'created_at' => $now,
+                'updated_at' => $now
+            ]));
         }
     }
 
@@ -366,6 +421,8 @@ class FrontController extends Controller
 
         if ($request->type == 'confirm') {
             $ordersProduct->item_status = 'Confirmed';
+            $ordersProduct->status_code = OrderItemStatus::CONFIRMED;
+            $ordersProduct->confirmed_at = now();
             $ordersProduct->updated_at = now();
             $ordersProduct->save();
 
@@ -388,8 +445,14 @@ class FrontController extends Controller
                 'return' => 'Return Requested',
                 'exchange' => 'Exchange Requested'
             ];
+            $statusCodeMap = [
+                'cancel' => OrderItemStatus::CANCEL_REQUESTED,
+                'return' => OrderItemStatus::RETURN_REQUESTED,
+                'exchange' => OrderItemStatus::EXCHANGE_REQUESTED,
+            ];
 
             $ordersProduct->item_status = $statusMap[$claimType];
+            $ordersProduct->status_code = $statusCodeMap[$claimType];
             $ordersProduct->updated_at = now();
             $ordersProduct->save();
 
@@ -438,7 +501,20 @@ class FrontController extends Controller
             ->first();
         if (!$ordersProduct) abort(404);
 
-        \Illuminate\Support\Facades\DB::table('contacts')->insert([
+        $shopChannelId = $ordersProduct->shop_channel_id;
+        if (!$shopChannelId && $ordersProduct->shop_channel_product_id) {
+            $shopChannelId = DB::table('shop_channel_products')
+                ->where('id', $ordersProduct->shop_channel_product_id)
+                ->value('shop_channel_id');
+        }
+
+        DB::table('contacts')->insert([
+            'user_id' => $order->user_id ?: null,
+            'vendor_id' => $ordersProduct->vendor_id,
+            'shop_channel_id' => $shopChannelId,
+            'order_id' => $order->id,
+            'order_product_id' => $ordersProduct->id,
+            'product_id' => $ordersProduct->product_id,
             'name' => $order->name,
             'email' => $order->email,
             'phone' => $order->mobile,
@@ -455,6 +531,7 @@ class FrontController extends Controller
 
     public function shopGate()
     {
+        app(ShopChannelRuntime::class)->ensureDemoData();
         return view('shop.gate');
     }
 
@@ -463,10 +540,23 @@ class FrontController extends Controller
         $request->validate([
             'entry_code' => 'required'
         ]);
-        if ($request->entry_code == 'me9') {
-            return redirect()->route('shop.channel_main')->with('flash_message_success', '입장 코드가 인증되었습니다!');
+
+        $shop = app(ShopChannelRuntime::class)->enterChannel($request->entry_code);
+        if ($shop) {
+            return redirect()->route('shop.channel_main')->with('flash_message_success', $shop->channel_name . '에 입장했습니다.');
         }
-        return redirect()->back()->with('flash_message_error', '입장 코드가 올바르지 않습니다. (테스트 코드: me9)');
+
+        return redirect()->back()->with('flash_message_error', '입장 코드가 올바르지 않습니다. 테스트 기본 코드는 me9 입니다.');
+    }
+
+    public function shopEnter(string $channelCode)
+    {
+        $shop = app(ShopChannelRuntime::class)->enterChannel($channelCode);
+        if (!$shop) {
+            return redirect()->route('shop.gate')->with('flash_message_error', '운영 중인 Shop 채널을 찾을 수 없습니다.');
+        }
+
+        return redirect()->route('shop.channel_main')->with('flash_message_success', $shop->channel_name . '에 입장했습니다.');
     }
 
     public function shopRegister()
@@ -476,42 +566,105 @@ class FrontController extends Controller
 
     public function shopRegisterSubmit(Request $request)
     {
+        app(ShopChannelRuntime::class)->enterChannel('me9');
         return redirect()->route('shop.channel_main')->with('flash_message_success', '간편회원 가입이 완료되었습니다!');
     }
 
     public function shopMain()
     {
-        return view('shop.channel_main');
+        $runtime = app(ShopChannelRuntime::class);
+        $shop = $runtime->currentChannel();
+        $products = $runtime->products()->take(4);
+        $jointPurchases = \Illuminate\Support\Facades\DB::table('joint_purchases')
+            ->join('products', 'joint_purchases.product_id', '=', 'products.id')
+            ->select('joint_purchases.*', 'products.product_name', 'products.product_code', 'products.product_price')
+            ->where('joint_purchases.status', 1)
+            ->orderBy('joint_purchases.end_date')
+            ->take(2)
+            ->get();
+
+        return view('shop.channel_main', compact('shop', 'products', 'jointPurchases'));
     }
 
     public function shopProducts()
     {
-        return view('shop.products_list');
+        $runtime = app(ShopChannelRuntime::class);
+        $shop = $runtime->currentChannel();
+        $products = $runtime->products();
+
+        return view('shop.products_list', compact('shop', 'products'));
     }
 
     public function shopProductDetails($id)
     {
-        return view('shop.product_details', compact('id'));
+        $runtime = app(ShopChannelRuntime::class);
+        $shop = $runtime->currentChannel();
+        $shopProduct = \App\Models\ShopChannelProduct::with(['product.images', 'shopChannel'])
+            ->where('shop_channel_id', $shop->id)
+            ->where('id', $id)
+            ->first();
+
+        if (!$shopProduct) {
+            $shopProduct = \App\Models\ShopChannelProduct::with(['product.images', 'shopChannel'])
+                ->where('shop_channel_id', $shop->id)
+                ->where('status', 1)
+                ->firstOrFail();
+        }
+
+        return view('shop.product_details', compact('shop', 'shopProduct'));
     }
 
     public function shopJointPurchases()
     {
-        return view('shop.joint_purchases_list');
+        $runtime = app(ShopChannelRuntime::class);
+        $shop = $runtime->currentChannel();
+        $jointPurchases = \Illuminate\Support\Facades\DB::table('joint_purchases')
+            ->join('products', 'joint_purchases.product_id', '=', 'products.id')
+            ->select('joint_purchases.*', 'products.product_name', 'products.product_code', 'products.product_price')
+            ->where('joint_purchases.status', 1)
+            ->orderBy('joint_purchases.end_date')
+            ->get();
+
+        return view('shop.joint_purchases_list', compact('shop', 'jointPurchases'));
     }
 
     public function shopJointPurchaseDetails($id)
     {
-        return view('shop.joint_purchase_details', compact('id'));
+        $runtime = app(ShopChannelRuntime::class);
+        $shop = $runtime->currentChannel();
+        $jointPurchase = \Illuminate\Support\Facades\DB::table('joint_purchases')
+            ->join('products', 'joint_purchases.product_id', '=', 'products.id')
+            ->select('joint_purchases.*', 'products.product_name', 'products.product_code', 'products.product_price')
+            ->where('joint_purchases.id', $id)
+            ->first();
+
+        if (!$jointPurchase) {
+            $jointPurchase = \Illuminate\Support\Facades\DB::table('joint_purchases')
+                ->join('products', 'joint_purchases.product_id', '=', 'products.id')
+                ->select('joint_purchases.*', 'products.product_name', 'products.product_code', 'products.product_price')
+                ->firstOrFail();
+        }
+
+        return view('shop.joint_purchase_details', compact('shop', 'jointPurchase'));
     }
 
     public function shopNotices()
     {
-        return view('shop.notices');
+        $runtime = app(ShopChannelRuntime::class);
+        $shop = $runtime->currentChannel();
+        $notices = \App\Models\ShopChannelNotice::where('shop_channel_id', $shop->id)
+            ->where('status', 1)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('shop.notices', compact('shop', 'notices'));
     }
 
     public function storyboardTestbed()
     {
         $this->ensureCustomerCenterSeeded();
+        app(ShopChannelRuntime::class)->ensureDemoData();
+
         return view('front.storyboard_testbed');
     }
 
@@ -593,4 +746,3 @@ class FrontController extends Controller
         }
     }
 }
-

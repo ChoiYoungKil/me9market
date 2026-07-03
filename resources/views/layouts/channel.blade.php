@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="ko">
 
-<head>
-	<title>Me9 market</title>
-	<meta charset="utf-8" />
-	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<head>
+		<title>Me9 market</title>
+		<meta charset="utf-8" />
+		<meta name="csrf-token" content="{{ csrf_token() }}">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
 	<meta name="format-detection" content="telephone=no" />
 	<meta name="description" content="" />
 	<meta name="keywords" content="" />
@@ -52,7 +53,7 @@
 					<li><a href="{{ route('channel.shop_list') }}" class="{{ request()->is('channel/shop*') ? 'on' : '' }}">Shop채널관리</a></li>
 					<li><a href="{{ route('channel.product_own') }}" class="{{ request()->is('channel/product*') ? 'on' : '' }}">상품관리</a></li>
 					<li><a href="{{ route('channel.joint_purchase.list') }}" class="{{ request()->is('channel/joint-purchase*') ? 'on' : '' }}">공동구매관리</a></li>
-					<li><a href="{{ route('channel.order.list') }}" class="{{ request()->is('channel/order*') ? 'on' : '' }}">주문관리</a></li>
+					<li><a href="{{ route('channel.order.list') }}" class="{{ request()->is('channel/order*') || request()->is('channel/inquiries*') ? 'on' : '' }}">주문관리</a></li>
 					<li><a href="{{ route('channel.settlement.list') }}" class="{{ request()->is('channel/settlement*') ? 'on' : '' }}">정산관리</a></li>
 				</ul>
 			</div>
@@ -62,12 +63,24 @@
 				<a href="#" class="btn icon1"></a>
 				<a href="{{ route('channel.logout') }}" class="btn icon2" title="로그아웃"></a>
 				<div class="r_menu">
-					<div class="r_menu_btn"><span>채널목록</span></div>
+					<div class="r_menu_btn"><span>채널목록{{ isset($headerChannels) && $headerChannels->count() ? ' (' . $headerChannels->count() . ')' : '' }}</span></div>
 					<div class="menu_w">
 						<ul>
-							<li><a href="#"><span>내채널목록 내채널목록</span></a></li>
-							<li><a href="#"><span>내채널목록</span></a></li>
-							<li><a href="#"><span>내채널목록</span></a></li>
+							@forelse($headerChannels ?? [] as $channel)
+								<li>
+									<a href="{{ route('channel.shop_info', ['id' => $channel->id]) }}">
+										<span>
+											{{ \Illuminate\Support\Str::limit($channel->channel_name, 24) }}
+											<small style="display:block; margin-top:3px; color:#8a8a8a; font-size:11px;">
+												/{{ $channel->channel_code }} · {{ $channel->status == 1 ? '운영' : '중지' }} · {{ $channel->is_public == 1 ? '공개' : '비공개' }}
+											</small>
+										</span>
+									</a>
+								</li>
+							@empty
+								<li><a href="{{ route('channel.shop_register') }}"><span>등록된 채널이 없습니다. 채널등록</span></a></li>
+							@endforelse
+							<li><a href="{{ route('channel.shop_list') }}"><span>전체 채널목록 보기</span></a></li>
 						</ul>
 					</div>
 				</div>
