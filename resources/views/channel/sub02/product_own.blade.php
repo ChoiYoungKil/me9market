@@ -28,6 +28,7 @@
                 </div>
                 <div class="conbx">
                     <div class="con_w">
+                        <form method="GET" action="{{ route('channel.product_own') }}" id="productSearchForm">
                         <div class="tb01">
                             <table>
                                 <colgroup>
@@ -41,7 +42,7 @@
                                         <th class="w160"><span>상품명</span></th>
                                         <td colspan="3">
                                             <div class="r_btn_w" style="display: flex; align-items: center; gap: 5px;">
-                                                <input type="text" value="" required="required" placeholder="상품명을 입력해 주세요."
+                                                <input type="text" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="상품명 또는 상품코드를 입력해 주세요."
                                                     style="flex: 1; height: 34px; border: 1px solid #ddd; padding: 0 10px;">
                                                 <a id="arrow1" class="btn01 arrow"
                                                     style="width: 100px; height: 34px; line-height: 32px;"><span>상세검색</span></a>
@@ -65,21 +66,13 @@
                                         <td colspan="3">
                                             <ul class="type_bx w600">
                                                 <li>
-                                                    <select required="required">
-                                                        <option value="" disabled="" selected="">대분류</option>
-                                                        <option value="1">대분류1</option>
-                                                    </select>
-                                                </li>
-                                                <li>
-                                                    <select required="required">
-                                                        <option value="" disabled="" selected="">중분류</option>
-                                                        <option value="1">중분류1</option>
-                                                    </select>
-                                                </li>
-                                                <li>
-                                                    <select required="required">
-                                                        <option value="" disabled="" selected="">세분류</option>
-                                                        <option value="1">세분류1</option>
+                                                    <select name="category_id">
+                                                        <option value="">전체 상품분류</option>
+                                                        @foreach($categoryOptions ?? [] as $category)
+                                                            <option value="{{ $category['id'] }}" {{ (int)($filters['category_id'] ?? 0) === (int)$category['id'] ? 'selected' : '' }}>
+                                                                {{ $category['name'] }}
+                                                            </option>
+                                                        @endforeach
                                                     </select>
                                                 </li>
                                             </ul>
@@ -88,37 +81,45 @@
                                     <tr>
                                         <th class="w160"><span>상품상태</span></th>
                                         <td>
-                                            <ul class="chk01">
-                                                <li>
-                                                    <input type="radio" name="radio1" id="radio1_1" checked="">
-                                                    <label for="radio1_1">판매</label>
-                                                </li>
-                                                <li>
-                                                    <input type="radio" name="radio1" id="radio1_2">
-                                                    <label for="radio1_2">중지</label>
-                                                </li>
-                                                <li>
-                                                    <input type="radio" name="radio1" id="radio1_3">
-                                                    <label for="radio1_3">판매중지예고</label>
-                                                </li>
-                                            </ul>
+	                                            <ul class="chk01">
+	                                                <li>
+	                                                    <input type="radio" name="status" id="status_all" value="" {{ ($filters['status'] ?? '') === '' ? 'checked' : '' }}>
+	                                                    <label for="status_all">전체</label>
+	                                                </li>
+	                                                <li>
+	                                                    <input type="radio" name="status" id="status_sale" value="1" {{ (string)($filters['status'] ?? '') === '1' ? 'checked' : '' }}>
+	                                                    <label for="status_sale">판매</label>
+	                                                </li>
+	                                                <li>
+	                                                    <input type="radio" name="status" id="status_stop" value="0" {{ (string)($filters['status'] ?? '') === '0' ? 'checked' : '' }}>
+	                                                    <label for="status_stop">중지</label>
+	                                                </li>
+	                                                <li>
+	                                                    <input type="radio" name="status" id="status_stop_notice" value="stop_notice" {{ ($filters['status'] ?? '') === 'stop_notice' ? 'checked' : '' }}>
+	                                                    <label for="status_stop_notice">판매중지예고</label>
+	                                                </li>
+	                                            </ul>
                                         </td>
                                         <th class="w160"><span>판매범위</span></th>
                                         <td>
-                                            <ul class="chk01">
-                                                <li>
-                                                    <input type="radio" name="radio2" id="radio2_1" checked="">
-                                                    <label for="radio2_1">자사상품</label>
-                                                </li>
-                                                <li>
-                                                    <input type="radio" name="radio2" id="radio2_2">
-                                                    <label for="radio2_2">공개상품</label>
-                                                </li>
-                                                <li>
-                                                    <input type="radio" name="radio2" id="radio2_3">
-                                                    <label for="radio2_3">부분공개상품</label>
-                                                </li>
-                                            </ul>
+	                                            <ul class="chk01">
+	                                                <li>
+	                                                    <input type="radio" name="sale_scope" id="sale_scope_all" value="" {{ ($filters['sale_scope'] ?? '') === '' ? 'checked' : '' }}>
+	                                                    <label for="sale_scope_all">전체</label>
+	                                                </li>
+	                                                <li>
+	                                                    <input type="radio" name="sale_scope" id="sale_scope_own" value="own" {{ ($filters['sale_scope'] ?? '') === 'own' ? 'checked' : '' }}>
+	                                                    <label for="sale_scope_own">자사상품</label>
+	                                                </li>
+	                                                <li>
+	                                                    <input type="radio" name="sale_scope" id="sale_scope_public" value="public" {{ ($filters['sale_scope'] ?? '') === 'public' ? 'checked' : '' }}>
+	                                                    <label for="sale_scope_public">공개상품</label>
+	                                                </li>
+	                                                <li>
+	                                                    <input type="radio" name="sale_scope" id="sale_scope_partial" value="partial" {{ ($filters['sale_scope'] ?? '') === 'partial' ? 'checked' : '' }}>
+	                                                    <label for="sale_scope_partial">부분공개상품</label>
+	                                                </li>
+	                                            </ul>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -126,9 +127,11 @@
                         </div>
 
                         <div class="btm_btn right mt10" style="margin-bottom: 40px;">
-                            <button type="button" class="type2"
+                            <button type="submit" class="type2"
                                 style="border: none; cursor: pointer; width: 120px; height: 32px; line-height: 32px; font-size: 14px; font-weight: 700;">검색</button>
+                            <a href="{{ route('channel.product_own') }}" class="col5" style="display:inline-block; width:80px; height:32px; line-height:32px; text-align:center;">초기화</a>
                         </div>
+                        </form>
 
                         <div class="list_top1"
                             style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: none; padding-bottom: 0;">
@@ -137,13 +140,11 @@
                             </div>
                             <div class="right_bx" style="display: flex; gap: 10px; align-items: center;">
                                 <select id="perPageSelect" style="padding: 0 10px; border: 1px solid #ddd; height: 34px;">
-                                    <option value="20">20개씩 보기</option>
-                                    <option value="40">40개씩 보기</option>
-                                    <option value="60">60개씩 보기</option>
-                                    <option value="80">80개씩 보기</option>
-                                    <option value="100">100개씩 보기</option>
+                                    @foreach([20, 40, 60, 80, 100] as $perPageOption)
+                                        <option value="{{ $perPageOption }}" {{ (int)($filters['per_page'] ?? 20) === $perPageOption ? 'selected' : '' }}>{{ $perPageOption }}개씩 보기</option>
+                                    @endforeach
                                 </select>
-                                <a href="{{ route('channel.product.own.export') }}" class="btn01 col2"
+                                <a href="{{ route('channel.product.own.export', request()->query()) }}" class="btn01 col2"
                                     style="height: 34px; line-height: 32px; font-size: 12px; width: 140px; text-align: center; padding: 0;">EXCEL
                                     다운로드</a>
                                 <a href="{{ route('channel.product.base.create') }}" class="btn01 col5"
@@ -621,6 +622,107 @@
             $(".arrowbx[data-arrowbx='" + thisId + "']").stop().slideToggle(300);
         });
 
+        $("#perPageSelect").change(function () {
+            var url = new URL(window.location.href);
+            url.searchParams.set("per_page", $(this).val());
+            url.searchParams.delete("page");
+            window.location.href = url.toString();
+        });
+
+        function numberFormat(value) {
+            var number = parseFloat(value || 0);
+            return number.toLocaleString();
+        }
+
+        function rebuildProductImages($pop, images) {
+            var fallback = "{{ asset('channel_assets/images/sub/thum01.jpg') }}";
+            var imageUrls = images && images.length ? images : [fallback];
+            var $mainImage = $pop.find(".product-detail-main-image");
+            var $slider = $pop.find(".product-detail-image-list");
+
+            if ($slider.hasClass("slick-initialized")) {
+                $slider.slick("unslick");
+            }
+
+            $slider.empty();
+            imageUrls.forEach(function (url, index) {
+                $slider.append(
+                    '<li><div class="con ' + (index === 0 ? 'on' : '') + '"><img src="' + url + '"></div></li>'
+                );
+            });
+            $mainImage.attr("src", imageUrls[0] || fallback);
+
+            $slider.slick({
+                dots: false,
+                arrows: true,
+                autoplay: false,
+                infinite: false,
+                autoplaySpeed: 4000,
+                slidesToShow: 4,
+                slidesToScroll: 1,
+                draggable: true,
+                focusOnSelect: false,
+                pauseOnFocus: false,
+                pauseOnHover: false,
+                swipe: false,
+            });
+
+            $slider.find(".con").off("click").on("click", function () {
+                $slider.find(".con").removeClass("on");
+                $(this).addClass("on");
+                $mainImage.attr("src", $(this).find("img").attr("src"));
+            });
+        }
+
+        function renderProductOptions($pop, options) {
+            var $select = $pop.find(".product-detail-option-select");
+            var $list = $pop.find(".product-detail-option-list");
+            $select.empty();
+            $list.empty();
+
+            if (!options || !options.length) {
+                $select.append('<option>-선택-</option>');
+                $list.append('<li style="padding:10px 0; border-bottom:1px solid #eee;">등록된 옵션이 없습니다.</li>');
+                return;
+            }
+
+            $select.append('<option>-선택-</option>');
+            options.forEach(function (option) {
+                var label = (option.name ? option.name + ' : ' : '') + (option.value || '-');
+                $select.append('<option>' + label + '</option>');
+                $list.append(
+                    '<li style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #eee;">' +
+                        '<div class="txt1" style="flex:1; font-weight:bold;">' + label + '</div>' +
+                        '<div class="txt2" style="width:90px; text-align:right; font-weight:bold; margin-right:10px;">' + numberFormat(option.price) + '원</div>' +
+                        '<div style="width:70px; text-align:right; color:#777;">재고 ' + numberFormat(option.stock) + '</div>' +
+                    '</li>'
+                );
+            });
+        }
+
+        function applyProductDetail(response) {
+            var p = response.product;
+            var $pop = $(".popup_bx[data-id='pop3_1']");
+
+            $pop.find(".product-detail-category").text(response.category_path || '카테고리 없음');
+            $pop.find(".product-detail-name").text(p.product_name || '-');
+            $pop.find(".product-detail-code").text("상품코드 : " + (p.product_code || '-'));
+            $pop.find(".product-detail-seller").text("판매자 : " + (p.seller_name || '-'));
+            $pop.find(".product-detail-reward").text(p.reward_points_label || '0 point');
+            $pop.find(".product-detail-tax").text(p.tax_label || '-');
+            $pop.find(".product-detail-price").text(p.price_condition_label || (numberFormat(p.product_price) + ' 원'));
+            $pop.find(".product-detail-profit").text(p.profit_share_label || '-');
+            $pop.find(".product-detail-stock").text(p.stock_label || '-');
+            $pop.find(".product-detail-purchase-limit").text(p.purchase_limit_label || '-');
+            $pop.find(".product-detail-html").html(p.detail_html || p.description || '등록된 상세 설명이 없습니다.');
+
+            rebuildProductImages($pop, p.image_urls || []);
+            renderProductOptions($pop, p.option_rows || []);
+
+            $pop.stop().fadeIn(300);
+            $pop.scrollTop(0);
+        }
+
         /* 팝업 */
         $(".pop_btn").click(function () {
             var popId = $(this).attr("data-pop");
@@ -629,28 +731,7 @@
             if (popId === 'pop3_1' && productId) {
                 $.get("/channel/product/base/detail/" + productId, function(response) {
                     if (response.status) {
-                        var p = response.product;
-                        var $pop = $(".popup_bx[data-id='pop3_1']");
-                        
-                        $pop.find(".txt_bx p").text(response.category_path);
-                        $pop.find(".txt_bx strong").text(p.product_name);
-                        $pop.find(".txt_bx ul li:eq(0)").text("상품코드 : " + p.product_code);
-                        $pop.find(".txt_bx ul li:eq(1)").text("판매자 : " + @json(Auth::guard('admin')->user()->name ?? '채널관리자'));
-                        $pop.find(".tab_w.tab1 table tr:nth-child(3) td").text(parseFloat(p.product_price).toLocaleString() + " 원");
-                        $pop.find(".tab_w.tab1 table tr:nth-child(4) td").text("상품가 기준");
-                        $pop.find(".tab_w.tab1 table tr:nth-child(5) td").text("-");
-                        $pop.find(".tab_w.tab1 table tr:nth-child(6) td").text("-");
-                        $pop.find(".tab_w.tab2 table tr:first td").html(p.description || '등록된 상세 설명이 없습니다.');
-                        
-                        if (p.images && p.images.length > 0) {
-                            var mainImgUrl = "/front/images/product_images/small/" + p.images[0].image;
-                            $pop.find(".l_bx .img_bx img").attr("src", mainImgUrl);
-                        } else {
-                            $pop.find(".l_bx .img_bx img").attr("src", "/channel_assets/images/sub/thum01.jpg");
-                        }
-
-                        $pop.stop().fadeIn(300);
-                        $pop.scrollTop(0);
+                        applyProductDetail(response);
                     } else {
                         alert(response.message || '데이터를 불러오지 못했습니다.');
                     }

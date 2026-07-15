@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Order;
 use App\Models\OrdersProduct; // 주문 상품 모델 가정
+use App\Support\OrderItemStatus;
 
 class ChannelOrderController extends Controller
 {
@@ -32,23 +33,38 @@ class ChannelOrderController extends Controller
             }
 
             // Vendor ID check
-            $vendor_id = Auth::guard('admin')->user()->vendor_id;
+            $vendor_id = $this->currentVendorId();
+            if (!$vendor_id) {
+                return response()->json(['status' => false, 'message' => '로그인이 필요합니다.'], 401);
+            }
+
+            $status = OrderItemStatus::normalize($data['status']);
+            if (!array_key_exists($status, OrderItemStatus::labels())) {
+                return response()->json(['status' => false, 'message' => '처리할 수 없는 주문 상태입니다.']);
+            }
             
             try {
-                // Update specific items belonging to this vendor
-                $updateData = ['item_status' => $data['status']];
-                
-                if ($data['status'] == 'shipping' || $data['status'] == 'shipped') {
-                     if (empty($data['courier_name']) || empty($data['tracking_number'])) {
-                         return response()->json(['status' => false, 'message' => '배송 정보를 모두 입력해주세요.']);
-                     }
-                    $updateData['courier_name'] = $data['courier_name'];
-                    $updateData['tracking_number'] = $data['tracking_number'];
+                if ($status === OrderItemStatus::SHIPPING && (empty($data['courier_name']) || empty($data['tracking_number']))) {
+                    return response()->json(['status' => false, 'message' => '배송 정보를 모두 입력해주세요.']);
                 }
 
-                OrdersProduct::whereIn('id', $data['item_ids'])
-                            ->where('vendor_id', $vendor_id)
-                            ->update($updateData);
+                $items = $this->vendorItems($data['item_ids'], $vendor_id, (int) $data['order_id']);
+                if ($items->isEmpty()) {
+                    return response()->json(['status' => false, 'message' => '선택된 상품이 없거나 권한이 없습니다.']);
+                }
+
+                foreach ($items as $item) {
+                    $item->setStatus($status);
+                    $item->item_status = $data['status'];
+
+                    if ($status === OrderItemStatus::SHIPPING) {
+                        $item->courier_name = $data['courier_name'];
+                        $item->tracking_number = $data['tracking_number'];
+                    }
+
+                    $this->applyStatusTimestamps($item, $status);
+                    $item->save();
+                }
 
                 // Check if all items in order are shipped, then maybe update main order status?
                 // For now, we stick to item status updates.
@@ -78,7 +94,10 @@ class ChannelOrderController extends Controller
                 return response()->json(['status' => false, 'message' => $validator->errors()->first()]);
             }
 
-            $vendor_id = Auth::guard('admin')->user()->vendor_id;
+            $vendor_id = $this->currentVendorId();
+            if (!$vendor_id) {
+                return response()->json(['status' => false, 'message' => '로그인이 필요합니다.'], 401);
+            }
 
             DB::beginTransaction();
             try {
@@ -86,11 +105,10 @@ class ChannelOrderController extends Controller
                 $order = Order::find($data['order_id']);
                 
                 // Fetch items to verify ownership and get details
-                $items = OrdersProduct::whereIn('id', $data['item_ids'])
-                            ->where('vendor_id', $vendor_id)
-                            ->get();
+                $items = $this->vendorItems($data['item_ids'], $vendor_id, (int) $data['order_id']);
 
                 if ($items->isEmpty()) {
+                    DB::rollback();
                     return response()->json(['status' => false, 'message' => '선택된 상품이 없거나 권한이 없습니다.']);
                 }
 
@@ -110,9 +128,9 @@ class ChannelOrderController extends Controller
                         'status' => 'requested'
                      ]);
                      
-                     // Update Item Status
-                     $item->item_status = '취소요청'; // Or '취소완료' if seller cancels directly? Let's say '취소완료' as per previous logic for seller action
-                     $item->item_status = '취소완료'; 
+                     // 판매자 화면의 취소 처리는 요청 접수와 동시에 취소 완료 상태로 마감한다.
+                     $item->setStatus(OrderItemStatus::CANCELLED);
+                     $this->applyStatusTimestamps($item, OrderItemStatus::CANCELLED);
                      $item->save();
                 }
 
@@ -144,16 +162,18 @@ class ChannelOrderController extends Controller
                 return response()->json(['status' => false, 'message' => $validator->errors()->first()]);
             }
             
-            $vendor_id = Auth::guard('admin')->user()->vendor_id;
+            $vendor_id = $this->currentVendorId();
+            if (!$vendor_id) {
+                return response()->json(['status' => false, 'message' => '로그인이 필요합니다.'], 401);
+            }
 
             DB::beginTransaction();
             try {
                 $order = Order::find($data['order_id']);
-                $items = OrdersProduct::whereIn('id', $data['item_ids'])
-                            ->where('vendor_id', $vendor_id)
-                            ->get();
+                $items = $this->vendorItems($data['item_ids'], $vendor_id, (int) $data['order_id']);
 
                  if ($items->isEmpty()) {
+                    DB::rollback();
                     return response()->json(['status' => false, 'message' => '선택된 상품이 없거나 권한이 없습니다.']);
                 }
 
@@ -169,7 +189,8 @@ class ChannelOrderController extends Controller
                         'status' => 'requested'
                      ]);
 
-                     $item->item_status = '반품요청';
+                     $item->setStatus(OrderItemStatus::RETURN_REQUESTED);
+                     $this->applyStatusTimestamps($item, OrderItemStatus::RETURN_REQUESTED);
                      $item->save();
                 }
                 
@@ -199,16 +220,18 @@ class ChannelOrderController extends Controller
                 return response()->json(['status' => false, 'message' => $validator->errors()->first()]);
             }
 
-            $vendor_id = Auth::guard('admin')->user()->vendor_id;
+            $vendor_id = $this->currentVendorId();
+            if (!$vendor_id) {
+                return response()->json(['status' => false, 'message' => '로그인이 필요합니다.'], 401);
+            }
 
              DB::beginTransaction();
              try {
                 $order = Order::find($data['order_id']);
-                $items = OrdersProduct::whereIn('id', $data['item_ids'])
-                            ->where('vendor_id', $vendor_id)
-                            ->get();
+                $items = $this->vendorItems($data['item_ids'], $vendor_id, (int) $data['order_id']);
 
                  if ($items->isEmpty()) {
+                    DB::rollback();
                     return response()->json(['status' => false, 'message' => '선택된 상품이 없거나 권한이 없습니다.']);
                 }
 
@@ -224,7 +247,8 @@ class ChannelOrderController extends Controller
                         'status' => 'requested'
                      ]);
 
-                     $item->item_status = '교환요청';
+                     $item->setStatus(OrderItemStatus::EXCHANGE_REQUESTED);
+                     $this->applyStatusTimestamps($item, OrderItemStatus::EXCHANGE_REQUESTED);
                      $item->save();
                 }
 
@@ -235,6 +259,36 @@ class ChannelOrderController extends Controller
                 DB::rollback();
                 return response()->json(['status' => false, 'message' => '오류가 발생했습니다: ' . $e->getMessage()]);
              }
+        }
+    }
+
+    private function currentVendorId(): ?int
+    {
+        $admin = Auth::guard('admin')->user();
+
+        return $admin?->vendor_id ? (int) $admin->vendor_id : null;
+    }
+
+    private function vendorItems(array $itemIds, int $vendorId, int $orderId)
+    {
+        return OrdersProduct::whereIn('id', $itemIds)
+            ->where('vendor_id', $vendorId)
+            ->where('order_id', $orderId)
+            ->get();
+    }
+
+    private function applyStatusTimestamps(OrdersProduct $item, string $status): void
+    {
+        if ($status === OrderItemStatus::SHIPPING && !$item->shipped_at) {
+            $item->shipped_at = now();
+        }
+
+        if ($status === OrderItemStatus::DELIVERED && !$item->delivered_at) {
+            $item->delivered_at = now();
+        }
+
+        if ($status === OrderItemStatus::CONFIRMED && !$item->confirmed_at) {
+            $item->confirmed_at = now();
         }
     }
 }

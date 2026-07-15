@@ -56,6 +56,7 @@
                 $isSettings = in_array($currentPage, ['update_admin_password', 'update_admin_details', 'update_personal_details', 'update_business_details', 'update_bank_details']);
                 $isProductManagement = in_array($currentPage, ['products', 'categories', 'sections', 'brands', 'filters', 'attributes']);
                 $isSupport = in_array($currentPage, ['notices', 'faqs', 'contacts']);
+                $isSettlement = $currentPage === 'settlements';
             @endphp
             <div class="t_menu">
                 <ul>
@@ -65,6 +66,7 @@
                     </li>
                     <li><a href="{{ url('admin/notices') }}" class="{{ $isSupport ? 'on' : '' }}">고객센터</a></li>
                     <li><a href="#">판매사이트관리</a></li>
+                    <li><a href="{{ route('admin.settlements.index') }}" class="{{ $isSettlement ? 'on' : '' }}">정산관리</a></li>
                 </ul>
             </div>
 

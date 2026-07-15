@@ -32,8 +32,68 @@
 
                     <div class="conbx">
                         <div class="con_w">
-                            <div class="list_top1">
+                            <form method="GET" action="{{ route('channel.product_request') }}" id="requestSearchForm">
+                                <div class="tb01">
+                                    <table>
+                                        <colgroup>
+                                            <col width="160px">
+                                            <col width="">
+                                            <col width="160px">
+                                            <col width="">
+                                        </colgroup>
+                                        <tbody class="textL">
+                                            <tr>
+                                                <th class="w160"><span>상품명</span></th>
+                                                <td>
+                                                    <input type="text" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="상품명 또는 상품코드">
+                                                </td>
+                                                <th class="w160"><span>요청자</span></th>
+                                                <td>
+                                                    <input type="text" name="requester" value="{{ $filters['requester'] ?? '' }}" placeholder="채널명, 채널코드, 벤더명">
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th class="w160"><span>요청상태</span></th>
+                                                <td colspan="3">
+                                                    <ul class="chk01">
+                                                        <li>
+                                                            <input type="radio" name="request_status" id="request_status_all" value="" {{ ($filters['request_status'] ?? '') === '' ? 'checked' : '' }}>
+                                                            <label for="request_status_all">전체</label>
+                                                        </li>
+                                                        <li>
+                                                            <input type="radio" name="request_status" id="request_status_wait" value="0" {{ (string)($filters['request_status'] ?? '') === '0' ? 'checked' : '' }}>
+                                                            <label for="request_status_wait">대기</label>
+                                                        </li>
+                                                        <li>
+                                                            <input type="radio" name="request_status" id="request_status_approved" value="1" {{ (string)($filters['request_status'] ?? '') === '1' ? 'checked' : '' }}>
+                                                            <label for="request_status_approved">허용</label>
+                                                        </li>
+                                                        <li>
+                                                            <input type="radio" name="request_status" id="request_status_rejected" value="2" {{ (string)($filters['request_status'] ?? '') === '2' ? 'checked' : '' }}>
+                                                            <label for="request_status_rejected">거부</label>
+                                                        </li>
+                                                    </ul>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div class="btm_btn right mt10" style="margin-bottom: 40px;">
+                                    <button type="submit" class="type2">검색</button>
+                                    <a href="{{ route('channel.product_request') }}" class="type2 col5">초기화</a>
+                                </div>
+                            </form>
+
+                            <div class="list_top1" style="display: flex; justify-content: space-between; align-items: center;">
                                 <div class="count">총 <strong>{{ $requests->total() }}</strong> 건</div>
+                                <div class="right_bx" style="display: flex; gap: 10px; align-items: center;">
+                                    <select id="perPageSelect" style="padding: 0 10px; border: 1px solid #ddd; height: 34px;">
+                                        @foreach([20, 40, 60, 80, 100] as $perPageOption)
+                                            <option value="{{ $perPageOption }}" {{ (int)($filters['per_page'] ?? 20) === $perPageOption ? 'selected' : '' }}>{{ $perPageOption }}개씩 보기</option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             </div>
 
                             <div class="tb01 ovS">
@@ -90,7 +150,7 @@
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    {{ $req->shopChannel->shop_name }}<br>
+                                                    {{ $req->shopChannel->channel_name ?? '-' }}<br>
                                                     ({{ $req->shopChannel->vendor->name ?? '벤더정보없음' }})
                                                 </td>
                                                 <td>{{ $req->created_at->format('Y-m-d') }}</td>
@@ -131,7 +191,7 @@
                                                                         <table>
                                                                             <colgroup><col width="160px"><col width=""></colgroup>
                                                                             <tbody>
-                                                                                <tr><th>요청 채널</th><td>{{ $req->shopChannel->shop_name }} ({{ $req->shopChannel->shop_code }})</td></tr>
+                                                                                <tr><th>요청 채널</th><td>{{ $req->shopChannel->channel_name ?? '-' }} ({{ $req->shopChannel->channel_code ?? '-' }})</td></tr>
                                                                                 <tr><th>요청 벤더</th><td>{{ $req->shopChannel->vendor->name ?? '-' }} ({{ $req->shopChannel->vendor->email ?? '-' }})</td></tr>
                                                                                 <tr><th>요청 판매가</th><td>{{ number_format($req->selling_price) }}원</td></tr>
                                                                                 <tr><th>현재 상태</th><td>{{ $statusText }}</td></tr>
@@ -178,6 +238,13 @@
 @push('scripts')
     <script type="text/javascript">
         $(function () {
+            $("#perPageSelect").change(function () {
+                var url = new URL(window.location.href);
+                url.searchParams.set("per_page", $(this).val());
+                url.searchParams.delete("page");
+                window.location.href = url.toString();
+            });
+
             /* 팝업 */
             $(".pop_btn").click(function () {
                 var popId = $(this).attr("data-pop");

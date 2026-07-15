@@ -232,7 +232,8 @@
   text-align: right;
 }
 
-.btm_btn a {
+.btm_btn a,
+.btm_btn button {
   max-width: 160px;
   display: inline-block;
   line-height: 48px;
@@ -246,15 +247,58 @@
   letter-spacing: -0.03em;
   width: 100%;
   margin-right: 5px;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  vertical-align: top;
+  box-sizing: border-box;
 }
 
-.btm_btn a.type2 {
+.btm_btn a.type2,
+.btm_btn button.type2 {
   max-width: 90px;
+  height: 30px;
   line-height: 28px;
   font-size: 12px;
 }
 
-.btm_btn a:last-child {
+.btm_btn.order-search-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 5px;
+}
+
+.btm_btn.order-search-actions .order-search-submit {
+  max-width: 90px;
+  width: 100%;
+  height: 30px;
+  line-height: 28px;
+  display: inline-block;
+  background-color: #3470f7;
+  border: 1px solid #3470f7;
+  border-radius: 5px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  text-align: center;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.btm_btn.order-search-actions a {
+  max-width: 90px;
+  width: 100%;
+  height: 30px;
+  line-height: 28px;
+  font-size: 12px;
+  box-sizing: border-box;
+  margin-right: 0;
+}
+
+.btm_btn a:last-child,
+.btm_btn button:last-child {
   margin-right: 0;
 }
 
@@ -266,23 +310,27 @@
   float: right;
 }
 
-.btm_btn a.col2 {
+.btm_btn a.col2,
+.btm_btn button.col2 {
   background-color: #1d6d43;
   border-color: #1d6d43;
 }
 
-.btm_btn a.col3 {
+.btm_btn a.col3,
+.btm_btn button.col3 {
   background-color: #fff;
   border-color: #aaaaaa;
   color: #666666;
 }
 
-.btm_btn a.col4 {
+.btm_btn a.col4,
+.btm_btn button.col4 {
   background-color: #aaaaaa;
   border-color: #aaaaaa;
 }
 
-.btm_btn a.col5 {
+.btm_btn a.col5,
+.btm_btn button.col5 {
   background-color: #111111;
   border-color: #111111;
 }
@@ -352,7 +400,9 @@
   cursor: pointer;
 }
 
-.tab_bx1 ul li a.on {
+.tab_bx1 ul li a.on,
+.tab_bx1 ul li a.active,
+.tab_bx1 ul li a[aria-current="page"] {
   background-color: #3470f7;
   color: #fff;
 }

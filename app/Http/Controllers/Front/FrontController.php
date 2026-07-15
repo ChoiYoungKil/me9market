@@ -408,7 +408,7 @@ class FrontController extends Controller
             'order_id' => 'required',
             'order_product_id' => 'required',
             'type' => 'required|in:cancel,return,exchange,confirm',
-            'reason' => 'required'
+            'reason' => 'required_unless:type,confirm'
         ]);
 
         $order = \App\Models\Order::find($request->order_id);
@@ -420,10 +420,8 @@ class FrontController extends Controller
         if (!$ordersProduct) abort(404);
 
         if ($request->type == 'confirm') {
-            $ordersProduct->item_status = 'Confirmed';
-            $ordersProduct->status_code = OrderItemStatus::CONFIRMED;
+            $ordersProduct->setStatus(OrderItemStatus::CONFIRMED);
             $ordersProduct->confirmed_at = now();
-            $ordersProduct->updated_at = now();
             $ordersProduct->save();
 
             // Save rating and review to ratings table
@@ -440,20 +438,13 @@ class FrontController extends Controller
             return redirect()->back()->with('flash_message_success', '구매 확정이 완료되었습니다.');
         } else {
             $claimType = $request->type;
-            $statusMap = [
-                'cancel' => 'Cancel Requested',
-                'return' => 'Return Requested',
-                'exchange' => 'Exchange Requested'
-            ];
             $statusCodeMap = [
                 'cancel' => OrderItemStatus::CANCEL_REQUESTED,
                 'return' => OrderItemStatus::RETURN_REQUESTED,
                 'exchange' => OrderItemStatus::EXCHANGE_REQUESTED,
             ];
 
-            $ordersProduct->item_status = $statusMap[$claimType];
-            $ordersProduct->status_code = $statusCodeMap[$claimType];
-            $ordersProduct->updated_at = now();
+            $ordersProduct->setStatus($statusCodeMap[$claimType]);
             $ordersProduct->save();
 
             $detailReason = $request->detail_reason ?? '';

@@ -11,15 +11,42 @@
         <div class="row">
             <div class="box box1">
                 <div class="page_info">
-                    <div class="ttl">주문목록</div>
+                    <div class="ttl">{{ $orderPageTitle ?? '주문목록' }}</div>
                     <ul class="dep">
                         <li>HOME</li>
                         <li>주문관리</li>
-                        <li>주문목록</li>
+                        <li>{{ $orderPageTitle ?? '주문목록' }}</li>
                     </ul>
                 </div>
                 <div class="conbx">
                     <div class="con_w">
+                        @php
+                            $orderTab = $orderPageType ?? match(true) {
+                                request()->routeIs('channel.order.joint_list') => 'joint',
+                                request()->routeIs('channel.order.cancel_list') => 'cancel',
+                                request()->routeIs('channel.order.return_list') => 'return',
+                                request()->routeIs('channel.order.exchange_list') => 'exchange',
+                                default => 'list',
+                            };
+                            $searchAction = match($orderTab) {
+                                'joint' => route('channel.order.joint_list'),
+                                'cancel' => route('channel.order.cancel_list'),
+                                'return' => route('channel.order.return_list'),
+                                'exchange' => route('channel.order.exchange_list'),
+                                default => route('channel.order.list'),
+                            };
+                            $isDetailSearchOpen = request()->input('detail_open') === '1'
+                                || !empty($filters['date_from'] ?? '')
+                                || !empty($filters['date_to'] ?? '')
+                                || !empty($filters['order_statuses'] ?? [])
+                                || !empty($filters['buyer'] ?? '')
+                                || !empty($filters['price_min'] ?? '')
+                                || !empty($filters['price_max'] ?? '')
+                                || !empty($filters['order_type'] ?? '');
+                        @endphp
+                        <form method="GET" action="{{ $searchAction }}" id="orderSearchForm">
+                        <input type="hidden" name="detail_open" id="detail_open" value="{{ $isDetailSearchOpen ? '1' : '0' }}">
+                        <input type="hidden" name="status_filter" id="status_filter" value="{{ implode(',', $filters['order_statuses'] ?? []) }}">
                         <div class="tb01">
                             <table>
                                 <colgroup>
@@ -34,20 +61,23 @@
                                         <td colspan="3">
                                             <div class="r_btn_w">
                                                 <div class="search_w01">
-                                                    <select required="required">
-                                                        <option value="" disabled="" selected="">검색구분 선택</option>
-                                                        <option value="1">주문번호</option>
+                                                    <select name="search_type">
+                                                        <option value="all" {{ ($filters['search_type'] ?? 'all') === 'all' ? 'selected' : '' }}>전체</option>
+                                                        <option value="order_no" {{ ($filters['search_type'] ?? '') === 'order_no' ? 'selected' : '' }}>주문번호</option>
+                                                        <option value="product_name" {{ ($filters['search_type'] ?? '') === 'product_name' ? 'selected' : '' }}>상품명</option>
+                                                        <option value="product_code" {{ ($filters['search_type'] ?? '') === 'product_code' ? 'selected' : '' }}>상품코드</option>
+                                                        <option value="tracking_number" {{ ($filters['search_type'] ?? '') === 'tracking_number' ? 'selected' : '' }}>송장번호</option>
                                                     </select>
-                                                    <input type="text" value="" required="required">
+                                                    <input type="text" name="keyword" value="{{ $filters['keyword'] ?? '' }}" placeholder="검색어를 입력해 주세요.">
                                                 </div>
-                                                <a id="arrow1" class="btn01 arrow"><span>상세</span></a>
+                                                <a id="arrow1" class="btn01 arrow {{ $isDetailSearchOpen ? 'on' : '' }}"><span>상세</span></a>
                                             </div>
                                         </td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
-                        <div class="tb01 bN arrowbx" data-arrowbx="arrow1">
+                        <div class="tb01 bN arrowbx" data-arrowbx="arrow1" style="{{ $isDetailSearchOpen ? 'display:block;' : '' }}">
                             <table>
                                 <colgroup>
                                     <col width="160px">
@@ -59,105 +89,89 @@
                                     <tr>
                                         <th class="w160"><span>주문기간</span></th>
                                         <td colspan="3">
-                                            <input class="datepicker w160" type="text" required="required" readonly="">
+                                            <input class="datepicker w160" type="text" name="date_from" value="{{ $filters['date_from'] ?? '' }}" readonly="">
                                             &nbsp; ~ &nbsp;
-                                            <input class="datepicker w160" type="text" required="required" readonly="">
+                                            <input class="datepicker w160" type="text" name="date_to" value="{{ $filters['date_to'] ?? '' }}" readonly="">
                                         </td>
                                     </tr>
                                     <tr>
                                         <th class="w160"><span>주문상태</span></th>
                                         <td colspan="3">
                                             <ul class="chk02">
-                                                <li>
-                                                    <input type="checkbox" name="chk1" id="chk1_1" checked="">
-                                                    <label for="chk1_1">결제대기중</label>
-                                                </li>
-                                                <li>
-                                                    <input type="checkbox" name="chk1" id="chk1_2">
-                                                    <label for="chk1_2">결제완료</label>
-                                                </li>
-                                                <li>
-                                                    <input type="checkbox" name="chk1" id="chk1_3">
-                                                    <label for="chk1_3">배송대기</label>
-                                                </li>
-                                                <li>
-                                                    <input type="checkbox" name="chk1" id="chk1_4">
-                                                    <label for="chk1_4">배송중</label>
-                                                </li>
-                                                <li>
-                                                    <input type="checkbox" name="chk1" id="chk1_5">
-                                                    <label for="chk1_5">구매확정</label>
-                                                </li>
-                                            </ul>
-                                            <ul class="chk02 mt5">
-                                                <li>
-                                                    <input type="checkbox" name="chk1" id="chk1_6">
-                                                    <label for="chk1_6">취소요청</label>
-                                                </li>
-                                                <li>
-                                                    <input type="checkbox" name="chk1" id="chk1_7">
-                                                    <label for="chk1_7">취소완료</label>
-                                                </li>
-                                            </ul>
-                                            <ul class="chk02 mt5">
-                                                <li>
-                                                    <input type="checkbox" name="chk1" id="chk1_8">
-                                                    <label for="chk1_8">반품신청</label>
-                                                </li>
-                                                <li>
-                                                    <input type="checkbox" name="chk1" id="chk1_9">
-                                                    <label for="chk1_9">반품완료</label>
-                                                </li>
-                                            </ul>
-                                            <ul class="chk02 mt5">
-                                                <li>
-                                                    <input type="checkbox" name="chk1" id="chk1_10">
-                                                    <label for="chk1_10">교환신청</label>
-                                                </li>
-                                                <li>
-                                                    <input type="checkbox" name="chk1" id="chk1_11">
-                                                    <label for="chk1_11">교환완료</label>
-                                                </li>
+                                                @foreach($orderStatusOptions ?? [] as $statusValue => $statusLabel)
+                                                    <li>
+                                                        <input type="checkbox" name="order_statuses[]" class="order-status-check" value="{{ $statusValue }}" id="order_status_{{ $statusValue }}" {{ in_array($statusValue, $filters['order_statuses'] ?? [], true) ? 'checked' : '' }}>
+                                                        <label for="order_status_{{ $statusValue }}">{{ $statusLabel }}</label>
+                                                    </li>
+                                                @endforeach
                                             </ul>
                                         </td>
                                     </tr>
                                     <tr>
                                         <th class="w160"><span>주문자</span></th>
                                         <td>
-                                            <input type="text" value="" required="required">
+                                            <input type="text" name="buyer" value="{{ $filters['buyer'] ?? '' }}" placeholder="주문자명, 이메일, 연락처">
                                         </td>
                                         <th class="w160"><span>판매가격 범위</span></th>
                                         <td>
                                             <div class="scope01">
-                                                <input type="text" value="" required="required"><span>원</span>
+                                                <input type="text" name="price_min" value="{{ $filters['price_min'] ?? '' }}"><span>원</span>
                                                 <span class="mid">~</span>
-                                                <input type="text" value="" required="required"><span>원</span>
+                                                <input type="text" name="price_max" value="{{ $filters['price_max'] ?? '' }}"><span>원</span>
                                             </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th class="w160"><span>주문 유형</span></th>
+                                        <td colspan="3">
+                                            <ul class="chk01">
+                                                <li>
+                                                    <input type="radio" name="order_type" id="order_type_all" value="all" {{ ($filters['order_type'] ?? '') === '' ? 'checked' : '' }}>
+                                                    <label for="order_type_all">전체</label>
+                                                </li>
+                                                <li>
+                                                    <input type="radio" name="order_type" id="order_type_normal" value="normal" {{ ($filters['order_type'] ?? '') === 'normal' ? 'checked' : '' }}>
+                                                    <label for="order_type_normal">일반</label>
+                                                </li>
+                                                <li>
+                                                    <input type="radio" name="order_type" id="order_type_joint" value="joint" {{ ($filters['order_type'] ?? '') === 'joint' ? 'checked' : '' }}>
+                                                    <label for="order_type_joint">공동구매</label>
+                                                </li>
+                                            </ul>
                                         </td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
 
-                        <div class="btm_btn right mt10">
-                            <a href="#">검색</a>
+                        <div class="btm_btn right mt10 order-search-actions">
+                            <button type="submit" class="type2 order-search-submit">검색</button>
+                            <a href="{{ $searchAction }}" class="col5">초기화</a>
                         </div>
+                        </form>
                     </div>
                 </div>
             </div>
             <div class="box box1">
                 <div class="conbx">
                     <div class="con_w">
-                        <div class="tab_bx1">
+                        <div class="tab_bx1 order-list-tabs">
                             <ul>
-                                <li><a href="{{ route('channel.order.list') }}" class="on"><span>주문목록</span></a></li>
-                                <li><a href="{{ route('channel.order.cancel_list') }}"><span>취소목록</span></a></li>
-                                <li><a href="{{ route('channel.order.return_list') }}"><span>반품목록</span></a></li>
-                                <li><a href="{{ route('channel.order.exchange_list') }}"><span>교환목록</span></a></li>
+                                <li><a href="{{ route('channel.order.list') }}" class="{{ in_array($orderTab, ['list', 'joint'], true) ? 'on active' : '' }}" @if(in_array($orderTab, ['list', 'joint'], true)) aria-current="page" @endif><span>주문목록</span></a></li>
+                                <li><a href="{{ route('channel.order.cancel_list') }}" class="{{ $orderTab === 'cancel' ? 'on active' : '' }}" @if($orderTab === 'cancel') aria-current="page" @endif><span>취소목록</span></a></li>
+                                <li><a href="{{ route('channel.order.return_list') }}" class="{{ $orderTab === 'return' ? 'on active' : '' }}" @if($orderTab === 'return') aria-current="page" @endif><span>반품목록</span></a></li>
+                                <li><a href="{{ route('channel.order.exchange_list') }}" class="{{ $orderTab === 'exchange' ? 'on active' : '' }}" @if($orderTab === 'exchange') aria-current="page" @endif><span>교환목록</span></a></li>
                             </ul>
                         </div>
-                        <div class="list_top1">
+                        <div class="list_top1" style="display: flex; justify-content: space-between; align-items: center;">
                             <div class="count">총 <strong>{{ $orders->total() }}</strong> 건</div>
+                            <div class="right_bx" style="display: flex; gap: 10px; align-items: center;">
+                                <select id="perPageSelect" style="padding: 0 10px; border: 1px solid #ddd; height: 34px;">
+                                    @foreach([20, 40, 60, 80, 100] as $perPageOption)
+                                        <option value="{{ $perPageOption }}" {{ (int)($filters['per_page'] ?? 20) === $perPageOption ? 'selected' : '' }}>{{ $perPageOption }}개씩 보기</option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
                         <div class="tb01 ovS">
                             <table>
@@ -166,6 +180,7 @@
                                     <col width="120px">
                                     <col width="80px">
                                     <col width="150px">
+                                    <col width="120px">
                                     <col width="120px">
                                     <col width="120px">
                                     <col width="120px">
@@ -193,6 +208,7 @@
                                         <th>Shop채널</th>
                                         <th>주문상태</th>
                                         <th>주문자</th>
+                                        <th>주문 유형</th>
                                         <th>상품 유형</th>
                                         <th>상품명</th>
                                         <th>상품코드</th>
@@ -222,6 +238,11 @@
                                                 <td>{{ $order->shop_name }}</td>
                                                 <td>{{ $order->status }}</td>
                                                 <td>{{ $order->user_name }}</td>
+                                                <td>
+                                                    @foreach($order->items as $item)
+                                                        {{ $item['order_type_label'] }}<br>
+                                                    @endforeach
+                                                </td>
                                                 <td>{{ $order->items->first()['product_type'] ?? '자사' }}</td>
                                                 <td class="t_l">
                                                     @foreach($order->items as $item)
@@ -260,7 +281,7 @@
                                             </tr>
                                             <!-- 액션 버튼 행 -->
                                             <tr>
-                                                <td colspan="22" style="text-align: left; padding: 5px 10px; background: #f9f9f9;">
+                                                <td colspan="23" style="text-align: left; padding: 5px 10px; background: #f9f9f9;">
                                                     <strong>[관리]: </strong>
                                                     <a href="#" onclick='openOrderModal("pop1_2_3", @json($order)); return false;'
                                                         class="btn02">배송관리</a>
@@ -275,7 +296,7 @@
                                         @endforeach
                                     @else
                                         <tr>
-                                            <td colspan="22" class="no_data">등록된 데이터가 없습니다.</td>
+                                            <td colspan="23" class="no_data">등록된 데이터가 없습니다.</td>
                                         </tr>
                                     @endif
                                 </tbody>
@@ -313,6 +334,46 @@
                 var thisId = $(this).attr("id");
                 $(this).toggleClass("on");
                 $(".arrowbx[data-arrowbx='" + thisId + "']").stop().slideToggle(300);
+                $("#detail_open").val($(this).hasClass("on") ? "1" : "0");
+            });
+
+            $("#perPageSelect").change(function () {
+                var url = new URL(window.location.href);
+                url.searchParams.set("per_page", $(this).val());
+                url.searchParams.delete("page");
+                window.location.href = url.toString();
+            });
+
+            function syncOrderStatusFilter() {
+                var statuses = $(".order-status-check:checked").map(function () {
+                    return this.value;
+                }).get();
+                $("#status_filter").val(statuses.join(","));
+            }
+
+            $(".order-status-check").on("change", syncOrderStatusFilter);
+            syncOrderStatusFilter();
+
+            $("#orderSearchForm").on("submit", function () {
+                syncOrderStatusFilter();
+                if ($("#detail_open").val() !== "1") {
+                    $("#detail_open").prop("disabled", true);
+                }
+                $(this).find(":input").filter(function () {
+                    return !this.value;
+                }).prop("disabled", true);
+            });
+
+            $(".order-list-tabs a").each(function () {
+                var linkPath = this.pathname.replace(/\/$/, "");
+                var currentPath = window.location.pathname.replace(/\/$/, "");
+                var isCurrent = linkPath === currentPath;
+                $(this).toggleClass("on active", isCurrent);
+                if (isCurrent) {
+                    $(this).attr("aria-current", "page");
+                } else {
+                    $(this).removeAttr("aria-current");
+                }
             });
 
             /* 팝업 */

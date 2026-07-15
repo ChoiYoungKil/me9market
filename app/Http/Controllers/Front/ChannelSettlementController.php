@@ -5,72 +5,206 @@ namespace App\Http\Controllers\Front;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use App\Models\Order;
-use App\Models\OrdersProduct;
-use Carbon\Carbon;
+use App\Models\SettlementRun;
+use App\Services\SettlementCalculator;
+use App\Support\OrderItemStatus;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class ChannelSettlementController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, SettlementCalculator $calculator)
     {
         $admin = Auth::guard('admin')->user();
         $vendor_id = $admin->vendor_id;
-
-        // Fetch the shop channel's settlement rate (using the first one as default if multiple exist)
-        $shop = \App\Models\ShopChannel::where('vendor_id', $vendor_id)->first();
-        $rate = $shop ? ($shop->settlement_rate / 100) : 0.10; // Fallback to 10%
-
-        // Calculate monthly settlements
-        $settlements = OrdersProduct::select(
-                DB::raw("DATE_FORMAT(updated_at, '%Y-%m') as settlement_period"),
-                DB::raw('SUM(product_price * product_qty) as total_sales'),
-                DB::raw('COUNT(id) as order_count')
-            )
+        $period = $request->query('period')
+            ? $calculator->normalizePeriod($request->query('period'))
+            : $this->latestSettlementPeriod($vendor_id, $calculator);
+        $periodOptions = $calculator->periodOptions();
+        $runs = SettlementRun::where('period', $period)
             ->where('vendor_id', $vendor_id)
-            ->whereIn('item_status', ['구매확정'])
-            ->groupBy('settlement_period')
-            ->orderBy('settlement_period', 'desc')
-            ->paginate(10);
-            
-        $settlements->getCollection()->transform(function($item) use ($rate) {
-             $item->commission = $item->total_sales * $rate;
-             $item->settlement_amount = $item->total_sales - $item->commission;
-             $item->status = '정산완료'; 
-             $item->rate = $rate * 100; // Store percentage for view
-             
-             return $item;
-        });
+            ->get()
+            ->keyBy('settlement_key');
+
+        $rows = $calculator->preview($period, $vendor_id)
+            ->map(function (array $row) use ($runs) {
+                $run = $runs->get($row['settlement_key']);
+                $runStatus = $run?->status ?? 'preview';
+                $row['run_status'] = $runStatus;
+                $row['status'] = $this->statusLabel($runStatus);
+                $row['settlement_period'] = $row['period'];
+                $row['total_sales'] = $row['gross_sales_amount'];
+                $row['rate'] = $row['settlement_rate'];
+                $row['commission'] = $this->legacyCommissionAmount($row);
+
+                return (object) $row;
+            })
+            ->values();
+        $rate = optional($rows->first())->rate ?? 0;
+        $totals = [
+            'order_count' => $rows->sum('order_count'),
+            'quantity' => $rows->sum('quantity'),
+            'gross_sales_amount' => $rows->sum('gross_sales_amount'),
+            'supply_amount' => $rows->sum('supply_amount'),
+            'sales_profit_amount' => $rows->sum('sales_profit_amount'),
+            'invoice_sales_amount' => $rows->sum('invoice_sales_amount'),
+            'invoice_purchase_amount' => $rows->sum('invoice_purchase_amount'),
+            'point_deposit_amount' => $rows->sum('point_deposit_amount'),
+            'point_used_amount' => $rows->sum('point_used_amount'),
+            'payout_amount' => $rows->sum('payout_amount'),
+            'settlement_amount' => $rows->sum('settlement_amount'),
+            'admin_amount' => $rows->sum('admin_amount'),
+        ];
+
+        $settlements = $this->paginateRows($rows, $request, 20, route('channel.settlement.list'));
 
         return view('channel.sub05.settlement_list', [
             'settlements' => $settlements,
             'dep1_id' => '05',
-            'rate' => $rate * 100
+            'period' => $period,
+            'periodOptions' => $periodOptions,
+            'totals' => $totals,
+            'rate' => $rate,
         ]);
     }
 
-    public function view(Request $request, $period)
+    public function view(Request $request, $period, SettlementCalculator $calculator)
     {
         $admin = Auth::guard('admin')->user();
         $vendor_id = $admin->vendor_id;
+        $period = $calculator->normalizePeriod($period);
+        $shopChannelId = $this->normalizeShopChannelId($request->query('shop_channel_id'));
 
-        // Fetch the shop channel's settlement rate
-        $shop = \App\Models\ShopChannel::where('vendor_id', $vendor_id)->first();
-        $rate = $shop ? ($shop->settlement_rate / 100) : 0.10;
+        $summary = $calculator->preview($period, $vendor_id, $shopChannelId)->first();
+        $rowData = $calculator->items($period, $vendor_id, $shopChannelId)->values();
+        $rows = $this->ordersFromSettlementRows($rowData);
 
-        // Fetch orders for this period and vendor
-        $orders = OrdersProduct::where('vendor_id', $vendor_id)
-            ->where(DB::raw("DATE_FORMAT(updated_at, '%Y-%m')"), $period)
-            ->whereIn('item_status', ['구매확정'])
-            ->with(['product', 'order'])
-            ->orderBy('updated_at', 'desc')
-            ->paginate(20);
+        if (!$summary && $shopChannelId !== null) {
+            abort(404);
+        }
+
+        $orders = $this->paginateRows($rows, $request, 30, route('channel.settlement.view', ['period' => $period]));
+
+        $totals = [
+            'quantity' => $rows->sum('quantity'),
+            'gross_sales_amount' => $rows->sum('gross_sales_amount'),
+            'supply_amount' => $rows->sum('supply_amount'),
+            'sales_profit_amount' => $rows->sum('sales_profit_amount'),
+            'invoice_sales_amount' => $rows->sum('invoice_sales_amount'),
+            'invoice_purchase_amount' => $rows->sum('invoice_purchase_amount'),
+            'point_deposit_amount' => $rows->sum('point_deposit_amount'),
+            'point_used_amount' => $rows->sum('point_used_amount'),
+            'payout_amount' => $rows->sum('payout_amount'),
+            'settlement_amount' => $rows->sum('settlement_amount'),
+            'admin_amount' => $rows->sum('admin_amount'),
+        ];
 
         return view('channel.sub05.settlement_view', [
             'orders' => $orders,
             'period' => $period,
+            'shopChannelId' => $shopChannelId,
+            'summary' => $summary ? (object) $summary : null,
+            'totals' => $totals,
             'dep1_id' => '05',
-            'rate' => $rate * 100
+            'rate' => $summary['settlement_rate'] ?? optional($rows->first())->rate ?? 0,
         ]);
+    }
+
+    private function ordersFromSettlementRows($rowData)
+    {
+        if ($rowData->isEmpty()) {
+            return collect();
+        }
+
+        $items = \App\Models\OrdersProduct::with(['product', 'order'])
+            ->whereIn('id', $rowData->pluck('order_product_id')->all())
+            ->get()
+            ->keyBy('id');
+
+        return $rowData
+            ->map(function (array $row) use ($items) {
+                $item = $items->get($row['order_product_id']);
+                if (!$item) {
+                    return (object) $row;
+                }
+
+                foreach ($row as $key => $value) {
+                    $item->setAttribute($key, $value);
+                }
+                $item->setAttribute('rate', $row['settlement_rate'] ?? 0);
+                $item->setAttribute('total_sales', $row['gross_sales_amount'] ?? 0);
+                $item->setAttribute('commission', $this->legacyCommissionAmount($row));
+
+                return $item;
+            })
+            ->values();
+    }
+
+    private function statusLabel(string $status): string
+    {
+        return [
+            'completed' => '정산완료',
+            'pending' => '정산대기',
+            'preview' => '정산완료',
+        ][$status] ?? $status;
+    }
+
+    private function legacyCommissionAmount(array $row): float
+    {
+        if ((int) ($row['settlement_type'] ?? 1) === 2) {
+            return $this->ceilToTen((float) ($row['quantity'] ?? 0) * (float) ($row['settlement_rate'] ?? 0));
+        }
+
+        return $this->ceilToTen((float) ($row['gross_sales_amount'] ?? 0) * ((float) ($row['settlement_rate'] ?? 0) / 100) * 1.1);
+    }
+
+    private function ceilToTen(float $amount): float
+    {
+        return ceil(max(0, $amount) / 10) * 10;
+    }
+
+    private function normalizeShopChannelId($value): ?int
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return (int) $value;
+    }
+
+    private function latestSettlementPeriod(int $vendorId, SettlementCalculator $calculator): string
+    {
+        $statusValues = [
+            OrderItemStatus::CONFIRMED,
+            OrderItemStatus::label(OrderItemStatus::CONFIRMED),
+            'Confirmed',
+            '구매확정',
+        ];
+
+        $latest = \App\Models\OrdersProduct::where('vendor_id', $vendorId)
+            ->where(function ($query) use ($statusValues) {
+                $query->whereIn('status_code', $statusValues)
+                    ->orWhereIn('item_status', $statusValues);
+            })
+            ->selectRaw('MAX(COALESCE(confirmed_at, updated_at)) as latest_at')
+            ->value('latest_at');
+
+        return $latest
+            ? \Carbon\Carbon::parse($latest)->format('Y-m')
+            : $calculator->normalizePeriod(null);
+    }
+
+    private function paginateRows($rows, Request $request, int $perPage, string $path): LengthAwarePaginator
+    {
+        $page = max((int) $request->query('page', 1), 1);
+        $query = $request->query();
+        unset($query['page']);
+
+        return new LengthAwarePaginator(
+            $rows->forPage($page, $perPage)->values(),
+            $rows->count(),
+            $perPage,
+            $page,
+            ['path' => $path, 'query' => $query]
+        );
     }
 }

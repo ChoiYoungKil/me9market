@@ -7,6 +7,6 @@
         <li><a href="#">부분공개상품</a></li>
         <!--<li><a href="#">판매요청목록</a></li>
         <li><a href="#">상품게시채널목록</a></li>-->
-        <li><a href="{{ route('channel.product_request') }}">상품등록</a></li>
+        <li><a href="{{ route('channel.product_request') }}">판매요청관리</a></li>
     </ul>
 </li>

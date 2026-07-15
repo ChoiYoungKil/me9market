@@ -7,7 +7,7 @@
             <div class="ttl">주문관리</div>
             <ul>
                 <li>
-                    <a href="{{ route('channel.order.list') }}">
+                    <a href="{{ route('channel.order.list', ['date_from' => now()->toDateString(), 'date_to' => now()->toDateString()]) }}">
                         <div class="icon icon1">
                             <span class="num">{{ $formatSidebarCount($sidebar_order_counts['today_orders'] ?? 0) }}</span>
                         </div>
@@ -15,7 +15,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="{{ route('channel.order.list') }}">
+                    <a href="{{ route('channel.order.list', ['order_statuses' => [\App\Support\OrderItemStatus::PAID]]) }}">
                         <div class="icon icon2">
                             <span class="num">{{ $formatSidebarCount($sidebar_order_counts['paid'] ?? 0) }}</span>
                         </div>
@@ -23,7 +23,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="{{ route('channel.order.list') }}">
+                    <a href="{{ route('channel.order.list', ['order_statuses' => [\App\Support\OrderItemStatus::READY_TO_SHIP]]) }}">
                         <div class="icon icon3">
                             <span class="num">{{ $formatSidebarCount($sidebar_order_counts['shipping_ready'] ?? 0) }}</span>
                         </div>
@@ -31,7 +31,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="{{ route('channel.order.cancel_list') }}">
+                    <a href="{{ route('channel.order.cancel_list', ['order_statuses' => [\App\Support\OrderItemStatus::CANCEL_REQUESTED]]) }}">
                         <div class="icon icon4">
                             <span class="num">{{ $formatSidebarCount($sidebar_order_counts['cancel_request'] ?? 0) }}</span>
                         </div>
@@ -39,7 +39,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="{{ route('channel.order.return_list') }}">
+                    <a href="{{ route('channel.order.return_list', ['order_statuses' => [\App\Support\OrderItemStatus::RETURN_REQUESTED]]) }}">
                         <div class="icon icon5">
                             <span class="num">{{ $formatSidebarCount($sidebar_order_counts['return_request'] ?? 0) }}</span>
                         </div>
@@ -60,7 +60,7 @@
                         <li><a href="{{ route('channel.product_own') }}">- 판매 상품 수<span>({{ $sidebar_counts['selling'] ?? 0 }})</span></a></li>
                         <li><a href="{{ route('channel.shop_list') }}">- 판매채널 수<span>({{ $sidebar_counts['channels'] ?? 0 }})</span></a></li>
                     </ul>
-                    <a href="{{ route('channel.product_request') }}" class="add_btn"><span>상품등록</span></a>
+                    <a href="{{ route('channel.product.base.create') }}" class="add_btn"><span>상품등록</span></a>
                 </div>
             </div>
         </div>
@@ -89,6 +89,9 @@
                             <li><a href="{{ route('channel.product_own') }}"
                                     class="{{ request()->routeIs('channel.product_own') ? 'active-link' : '' }}">-
                                     자사상품목록</a></li>
+                            <li><a href="{{ route('channel.product.base.create') }}"
+                                    class="{{ request()->routeIs('channel.product.base.*') ? 'active-link' : '' }}">-
+                                    상품등록</a></li>
                             <li><a href="{{ route('channel.product_public') }}"
                                     class="{{ request()->routeIs('channel.product_public') ? 'active-link' : '' }}">-
                                     공개상품목록</a></li>
@@ -100,7 +103,7 @@
                                     분류관리</a></li>
                             <li><a href="{{ route('channel.product_request') }}"
                                     class="{{ request()->routeIs('channel.product_request') ? 'active-link' : '' }}">-
-                                    상품등록</a></li>
+                                    판매요청관리</a></li>
                         </ul>
                     </li>
                     <li class="dep1 {{ request()->routeIs('channel.joint_purchase.*') ? 'on' : '' }}">
@@ -114,10 +117,16 @@
                         <a href="javascript:void(0);" class="toggle-btn">주문관리 <span class="arrow">▼</span></a>
                         <ul class="dep2_wrap"
                             style="{{ request()->routeIs('channel.order.*') || request()->routeIs('channel.inquiries.*') ? 'display: block;' : 'display: none;' }}">
-                            <li><a href="{{ route('channel.order.list') }}"
-                                    class="{{ request()->routeIs('channel.order.list') ? 'active-link' : '' }}">- 일반
-                                    주문목록</a></li>
-                            <li><a href="#">- 공동구매 주문목록</a></li>
+	                            <li><a href="{{ route('channel.order.list') }}"
+	                                    class="{{ request()->routeIs('channel.order.list') ? 'active-link' : '' }}">- 주문목록</a></li>
+	                            <li><a href="{{ route('channel.order.cancel_list') }}"
+	                                    class="{{ request()->routeIs('channel.order.cancel_list') ? 'active-link' : '' }}">- 취소목록</a></li>
+	                            <li><a href="{{ route('channel.order.return_list') }}"
+	                                    class="{{ request()->routeIs('channel.order.return_list') ? 'active-link' : '' }}">- 반품목록</a></li>
+	                            <li><a href="{{ route('channel.order.exchange_list') }}"
+	                                    class="{{ request()->routeIs('channel.order.exchange_list') ? 'active-link' : '' }}">- 교환목록</a></li>
+	                            <li><a href="{{ route('channel.order.joint_list') }}"
+	                                    class="{{ request()->routeIs('channel.order.joint_list') ? 'active-link' : '' }}">- 공동구매 주문목록</a></li>
                             <li><a href="{{ route('channel.inquiries.index') }}"
                                     class="{{ request()->routeIs('channel.inquiries.*') ? 'active-link' : '' }}">- 상품문의</a></li>
                         </ul>

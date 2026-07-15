@@ -137,8 +137,8 @@ class ChannelSettlementTest extends TestCase
         $this->assertEquals('2026-05', $settlement->settlement_period);
         $this->assertEquals(200.0, $settlement->total_sales);
         $this->assertEquals(1, $settlement->order_count);
-        $this->assertEquals(25.0, $settlement->commission);
-        $this->assertEquals(175.0, $settlement->settlement_amount);
+        $this->assertEquals(30.0, $settlement->commission);
+        $this->assertEquals(170.0, $settlement->settlement_amount);
         $this->assertEquals(12.5, $settlement->rate);
         $this->assertEquals('정산완료', $settlement->status);
     }

@@ -56,6 +56,9 @@
                     <li class="dep1 icon1_6">
                         <a href="#">취소/환불안내</a>
                     </li>
+                    <li class="dep1 icon1_5 @if(Session::get('page') == 'settlements') on @endif">
+                        <a href="{{ route('admin.settlements.index') }}">정산관리</a>
+                    </li>
                 </ul>
             </div>
             <div class="con_w">

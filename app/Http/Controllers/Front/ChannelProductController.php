@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Product; // 상품 모델 가정
 use App\Models\Category;
+use App\Models\OrdersProduct;
 use App\Models\ProductsAttribute;
 use App\Models\ProductsImage;
 use Illuminate\Http\UploadedFile;
@@ -18,6 +19,8 @@ use Illuminate\Support\Facades\Schema;
 
 class ChannelProductController extends Controller
 {
+    private const COMMISSION_VAT_MULTIPLIER = 1.1;
+
     public function storeOwnProduct(Request $request)
     {
         if ($request->ajax()) {
@@ -65,6 +68,8 @@ class ChannelProductController extends Controller
                     return response()->json(['status' => false, 'message' => '이미 채널에 추가된 상품입니다.']);
                 }
 
+                $pricing = $this->resolveShopProductPricing($product, $shop, (float) $data['selling_price'], 'own');
+
                 // Create Mapping
                 \App\Models\ShopChannelProduct::create([
                     'shop_channel_id' => $shop->id,
@@ -75,13 +80,15 @@ class ChannelProductController extends Controller
                     'status' => 1, // 판매중 상태로 등록 (필요시 0으로)
                     'constraint_type' => 'none', // 추후 제약조건 폼 필드 연동 필요
                     'stock' => $product->stock,
-                    'product_price' => $product->product_price,
-                    'selling_price' => $data['selling_price'],
-                    'profit' => max(0, $data['selling_price'] - $product->product_price), // 간단 이익 계산
+                    'product_price' => $pricing['product_price'],
+                    'selling_price' => $pricing['selling_price'],
+                    'profit' => $pricing['profit'],
                 ]);
 
                 return response()->json(['status' => true, 'message' => '상품이 성공적으로 채널에 추가되었습니다.']);
 
+            } catch (ValidationException $e) {
+                return response()->json(['status' => false, 'message' => collect($e->errors())->flatten()->first() ?: $e->getMessage()]);
             } catch (\Exception $e) {
                 return response()->json(['status' => false, 'message' => '오류가 발생했습니다: ' . $e->getMessage()]);
             }
@@ -130,6 +137,8 @@ class ChannelProductController extends Controller
                     return response()->json(['status' => false, 'message' => '이미 채널에 추가된 상품입니다.']);
                 }
 
+                $pricing = $this->resolveShopProductPricing($product, $shop, (float) $data['selling_price'], 'public');
+
                 \App\Models\ShopChannelProduct::create([
                     'shop_channel_id' => $shop->id,
                     'product_id' => $product->id,
@@ -139,12 +148,14 @@ class ChannelProductController extends Controller
                     'status' => 1,
                     'constraint_type' => 'none',
                     'stock' => $product->stock,
-                    'product_price' => $product->product_price,
-                    'selling_price' => $data['selling_price'],
-                    'profit' => max(0, $data['selling_price'] - $product->product_price),
+                    'product_price' => $pricing['product_price'],
+                    'selling_price' => $pricing['selling_price'],
+                    'profit' => $pricing['profit'],
                 ]);
 
                 return response()->json(['status' => true, 'message' => '공유 상품이 성공적으로 추가되었습니다.']);
+            } catch (ValidationException $e) {
+                return response()->json(['status' => false, 'message' => collect($e->errors())->flatten()->first() ?: $e->getMessage()]);
             } catch (\Exception $e) {
                 return response()->json(['status' => false, 'message' => '오류가 발생했습니다: ' . $e->getMessage()]);
             }
@@ -194,6 +205,8 @@ class ChannelProductController extends Controller
                     return response()->json(['status' => false, 'message' => '이미 추가되었거나 권한 요청이 접수된 상품입니다.']);
                 }
 
+                $pricing = $this->resolveShopProductPricing($product, $shop, (float) $data['selling_price'], 'partial');
+
                 // 부분 공유 상품은 승인 대기로 등록 (status = 0, partial_approved 처리 등)
                 \App\Models\ShopChannelProduct::create([
                     'shop_channel_id' => $shop->id,
@@ -206,13 +219,15 @@ class ChannelProductController extends Controller
                     'status' => 0, // 판매 승인 대기
                     'constraint_type' => 'none',
                     'stock' => $product->stock,
-                    'product_price' => $product->product_price,
-                    'selling_price' => $data['selling_price'],
-                    'profit' => max(0, $data['selling_price'] - $product->product_price),
+                    'product_price' => $pricing['product_price'],
+                    'selling_price' => $pricing['selling_price'],
+                    'profit' => $pricing['profit'],
                 ]);
 
                 return response()->json(['status' => true, 'message' => '판매 권한 요청이 성공적으로 접수되었습니다. (승인 대기)']);
 
+            } catch (ValidationException $e) {
+                return response()->json(['status' => false, 'message' => collect($e->errors())->flatten()->first() ?: $e->getMessage()]);
             } catch (\Exception $e) {
                 return response()->json(['status' => false, 'message' => '오류가 발생했습니다: ' . $e->getMessage()]);
             }
@@ -275,10 +290,16 @@ class ChannelProductController extends Controller
         $shopProduct->status = 0;
         $shopProduct->constraint_type = 'none';
         $shopProduct->stock = $product->stock ?? null;
-        $shopProduct->product_price = $product->product_price;
-        $shopProduct->selling_price = $data['selling_price'];
-        $shopProduct->profit = max(0, $data['selling_price'] - $product->product_price);
-        $shopProduct->save();
+
+        try {
+            $pricing = $this->resolveShopProductPricing($product, $shop, (float) $data['selling_price'], 'partial');
+            $shopProduct->product_price = $pricing['product_price'];
+            $shopProduct->selling_price = $pricing['selling_price'];
+            $shopProduct->profit = $pricing['profit'];
+            $shopProduct->save();
+        } catch (ValidationException $e) {
+            return response()->json(['status' => false, 'message' => collect($e->errors())->flatten()->first() ?: $e->getMessage()]);
+        }
 
         return response()->json(['status' => true, 'message' => '판매 권한 요청이 접수되었습니다.']);
     }
@@ -364,16 +385,14 @@ class ChannelProductController extends Controller
             'status' => 'required|in:0,1',
         ]);
 
-        $shopProduct->selling_price = $request->input('selling_price');
+        $pricing = $this->resolveShopProductPricing($shopProduct->product, $shop, (float) $request->input('selling_price'), $shopProduct->product_type ?: 'own');
+        $shopProduct->product_price = $pricing['product_price'];
+        $shopProduct->selling_price = $pricing['selling_price'];
         $shopProduct->stock = $request->input('stock');
         $shopProduct->purchase_limit = $request->input('purchase_limit');
         $shopProduct->status = $request->input('status');
         
-        // Calculate profit consider settlement rate (Commission)
-        // Profit = Selling Price - (Selling Price * Rate/100) - CostPrice
-        $rate = $shop->settlement_rate ?? 10;
-        $commission = $shopProduct->selling_price * ($rate / 100);
-        $shopProduct->profit = $shopProduct->selling_price - $commission - $shopProduct->product_price;
+        $shopProduct->profit = $pricing['profit'];
         
         $shopProduct->save();
 
@@ -478,12 +497,137 @@ class ChannelProductController extends Controller
         ]);
     }
 
-    public function exportOwnProducts()
+    private function resolveShopProductPricing(Product $product, \App\Models\ShopChannel $shop, float $sellingPrice, string $productType): array
+    {
+        $supplyPrice = (float) $product->product_price;
+        $shippingFee = $this->productShippingFee($product);
+        $rewardPoints = max(0, (float) ($product->reward_points ?? 0));
+        $settlementType = (int) ($shop->settlement_type ?: 1);
+        $settlementRate = (float) ($shop->settlement_rate ?? 0);
+        $isShared = in_array($productType, ['public', 'partial'], true);
+        $isFixed = $isShared
+            && (bool) ($product->price_constraint_enabled ?? false)
+            && $product->price_constraint_type === 'fixed';
+
+        if ($isFixed) {
+            $fixedPrice = (float) ($product->price_fixed ?: $product->product_price);
+            if (round($sellingPrice, 2) !== round($fixedPrice, 2)) {
+                throw ValidationException::withMessages([
+                    'selling_price' => '판매가 고정 공유상품은 ' . number_format($fixedPrice) . '원으로만 등록할 수 있습니다.',
+                ]);
+            }
+
+            $commission = $this->shopCommissionAmount($fixedPrice + $shippingFee, 1, $settlementType, $settlementRate);
+            $rebate = $this->productRebateAmount($product, $fixedPrice + $shippingFee);
+            if ($rebate < $commission) {
+                throw ValidationException::withMessages([
+                    'selling_price' => '판매가 고정 공유상품의 리베이트는 수수료 ' . number_format($commission) . '원 이상이어야 합니다.',
+                ]);
+            }
+
+            return [
+                'product_price' => $fixedPrice,
+                'selling_price' => $fixedPrice,
+                'minimum_price' => $fixedPrice,
+                'profit' => round($rebate - $commission - $rewardPoints, 2),
+            ];
+        }
+
+        $minimumPrice = $this->minimumSellingPrice($product, $shop);
+        if ($isShared && $sellingPrice < $minimumPrice) {
+            throw ValidationException::withMessages([
+                'selling_price' => '최소 판매가는 ' . number_format($minimumPrice) . '원입니다. 수수료와 지급 포인트를 반영한 금액 이상으로 입력해 주세요.',
+            ]);
+        }
+
+        if ($isShared
+            && (bool) ($product->price_constraint_enabled ?? false)
+            && $product->price_constraint_type === 'range'
+            && $product->price_max !== null
+            && $sellingPrice > (float) $product->price_max) {
+            throw ValidationException::withMessages([
+                'selling_price' => '판매가는 공유자가 설정한 최대 금액 ' . number_format((float) $product->price_max) . '원을 초과할 수 없습니다.',
+            ]);
+        }
+
+        $commission = $this->shopCommissionAmount($sellingPrice + $shippingFee, 1, $settlementType, $settlementRate);
+
+        return [
+            'product_price' => $supplyPrice,
+            'selling_price' => $sellingPrice,
+            'minimum_price' => $minimumPrice,
+            'profit' => round($sellingPrice + $shippingFee - $supplyPrice - $shippingFee - $commission - $rewardPoints, 2),
+        ];
+    }
+
+    private function minimumSellingPrice(Product $product, \App\Models\ShopChannel $shop): float
+    {
+        $supplyPrice = (float) $product->product_price;
+        $shippingFee = $this->productShippingFee($product);
+        $rewardPoints = max(0, (float) ($product->reward_points ?? 0));
+        $settlementType = (int) ($shop->settlement_type ?: 1);
+        $settlementRate = (float) ($shop->settlement_rate ?? 0);
+
+        if ($settlementType === 2) {
+            $minimum = $supplyPrice + $this->shopCommissionAmount(0, 1, $settlementType, $settlementRate) + $rewardPoints;
+        } else {
+            $rate = ($settlementRate / 100) * self::COMMISSION_VAT_MULTIPLIER;
+            $minimum = $rate >= 1
+                ? $supplyPrice
+                : (($supplyPrice + $shippingFee + $rewardPoints) / (1 - $rate)) - $shippingFee;
+        }
+
+        if ((bool) ($product->price_constraint_enabled ?? false) && $product->price_constraint_type === 'range') {
+            $minimum = max($minimum, (float) ($product->price_min ?? 0));
+        }
+
+        return $this->ceilToTen($minimum);
+    }
+
+    private function shopCommissionAmount(float $grossAmount, int $quantity, int $settlementType, float $settlementRate): float
+    {
+        $amount = $settlementType === 2
+            ? $quantity * $settlementRate
+            : $grossAmount * ($settlementRate / 100) * self::COMMISSION_VAT_MULTIPLIER;
+
+        return $this->ceilToTen(max(0, $amount));
+    }
+
+    private function productRebateAmount(Product $product, float $grossAmount): float
+    {
+        $value = (float) ($product->profit_share_value ?? 0);
+        if ($product->profit_share_type === 'percent') {
+            return round($grossAmount * ($value / 100), 2);
+        }
+
+        if ($product->profit_share_type === 'fixed') {
+            return round($value, 2);
+        }
+
+        return 0;
+    }
+
+    private function ceilToTen(float $amount): float
+    {
+        return ceil(max(0, $amount) / 10) * 10;
+    }
+
+    private function productShippingFee(Product $product): float
+    {
+        if (in_array($product->shipping_policy_type ?? null, ['paid', 'free_conditional'], true)) {
+            return max(0, (float) ($product->shipping_base_fee ?? 0));
+        }
+
+        return 0;
+    }
+
+
+    public function exportOwnProducts(Request $request)
     {
         $admin = Auth::guard('admin')->user();
         if (!$admin) return redirect()->route('channel.login');
 
-        $products = Product::where('vendor_id', $admin->vendor_id)
+        $query = Product::where('vendor_id', $admin->vendor_id)
             ->with(['category'])
             ->withCount([
                 'shopChannelProducts as shop_channels_count' => function ($query) {
@@ -492,9 +636,45 @@ class ChannelProductController extends Controller
                 'shopChannelProducts as sales_request_count' => function ($query) {
                     $query->where('product_type', 'partial');
                 },
-            ])
-            ->orderByDesc('id')
-            ->get();
+            ]);
+
+        $keyword = trim((string) $request->input('q', ''));
+        if ($keyword !== '') {
+            $query->where(function ($search) use ($keyword) {
+                $search->where('product_name', 'like', '%' . $keyword . '%')
+                    ->orWhere('product_code', 'like', '%' . $keyword . '%');
+            });
+        }
+
+        $categoryId = (int) $request->input('category_id', 0);
+        if ($categoryId > 0) {
+            $query->whereIn('category_id', $this->categoryWithDescendantIds($categoryId));
+        }
+
+        $status = $request->input('status', '');
+        if ($status === 'stop_notice') {
+            $query->whereNotNull('stop_notice_at');
+        } elseif (in_array((string) $status, ['0', '1'], true)) {
+            $query->where('status', (int) $status);
+        }
+
+        $saleScope = $request->input('sale_scope', '');
+        if ($saleScope === 'own') {
+            $query->where('is_public', 'No')->where('is_partial', 'No');
+        } elseif ($saleScope === 'public') {
+            $query->where('is_public', 'Yes');
+        } elseif ($saleScope === 'partial') {
+            $query->where('is_partial', 'Yes');
+        }
+
+        if ($request->filled('price_min') && is_numeric($request->input('price_min'))) {
+            $query->where('product_price', '>=', (float) $request->input('price_min'));
+        }
+        if ($request->filled('price_max') && is_numeric($request->input('price_max'))) {
+            $query->where('product_price', '<=', (float) $request->input('price_max'));
+        }
+
+        $products = $query->orderByDesc('id')->get();
 
         $filename = 'own-products-' . now()->format('Ymd-His') . '.csv';
 
@@ -522,6 +702,17 @@ class ChannelProductController extends Controller
         }, $filename, [
             'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
+    }
+
+    private function categoryWithDescendantIds(int $categoryId): array
+    {
+        $ids = [$categoryId];
+        $children = Category::where('parent_id', $categoryId)->pluck('id')->all();
+        foreach ($children as $childId) {
+            $ids = array_merge($ids, $this->categoryWithDescendantIds((int) $childId));
+        }
+
+        return array_values(array_unique($ids));
     }
 
     public function productCategories()
@@ -832,6 +1023,23 @@ class ChannelProductController extends Controller
             }
             if ($profitShareType === 'percent' && isset($data['profit_share_value']) && (float) $data['profit_share_value'] > 100) {
                 throw ValidationException::withMessages(['profit_share_value' => '정률 수익배분은 100% 이하로 입력해 주세요.']);
+            }
+            if (($data['price_constraint_type'] ?? null) === 'fixed' && in_array($data['sale_scope'] ?? 'own', ['public', 'affiliate'], true)) {
+                if ((int) ($data['reward_points'] ?? 0) > 0) {
+                    throw ValidationException::withMessages(['reward_points' => '판매가 고정 공유상품은 포인트를 제공할 수 없습니다.']);
+                }
+
+                $fixedPrice = (float) ($data['price_fixed'] ?? 0);
+                $minimumRebate = round($fixedPrice * 0.05 * self::COMMISSION_VAT_MULTIPLIER, 2);
+                $rebate = $profitShareType === 'percent'
+                    ? round($fixedPrice * ((float) ($data['profit_share_value'] ?? 0) / 100), 2)
+                    : (float) ($data['profit_share_value'] ?? 0);
+
+                if ($rebate < $minimumRebate) {
+                    throw ValidationException::withMessages([
+                        'profit_share_value' => '판매가 고정 공유상품의 리베이트는 기본 수수료 ' . number_format($minimumRebate) . '원 이상이어야 합니다.',
+                    ]);
+                }
             }
         }
 
@@ -1791,6 +1999,13 @@ class ChannelProductController extends Controller
             return redirect()->route('channel.product_own')->with('error_message', '권한이 없습니다.');
         }
 
+        $orderedCount = OrdersProduct::where('product_id', $product->id)->count();
+        if ($orderedCount > 0) {
+            $message = '주문 이력이 있는 상품은 삭제할 수 없습니다. 판매중지 또는 판매중지 예고를 사용해 주세요.';
+            if ($request->ajax()) return response()->json(['status' => false, 'message' => $message]);
+            return redirect()->route('channel.product_own')->with('error_message', $message);
+        }
+
         \App\Models\ShopChannelProduct::where('product_id', $product->id)->delete();
         $product->delete();
 
@@ -1872,6 +2087,10 @@ class ChannelProductController extends Controller
         }
 
         $actionName = $data['status'] == 1 ? '허용' : '거부';
+        if (count($requests) === 1) {
+            return response()->json(['status' => true, 'message' => '판매 요청이 성공적으로 ' . $actionName . ' 처리되었습니다.']);
+        }
+
         return response()->json(['status' => true, 'message' => count($requests) . '건의 판매 요청이 성공적으로 ' . $actionName . ' 처리되었습니다.']);
     }
 }

@@ -65,6 +65,7 @@
                                             <td class="t_c" style="color: #d90000; font-weight: bold;">{{ number_format($jp->discount_price) }}원</td>
                                             <td class="t_c">{{ $jp->start_date }} ~ {{ $jp->end_date }}</td>
                                             <td class="t_c">
+                                                <a href="{{ route('channel.order.joint_list', ['search_type' => 'product_code', 'keyword' => $jp->product_code, 'detail_open' => 1]) }}" class="btn02">주문내역</a>
                                                 <a href="{{ route('channel.joint_purchase.edit', ['id' => $jp->id]) }}" class="btn02 col7">수정</a>
                                                 <a href="/shop-channel/joint-purchases/{{ $jp->id }}" class="btn02 col5" target="_blank">상세화면</a>
                                             </td>

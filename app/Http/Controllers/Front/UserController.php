@@ -742,10 +742,8 @@ class UserController extends Controller
         }
 
         if ($request->type === 'confirm') {
-            $item->item_status = 'Confirmed';
-            $item->status_code = OrderItemStatus::CONFIRMED;
+            $item->setStatus(OrderItemStatus::CONFIRMED);
             $item->confirmed_at = now();
-            $item->updated_at = now();
             $item->save();
 
             // Save rating and review to ratings table
@@ -765,20 +763,13 @@ class UserController extends Controller
             ]);
         } else {
             $claimType = $request->type;
-            $statusMap = [
-                'cancel' => 'Cancel Requested',
-                'return' => 'Return Requested',
-                'exchange' => 'Exchange Requested'
-            ];
             $statusCodeMap = [
                 'cancel' => OrderItemStatus::CANCEL_REQUESTED,
                 'return' => OrderItemStatus::RETURN_REQUESTED,
                 'exchange' => OrderItemStatus::EXCHANGE_REQUESTED,
             ];
 
-            $item->item_status = $statusMap[$claimType];
-            $item->status_code = $statusCodeMap[$claimType];
-            $item->updated_at = now();
+            $item->setStatus($statusCodeMap[$claimType]);
             $item->save();
 
             $detailReason = $request->detail_reason ?? '';

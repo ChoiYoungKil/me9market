@@ -39,7 +39,7 @@
                 ['slide' => '106-123', 'screen' => 'RF-02-05', 'name' => '상품관리', 'intent' => '자사상품 등록, 공개/부분공개, 제약조건, 판매요청 관리', 'url' => '/channel/product/own', 'state' => 'partial', 'note' => '공개/부분공유 조회와 승인 상태 연동 보강'],
                 ['slide' => '124-132', 'screen' => 'RF-02-06', 'name' => '공동구매관리', 'intent' => '공동구매 상품 등록, 기간, 혜택, 발주 담당자 설정', 'url' => '/channel/joint-purchase/list', 'state' => 'partial', 'note' => '기본 CRUD는 있으나 세부 조건은 단순화'],
                 ['slide' => '134-162', 'screen' => 'RF-02-07', 'name' => '주문관리', 'intent' => '주문 상세, 정상/취소/반품/교환 주문 처리와 송장 입력', 'url' => '/channel/order/list', 'state' => 'partial', 'note' => 'Shop 주문과 orders_products 상태를 같이 표시, 팝업 세부 동작 추가 검증 필요'],
-                ['slide' => '164-166', 'screen' => 'RF-02-08', 'name' => '정산관리', 'intent' => '기간별 정산 집행 현황과 상세 정산 확인', 'url' => '/channel/settlement/list', 'state' => 'partial', 'note' => '구매확정 상품 기준 계산 구현'],
+                ['slide' => '164-166', 'screen' => 'RF-02-08', 'name' => '정산관리', 'intent' => '기간별 정산 집행 현황과 상세 정산 확인', 'url' => '/channel/settlement/list', 'state' => 'partial', 'note' => '구매확정 상품과 Shop 채널 요율 기준 계산, 전체관리자 정산 생성 기준과 공유'],
                 ['slide' => '168-197', 'screen' => 'RF-02-09~13', 'name' => '서브관리자/발주담당/포인트/배송비/환불정책', 'intent' => '운영 보조 계정과 정책성 데이터를 관리', 'url' => '/channel/settings/refund', 'state' => 'partial', 'note' => '환불정책 CRUD, 발주담당 목록 DB 연동, 배송/포인트 화면 연결'],
             ],
             'flows' => [
@@ -90,12 +90,13 @@
             'code' => 'RF-05',
             'title' => '전체관리자 / 디자인 패턴',
             'intent' => 'Me9 운영자가 전체 플랫폼을 관리하고, 관리자 화면 전반에 쓰일 리스트/갤러리/보기/입력/레이어/로딩 패턴을 정의합니다.',
-            'summary' => ['관리자 로그인', '대시보드', '리스트/갤러리/보기 패턴', '입력폼', '팝업/레이어', '상태 진행창'],
+            'summary' => ['관리자 로그인', '대시보드', '전체 정산관리', '리스트/갤러리/보기 패턴', '입력폼', '팝업/레이어', '상태 진행창'],
             'status' => '부분 구현',
             'accent' => '#dc2626',
             'items' => [
                 ['slide' => '247', 'screen' => 'RF-05-01', 'name' => '전체관리자 로그인', 'intent' => '별도 관리자 주소로 로그인', 'url' => '/admin/login', 'state' => 'done', 'note' => '기존 admin guard 로그인'],
                 ['slide' => '249', 'screen' => 'RF-05-02-01', 'name' => '대시보드', 'intent' => '3분할 블록형 대시보드와 메뉴 구조', 'url' => '/admin/dashboard', 'state' => 'partial', 'note' => '기존 관리자 대시보드와 혼재'],
+                ['slide' => '164-166 연계', 'screen' => 'RF-05-SETTLEMENT', 'name' => '전체관리자 정산관리', 'intent' => '구매확정 주문을 기준으로 채널별 요율 정산자료를 생성하고 완료 처리', 'url' => '/admin/settlements', 'state' => 'done', 'note' => 'settlement_runs, settlement_items 별도 테이블과 Shop 채널 정산 요율 연동'],
                 ['slide' => '250-254', 'screen' => 'RF-05-02-02~06', 'name' => '리스트/갤러리/보기 패턴', 'intent' => '관리자 공통 화면 패턴', 'url' => '/admin/sub03', 'state' => 'partial', 'note' => '패턴 확인용 sub 화면 존재'],
                 ['slide' => '255-258', 'screen' => 'RF-05-02-07~10', 'name' => '입력/팝업/레이어 패턴', 'intent' => '폼, 작은 레이어, 별도 팝업, 대형 딤 레이어', 'url' => '/admin/sub02', 'state' => 'partial', 'note' => '여러 샘플 페이지로 분산'],
                 ['slide' => '259', 'screen' => 'RF-05-02-11', 'name' => '상태 진행창', 'intent' => 'Ajax/대용량 처리 중 전체 화면 클릭 방지 로딩', 'url' => '/admin/loading', 'state' => 'partial', 'note' => '로딩 샘플 화면'],
@@ -126,6 +127,13 @@
         ['title' => '채널 관리자', 'lines' => ['아이디: john@admin.com', '비밀번호: 123456'], 'url' => '/channel/login'],
         ['title' => '발주사', 'lines' => ['아이디: partner@main.com', '비밀번호: 123456'], 'url' => '/distributor/login'],
         ['title' => '전체 관리자', 'lines' => ['아이디: admin@admin.com', '비밀번호: 123456'], 'url' => '/admin/login'],
+    ];
+
+    $quickMenus = [
+        ['title' => '전체관리자 정산관리', 'desc' => '정산자료 생성, 상세 품목, 완료 처리', 'url' => '/admin/settlements'],
+        ['title' => '채널 정산관리', 'desc' => 'Shop 채널별 기간 정산 조회', 'url' => '/channel/settlement/list'],
+        ['title' => '채널 주문목록', 'desc' => '주문/취소/반품/교환 상태 검색', 'url' => '/channel/order/list'],
+        ['title' => '공동구매 주문목록', 'desc' => '공동구매 주문만 분리 조회', 'url' => '/channel/order/joint/list'],
     ];
 @endphp
 <!DOCTYPE html>
@@ -302,6 +310,45 @@
             font-size: 12px;
         }
 
+        .quick-menu-title {
+            margin: 16px 0 8px;
+            padding-top: 14px;
+            border-top: 1px solid var(--line);
+            font-weight: 800;
+            font-size: 13px;
+        }
+
+        .quick-menu-list {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        .quick-menu {
+            min-height: 72px;
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            padding: 10px;
+            display: grid;
+            align-content: start;
+            gap: 4px;
+            text-decoration: none;
+            background: #fff;
+        }
+
+        .quick-menu strong {
+            font-size: 13px;
+        }
+
+        .quick-menu span {
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        .quick-menu:hover {
+            border-color: #111827;
+        }
+
         .rf-nav {
             display: grid;
             grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -338,7 +385,7 @@
 
         .toolbar {
             display: grid;
-            grid-template-columns: minmax(260px, 1fr) auto auto auto;
+            grid-template-columns: minmax(260px, 1fr) auto auto auto auto auto;
             gap: 10px;
             margin: 16px 0;
         }
@@ -540,7 +587,8 @@
             }
 
             .metric-grid,
-            .rf-nav {
+            .rf-nav,
+            .quick-menu-list {
                 grid-template-columns: 1fr;
             }
 
@@ -592,8 +640,8 @@
                 <div class="metric-grid">
                     <div class="metric"><b>5</b><span>대분류 RF 영역</span></div>
                     <div class="metric"><b>260</b><span>PPTX 슬라이드</span></div>
-                    <div class="metric"><b>31</b><span>대표 검증 항목</span></div>
-                    <div class="metric"><b>307</b><span>현재 Laravel 라우트</span></div>
+                    <div class="metric"><b>32</b><span>대표 검증 항목</span></div>
+                    <div class="metric"><b>330</b><span>현재 Laravel 라우트</span></div>
                 </div>
             </div>
 
@@ -610,6 +658,15 @@
                             </div>
                             <a class="open-link" href="{{ $account['url'] }}" target="_blank" rel="noreferrer">열기</a>
                         </div>
+                    @endforeach
+                </div>
+                <div class="quick-menu-title">운영 메뉴 바로가기</div>
+                <div class="quick-menu-list">
+                    @foreach ($quickMenus as $menu)
+                        <a class="quick-menu" href="{{ $menu['url'] }}" target="_blank" rel="noreferrer">
+                            <strong>{{ $menu['title'] }}</strong>
+                            <span>{{ $menu['desc'] }}</span>
+                        </a>
                     @endforeach
                 </div>
             </div>
@@ -635,6 +692,8 @@
             </select>
             <button class="copy-button" type="button" data-copy="/storyboard-test">현재 URL 복사</button>
             <a class="open-link primary" href="/admin/dashboard" target="_blank" rel="noreferrer">관리자 바로가기</a>
+            <a class="open-link primary" href="/admin/settlements" target="_blank" rel="noreferrer">전체관리자 정산</a>
+            <a class="open-link" href="/channel/settlement/list" target="_blank" rel="noreferrer">채널 정산</a>
         </section>
 
         @foreach ($sections as $section)

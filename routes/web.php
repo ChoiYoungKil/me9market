@@ -189,6 +189,13 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         // PDF 인보이스 렌더링 (Dompdf 패키지 사용)
         Route::get('orders/invoice/pdf/{id}', 'OrderController@viewPDFInvoice');
 
+        // 정산관리
+        Route::get('settlements', 'SettlementController@index')->name('admin.settlements.index');
+        Route::post('settlements/generate', 'SettlementController@generate')->name('admin.settlements.generate');
+        Route::get('settlements/preview', 'SettlementController@preview')->name('admin.settlements.preview');
+        Route::get('settlements/{id}', 'SettlementController@show')->name('admin.settlements.show');
+        Route::post('settlements/{id}/complete', 'SettlementController@complete')->name('admin.settlements.complete');
+
         // 배송비 관리 모듈 (Shipping Charges module)
         // 배송비 관리 페이지 (admin/shipping/shipping_charges.blade.php) 렌더링 (관리자 전용)
         Route::get('shipping-charges', 'ShippingController@shippingCharges');
@@ -402,6 +409,7 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
             // Order Management (Sub04)
             Route::prefix('order')->group(function () {
                 Route::get('/list', 'ChannelController@orderList')->name('channel.order.list');
+                Route::get('/joint/list', 'ChannelController@orderJointPurchaseList')->name('channel.order.joint_list');
                 Route::get('/cancel/list', 'ChannelController@orderCancelList')->name('channel.order.cancel_list');
                 Route::get('/return/list', 'ChannelController@orderReturnRequestList')->name('channel.order.return_list');
                 Route::get('/exchange/list', 'ChannelController@orderExchangeRequestList')->name('channel.order.exchange_list');
@@ -434,26 +442,26 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
                 Route::get('/edit/{id}', 'ChannelController@jointPurchaseEdit')->name('channel.joint_purchase.edit');
                 Route::post('/update/{id}', 'ChannelController@jointPurchaseUpdate')->name('channel.joint_purchase.update');
             });
-        });
 
-        // Settings / Additional Info (Sub00)
-        Route::prefix('settings')->group(function () {
-            Route::get('/delivery', 'ChannelController@deliveryChargeList')->name('channel.delivery.list');
-            Route::get('/refund', 'ChannelController@cancelRefundList')->name('channel.refund.list');
-            
-            // 취소/환불 정책 CRUD
-            Route::post('/refund/store', 'ChannelController@storeCancelRefundPolicy')->name('channel.refund.store');
-            Route::get('/refund/{id}', 'ChannelController@getCancelRefundPolicy')->name('channel.refund.get');
-            Route::post('/refund/{id}/update', 'ChannelController@updateCancelRefundPolicy')->name('channel.refund.update');
-            Route::post('/refund/{id}/delete', 'ChannelController@deleteCancelRefundPolicy')->name('channel.refund.delete');
-            Route::post('/refund/{id}/copy', 'ChannelController@copyCancelRefundPolicy')->name('channel.refund.copy');
-            
-            Route::get('/info', 'ChannelController@infoManagement')->name('channel.info.management');
-            Route::post('/info/update', 'ChannelController@updateInfo')->name('channel.info.update');
-            Route::post('/update-password', 'ChannelController@updatePassword')->name('channel.update_password');
-            Route::get('/order-manager', 'ChannelController@orderManagerList')->name('channel.order.manager');
-            Route::get('/points', 'ChannelController@pointList')->name('channel.point.list');
-            Route::get('/sub-accounts', 'ChannelController@subList')->name('channel.sub_accounts.list');
+            // Settings / Additional Info (Sub00)
+            Route::prefix('settings')->group(function () {
+                Route::get('/delivery', 'ChannelController@deliveryChargeList')->name('channel.delivery.list');
+                Route::get('/refund', 'ChannelController@cancelRefundList')->name('channel.refund.list');
+
+                // 취소/환불 정책 CRUD
+                Route::post('/refund/store', 'ChannelController@storeCancelRefundPolicy')->name('channel.refund.store');
+                Route::get('/refund/{id}', 'ChannelController@getCancelRefundPolicy')->name('channel.refund.get');
+                Route::post('/refund/{id}/update', 'ChannelController@updateCancelRefundPolicy')->name('channel.refund.update');
+                Route::post('/refund/{id}/delete', 'ChannelController@deleteCancelRefundPolicy')->name('channel.refund.delete');
+                Route::post('/refund/{id}/copy', 'ChannelController@copyCancelRefundPolicy')->name('channel.refund.copy');
+
+                Route::get('/info', 'ChannelController@infoManagement')->name('channel.info.management');
+                Route::post('/info/update', 'ChannelController@updateInfo')->name('channel.info.update');
+                Route::post('/update-password', 'ChannelController@updatePassword')->name('channel.update_password');
+                Route::get('/order-manager', 'ChannelController@orderManagerList')->name('channel.order.manager');
+                Route::get('/points', 'ChannelController@pointList')->name('channel.point.list');
+                Route::get('/sub-accounts', 'ChannelController@subList')->name('channel.sub_accounts.list');
+            });
         });
     });
 

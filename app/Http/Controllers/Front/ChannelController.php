@@ -546,12 +546,13 @@ class ChannelController extends Controller
         ]);
     }
 
-    public function productOwn()
+    public function productOwn(Request $request)
     {
         $admin = Auth::guard('admin')->user();
         if (!$admin) return redirect()->route('channel.login');
 
-        $products = \App\Models\Product::where('vendor_id', $admin->vendor_id)
+        $filters = $this->productListFilters($request);
+        $query = \App\Models\Product::where('vendor_id', $admin->vendor_id)
             ->with([
                 'category',
                 'images',
@@ -566,45 +567,88 @@ class ChannelController extends Controller
                 'shopChannelProducts as sales_request_count' => function ($query) {
                     $query->where('product_type', 'partial');
                 },
-            ])
-            ->orderBy('id', 'desc')
-            ->paginate(20);
+            ]);
+        $this->applyProductListFilters($query, $filters, false);
+
+        $products = $query->orderBy('id', 'desc')
+            ->paginate($filters['per_page'])
+            ->appends($request->query());
 
         return view('channel.sub02.product_own', [
             'dep1_id' => '02',
-            'products' => $products
+            'products' => $products,
+            'filters' => $filters,
+            'categoryOptions' => $this->productCategoryOptions(),
         ]);
     }
 
-    public function productPublic()
+    public function productPublic(Request $request)
     {
         $admin = Auth::guard('admin')->user();
         if (!$admin) return redirect()->route('channel.login');
 
-        $products = \App\Models\Product::where('is_public', 'Yes')
-            ->with(['category', 'images', 'vendor.vendorbusinessdetails'])
-            ->orderBy('id', 'desc')
-            ->paginate(20);
+        $filters = $this->productListFilters($request);
+        $query = \App\Models\Product::where('is_public', 'Yes')
+            ->with(['category', 'images', 'vendor.vendorbusinessdetails']);
+        $this->applyProductListFilters($query, $filters, true);
+
+        $products = $query->orderBy('id', 'desc')
+            ->paginate($filters['per_page'])
+            ->appends($request->query());
 
         return view('channel.sub02.product_public', [
             'dep1_id' => '02',
-            'products' => $products
+            'products' => $products,
+            'filters' => $filters,
+            'categoryOptions' => $this->productCategoryOptions(),
         ]);
     }
 
-    public function productPartial()
+    public function productPartial(Request $request)
     {
         $admin = Auth::guard('admin')->user();
         if (!$admin) return redirect()->route('channel.login');
 
-        $products = \App\Models\Product::where('is_partial', 'Yes')
-            ->with(['category', 'images', 'vendor.vendorbusinessdetails'])
-            ->orderBy('id', 'desc')
-            ->paginate(20);
+        $filters = $this->productListFilters($request);
+        $filters['request_states'] = collect((array) $request->input('request_states', []))
+            ->map(fn ($state) => (string) $state)
+            ->filter(fn ($state) => in_array($state, ['available', 'pending', 'approved', 'rejected'], true))
+            ->values()
+            ->all();
+        $query = \App\Models\Product::where('is_partial', 'Yes')
+            ->with(['category', 'images', 'vendor.vendorbusinessdetails']);
+        $this->applyProductListFilters($query, $filters, true);
+        if (!empty($filters['request_states'])) {
+            $shopChannelIds = \App\Models\ShopChannel::where('vendor_id', $admin->vendor_id)->pluck('id')->all();
+            $query->where(function ($stateQuery) use ($filters, $shopChannelIds) {
+                if (in_array('available', $filters['request_states'], true)) {
+                    $stateQuery->orWhereDoesntHave('shopChannelProducts', function ($requestQuery) use ($shopChannelIds) {
+                        $requestQuery->whereIn('shop_channel_id', $shopChannelIds)
+                            ->where('product_type', 'partial');
+                    });
+                }
+
+                foreach (['pending', 'approved', 'rejected'] as $approvalStatus) {
+                    if (in_array($approvalStatus, $filters['request_states'], true)) {
+                        $stateQuery->orWhereHas('shopChannelProducts', function ($requestQuery) use ($shopChannelIds, $approvalStatus) {
+                            $requestQuery->whereIn('shop_channel_id', $shopChannelIds)
+                                ->where('product_type', 'partial')
+                                ->where('approval_status', $approvalStatus);
+                        });
+                    }
+                }
+            });
+        }
+
+        $products = $query->orderBy('id', 'desc')
+            ->paginate($filters['per_page'])
+            ->appends($request->query());
 
         return view('channel.sub02.product_partial', [
             'dep1_id' => '02',
-            'products' => $products
+            'products' => $products,
+            'filters' => $filters,
+            'categoryOptions' => $this->productCategoryOptions(),
         ]);
     }
 
@@ -613,23 +657,158 @@ class ChannelController extends Controller
         $admin = Auth::guard('admin')->user();
         if (!$admin) return redirect()->route('channel.login');
 
+        $filters = [
+            'q' => trim((string) $request->input('q', '')),
+            'requester' => trim((string) $request->input('requester', '')),
+            'request_status' => $request->input('request_status', ''),
+            'per_page' => $this->normalizedPerPage($request),
+        ];
+
         // Fetch requests for products belonging to THIS vendor (where others requested permission)
-        $requests = \App\Models\ShopChannelProduct::whereHas('product', function($query) use ($admin) {
+        $query = \App\Models\ShopChannelProduct::whereHas('product', function($query) use ($admin, $filters) {
                 $query->where('vendor_id', $admin->vendor_id);
+                if ($filters['q'] !== '') {
+                    $query->where(function ($search) use ($filters) {
+                        $search->where('product_name', 'like', '%' . $filters['q'] . '%')
+                            ->orWhere('product_code', 'like', '%' . $filters['q'] . '%');
+                    });
+                }
             })
-            ->where('product_type', 'partial')
+            ->where('product_type', 'partial');
+
+        if ($filters['request_status'] !== '' && in_array((string) $filters['request_status'], ['0', '1', '2'], true)) {
+            $query->where('status', (int) $filters['request_status']);
+        }
+        if ($filters['requester'] !== '') {
+            $query->whereHas('shopChannel', function ($shopQuery) use ($filters) {
+                $shopQuery->where('channel_name', 'like', '%' . $filters['requester'] . '%')
+                    ->orWhere('channel_code', 'like', '%' . $filters['requester'] . '%')
+                    ->orWhereHas('vendor', function ($vendorQuery) use ($filters) {
+                        $vendorQuery->where('name', 'like', '%' . $filters['requester'] . '%')
+                            ->orWhere('email', 'like', '%' . $filters['requester'] . '%');
+                    });
+            });
+        }
+
+        $requests = $query
             ->with(['product' => function($query) {
                 $query->with(['category', 'images']);
             }, 'shopChannel' => function($query) {
                 $query->with('vendor'); // To show who is requesting
             }])
             ->orderBy('created_at', 'desc')
-            ->paginate(10);
+            ->paginate($filters['per_page'])
+            ->appends($request->query());
 
         return view('channel.sub02.product_request', [
             'dep1_id' => '02',
-            'requests' => $requests
+            'requests' => $requests,
+            'filters' => $filters,
         ]);
+    }
+
+    private function normalizedPerPage(Request $request): int
+    {
+        $perPage = (int) $request->input('per_page', 20);
+        return in_array($perPage, [20, 40, 60, 80, 100], true) ? $perPage : 20;
+    }
+
+    private function productListFilters(Request $request): array
+    {
+        return [
+            'q' => trim((string) $request->input('q', '')),
+            'category_id' => (int) $request->input('category_id', 0),
+            'status' => $request->input('status', ''),
+            'sale_scope' => $request->input('sale_scope', ''),
+            'seller' => trim((string) $request->input('seller', '')),
+            'price_min' => $request->input('price_min', ''),
+            'price_max' => $request->input('price_max', ''),
+            'per_page' => $this->normalizedPerPage($request),
+        ];
+    }
+
+    private function applyProductListFilters($query, array $filters, bool $includeSeller): void
+    {
+        if ($filters['q'] !== '') {
+            $query->where(function ($search) use ($filters) {
+                $search->where('product_name', 'like', '%' . $filters['q'] . '%')
+                    ->orWhere('product_code', 'like', '%' . $filters['q'] . '%');
+            });
+        }
+
+        if ($filters['category_id'] > 0) {
+            $query->whereIn('category_id', $this->categoryWithDescendantIds($filters['category_id']));
+        }
+
+        if ($filters['status'] !== '') {
+            if ($filters['status'] === 'stop_notice') {
+                $query->whereNotNull('stop_notice_at');
+            } elseif (in_array((string) $filters['status'], ['0', '1'], true)) {
+                $query->where('status', (int) $filters['status']);
+            }
+        }
+
+        if ($filters['sale_scope'] !== '') {
+            if ($filters['sale_scope'] === 'own') {
+                $query->where('is_public', 'No')->where('is_partial', 'No');
+            } elseif ($filters['sale_scope'] === 'public') {
+                $query->where('is_public', 'Yes');
+            } elseif ($filters['sale_scope'] === 'partial') {
+                $query->where('is_partial', 'Yes');
+            }
+        }
+
+        if ($includeSeller && $filters['seller'] !== '') {
+            $query->whereHas('vendor', function ($vendorQuery) use ($filters) {
+                $vendorQuery->where('name', 'like', '%' . $filters['seller'] . '%')
+                    ->orWhere('email', 'like', '%' . $filters['seller'] . '%')
+                    ->orWhereHas('vendorbusinessdetails', function ($businessQuery) use ($filters) {
+                        $businessQuery->where('shop_name', 'like', '%' . $filters['seller'] . '%')
+                            ->orWhere('company_name', 'like', '%' . $filters['seller'] . '%');
+                    });
+            });
+        }
+
+        if ($filters['price_min'] !== '' && is_numeric($filters['price_min'])) {
+            $query->where('product_price', '>=', (float) $filters['price_min']);
+        }
+        if ($filters['price_max'] !== '' && is_numeric($filters['price_max'])) {
+            $query->where('product_price', '<=', (float) $filters['price_max']);
+        }
+    }
+
+    private function categoryWithDescendantIds(int $categoryId): array
+    {
+        $ids = [$categoryId];
+        $children = \App\Models\Category::where('parent_id', $categoryId)->pluck('id')->all();
+        foreach ($children as $childId) {
+            $ids = array_merge($ids, $this->categoryWithDescendantIds((int) $childId));
+        }
+        return array_values(array_unique($ids));
+    }
+
+    private function productCategoryOptions(): array
+    {
+        $categories = \App\Models\Category::where('status', 1)
+            ->select('id', 'parent_id', 'category_name')
+            ->orderBy('parent_id')
+            ->orderBy('category_name')
+            ->get()
+            ->groupBy('parent_id');
+
+        $options = [];
+        $walk = function ($parentId, $prefix = '') use (&$walk, &$options, $categories) {
+            foreach ($categories->get($parentId, collect()) as $category) {
+                $options[] = [
+                    'id' => $category->id,
+                    'name' => $prefix . $category->category_name,
+                ];
+                $walk($category->id, $prefix . $category->category_name . ' > ');
+            }
+        };
+        $walk(0);
+
+        return $options;
     }
     
     public function community()
@@ -1001,111 +1180,308 @@ class ChannelController extends Controller
     // 상품 관리 (Sub02) 관련 메서드는 위에 이미 정의되어 있습니다.
 
     // 주문 관리 (Sub04)
-    public function orderList()
+    public function orderList(Request $request)
     {
-        $vendor_id = \Illuminate\Support\Facades\Auth::guard('admin')->user()->vendor_id;
-        $orders = $this->fetchOrders($vendor_id);
-        return view('channel.sub04.order_list', ['dep1_id' => '04', 'orders' => $orders]);
-    }
-    
-    public function orderCancelList()
-    {
-        $vendor_id = \Illuminate\Support\Facades\Auth::guard('admin')->user()->vendor_id;
-        $orders = $this->fetchOrders($vendor_id, ['취소요청', '취소완료']);
-        return view('channel.sub04.order_list', ['dep1_id' => '04', 'orders' => $orders]);
-    }
-
-    public function orderReturnRequestList()
-    {
-        $vendor_id = \Illuminate\Support\Facades\Auth::guard('admin')->user()->vendor_id;
-        $orders = $this->fetchOrders($vendor_id, ['반품요청', '반품완료']);
-        return view('channel.sub04.order_list', ['dep1_id' => '04', 'orders' => $orders]);
-    }
-
-    public function orderExchangeRequestList()
-    {
-        $vendor_id = \Illuminate\Support\Facades\Auth::guard('admin')->user()->vendor_id;
-        $orders = $this->fetchOrders($vendor_id, ['교환요청', '교환완료']);
-        return view('channel.sub04.order_list', ['dep1_id' => '04', 'orders' => $orders]);
-    }
-
-    private function fetchOrders($vendor_id, $statusFilter = [])
-    {
-        $statusFilterMap = [
-            '취소요청' => 'Cancel Requested',
-            '취소완료' => 'Cancelled',
-            '반품요청' => 'Return Requested',
-            '반품완료' => 'Returned',
-            '교환요청' => 'Exchange Requested',
-            '교환완료' => 'Exchanged'
-        ];
-
-        $fullStatusFilter = [];
-        foreach ($statusFilter as $sf) {
-            $fullStatusFilter[] = $sf;
-            if (isset($statusFilterMap[$sf])) {
-                $fullStatusFilter[] = $statusFilterMap[$sf];
-            }
+        if (!$request->query->has('order_type')) {
+            $request->merge(['order_type' => 'normal']);
         }
 
-        $query = \App\Models\Order::with(['orders_products' => function($q) use ($vendor_id, $fullStatusFilter) {
-            $q->where('vendor_id', $vendor_id);
-            if (!empty($fullStatusFilter)) {
-                $q->whereIn('item_status', $fullStatusFilter);
-            }
-            $q->with('shopChannelProduct');
-        }, 'user', 'claims']);
+        return $this->renderOrderList($request, 'list', $this->normalOrderStatusKeys());
+    }
 
-        // Filter orders that have at least one product matching the criteria
-        $query->whereHas('orders_products', function($q) use ($vendor_id, $fullStatusFilter) {
-            $q->where('vendor_id', $vendor_id);
-            if (!empty($fullStatusFilter)) {
-                $q->whereIn('item_status', $fullStatusFilter);
-            }
-        });
+    public function orderJointPurchaseList(Request $request)
+    {
+        $request->merge(['order_type' => 'joint']);
 
-        $orders = $query->orderBy('created_at', 'desc')->paginate(10);
+        return $this->renderOrderList($request, 'joint', $this->normalOrderStatusKeys());
+    }
+    
+    public function orderCancelList(Request $request)
+    {
+        return $this->renderOrderList($request, 'cancel', [
+            OrderItemStatus::CANCEL_REQUESTED,
+            OrderItemStatus::CANCELLED,
+        ]);
+    }
 
-        $statusMap = [
-            'New' => '결제완료',
-            'In Process' => '배송준비중',
-            'Shipped' => '배송중',
-            'Delivered' => '배송완료',
-            'Confirmed' => '구매확정',
-            'Cancel Requested' => '취소요청',
-            'Cancelled' => '취소완료',
-            'Return Requested' => '반품요청',
-            'Returned' => '반품완료',
-            'Exchange Requested' => '교환요청',
-            'Exchanged' => '교환완료'
+    public function orderReturnRequestList(Request $request)
+    {
+        return $this->renderOrderList($request, 'return', [
+            OrderItemStatus::RETURN_REQUESTED,
+            OrderItemStatus::RETURNED,
+        ]);
+    }
+
+    public function orderExchangeRequestList(Request $request)
+    {
+        return $this->renderOrderList($request, 'exchange', [
+            OrderItemStatus::EXCHANGE_REQUESTED,
+            OrderItemStatus::EXCHANGED,
+        ]);
+    }
+
+    private function renderOrderList(Request $request, string $pageType, array $baseStatusKeys)
+    {
+        $admin = Auth::guard('admin')->user();
+        if (!$admin) return redirect()->route('channel.login');
+
+        $filters = $this->orderListFilters($request);
+        $orders = $this->fetchOrders($admin->vendor_id, $baseStatusKeys, $filters)
+            ->appends($request->query());
+
+        $titles = [
+            'list' => '주문목록',
+            'joint' => '공동구매 주문목록',
+            'cancel' => '취소목록',
+            'return' => '반품목록',
+            'exchange' => '교환목록',
         ];
 
-        // Transform
-        $orders->getCollection()->transform(function($order) use ($statusMap) {
+        return view('channel.sub04.order_list', [
+            'dep1_id' => '04',
+            'orders' => $orders,
+            'filters' => $filters,
+            'orderPageType' => $pageType,
+            'orderPageTitle' => $titles[$pageType] ?? '주문목록',
+            'orderStatusOptions' => $this->orderStatusOptions($baseStatusKeys),
+        ]);
+    }
+
+    private function normalOrderStatusKeys(): array
+    {
+        return [
+            OrderItemStatus::PAID,
+            OrderItemStatus::READY_TO_SHIP,
+            OrderItemStatus::SHIPPING,
+            OrderItemStatus::DELIVERED,
+            OrderItemStatus::CONFIRMED,
+        ];
+    }
+
+    private function orderListFilters(Request $request): array
+    {
+        $searchType = $request->input('search_type', 'all');
+        if (!in_array($searchType, ['all', 'order_no', 'product_name', 'product_code', 'tracking_number'], true)) {
+            $searchType = 'all';
+        }
+
+        $statusInputs = collect((array) $request->input('order_statuses', []))
+            ->flatMap(fn ($status) => is_array($status) ? $status : explode(',', (string) $status));
+
+        $statusFilter = trim((string) $request->input('status_filter', ''));
+        if ($statusFilter !== '') {
+            $statusInputs = $statusInputs->merge(explode(',', $statusFilter));
+        }
+
+        $statusKeys = $statusInputs
+            ->map(fn ($status) => trim((string) $status))
+            ->filter()
+            ->map(fn ($status) => OrderItemStatus::normalize($status))
+            ->filter(fn ($status) => array_key_exists($status, OrderItemStatus::labels()))
+            ->values()
+            ->unique()
+            ->all();
+
+        $perPage = (int) $request->input('per_page', 20);
+        $orderType = $request->input('order_type', '');
+        if (!in_array($orderType, ['', 'all', 'normal', 'joint'], true)) {
+            $orderType = '';
+        }
+        if ($orderType === 'all') {
+            $orderType = '';
+        }
+
+        return [
+            'search_type' => $searchType,
+            'keyword' => trim((string) $request->input('keyword', '')),
+            'date_from' => $request->input('date_from', ''),
+            'date_to' => $request->input('date_to', ''),
+            'order_statuses' => $statusKeys,
+            'buyer' => trim((string) $request->input('buyer', '')),
+            'price_min' => $request->input('price_min', ''),
+            'price_max' => $request->input('price_max', ''),
+            'order_type' => $orderType,
+            'per_page' => in_array($perPage, [20, 40, 60, 80, 100], true) ? $perPage : 20,
+        ];
+    }
+
+    private function fetchOrders($vendor_id, array $baseStatusKeys = [], array $filters = [])
+    {
+        $selectedStatusKeys = $filters['order_statuses'] ?? [];
+        $effectiveStatusKeys = $baseStatusKeys;
+        if (!empty($selectedStatusKeys)) {
+            $effectiveStatusKeys = empty($baseStatusKeys)
+                ? $selectedStatusKeys
+                : array_values(array_intersect($baseStatusKeys, $selectedStatusKeys));
+        }
+
+        $statusValues = $this->orderStatusQueryValues($effectiveStatusKeys);
+        $hasImpossibleStatusFilter = !empty($selectedStatusKeys) && !empty($baseStatusKeys) && empty($effectiveStatusKeys);
+        $itemFilter = function ($q) use ($vendor_id, $filters, $statusValues, $hasImpossibleStatusFilter) {
+            $q->where('vendor_id', $vendor_id);
+
+            if ($hasImpossibleStatusFilter) {
+                $q->whereRaw('1 = 0');
+                return;
+            }
+
+            if (!empty($statusValues)) {
+                $q->where(function ($statusQuery) use ($statusValues) {
+                    $statusQuery->whereIn('status_code', $statusValues)
+                        ->orWhereIn('item_status', $statusValues);
+                });
+            }
+
+            $this->applyOrderTypeFilter($q, $filters['order_type'] ?? '');
+
+            $keyword = $filters['keyword'] ?? '';
+            $searchType = $filters['search_type'] ?? 'all';
+            if ($keyword !== '' && in_array($searchType, ['product_name', 'product_code', 'tracking_number'], true)) {
+                $q->where(function ($search) use ($keyword, $searchType) {
+                    if ($searchType === 'product_name') {
+                        $search->orWhere('product_name', 'like', '%' . $keyword . '%');
+                    }
+                    if ($searchType === 'product_code') {
+                        $search->orWhere('product_code', 'like', '%' . $keyword . '%');
+                    }
+                    if ($searchType === 'tracking_number') {
+                        $search->orWhere('tracking_number', 'like', '%' . $keyword . '%');
+                    }
+                });
+            }
+
+            if (($filters['price_min'] ?? '') !== '' && is_numeric($filters['price_min'])) {
+                $q->whereRaw('CASE WHEN line_total > 0 THEN line_total ELSE product_price * product_qty END >= ?', [(float) $filters['price_min']]);
+            }
+            if (($filters['price_max'] ?? '') !== '' && is_numeric($filters['price_max'])) {
+                $q->whereRaw('CASE WHEN line_total > 0 THEN line_total ELSE product_price * product_qty END <= ?', [(float) $filters['price_max']]);
+            }
+        };
+
+        $query = \App\Models\Order::with([
+            'orders_products' => function($q) use ($itemFilter) {
+                $itemFilter($q);
+                $q->with(['shopChannel', 'shopChannelProduct']);
+            },
+            'user',
+            'claims',
+        ]);
+
+        $query->whereHas('orders_products', $itemFilter);
+
+        $keyword = $filters['keyword'] ?? '';
+        $searchType = $filters['search_type'] ?? 'all';
+        if ($keyword !== '' && $searchType === 'all') {
+            $query->where(function ($mixedQuery) use ($keyword, $vendor_id, $statusValues, $hasImpossibleStatusFilter, $filters) {
+                $orderNumber = $this->orderNumberSearchValue($keyword);
+                $mixedQuery->where(function ($orderQuery) use ($keyword, $orderNumber) {
+                    if ($orderNumber !== null) {
+                        $orderQuery->orWhere('id', (int) $orderNumber)
+                            ->orWhere('id', 'like', '%' . $orderNumber . '%');
+                    }
+                    $orderQuery->orWhere('name', 'like', '%' . $keyword . '%')
+                        ->orWhere('email', 'like', '%' . $keyword . '%')
+                        ->orWhere('mobile', 'like', '%' . $keyword . '%');
+                })->orWhereHas('orders_products', function ($itemQuery) use ($keyword, $vendor_id, $statusValues, $hasImpossibleStatusFilter, $filters) {
+                    $itemQuery->where('vendor_id', $vendor_id);
+                    if ($hasImpossibleStatusFilter) {
+                        $itemQuery->whereRaw('1 = 0');
+                        return;
+                    }
+                    if (!empty($statusValues)) {
+                        $itemQuery->where(function ($statusQuery) use ($statusValues) {
+                            $statusQuery->whereIn('status_code', $statusValues)
+                                ->orWhereIn('item_status', $statusValues);
+                        });
+                    }
+                    $this->applyOrderTypeFilter($itemQuery, $filters['order_type'] ?? '');
+                    if (($filters['price_min'] ?? '') !== '' && is_numeric($filters['price_min'])) {
+                        $itemQuery->whereRaw('CASE WHEN line_total > 0 THEN line_total ELSE product_price * product_qty END >= ?', [(float) $filters['price_min']]);
+                    }
+                    if (($filters['price_max'] ?? '') !== '' && is_numeric($filters['price_max'])) {
+                        $itemQuery->whereRaw('CASE WHEN line_total > 0 THEN line_total ELSE product_price * product_qty END <= ?', [(float) $filters['price_max']]);
+                    }
+                    $itemQuery->where(function ($itemSearch) use ($keyword) {
+                        $itemSearch->where('product_name', 'like', '%' . $keyword . '%')
+                            ->orWhere('product_code', 'like', '%' . $keyword . '%')
+                            ->orWhere('tracking_number', 'like', '%' . $keyword . '%');
+                    });
+                });
+            });
+        } elseif ($keyword !== '' && $searchType === 'order_no') {
+            $orderNumber = $this->orderNumberSearchValue($keyword);
+            $query->where(function ($orderQuery) use ($orderNumber) {
+                if ($orderNumber === null) {
+                    $orderQuery->whereRaw('1 = 0');
+                    return;
+                }
+                $orderQuery->where('id', (int) $orderNumber)
+                    ->orWhere('id', 'like', '%' . $orderNumber . '%');
+            });
+        }
+
+        if (($filters['buyer'] ?? '') !== '') {
+            $buyer = $filters['buyer'];
+            $query->where(function ($buyerQuery) use ($buyer) {
+                $buyerQuery->where('name', 'like', '%' . $buyer . '%')
+                    ->orWhere('email', 'like', '%' . $buyer . '%')
+                    ->orWhere('mobile', 'like', '%' . $buyer . '%');
+            });
+        }
+
+        if (($filters['date_from'] ?? '') !== '') {
+            $query->whereDate('created_at', '>=', $filters['date_from']);
+        }
+        if (($filters['date_to'] ?? '') !== '') {
+            $query->whereDate('created_at', '<=', $filters['date_to']);
+        }
+
+        $orders = $query->orderBy('created_at', 'desc')->paginate($filters['per_page'] ?? 20);
+
+        $productIds = $orders->getCollection()
+            ->flatMap(fn ($order) => $order->orders_products->pluck('product_id'))
+            ->filter()
+            ->unique()
+            ->values();
+
+        $jointProductIds = $productIds->isEmpty()
+            ? collect()
+            : DB::table('joint_purchases')
+                ->whereIn('product_id', $productIds)
+                ->pluck('product_id')
+                ->map(fn ($productId) => (int) $productId)
+                ->flip();
+
+        $orders->getCollection()->transform(function($order) use ($jointProductIds) {
             $order->order_no = 'Me9-' . str_pad($order->id, 8, '0', STR_PAD_LEFT); 
-            $order->shop_name = 'Me9 Market'; 
             $order->user_name = $order->name; 
             $order->claims_data = $order->claims; 
             
-            // Note: $order->orders_products will only contain the filtered items due to 'with' usage above
             $vendorItems = $order->orders_products;
+            $firstItem = $vendorItems->first();
+            $order->shop_name = $firstItem?->shopChannel?->channel_name ?? 'Me9 Market';
             
-            $order->items = $vendorItems->map(function($item) use ($statusMap) {
+            $order->items = $vendorItems->map(function($item) use ($jointProductIds) {
                 $lineTotal = $item->line_total > 0
                     ? $item->line_total
                     : $item->product_price * $item->product_qty;
+                $isJointPurchase = $jointProductIds->has((int) $item->product_id);
 
                 return [
                     'id' => $item->id,
                     'status' => $item->status_code ?: $item->item_status,
-                    'status_label' => $item->status_label ?: ($statusMap[$item->item_status] ?? $item->item_status),
+                    'status_label' => $item->status_label,
+                    'order_type' => $isJointPurchase ? 'joint' : 'normal',
+                    'order_type_label' => $isJointPurchase ? '공동구매' : '일반',
                     'product_name' => $item->product_name,
                     'product_code' => $item->product_code,
-                    'option_name' => $item->product_color . '/' . $item->product_size,
+                    'option_name' => trim(($item->product_color ?: '-') . '/' . ($item->product_size ?: '-'), '/'),
                     'qty' => $item->product_qty,
                     'price' => $item->selling_price ?: $item->product_price,
                     'line_total' => $lineTotal,
-                    'product_type' => $item->shopChannelProduct?->product_type === 'public' ? '공유' : ($item->shopChannelProduct?->product_type === 'partial' ? '부분공유' : '자사'),
+                    'courier_name' => $item->courier_name,
+                    'tracking_number' => $item->tracking_number,
+                    'product_type' => $item->shopChannelProduct?->product_type === 'public' ? '공유' : ($item->shopChannelProduct?->product_type === 'partial' ? '제휴' : '자사'),
                 ];
             });
 
@@ -1117,19 +1493,98 @@ class ChannelController extends Controller
             $order->total_sale_price = $totalProductPrice; 
             $order->total_profit = 0; 
             $order->total_selling_profit = 0; 
-            
-            $order->delivery_fee = 0; 
-            
+            $order->delivery_fee = (int) ($order->shipping_charges ?? 0);
             $order->used_point = 0;
-            $order->total_payment_price = $totalProductPrice; 
+            $order->total_payment_price = $totalProductPrice + $order->delivery_fee;
             $order->earned_point = 0;
-
-            $order->status = $order->items->first()['status_label'] ?? 'Pending';
+            $order->status = $order->items->first()['status_label'] ?? OrderItemStatus::label(OrderItemStatus::PAID);
+            $order->order_type_label = $order->items->pluck('order_type_label')->unique()->implode(', ');
             
             return $order;
         });
 
         return $orders;
+    }
+
+    private function applyOrderTypeFilter($query, string $orderType): void
+    {
+        if ($orderType === 'joint') {
+            $query->whereExists(function ($jointQuery) {
+                $jointQuery->select(DB::raw(1))
+                    ->from('joint_purchases')
+                    ->whereColumn('joint_purchases.product_id', 'orders_products.product_id');
+            });
+        } elseif ($orderType === 'normal') {
+            $query->whereNotExists(function ($jointQuery) {
+                $jointQuery->select(DB::raw(1))
+                    ->from('joint_purchases')
+                    ->whereColumn('joint_purchases.product_id', 'orders_products.product_id');
+            });
+        }
+    }
+
+    private function orderStatusOptions(array $statusKeys = []): array
+    {
+        $options = [
+            OrderItemStatus::PAID => '결제완료',
+            OrderItemStatus::READY_TO_SHIP => '배송대기',
+            OrderItemStatus::SHIPPING => '배송중',
+            OrderItemStatus::DELIVERED => '배송완료',
+            OrderItemStatus::CONFIRMED => '구매확정',
+            OrderItemStatus::CANCEL_REQUESTED => '취소요청',
+            OrderItemStatus::CANCELLED => '취소완료',
+            OrderItemStatus::RETURN_REQUESTED => '반품요청',
+            OrderItemStatus::RETURNED => '반품완료',
+            OrderItemStatus::EXCHANGE_REQUESTED => '교환요청',
+            OrderItemStatus::EXCHANGED => '교환완료',
+        ];
+
+        if (empty($statusKeys)) {
+            return $options;
+        }
+
+        return array_intersect_key($options, array_flip($statusKeys));
+    }
+
+    private function orderNumberSearchValue(string $keyword): ?string
+    {
+        $keyword = trim($keyword);
+        $keyword = preg_replace('/^me9[\s\-_]*/i', '', $keyword);
+        preg_match('/\d+/', $keyword, $matches);
+
+        if (empty($matches[0])) {
+            return null;
+        }
+
+        return ltrim($matches[0], '0') ?: '0';
+    }
+
+    private function orderStatusQueryValues(array $statusKeys): array
+    {
+        $legacyValues = [
+            OrderItemStatus::PAID => ['New', 'Payment Captured'],
+            OrderItemStatus::READY_TO_SHIP => ['In Process', '배송준비중'],
+            OrderItemStatus::SHIPPING => ['Shipped', 'shipping', 'shipped'],
+            OrderItemStatus::DELIVERED => ['Delivered'],
+            OrderItemStatus::CONFIRMED => ['Confirmed'],
+            OrderItemStatus::CANCEL_REQUESTED => ['Cancel Requested'],
+            OrderItemStatus::CANCELLED => ['Cancelled'],
+            OrderItemStatus::RETURN_REQUESTED => ['Return Requested'],
+            OrderItemStatus::RETURNED => ['Returned'],
+            OrderItemStatus::EXCHANGE_REQUESTED => ['Exchange Requested'],
+            OrderItemStatus::EXCHANGED => ['Exchanged'],
+        ];
+
+        $values = [];
+        foreach ($statusKeys as $statusKey) {
+            $values[] = $statusKey;
+            $values[] = OrderItemStatus::label($statusKey);
+            foreach ($legacyValues[$statusKey] ?? [] as $legacyValue) {
+                $values[] = $legacyValue;
+            }
+        }
+
+        return array_values(array_unique(array_filter($values)));
     }
 
     public function inquiryList(Request $request)
@@ -1219,6 +1674,10 @@ class ChannelController extends Controller
     // 추가 정보 / 설정 (Sub00)
     public function deliveryChargeList()
     {
+        if (!Auth::guard('admin')->check()) {
+            return redirect()->route('channel.login');
+        }
+
         return view('channel.sub00.delivery_charge_list', ['dep1_id' => '00']);
     }
 
@@ -1371,6 +1830,10 @@ class ChannelController extends Controller
 
     public function orderManagerList()
     {
+        if (!Auth::guard('admin')->check()) {
+            return redirect()->route('channel.login');
+        }
+
         app(\App\Services\ShopChannelRuntime::class)->ensureDemoData();
 
         $managers = \App\Models\Distributor::withCount('products')
@@ -1385,11 +1848,19 @@ class ChannelController extends Controller
 
     public function pointList()
     {
+        if (!Auth::guard('admin')->check()) {
+            return redirect()->route('channel.login');
+        }
+
         return view('channel.sub00.point_list', ['dep1_id' => '00']);
     }
     
     public function subList()
     {
+        if (!Auth::guard('admin')->check()) {
+            return redirect()->route('channel.login');
+        }
+
         return view('channel.sub00.sub_accounts_list', ['dep1_id' => '00']);
     }
 
