@@ -3,34 +3,36 @@
 @section('page_type', 'sub')
 
 @php
-    $statusMap = [
-        'New' => '결제 완료',
-        'In Process' => '배송 준비중',
-        'Shipped' => '배송 중',
-        'Delivered' => '배송완료',
-        'Confirmed' => '구매 확정',
-        'Cancel Requested' => '취소신청중',
-        'Cancelled' => '취소완료',
-        'Return Requested' => '반품신청중',
-        'Returned' => '반품완료',
-        'Exchange Requested' => '교환신청중',
-        'Exchanged' => '교환완료'
-    ];
-
     $purchasedItems = $order->orders_products->filter(function($p) {
-        return !in_array($p->item_status, ['Cancelled', 'Cancel Requested', 'Return Requested', 'Returned', 'Exchange Requested', 'Exchanged']);
+        return !in_array($p->normalized_status, [
+            \App\Support\OrderItemStatus::CANCELLED,
+            \App\Support\OrderItemStatus::CANCEL_REQUESTED,
+            \App\Support\OrderItemStatus::RETURN_REQUESTED,
+            \App\Support\OrderItemStatus::RETURNED,
+            \App\Support\OrderItemStatus::EXCHANGE_REQUESTED,
+            \App\Support\OrderItemStatus::EXCHANGED,
+        ], true);
     });
 
     $cancelledItems = $order->orders_products->filter(function($p) {
-        return in_array($p->item_status, ['Cancel Requested', 'Cancelled']);
+        return in_array($p->normalized_status, [
+            \App\Support\OrderItemStatus::CANCEL_REQUESTED,
+            \App\Support\OrderItemStatus::CANCELLED,
+        ], true);
     });
 
     $returnedItems = $order->orders_products->filter(function($p) {
-        return in_array($p->item_status, ['Return Requested', 'Returned']);
+        return in_array($p->normalized_status, [
+            \App\Support\OrderItemStatus::RETURN_REQUESTED,
+            \App\Support\OrderItemStatus::RETURNED,
+        ], true);
     });
 
     $exchangedItems = $order->orders_products->filter(function($p) {
-        return in_array($p->item_status, ['Exchange Requested', 'Exchanged']);
+        return in_array($p->normalized_status, [
+            \App\Support\OrderItemStatus::EXCHANGE_REQUESTED,
+            \App\Support\OrderItemStatus::EXCHANGED,
+        ], true);
     });
 @endphp
 
@@ -116,7 +118,7 @@
                                             ->value('shop_name') ?? 'Me9 브랜드 전용관';
                                     @endphp
                                     <tr>
-                                        <td class="status col1">{{ $statusMap[$item->item_status] ?? $item->item_status }}</td>
+                                        <td class="status col1">{{ $item->status_label }}</td>
                                         <td class="info">
                                             <div class="con_w">
                                                 <div class="img_bx"
@@ -131,7 +133,7 @@
                                         </td>
                                         <td class="price t_r">{{ number_format($item->product_price * $item->product_qty) }} 원</td>
                                         <td class="t_r">
-                                            @if($item->item_status == 'Confirmed')
+                                            @if($item->normalized_status === \App\Support\OrderItemStatus::CONFIRMED)
                                                 구매확정일<br> {{ $item->updated_at->format('Y.m.d') }}
                                             @else
                                                 -
@@ -212,7 +214,7 @@
                                     </colgroup>
                                     <tbody>
                                         <tr>
-                                            <td class="status col2">{{ $statusMap[$item->item_status] ?? $item->item_status }}</td>
+                                            <td class="status col2">{{ $item->status_label }}</td>
                                             <td class="info">
                                                 <div class="con_w">
                                                     <div class="img_bx"
@@ -268,7 +270,7 @@
                                     </colgroup>
                                     <tbody>
                                         <tr>
-                                            <td class="status col3">{{ $statusMap[$item->item_status] ?? $item->item_status }}</td>
+                                            <td class="status col3">{{ $item->status_label }}</td>
                                             <td class="info">
                                                 <div class="con_w">
                                                     <div class="img_bx"
@@ -324,7 +326,7 @@
                                     </colgroup>
                                     <tbody>
                                         <tr>
-                                            <td class="status col4">{{ $statusMap[$item->item_status] ?? $item->item_status }}</td>
+                                            <td class="status col4">{{ $item->status_label }}</td>
                                             <td class="info">
                                                 <div class="con_w">
                                                     <div class="img_bx"

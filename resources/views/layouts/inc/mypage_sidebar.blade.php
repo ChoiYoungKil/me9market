@@ -1,15 +1,46 @@
+@php
+    $mypageUser = Auth::user();
+    $statusCounts = collect();
+
+    if ($mypageUser) {
+        $statusCounts = \App\Models\OrdersProduct::where('user_id', $mypageUser->id)
+            ->get()
+            ->map(fn ($item) => $item->normalized_status)
+            ->countBy();
+    }
+
+    $countFor = function (array $statuses) use ($statusCounts) {
+        return collect($statuses)->sum(fn ($status) => (int) ($statusCounts[$status] ?? 0));
+    };
+
+    $formatCount = fn ($count) => $count > 99 ? '99+' : (string) $count;
+
+    $paidCount = $countFor([\App\Support\OrderItemStatus::PAID]);
+    $readyToShipCount = $countFor([\App\Support\OrderItemStatus::READY_TO_SHIP]);
+    $shippingCount = $countFor([\App\Support\OrderItemStatus::SHIPPING, \App\Support\OrderItemStatus::DELIVERED]);
+    $confirmedCount = $countFor([\App\Support\OrderItemStatus::CONFIRMED]);
+    $cancelRequestCount = $countFor([\App\Support\OrderItemStatus::CANCEL_REQUESTED]);
+    $cancelCompletedCount = $countFor([\App\Support\OrderItemStatus::CANCELLED]);
+    $returnRequestCount = $countFor([\App\Support\OrderItemStatus::RETURN_REQUESTED]);
+    $returnCompletedCount = $countFor([\App\Support\OrderItemStatus::RETURNED]);
+    $exchangeRequestCount = $countFor([\App\Support\OrderItemStatus::EXCHANGE_REQUESTED]);
+    $exchangeCompletedCount = $countFor([\App\Support\OrderItemStatus::EXCHANGED]);
+    $orderTotalCount = $paidCount + $readyToShipCount + $shippingCount + $confirmedCount;
+@endphp
+
 <div id="l_menu">
     <div class="con_bx">
         <div class="con1">
             <div class="ttl on">주문목록 <span class="num"
-                    style="background-color: #ef4131; color: #fff; padding: 2px 6px; border-radius: 10px; font-size: 11px; margin-left: 5px; vertical-align: middle;">99+</span>
+                    style="background-color: #ef4131; color: #fff; padding: 2px 6px; border-radius: 10px; font-size: 11px; margin-left: 5px; vertical-align: middle;"
+                    aria-label="주문목록 {{ $orderTotalCount }}건">{{ $formatCount($orderTotalCount) }}</span>
             </div> <!-- 알림: on -->
             <ul>
                 <li>
                     <a href="{{ route('mypage.order.list', ['status' => 'payment_completed']) }}"
                         class="{{ request('status') == 'payment_completed' ? 'on' : '' }}">
                         <div class="icon icon1">
-                            <span class="num">20</span>
+                            <span class="num" aria-label="결제완료 {{ $paidCount }}건">{{ $formatCount($paidCount) }}</span>
                         </div>
                         <div class="txt">결제완료</div>
                     </a>
@@ -18,7 +49,7 @@
                     <a href="{{ route('mypage.order.list', ['status' => 'preparing_shipment']) }}"
                         class="{{ request('status') == 'preparing_shipment' ? 'on' : '' }}">
                         <div class="icon icon2">
-                            <!--<span class="num">20</span>-->
+                            <span class="num" aria-label="배송대기중 {{ $readyToShipCount }}건">{{ $formatCount($readyToShipCount) }}</span>
                         </div>
                         <div class="txt">배송대기중</div>
                     </a>
@@ -27,7 +58,7 @@
                     <a href="{{ route('mypage.order.list', ['status' => 'shipping']) }}"
                         class="{{ request('status') == 'shipping' ? 'on' : '' }}">
                         <div class="icon icon3">
-                            <!--<span class="num">99+</span>-->
+                            <span class="num" aria-label="배송중 {{ $shippingCount }}건">{{ $formatCount($shippingCount) }}</span>
                         </div>
                         <div class="txt">배송중</div>
                     </a>
@@ -36,7 +67,7 @@
                     <a href="{{ route('mypage.order.list', ['status' => 'purchase_confirmed']) }}"
                         class="{{ request('status') == 'purchase_confirmed' ? 'on' : '' }}">
                         <div class="icon icon4">
-                            <!--<span class="num">99+</span>-->
+                            <span class="num" aria-label="구매확정 {{ $confirmedCount }}건">{{ $formatCount($confirmedCount) }}</span>
                         </div>
                         <div class="txt">구매확정</div>
                     </a>
@@ -52,7 +83,7 @@
                     <a href="{{ route('mypage.order.list', ['tab' => 'cancel', 'status' => 'cancel_request']) }}"
                         class="{{ request('status') == 'cancel_request' ? 'on' : '' }}">
                         <div class="icon icon5">
-                            <!--<span class="num">99+</span>-->
+                            <span class="num" aria-label="취소요청 {{ $cancelRequestCount }}건">{{ $formatCount($cancelRequestCount) }}</span>
                         </div>
                         <div class="txt">취소요청</div>
                     </a>
@@ -61,7 +92,7 @@
                     <a href="{{ route('mypage.order.list', ['tab' => 'cancel', 'status' => 'cancel_completed']) }}"
                         class="{{ request('status') == 'cancel_completed' ? 'on' : '' }}">
                         <div class="icon icon4"> <!-- Reusing purchase confirm icon (Check) for completion -->
-                            <!--<span class="num">99+</span>-->
+                            <span class="num" aria-label="취소완료 {{ $cancelCompletedCount }}건">{{ $formatCount($cancelCompletedCount) }}</span>
                         </div>
                         <div class="txt">취소완료</div>
                     </a>
@@ -77,7 +108,7 @@
                     <a href="{{ route('mypage.order.list', ['tab' => 'return', 'status' => 'return_request']) }}"
                         class="{{ request('status') == 'return_request' ? 'on' : '' }}">
                         <div class="icon icon5">
-                            <!--<span class="num">99+</span>-->
+                            <span class="num" aria-label="반품신청 {{ $returnRequestCount }}건">{{ $formatCount($returnRequestCount) }}</span>
                         </div>
                         <div class="txt">반품신청</div>
                     </a>
@@ -86,7 +117,7 @@
                     <a href="{{ route('mypage.order.list', ['tab' => 'return', 'status' => 'return_completed']) }}"
                         class="{{ request('status') == 'return_completed' ? 'on' : '' }}">
                         <div class="icon icon4"> <!-- Reusing purchase confirm icon (Check) for completion -->
-                            <!--<span class="num">99+</span>-->
+                            <span class="num" aria-label="반품완료 {{ $returnCompletedCount }}건">{{ $formatCount($returnCompletedCount) }}</span>
                         </div>
                         <div class="txt">반품완료</div>
                     </a>
@@ -102,7 +133,7 @@
                     <a href="{{ route('mypage.order.list', ['tab' => 'exchange', 'status' => 'exchange_request']) }}"
                         class="{{ request('status') == 'exchange_request' ? 'on' : '' }}">
                         <div class="icon icon2"> <!-- Reusing 'Waiting Delivery' (Box) icon for Exchange Request -->
-                            <!--<span class="num">99+</span>-->
+                            <span class="num" aria-label="교환신청 {{ $exchangeRequestCount }}건">{{ $formatCount($exchangeRequestCount) }}</span>
                         </div>
                         <div class="txt">교환신청</div>
                     </a>
@@ -111,7 +142,7 @@
                     <a href="{{ route('mypage.order.list', ['tab' => 'exchange', 'status' => 'exchange_completed']) }}"
                         class="{{ request('status') == 'exchange_completed' ? 'on' : '' }}">
                         <div class="icon icon4"> <!-- Reusing purchase confirm icon (Check) for completion -->
-                            <!--<span class="num">99+</span>-->
+                            <span class="num" aria-label="교환완료 {{ $exchangeCompletedCount }}건">{{ $formatCount($exchangeCompletedCount) }}</span>
                         </div>
                         <div class="txt">교환완료</div>
                     </a>
