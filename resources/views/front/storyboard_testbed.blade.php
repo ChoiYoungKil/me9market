@@ -37,10 +37,10 @@
                 ['slide' => '072-087', 'screen' => 'RF-02-04-01~04', 'name' => 'Shop 채널 목록/등록/상세/수정', 'intent' => '공개여부, 입장코드, 키워드, 기간, 로고, 배너, OG, 관리자 정보 설정', 'url' => '/channel/shop/list', 'state' => 'done', 'note' => 'Shop 채널 목록/등록/상세/수정과 주요 DB 저장 경로 구현됨'],
                 ['slide' => '088-104', 'screen' => 'RF-02-04-05~09', 'name' => 'Shop 채널 판매상품/공지', 'intent' => '자사/공유/제휴 상품을 채널에 붙이고 채널 공지 운영', 'url' => '/channel/shop/product01', 'state' => 'done', 'note' => 'ShopChannelProduct 연결과 채널 공지 CRUD 구현됨'],
                 ['slide' => '106-123', 'screen' => 'RF-02-05', 'name' => '상품관리', 'intent' => '자사상품 등록, 공개/부분공개, 제약조건, 판매요청 관리', 'url' => '/channel/product/own', 'state' => 'done', 'note' => '자사/공유/제휴 상품 관리와 삭제 제한 로직 구현됨'],
-                ['slide' => '124-132', 'screen' => 'RF-02-06', 'name' => '공동구매관리', 'intent' => '공동구매 상품 등록, 기간, 혜택, 발주 담당자 설정', 'url' => '/channel/joint-purchase/list', 'state' => 'done', 'note' => '공동구매 목록/등록/수정/상태 관리 구현됨'],
-                ['slide' => '134-162', 'screen' => 'RF-02-07', 'name' => '주문관리', 'intent' => '주문 상세, 정상/취소/반품/교환 주문 처리와 송장 입력', 'url' => '/channel/order/list', 'state' => 'done', 'note' => 'Shop 주문과 orders_products 상태 동기화, 클레임/송장 처리 구현됨'],
-                ['slide' => '164-166', 'screen' => 'RF-02-08', 'name' => '정산관리', 'intent' => '기간별 정산 집행 현황과 상세 정산 확인', 'url' => '/channel/settlement/list', 'state' => 'done', 'note' => '구매확정 상품과 Shop 채널 요율 기준 정산 조회 구현됨'],
-                ['slide' => '168-197', 'screen' => 'RF-02-09~13', 'name' => '서브관리자/발주담당/포인트/배송비/환불정책', 'intent' => '운영 보조 계정과 정책성 데이터를 관리', 'url' => '/channel/settings/refund', 'state' => 'done', 'note' => '서브관리자/발주담당/배송비/포인트/환불정책 화면과 데이터 흐름 구현됨'],
+                ['slide' => '124-132', 'screen' => 'RF-02-06', 'name' => '공동구매관리', 'intent' => '공동구매 상품 등록, 기간, 혜택, 발주 담당자 설정', 'url' => '/channel/joint-purchase/list', 'state' => 'done', 'note' => '공동구매 수량별 가격 구간 등록/수정, 누적 수량 도달 시 기존 주문 재가격 산정 구현됨'],
+                ['slide' => '134-162', 'screen' => 'RF-02-07', 'name' => '주문관리', 'intent' => '주문 상세, 정상/취소/반품/교환 주문 처리와 송장 입력', 'url' => '/channel/order/list', 'state' => 'done', 'note' => 'Shop 주문 상태 동기화, 클레임/송장 처리, 배송 안내 SMS 포인트 차감, 공동구매 재결제 예정 차액 표시 구현됨'],
+                ['slide' => '164-166', 'screen' => 'RF-02-08', 'name' => '정산관리', 'intent' => '기간별 정산 집행 현황과 상세 정산 확인', 'url' => '/channel/settlement/list', 'state' => 'done', 'note' => '구매확정 상품과 Shop 채널 요율 기준 정산 조회, 공동구매 재가격 line_total 기준 정산 반영 구현됨'],
+                ['slide' => '168-197', 'screen' => 'RF-02-09~13', 'name' => '서브관리자/발주담당/포인트/배송비/환불정책', 'intent' => '운영 보조 계정과 정책성 데이터를 관리', 'url' => '/channel/settings/points', 'state' => 'done', 'note' => '판매자 포인트 구매/사용/SMS차감/환급 요청 원장과 정책 화면 데이터 흐름 구현됨'],
             ],
             'flows' => [
                 ['label' => 'Shop 채널 생성', 'steps' => ['채널 로그인', 'Shop 채널 등록', '채널 정보 확인', '판매상품 추가', '채널 공지 등록']],
@@ -58,8 +58,8 @@
             'items' => [
                 ['slide' => '200-202', 'screen' => 'RF-03-01~02', 'name' => '입장코드 / 로그인 / 간편가입', 'intent' => '공개/비공개 채널 입장 및 간편 회원 가입', 'url' => '/shop-channel/gate', 'state' => 'done', 'note' => '입장코드가 ShopChannel DB와 세션에 연결됨'],
                 ['slide' => '206', 'screen' => 'RF-03-03-01', 'name' => 'Shop 채널 메인', 'intent' => '배너, 상품 진입, 채널 소개, 공지 노출', 'url' => '/shop-channel/main', 'state' => 'done', 'note' => '채널/상품/공지/공동구매 데이터 노출 구현됨'],
-                ['slide' => '208-216', 'screen' => 'RF-03-04', 'name' => '상품 목록/상세/공동구매', 'intent' => '일반상품과 공동구매상품 탐색, 옵션 선택, Q&A, 판매정보 확인', 'url' => '/shop-channel/products', 'state' => 'done', 'note' => 'ShopChannelProduct와 joint_purchases 연동 구현됨'],
-                ['slide' => '217-220', 'screen' => 'RF-03-04-03~06', 'name' => '장바구니 / 주문서 / 결제완료 / 주문내역', 'intent' => '채널 상품 구매 전환 흐름', 'url' => '/shop/cart', 'state' => 'done', 'note' => '세션 장바구니에서 orders/orders_products 생성, 발주사 대기 목록까지 연동'],
+                ['slide' => '208-216', 'screen' => 'RF-03-04', 'name' => '상품 목록/상세/공동구매', 'intent' => '일반상품과 공동구매상품 탐색, 옵션 선택, Q&A, 판매정보 확인', 'url' => '/shop-channel/products', 'state' => 'done', 'note' => 'ShopChannelProduct, 공동구매 수량별 현재 적용가/다음 구매 예상가 표시 구현됨'],
+                ['slide' => '217-220', 'screen' => 'RF-03-04-03~06', 'name' => '장바구니 / 주문서 / 결제완료 / 주문내역', 'intent' => '채널 상품 구매 전환 흐름', 'url' => '/shop/cart', 'state' => 'done', 'note' => '세션 장바구니에서 orders/orders_products 생성, 공동구매 누적 수량 기준 가격 적용과 발주사 대기 목록 연동'],
                 ['slide' => '222-232', 'screen' => 'RF-03-05', 'name' => '주문조회/주문관리', 'intent' => '채널 구매 주문의 취소/반품/교환/구매확정/문의', 'url' => '/shop/order/details', 'state' => 'done', 'note' => '실제 주문 상세와 취소/반품/교환/확정 상태 변경 구현됨'],
                 ['slide' => '234-235', 'screen' => 'RF-03-06', 'name' => '채널 공지사항', 'intent' => 'Shop 채널 관리자가 등록한 공지 목록/상세', 'url' => '/shop-channel/notices', 'state' => 'done', 'note' => '채널별 공지 목록/상세 DB 연동 구현됨'],
             ],
@@ -96,7 +96,8 @@
             'items' => [
                 ['slide' => '247', 'screen' => 'RF-05-01', 'name' => '전체관리자 로그인', 'intent' => '별도 관리자 주소로 로그인', 'url' => '/admin/login', 'state' => 'done', 'note' => '기존 admin guard 로그인'],
                 ['slide' => '249', 'screen' => 'RF-05-02-01', 'name' => '대시보드', 'intent' => '3분할 블록형 대시보드와 메뉴 구조', 'url' => '/admin/dashboard', 'state' => 'partial', 'note' => '기존 관리자 대시보드와 혼재'],
-                ['slide' => '164-166 연계', 'screen' => 'RF-05-SETTLEMENT', 'name' => '전체관리자 정산관리', 'intent' => '구매확정 주문을 기준으로 채널별 요율 정산자료를 생성하고 완료 처리', 'url' => '/admin/settlements', 'state' => 'done', 'note' => 'settlement_runs, settlement_items 별도 테이블과 Shop 채널 정산 요율 연동'],
+                ['slide' => '164-166 연계', 'screen' => 'RF-05-SETTLEMENT', 'name' => '전체관리자 정산관리', 'intent' => '구매확정 주문을 기준으로 채널별 요율 정산자료를 생성하고 완료 처리', 'url' => '/admin/settlements', 'state' => 'done', 'note' => 'settlement_runs, settlement_items 별도 테이블과 Shop 채널 정산 요율, 공동구매 재가격 금액 연동'],
+                ['slide' => '포인트 연계', 'screen' => 'RF-05-POINTS', 'name' => '판매자 포인트 판매/사용 내역', 'intent' => '판매자 포인트 구매 승인, 환급 승인, 고객 페이백/SMS 사용 차감 원장 관리', 'url' => '/admin/channel-points', 'state' => 'done', 'note' => '판매자 포인트 구매/환급 승인과 사용 내역 전체관리자 원장 구현됨'],
                 ['slide' => '250-254', 'screen' => 'RF-05-02-02~06', 'name' => '리스트/갤러리/보기 패턴', 'intent' => '관리자 공통 화면 패턴', 'url' => '/admin/sub03', 'state' => 'partial', 'note' => '패턴 확인용 sub 화면 존재'],
                 ['slide' => '255-258', 'screen' => 'RF-05-02-07~10', 'name' => '입력/팝업/레이어 패턴', 'intent' => '폼, 작은 레이어, 별도 팝업, 대형 딤 레이어', 'url' => '/admin/sub02', 'state' => 'partial', 'note' => '여러 샘플 페이지로 분산'],
                 ['slide' => '259', 'screen' => 'RF-05-02-11', 'name' => '상태 진행창', 'intent' => 'Ajax/대용량 처리 중 전체 화면 클릭 방지 로딩', 'url' => '/admin/loading', 'state' => 'partial', 'note' => '로딩 샘플 화면'],
@@ -131,6 +132,7 @@
 
     $quickMenus = [
         ['title' => '전체관리자 정산관리', 'desc' => '정산자료 생성, 상세 품목, 완료 처리', 'url' => '/admin/settlements'],
+        ['title' => '전체관리자 포인트내역', 'desc' => '판매자 포인트 구매 승인, 환급, 사용 차감', 'url' => '/admin/channel-points'],
         ['title' => '채널 정산관리', 'desc' => 'Shop 채널별 기간 정산 조회', 'url' => '/channel/settlement/list'],
         ['title' => '채널 주문목록', 'desc' => '주문/취소/반품/교환 상태 검색', 'url' => '/channel/order/list'],
         ['title' => '공동구매 주문목록', 'desc' => '공동구매 주문만 분리 조회', 'url' => '/channel/order/joint/list'],

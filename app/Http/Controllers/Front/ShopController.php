@@ -119,6 +119,7 @@ class ShopController extends Controller
             $item->setStatus(OrderItemStatus::CONFIRMED);
             $item->confirmed_at = now();
             $item->save();
+            app(\App\Services\ChannelPointService::class)->recordCustomerPayback($item);
 
             return back()->with('flash_message_success', '구매확정 처리되었습니다.');
         }

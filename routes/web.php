@@ -196,6 +196,11 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::get('settlements/{id}', 'SettlementController@show')->name('admin.settlements.show');
         Route::post('settlements/{id}/complete', 'SettlementController@complete')->name('admin.settlements.complete');
 
+        // 판매자 포인트 구매/환급 승인
+        Route::get('channel-points', 'ChannelPointController@index')->name('admin.channel_points.index');
+        Route::post('channel-points/{id}/approve', 'ChannelPointController@approve')->name('admin.channel_points.approve');
+        Route::post('channel-points/{id}/reject', 'ChannelPointController@reject')->name('admin.channel_points.reject');
+
         // 배송비 관리 모듈 (Shipping Charges module)
         // 배송비 관리 페이지 (admin/shipping/shipping_charges.blade.php) 렌더링 (관리자 전용)
         Route::get('shipping-charges', 'ShippingController@shippingCharges');
@@ -460,6 +465,8 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
                 Route::post('/update-password', 'ChannelController@updatePassword')->name('channel.update_password');
                 Route::get('/order-manager', 'ChannelController@orderManagerList')->name('channel.order.manager');
                 Route::get('/points', 'ChannelController@pointList')->name('channel.point.list');
+                Route::post('/points/purchase', 'ChannelController@requestPointPurchase')->name('channel.point.purchase');
+                Route::post('/points/refund', 'ChannelController@requestPointRefund')->name('channel.point.refund');
                 Route::get('/sub-accounts', 'ChannelController@subList')->name('channel.sub_accounts.list');
             });
         });

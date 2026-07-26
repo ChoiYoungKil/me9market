@@ -12,7 +12,21 @@ class Sms extends Model
 
 
     // Sending an offline SMS using an SMS API
-    public static function sendSms($message, $mobile) {
+    public static function sendSms($message, $mobile, ?int $vendorId = null, ?int $shopChannelId = null, int $pointPerMessage = 20) {
+        if ($vendorId) {
+            $debited = app(\App\Services\ChannelPointService::class)->recordSmsDebit(
+                $vendorId,
+                1,
+                $pointPerMessage,
+                $shopChannelId,
+                '문자 발송 포인트 차감'
+            );
+
+            if (!$debited) {
+                return false;
+            }
+        }
+
         /*Code for SMS Script Starts*/
         $request ="";
         $param['authorization']="0fghGt7O6rJ1C8fsddpUXSEPLWv2aDRuMkyeif7mKBwNHxd4vw0gKcTfrhemqdsFS8gb6Do59Nzp1Ry5fi";
@@ -37,5 +51,7 @@ class Sms extends Model
         $curl_scraped_page = curl_exec($ch);
         curl_close($ch);
         /*Code for SMS Script Ends*/
+
+        return $curl_scraped_page;
     }
 }

@@ -745,6 +745,7 @@ class UserController extends Controller
             $item->setStatus(OrderItemStatus::CONFIRMED);
             $item->confirmed_at = now();
             $item->save();
+            app(\App\Services\ChannelPointService::class)->recordCustomerPayback($item);
 
             // Save rating and review to ratings table
             \Illuminate\Support\Facades\DB::table('ratings')->insert([

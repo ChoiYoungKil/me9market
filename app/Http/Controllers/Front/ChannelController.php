@@ -1479,6 +1479,10 @@ class ChannelController extends Controller
                     'qty' => $item->product_qty,
                     'price' => $item->selling_price ?: $item->product_price,
                     'line_total' => $lineTotal,
+                    'original_line_total' => $item->original_line_total,
+                    'repriced_line_total' => $item->repriced_line_total,
+                    'reprice_adjustment_amount' => $item->reprice_adjustment_amount,
+                    'reprice_status' => $item->reprice_status,
                     'courier_name' => $item->courier_name,
                     'tracking_number' => $item->tracking_number,
                     'product_type' => $item->shopChannelProduct?->product_type === 'public' ? '공유' : ($item->shopChannelProduct?->product_type === 'partial' ? '제휴' : '자사'),
@@ -1846,13 +1850,95 @@ class ChannelController extends Controller
         ]);
     }
 
-    public function pointList()
+    public function pointList(Request $request)
     {
         if (!Auth::guard('admin')->check()) {
             return redirect()->route('channel.login');
         }
 
-        return view('channel.sub00.point_list', ['dep1_id' => '00']);
+        $admin = Auth::guard('admin')->user();
+        $vendorId = (int) ($admin->vendor_id ?? 0);
+        $pointService = app(\App\Services\ChannelPointService::class);
+        $history = $request->query('history', 'all');
+        $status = $request->query('status', 'all');
+        $transactions = \App\Models\ChannelPointTransaction::with('shopChannel')
+            ->where('vendor_id', $vendorId);
+
+        if ($history === 'purchase') {
+            $transactions->where('type', \App\Services\ChannelPointService::TYPE_PURCHASE);
+        } elseif ($history === 'use') {
+            $transactions->whereIn('type', [
+                \App\Services\ChannelPointService::TYPE_CUSTOMER_PAYBACK,
+                \App\Services\ChannelPointService::TYPE_SMS,
+            ]);
+        } elseif ($history === 'refund') {
+            $transactions->where('type', \App\Services\ChannelPointService::TYPE_REFUND);
+        }
+
+        if ($status !== 'all') {
+            $transactions->where('status', $status);
+        }
+
+        $transactions = $transactions->latest()->paginate(20)->withQueryString();
+
+        return view('channel.sub00.point_list', [
+            'dep1_id' => '00',
+            'summary' => $pointService->summaryForVendor($vendorId),
+            'transactions' => $transactions,
+            'canRequestRefund' => !$pointService->hasActiveChannel($vendorId),
+            'filters' => [
+                'history' => $history,
+                'status' => $status,
+            ],
+        ]);
+    }
+
+    public function requestPointPurchase(Request $request)
+    {
+        if (!Auth::guard('admin')->check()) {
+            return redirect()->route('channel.login');
+        }
+
+        $data = $request->validate([
+            'points' => 'required|integer|min:1000',
+            'payment_method' => 'required|in:card,transfer',
+            'memo' => 'nullable|string|max:255',
+        ]);
+
+        $admin = Auth::guard('admin')->user();
+        app(\App\Services\ChannelPointService::class)->requestPurchase(
+            (int) $admin->vendor_id,
+            (int) $data['points'],
+            $data['payment_method'],
+            $data['memo'] ?? null,
+            null,
+            (int) $admin->id
+        );
+
+        return redirect()->route('channel.point.list')->with('success_message', '포인트 구매 요청이 접수되었습니다. 최고관리자 승인 후 보유 포인트에 반영됩니다.');
+    }
+
+    public function requestPointRefund(Request $request)
+    {
+        if (!Auth::guard('admin')->check()) {
+            return redirect()->route('channel.login');
+        }
+
+        $data = $request->validate([
+            'points' => 'required|integer|min:1000',
+            'memo' => 'nullable|string|max:255',
+        ]);
+
+        $admin = Auth::guard('admin')->user();
+        app(\App\Services\ChannelPointService::class)->requestRefund(
+            (int) $admin->vendor_id,
+            (int) $data['points'],
+            $data['memo'] ?? null,
+            null,
+            (int) $admin->id
+        );
+
+        return redirect()->route('channel.point.list')->with('success_message', '포인트 환급 요청이 접수되었습니다. 최고관리자 승인 후 환급 처리됩니다.');
     }
     
     public function subList()
@@ -2314,22 +2400,27 @@ class ChannelController extends Controller
         $request->validate([
             'product_id' => 'required',
             'min_quantity' => 'required|numeric',
-            'discount_price' => 'required|numeric',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date'
         ]);
+        $pricing = app(\App\Services\JointPurchasePricingService::class);
+        $tiers = $pricing->normalizeTierInput($request->all());
+        if (empty($tiers)) {
+            return back()->withErrors(['tier_unit_price' => '공동구매 수량별 가격을 1개 이상 입력해 주세요.'])->withInput();
+        }
 
-        \Illuminate\Support\Facades\DB::table('joint_purchases')->insert([
+        $jointPurchaseId = \Illuminate\Support\Facades\DB::table('joint_purchases')->insertGetId([
             'product_id' => $request->product_id,
             'min_quantity' => $request->min_quantity,
             'current_quantity' => 0,
-            'discount_price' => $request->discount_price,
+            'discount_price' => $tiers[0]['unit_price'],
             'start_date' => $request->start_date,
             'end_date' => $request->end_date,
             'status' => 1,
             'created_at' => now(),
             'updated_at' => now()
         ]);
+        $pricing->syncTiers((int) $jointPurchaseId, $tiers);
 
         return redirect()->route('channel.joint_purchase.list')->with('success_message', '공동구매 상품이 성공적으로 등록되었습니다.');
     }
@@ -2343,11 +2434,13 @@ class ChannelController extends Controller
         if (!$jointPurchase) abort(404);
 
         $products = \App\Models\Product::where('vendor_id', $admin->vendor_id)->get();
+        $tiers = app(\App\Services\JointPurchasePricingService::class)->tiers((int) $id);
 
         return view('channel.sub03.joint_purchase_edit', [
             'dep1_id' => '03',
             'jointPurchase' => $jointPurchase,
-            'products' => $products
+            'products' => $products,
+            'tiers' => $tiers,
         ]);
     }
 
@@ -2356,19 +2449,25 @@ class ChannelController extends Controller
         $request->validate([
             'product_id' => 'required',
             'min_quantity' => 'required|numeric',
-            'discount_price' => 'required|numeric',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date'
         ]);
+        $pricing = app(\App\Services\JointPurchasePricingService::class);
+        $tiers = $pricing->normalizeTierInput($request->all());
+        if (empty($tiers)) {
+            return back()->withErrors(['tier_unit_price' => '공동구매 수량별 가격을 1개 이상 입력해 주세요.'])->withInput();
+        }
 
         \Illuminate\Support\Facades\DB::table('joint_purchases')->where('id', $id)->update([
             'product_id' => $request->product_id,
             'min_quantity' => $request->min_quantity,
-            'discount_price' => $request->discount_price,
+            'discount_price' => $tiers[0]['unit_price'],
             'start_date' => $request->start_date,
             'end_date' => $request->end_date,
             'updated_at' => now()
         ]);
+        $pricing->syncTiers((int) $id, $tiers);
+        $pricing->repricePurchase((int) $id);
 
         return redirect()->route('channel.joint_purchase.list')->with('success_message', '공동구매 정보가 성공적으로 수정되었습니다.');
     }

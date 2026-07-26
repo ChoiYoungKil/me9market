@@ -9,6 +9,7 @@ use App\Models\ShopChannel;
 use App\Models\Order;
 use App\Models\OrdersProduct;
 use App\Models\OrderClaim;
+use App\Services\ChannelPointService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -85,6 +86,7 @@ class ChannelOrderTest extends TestCase
         $item->order_id = $order->id;
         $item->user_id = 1;
         $item->vendor_id = $vendor->id;
+        $item->shop_channel_id = $shop->id;
         $item->admin_id = $admin->id;
         $item->product_id = $product->id;
         $item->product_code = $product->product_code;
@@ -123,6 +125,36 @@ class ChannelOrderTest extends TestCase
             'item_status' => 'shipping',
             'courier_name' => 'FastDelivery',
             'tracking_number' => 'TRACK123',
+        ]);
+    }
+
+    public function test_shipping_status_debits_sms_points()
+    {
+        list($vendor, $admin, $shop, $product, $order, $item) = $this->createSetup();
+        $service = app(ChannelPointService::class);
+        $purchase = $service->requestPurchase($vendor->id, 100000, 'card', null, $shop->id, $admin->id);
+        $service->approve($purchase, $admin->id);
+
+        $response = $this->actingAs($admin, 'admin')->post('/channel/order/status/update', [
+            'order_id' => $order->id,
+            'status' => 'shipping',
+            'item_ids' => [$item->id],
+            'courier_name' => 'FastDelivery',
+            'tracking_number' => 'TRACK123',
+        ], [
+            'X-Requested-With' => 'XMLHttpRequest'
+        ]);
+
+        $response->assertJson(['status' => true]);
+
+        $this->assertSame(99980, $service->balanceForVendor($vendor->id));
+        $this->assertDatabaseHas('channel_point_transactions', [
+            'vendor_id' => $vendor->id,
+            'shop_channel_id' => $shop->id,
+            'type' => ChannelPointService::TYPE_SMS,
+            'points' => -20,
+            'status' => 'approved',
+            'memo' => '배송중 안내 문자 발송',
         ]);
     }
 

@@ -8,7 +8,6 @@ use App\Models\Category;
 use App\Models\Distributor;
 use App\Models\Order;
 use App\Models\OrdersProduct;
-use App\Models\PointTransaction;
 use App\Models\Product;
 use App\Models\Section;
 use App\Models\ShopChannel;
@@ -17,6 +16,7 @@ use App\Models\ShopChannelProduct;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Support\OrderItemStatus;
+use App\Services\JointPurchasePricingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -235,7 +235,7 @@ class ShopChannelRuntime
         foreach ($jointProducts as $index => $jointProduct) {
             $exists = DB::table('joint_purchases')->where('product_id', $jointProduct->id)->exists();
             if (!$exists) {
-                DB::table('joint_purchases')->insert([
+                $jointPurchaseId = DB::table('joint_purchases')->insertGetId([
                     'product_id' => $jointProduct->id,
                     'min_quantity' => $index === 0 ? 100 : 50,
                     'current_quantity' => $index === 0 ? 82 : 21,
@@ -246,6 +246,12 @@ class ShopChannelRuntime
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
+                if (Schema::hasTable('joint_purchase_price_tiers')) {
+                    app(JointPurchasePricingService::class)->syncTiers($jointPurchaseId, [
+                        ['min_quantity' => 1, 'max_quantity' => $index === 0 ? 100 : 50, 'unit_price' => $index === 0 ? 79000 : 52000],
+                        ['min_quantity' => $index === 0 ? 101 : 51, 'max_quantity' => null, 'unit_price' => $index === 0 ? 69000 : 47000],
+                    ]);
+                }
             }
         }
 
@@ -423,11 +429,15 @@ class ShopChannelRuntime
 
             $shopProduct = $products[$id];
             $qty = max(1, (int) ($row['qty'] ?? 1));
-            $price = (float) ($shopProduct->selling_price ?: $shopProduct->product_price);
+            $jointPrice = app(JointPurchasePricingService::class)->projectedPriceForProduct((int) $shopProduct->product_id, $qty);
+            $price = (float) ($jointPrice['unit_price'] ?? ($shopProduct->selling_price ?: $shopProduct->product_price));
             $items[] = [
                 'id' => $id,
                 'shop_product' => $shopProduct,
                 'product' => $shopProduct->product,
+                'joint_purchase' => $jointPrice['joint_purchase'] ?? null,
+                'joint_price_tier_id' => $jointPrice['tier_id'] ?? null,
+                'projected_joint_quantity' => $jointPrice['projected_quantity'] ?? null,
                 'option' => $row['option'] ?? '기본옵션',
                 'qty' => $qty,
                 'price' => $price,
@@ -505,16 +515,21 @@ class ShopChannelRuntime
             $order->grand_total = $totals['total'];
             $order->save();
 
+            $jointPurchaseIds = [];
             foreach ($items as $item) {
                 $shopProduct = $item['shop_product'];
                 $product = $item['product'];
                 $status = OrderItemStatus::PAID;
+                $originalPrice = (float) ($shopProduct->selling_price ?: $shopProduct->product_price);
+                $isJointPurchase = !empty($item['joint_purchase']);
                 $orderItem = OrdersProduct::create([
                     'order_id' => $order->id,
                     'user_id' => $order->user_id,
                     'vendor_id' => $shop->vendor_id,
                     'shop_channel_id' => $shop->id,
                     'shop_channel_product_id' => $shopProduct->id,
+                    'joint_purchase_id' => $item['joint_purchase']->id ?? null,
+                    'joint_price_tier_id' => $item['joint_price_tier_id'] ?? null,
                     'admin_id' => $product->admin_id ?? 0,
                     'product_id' => $product->id,
                     'distributor_id' => $shopProduct->distributor_id ?: $product->distributor_id,
@@ -525,6 +540,12 @@ class ShopChannelRuntime
                     'product_price' => $item['price'],
                     'supply_price' => $shopProduct->product_price ?: $product->product_price,
                     'selling_price' => $item['price'],
+                    'original_unit_price' => $isJointPurchase ? $originalPrice : null,
+                    'original_line_total' => $isJointPurchase ? round($originalPrice * $item['qty'], 2) : null,
+                    'repriced_unit_price' => $isJointPurchase ? $item['price'] : null,
+                    'repriced_line_total' => $isJointPurchase ? $item['line_total'] : null,
+                    'reprice_adjustment_amount' => $isJointPurchase ? round(($originalPrice * $item['qty']) - $item['line_total'], 2) : 0,
+                    'reprice_status' => $isJointPurchase && $originalPrice != $item['price'] ? 'pending_repayment' : null,
                     'product_qty' => $item['qty'],
                     'line_total' => $item['line_total'],
                     'item_status' => OrderItemStatus::label($status),
@@ -533,21 +554,13 @@ class ShopChannelRuntime
                     'settlement_status' => 'pending',
                 ]);
 
-                if ($order->user_id > 0 && Schema::hasTable('point_transactions')) {
-                    PointTransaction::firstOrCreate(
-                        [
-                            'user_id' => $order->user_id,
-                            'order_product_id' => $orderItem->id,
-                            'type' => 'earn',
-                        ],
-                        [
-                            'shop_channel_id' => $shop->id,
-                            'order_id' => $order->id,
-                            'points' => max(1, (int) floor($item['line_total'] * 0.01)),
-                            'description' => $product->product_name . ' 구매 적립 예정',
-                        ]
-                    );
+                if ($isJointPurchase) {
+                    $jointPurchaseIds[] = (int) $item['joint_purchase']->id;
                 }
+            }
+
+            foreach (array_unique($jointPurchaseIds) as $jointPurchaseId) {
+                app(JointPurchasePricingService::class)->repricePurchase($jointPurchaseId);
             }
 
             Session::forget(self::CART_KEY);

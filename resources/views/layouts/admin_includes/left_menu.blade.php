@@ -48,6 +48,10 @@
                         <a href="{{ url('admin/orders') }}">주문 관리 (Orders)</a>
                     </li>
 
+                    <li class="dep1 icon1_4 {{ Request::is('admin/channel-points*') ? 'on' : '' }}">
+                        <a href="{{ route('admin.channel_points.index') }}">포인트 판매/사용 내역</a>
+                    </li>
+
                     <!-- User Management -->
                     <li class="dep1 icon1_5 arrow {{ (Request::is('admin/users') || Request::is('admin/subscribers') || Request::is('admin/admins*')) ? 'on' : '' }}">
                         <a href="#">회원 관리 (Users)</a>

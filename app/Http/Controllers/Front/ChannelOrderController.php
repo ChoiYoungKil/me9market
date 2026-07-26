@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Order;
 use App\Models\OrdersProduct; // 주문 상품 모델 가정
+use App\Services\ChannelPointService;
 use App\Support\OrderItemStatus;
 
 class ChannelOrderController extends Controller
@@ -65,6 +66,8 @@ class ChannelOrderController extends Controller
                     $this->applyStatusTimestamps($item, $status);
                     $item->save();
                 }
+
+                $this->debitStatusSmsPoints($vendor_id, $status, $items);
 
                 // Check if all items in order are shipped, then maybe update main order status?
                 // For now, we stick to item status updates.
@@ -289,6 +292,27 @@ class ChannelOrderController extends Controller
 
         if ($status === OrderItemStatus::CONFIRMED && !$item->confirmed_at) {
             $item->confirmed_at = now();
+        }
+    }
+
+    private function debitStatusSmsPoints(int $vendorId, string $status, $items): void
+    {
+        if (!in_array($status, [OrderItemStatus::SHIPPING, OrderItemStatus::DELIVERED], true)) {
+            return;
+        }
+
+        $itemsByChannel = $items
+            ->filter(fn ($item) => !empty($item->shop_channel_id))
+            ->groupBy('shop_channel_id');
+
+        foreach ($itemsByChannel as $shopChannelId => $channelItems) {
+            app(ChannelPointService::class)->recordSmsDebit(
+                $vendorId,
+                1,
+                20,
+                (int) $shopChannelId,
+                OrderItemStatus::label($status) . ' 안내 문자 발송'
+            );
         }
     }
 }

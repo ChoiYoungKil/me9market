@@ -423,6 +423,7 @@ class FrontController extends Controller
             $ordersProduct->setStatus(OrderItemStatus::CONFIRMED);
             $ordersProduct->confirmed_at = now();
             $ordersProduct->save();
+            app(\App\Services\ChannelPointService::class)->recordCustomerPayback($ordersProduct);
 
             // Save rating and review to ratings table
             \Illuminate\Support\Facades\DB::table('ratings')->insert([

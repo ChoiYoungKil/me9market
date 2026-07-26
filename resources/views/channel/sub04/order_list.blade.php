@@ -247,6 +247,9 @@
                                                 <td class="t_l">
                                                     @foreach($order->items as $item)
                                                         <a class="fcol2 link">{{ $item['product_name'] }}</a><br>
+                                                        @if(($item['order_type'] ?? '') === 'joint' && !empty($item['reprice_status']) && ($item['reprice_adjustment_amount'] ?? 0) > 0)
+                                                            <span class="fs2 fcol3">공동구매 재결제 예정: {{ number_format($item['original_line_total'] ?? 0) }}원 → {{ number_format($item['repriced_line_total'] ?? $item['line_total']) }}원 / 차액 {{ number_format($item['reprice_adjustment_amount']) }}원</span><br>
+                                                        @endif
                                                     @endforeach
                                                 </td>
                                                 <td>

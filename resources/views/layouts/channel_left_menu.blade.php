@@ -89,7 +89,7 @@
                         <a href="{{ route('channel.order_manager') }}">발주담당관리</a>
                     </li>
                     <li class="dep1">
-                        <a href="{{ route('channel.points') }}">포인트관리</a>
+                        <a href="{{ route('channel.point.list') }}">포인트관리</a>
                     </li>
                     <li class="dep1">
                         <a href="{{ route('channel.delivery.charge_list') }}">배송비설정</a>

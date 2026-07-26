@@ -62,7 +62,18 @@
                                             <td><strong>{{ $jp->product_name ?? '삭제된 상품' }}</strong></td>
                                             <td class="t_c">{{ number_format($jp->min_quantity) }}개</td>
                                             <td class="t_c">{{ number_format($jp->current_quantity) }}개</td>
-                                            <td class="t_c" style="color: #d90000; font-weight: bold;">{{ number_format($jp->discount_price) }}원</td>
+                                            <td class="t_c" style="color: #d90000; font-weight: bold;">
+                                                @php
+                                                    $pricing = app(\App\Services\JointPurchasePricingService::class);
+                                                    $currentPrice = $pricing->priceForQuantity($jp, max(1, (int) $jp->current_quantity));
+                                                @endphp
+                                                {{ number_format($currentPrice['unit_price']) }}원
+                                                <div style="margin-top:4px; color:#667085; font-weight:400; font-size:12px;">
+                                                    @foreach($pricing->tiers((int) $jp->id) as $tier)
+                                                        {{ number_format($tier->min_quantity) }}~{{ $tier->max_quantity ? number_format($tier->max_quantity) : '이상' }}개 {{ number_format($tier->unit_price) }}원<br>
+                                                    @endforeach
+                                                </div>
+                                            </td>
                                             <td class="t_c">{{ $jp->start_date }} ~ {{ $jp->end_date }}</td>
                                             <td class="t_c">
                                                 <a href="{{ route('channel.order.joint_list', ['search_type' => 'product_code', 'keyword' => $jp->product_code, 'detail_open' => 1]) }}" class="btn02">주문내역</a>

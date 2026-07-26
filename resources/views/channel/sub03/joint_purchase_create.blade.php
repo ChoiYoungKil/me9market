@@ -62,10 +62,21 @@
                                             </td>
                                         </tr>
                                         <tr>
-                                            <th class="w160"><span>* 공동구매 할인가격 (원)</span></th>
+                                            <th class="w160"><span>* 수량별 판매가</span></th>
                                             <td>
-                                                <input type="number" name="discount_price" value="{{ old('discount_price', 15000) }}" required style="width: 200px;">
-                                                <span class="fs2 col2" style="margin-left: 10px;">공동구매 시 할인가를 숫자로 입력하세요.</span>
+                                                <div style="display:grid; gap:8px; max-width:760px;">
+                                                    @for($i = 0; $i < 4; $i++)
+                                                        <div style="display:flex; align-items:center; gap:8px;">
+                                                            <input type="number" name="tier_min_quantity[]" value="{{ old('tier_min_quantity.' . $i, $i === 0 ? 1 : '') }}" placeholder="시작수량" style="width:120px;">
+                                                            <span>개부터</span>
+                                                            <input type="number" name="tier_max_quantity[]" value="{{ old('tier_max_quantity.' . $i, $i === 0 ? 100 : '') }}" placeholder="종료수량" style="width:120px;">
+                                                            <span>개까지</span>
+                                                            <input type="number" name="tier_unit_price[]" value="{{ old('tier_unit_price.' . $i, $i === 0 ? 15000 : '') }}" placeholder="개당 판매가" style="width:140px;">
+                                                            <span>원</span>
+                                                        </div>
+                                                    @endfor
+                                                </div>
+                                                <p class="fs2 col2 mt10">예: 1~100개 500원, 101~200개 400원. 마지막 구간은 종료수량을 비우면 해당 수량 이상 전체에 적용됩니다.</p>
                                             </td>
                                         </tr>
                                         <tr>
