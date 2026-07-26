@@ -272,12 +272,12 @@
                                                                     @php
                                                                         $bln = !empty($businessDetails->business_license_number) ? explode('-', $businessDetails->business_license_number) : ['', '', ''];
                                                                     @endphp
-                                                                    <div class="tel_bx2" style="display: flex; align-items: center; gap: 5px;">
-                                                                        <input type="text" name="business_license_1" style="width: 60px;" value="{{ $bln[0] ?? '' }}">
+                                                                    <div class="tel_bx2">
+                                                                        <input type="text" name="business_license_1" class="tel1" value="{{ $bln[0] ?? '' }}">
                                                                         <span>-</span>
-                                                                        <input type="text" name="business_license_2" style="width: 40px;" value="{{ $bln[1] ?? '' }}">
+                                                                        <input type="text" name="business_license_2" class="tel2" value="{{ $bln[1] ?? '' }}">
                                                                         <span>-</span>
-                                                                        <input type="text" name="business_license_3" style="width: 80px;" value="{{ $bln[2] ?? '' }}">
+                                                                        <input type="text" name="business_license_3" class="tel3" value="{{ $bln[2] ?? '' }}">
                                                                     </div>
                                                                 </td>
                                                                 <th class="w160"><span>회원사 연락처</span></th>

@@ -7,11 +7,14 @@ use App\Models\ChannelPointTransaction;
 use App\Services\ChannelPointService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Session;
 
 class ChannelPointController extends Controller
 {
     public function index(Request $request, ChannelPointService $pointService)
     {
+        Session::put('page', 'channel_points');
+
         $status = $request->query('status', 'all');
         $type = $request->query('type', 'all');
 

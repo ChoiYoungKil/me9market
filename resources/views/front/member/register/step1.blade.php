@@ -250,6 +250,15 @@
         </div><!-- //콘텐츠 -->
     </div><!-- //컨테이너 -->
 
+    <style>
+        .password-modal-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+        }
+    </style>
+
     <!-- 비밀번호 변경 모달 -->
     <div id="passwordChangeModal"
         style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; align-items:center; justify-content:center;">
@@ -257,15 +266,15 @@
             <h3 style="margin-bottom:20px; font-size:18px; font-weight:bold;">비밀번호 변경</h3>
             <div style="margin-bottom:15px;">
                 <label style="display:block; margin-bottom:5px;">기존 비밀번호</label>
-                <input type="password" id="current_password" style="width:100%; padding:8px; border:1px solid #ddd;">
+                <input type="password" id="current_password" class="password-modal-input">
             </div>
             <div style="margin-bottom:15px;">
                 <label style="display:block; margin-bottom:5px;">새 비밀번호</label>
-                <input type="password" id="new_password" style="width:100%; padding:8px; border:1px solid #ddd;">
+                <input type="password" id="new_password" class="password-modal-input">
             </div>
             <div style="margin-bottom:20px;">
                 <label style="display:block; margin-bottom:5px;">새 비밀번호 확인</label>
-                <input type="password" id="confirm_password" style="width:100%; padding:8px; border:1px solid #ddd;">
+                <input type="password" id="confirm_password" class="password-modal-input">
             </div>
             <div style="text-align:right;">
                 <button type="button" id="btnCancelPassword"

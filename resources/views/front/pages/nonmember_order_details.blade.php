@@ -86,6 +86,9 @@
         resize: none;
         height: 80px;
     }
+    .modal-body textarea.h120 {
+        height: 120px;
+    }
     .modal-body input[readonly] {
         background: #f1f5f9;
         color: #64748b;
@@ -722,7 +725,7 @@
                 <input type="text" name="subject" placeholder="질문 제목입니다" required>
 
                 <label>■ 문의내용</label>
-                <textarea name="message" placeholder="판매자에게 상품, 배송, 취소, 교환, 반품 등 궁금한 내용을 문의하세요." required style="height: 120px;"></textarea>
+                <textarea name="message" placeholder="판매자에게 상품, 배송, 취소, 교환, 반품 등 궁금한 내용을 문의하세요." required class="h120"></textarea>
             </div>
             <div class="modal-footer">
                 <button type="submit" class="modal-btn primary">문의하기</button>

@@ -118,10 +118,10 @@
                                 <div class="form-group">
                                     <div class="field_wrapper">
                                         <div>
-                                            <input type="text" name="size[]"  placeholder="Size"  style="width:100px" required> {{-- !! Note that the "name" HTML attribute is an ARRAY (using SQUARE BRAKETS [] !!) --}}
-                                            <input type="text" name="sku[]"   placeholder="SKU"   style="width:100px" required> {{-- !! Note that the "name" HTML attribute is an ARRAY (using SQUARE BRAKETS [] !!) --}}
-                                            <input type="text" name="price[]" placeholder="Price" style="width:100px" required> {{-- !! Note that the "name" HTML attribute is an ARRAY (using SQUARE BRAKETS [] !!) --}}
-                                            <input type="text" name="stock[]" placeholder="Stock" style="width:100px" required> {{-- !! Note that the "name" HTML attribute is an ARRAY (using SQUARE BRAKETS [] !!) --}}
+                                            <input type="text" name="size[]"  placeholder="Size"  class="w100" required> {{-- !! Note that the "name" HTML attribute is an ARRAY (using SQUARE BRAKETS [] !!) --}}
+                                            <input type="text" name="sku[]"   placeholder="SKU"   class="w100" required> {{-- !! Note that the "name" HTML attribute is an ARRAY (using SQUARE BRAKETS [] !!) --}}
+                                            <input type="text" name="price[]" placeholder="Price" class="w100" inputmode="numeric" pattern="[0-9]*" required> {{-- !! Note that the "name" HTML attribute is an ARRAY (using SQUARE BRAKETS [] !!) --}}
+                                            <input type="text" name="stock[]" placeholder="Stock" class="w100" inputmode="numeric" pattern="[0-9]*" required> {{-- !! Note that the "name" HTML attribute is an ARRAY (using SQUARE BRAKETS [] !!) --}}
                                             <a href="javascript:void(0);" class="add_button" title="Add Attributes">Add</a> {{-- Add another 4 input fields like the former --}}
                                         </div>
                                     </div>
@@ -158,10 +158,10 @@
                                                 <td>{{ $attribute['size'] }}</td>
                                                 <td>{{ $attribute['sku'] }}</td>
                                                 <td>
-                                                    <input type="number" name="price[]" value="{{ $attribute['price'] }}" required style="width: 60px"> {{-- !! Note the "name" HTML attribute SQUARE BRACKETS [] !! --}}
+                                                    <input type="text" name="price[]" value="{{ $attribute['price'] }}" class="w100" inputmode="numeric" pattern="[0-9]*" required> {{-- !! Note the "name" HTML attribute SQUARE BRACKETS [] !! --}}
                                                 </td>
                                                 <td>
-                                                    <input type="number" name="stock[]" value="{{ $attribute['stock'] }}" required style="width: 60px"> {{-- !! Note the "name" HTML attribute SQUARE BRACKETS [] !! --}}
+                                                    <input type="text" name="stock[]" value="{{ $attribute['stock'] }}" class="w100" inputmode="numeric" pattern="[0-9]*" required> {{-- !! Note the "name" HTML attribute SQUARE BRACKETS [] !! --}}
                                                 </td>
                                                 <td>
                                                     @if ($attribute['status'] == 1)

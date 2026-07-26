@@ -150,7 +150,7 @@
                                                 <div class="date_bx" style="display: flex; align-items: center; gap: 5px;">
                                                     <input type="text" name="start_date" class="datepicker" value="{{ old('start_date') }}"
                                                         style="width: 120px;" readonly placeholder="날짜 선택">
-                                                    <select name="start_hour" style="width: 120px;">
+                                                    <select name="start_hour" class="w160">
                                                         <option value="">시 선택</option>
                                                         @for($i = 0; $i < 24; $i++)
                                                             <option value="{{ $i }}" {{ old('start_hour') !== null && old('start_hour') == $i ? 'selected' : '' }}>{{ sprintf('%02d', $i) }}시</option>
@@ -159,7 +159,7 @@
                                                     <span>~</span>
                                                     <input type="text" name="end_date" class="datepicker" value="{{ old('end_date') }}"
                                                         style="width: 120px;" readonly placeholder="날짜 선택">
-                                                    <select name="end_hour" style="width: 120px;">
+                                                    <select name="end_hour" class="w160">
                                                         <option value="">시 선택</option>
                                                         @for($i = 0; $i < 24; $i++)
                                                             <option value="{{ $i }}" {{ old('end_hour') !== null && old('end_hour') == $i ? 'selected' : '' }}>{{ sprintf('%02d', $i) }}시</option>
@@ -202,7 +202,7 @@
                                             <th class="w160"><span>로고 이미지</span></th>
                                             <td>
                                                 <div class="file_bx" style="display: flex; align-items: center; gap: 5px;">
-                                                    <input type="text" class="file_name" readonly style="width: 300px;">
+                                                    <input type="text" class="file_name w300" readonly>
                                                     <label for="logo_file"
                                                         style="background: #000; color: #fff; padding: 0 20px; height: 32px; line-height: 32px; cursor: pointer; border-radius: 2px;">찾아보기</label>
                                                     <input type="file" name="logo_image" id="logo_file" class="file_input"
@@ -250,7 +250,7 @@
                                                     @foreach(old('banner_files') as $key => $banner_file)
                                                         <div class="file_bx banner_row"
                                                             style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px;">
-                                                            <input type="text" class="file_name" readonly value="{{ old('banner_files_names.' . $key) }}" style="width: 300px;">
+                                                            <input type="text" class="file_name w300" readonly value="{{ old('banner_files_names.' . $key) }}">
                                                             <label class="btn_file"
                                                                 style="background: #000; color: #fff; padding: 0 20px; height: 32px; line-height: 32px; cursor: pointer; border-radius: 2px;">찾아보기
                                                                 <input type="file" name="banner_files[]" class="file_input"
@@ -272,7 +272,7 @@
                                                 @else
                                                     <div class="file_bx banner_row"
                                                         style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px;">
-                                                        <input type="text" class="file_name" readonly style="width: 300px;">
+                                                        <input type="text" class="file_name w300" readonly>
                                                         <label class="btn_file"
                                                             style="background: #000; color: #fff; padding: 0 20px; height: 32px; line-height: 32px; cursor: pointer; border-radius: 2px;">찾아보기
                                                             <input type="file" name="banner_files[]" class="file_input"
@@ -388,17 +388,17 @@
                                         <tr class="admin_detail_row" style="display: {{ old('use_admin') == '1' ? 'table-row' : 'none' }};">
                                             <th class="w160"><span>Shop 채널 관리자 성명</span></th>
                                             <td colspan="3">
-                                                <input type="text" name="admin_name" value="{{ old('admin_name') }}" style="width: 100%;">
+                                                <input type="text" name="admin_name" value="{{ old('admin_name') }}" class="wFull">
                                             </td>
                                         </tr>
                                         <tr class="admin_detail_row" style="display: {{ old('use_admin') == '1' ? 'table-row' : 'none' }};">
                                             <th class="w160"><span>로그인 ID</span></th>
                                             <td>
-                                                <input type="text" name="admin_login_id" value="{{ old('admin_login_id') }}" style="width: 250px;">
+                                                <input type="text" name="admin_login_id" value="{{ old('admin_login_id') }}" class="w160">
                                             </td>
                                             <th class="w160"><span>로그인 PW</span></th>
                                             <td>
-                                                <input type="password" name="admin_password" style="width: 250px;">
+                                                <input type="password" name="admin_password" class="w160">
                                             </td>
                                         </tr>
                                         <tr class="admin_detail_row" style="display: {{ old('use_admin') == '1' ? 'table-row' : 'none' }};">
@@ -421,12 +421,12 @@
                                             <td colspan="3">
                                                 <div class="settle_rate settle_rate_1"
                                                     style="display: {{ old('settlement_type', '1') == '1' ? 'flex' : 'none' }}; align-items: center; gap: 5px;">
-                                                    <input type="text" name="settlement_rate_percent" value="{{ old('settlement_rate_percent') }}" style="width: 200px;">
+                                                    <input type="text" name="settlement_rate_percent" value="{{ old('settlement_rate_percent') }}" class="w160" inputmode="decimal">
                                                     <span>% ( 총 판매금액에서 지급되는 % )</span>
                                                 </div>
                                                 <div class="settle_rate settle_rate_2"
                                                     style="display: {{ old('settlement_type') == '2' ? 'flex' : 'none' }}; align-items: center; gap: 5px;">
-                                                    <input type="text" name="settlement_rate_amount" value="{{ old('settlement_rate_amount') }}" style="width: 200px;">
+                                                    <input type="text" name="settlement_rate_amount" value="{{ old('settlement_rate_amount') }}" class="w160" inputmode="numeric" pattern="[0-9]*">
                                                     <span>원 ( 판매당 지급되는 비용 )</span>
                                                 </div>
                                             </td>
@@ -516,7 +516,7 @@
                     return;
                 }
                 var newRow = '<div class="file_bx banner_row" style="display: flex; align-items: center; gap: 5px; margin-bottom: 5px;">' +
-                    '    <input type="text" class="file_name" readonly style="width: 300px;">' +
+                    '    <input type="text" class="file_name w300" readonly>' +
                     '    <label class="btn_file" style="background: #000; color: #fff; padding: 0 20px; height: 32px; line-height: 32px; cursor: pointer; border-radius: 2px;">찾아보기' +
                     '        <input type="file" name="banner_files[]" class="file_input" style="display: none;">' +
                     '    </label>' +

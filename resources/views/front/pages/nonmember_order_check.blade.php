@@ -7,6 +7,16 @@
     #container {
         padding-top: 100px;
     }
+
+    .nonmember-check-input {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+
     @media all and (max-width: 1024px) {
         #container {
             padding-top: 70px;
@@ -37,12 +47,12 @@
                     @csrf
                     <div style="margin-bottom: 20px;">
                         <label for="order_id" style="display: block; font-size: 14px; font-weight: 600; color: #333; margin-bottom: 8px;">주문번호</label>
-                        <input type="text" id="order_id" name="order_id" value="Me9-Shop-0032022" placeholder="주문번호 입력 (예: Me9-Shop-0032022)" required style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
+                        <input type="text" id="order_id" name="order_id" value="Me9-Shop-0032022" placeholder="주문번호 입력 (예: Me9-Shop-0032022)" required class="nonmember-check-input">
                     </div>
 
                     <div style="margin-bottom: 30px;">
                         <label for="phone" style="display: block; font-size: 14px; font-weight: 600; color: #333; margin-bottom: 8px;">연락처</label>
-                        <input type="text" id="phone" name="phone" value="010-1234-5678" placeholder="'-' 제외하고 입력" required style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
+                        <input type="text" id="phone" name="phone" value="010-1234-5678" placeholder="'-' 제외하고 입력" required class="nonmember-check-input">
                     </div>
 
                     <button type="submit" style="width: 100%; background: #6366f1; color: white; padding: 14px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 0.2s;">조회하기</button>

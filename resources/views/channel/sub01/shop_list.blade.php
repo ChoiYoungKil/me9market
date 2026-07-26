@@ -106,9 +106,8 @@
                                 </table>
                             </div>
 
-                            <div class="btm_btn right mt10">
-                                <button type="submit" class="type2"
-                                    style="border: none; cursor: pointer; width: 120px; height: 32px; line-height: 32px; font-size: 14px; font-weight: 700;">검색</button>
+                            <div class="btm_btn right mt10 search-actions">
+                                <button type="submit" class="type2">검색</button>
                             </div>
                         </div>
                     </form>

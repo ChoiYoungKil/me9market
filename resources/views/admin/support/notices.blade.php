@@ -91,16 +91,14 @@
                 </div>
                 <div class="conbx">
                     <div class="con_w">
-                        <div class="list_top1"
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                            <div class="left_bx" style="display: flex; gap: 10px; align-items: center;">
+                        <div class="list_top1 list-top-split">
+                            <div class="left_bx list-top-actions">
                                 <div class="count">총 <strong>{{ $notices->total() }}</strong> 개</div>
 
                                 <form action="{{ url('admin/notices') }}" method="GET"
-                                    style="display: flex; gap: 5px; align-items: center; margin-left: 20px;">
+                                    class="list-inline-search">
                                     <input type="hidden" name="per_page" value="{{ $perPage }}">
-                                    <select name="search_type"
-                                        style="padding: 5px; border: 1px solid #ddd; border-radius: 4px; height: 34px;">
+                                    <select name="search_type" class="w160">
                                         <option value="title" {{ request('search_type') == 'title' ? 'selected' : '' }}>제목
                                         </option>
                                         <option value="content" {{ request('search_type') == 'content' ? 'selected' : '' }}>내용
@@ -109,16 +107,13 @@
                                         </option>
                                     </select>
                                     <input type="text" name="search_value" value="{{ request('search_value') }}"
-                                        placeholder="검색어를 입력하세요"
-                                        style="padding: 5px; border: 1px solid #ddd; border-radius: 4px; height: 34px;">
-                                    <button type="submit" class="btn02"
-                                        style="height: 34px; line-height: 34px; padding: 0 15px; border: none; cursor: pointer; background-color: #3470f7; color: #fff; border-radius: 4px;">검색</button>
+                                        placeholder="검색어를 입력하세요" class="w300">
+                                    <button type="submit" class="btn02 col5">검색</button>
                                 </form>
                             </div>
 
-                            <div class="right_bx" style="display: flex; gap: 10px; align-items: center;">
-                                <select id="perPageSelect"
-                                    style="padding: 5px 10px; border: 1px solid #ddd; border-radius: 4px; height: 34px;">
+                            <div class="right_bx list-top-actions">
+                                <select id="perPageSelect" class="w160">
                                     <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>20개씩 보기</option>
                                     <option value="40" {{ $perPage == 40 ? 'selected' : '' }}>40개씩 보기</option>
                                     <option value="60" {{ $perPage == 60 ? 'selected' : '' }}>60개씩 보기</option>

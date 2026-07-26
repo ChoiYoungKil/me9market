@@ -50,6 +50,10 @@ Route::get('/session-test', function() {
 // 첫째: 관리자 패널 라우트:
 // 웹사이트 'ADMIN' 섹션: 'admin'으로 시작하는 라우트 그룹 (Admin 라우트 그룹)    // 참고: 모든 라우트는 'admin/'으로 시작하므로 접두어 내부에서는 '/admin'을 생략하고 정의합니다!!
 Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function () {
+    Route::get('/', function () {
+        return redirect()->route('admin.dashboard');
+    })->name('admin.index');
+
     Route::match(['get', 'post'], 'login', 'AdminController@login')->name('admin.login'); // match() 메소드는 동일한 라우트에 대해 하나 이상의 HTTP 요청 메소드를 허용합니다 (예: 페이지 렌더링은 GET, 폼 제출은 POST)
 
 
@@ -188,6 +192,14 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
 
         // PDF 인보이스 렌더링 (Dompdf 패키지 사용)
         Route::get('orders/invoice/pdf/{id}', 'OrderController@viewPDFInvoice');
+
+        // 발주사 관리
+        Route::get('order-managers', 'OrderManagerController@index')->name('admin.order_managers.index');
+        Route::post('order-managers', 'OrderManagerController@store')->name('admin.order_managers.store');
+        Route::post('order-managers/{id}/update', 'OrderManagerController@update')->name('admin.order_managers.update');
+        Route::post('order-managers/{id}/reset-password', 'OrderManagerController@resetPassword')->name('admin.order_managers.reset_password');
+        Route::post('order-managers/{id}/delete', 'OrderManagerController@destroy')->name('admin.order_managers.destroy');
+        Route::post('order-managers/{id}/portal', 'OrderManagerController@portal')->name('admin.order_managers.portal');
 
         // 정산관리
         Route::get('settlements', 'SettlementController@index')->name('admin.settlements.index');
@@ -464,6 +476,9 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
                 Route::post('/info/update', 'ChannelController@updateInfo')->name('channel.info.update');
                 Route::post('/update-password', 'ChannelController@updatePassword')->name('channel.update_password');
                 Route::get('/order-manager', 'ChannelController@orderManagerList')->name('channel.order.manager');
+                Route::post('/order-manager/store', 'ChannelController@storeOrderManager')->name('channel.order.manager.store');
+                Route::post('/order-manager/{id}/update', 'ChannelController@updateOrderManager')->name('channel.order.manager.update');
+                Route::post('/order-manager/{id}/portal', 'ChannelController@openOrderManagerPortal')->name('channel.order.manager.portal');
                 Route::get('/points', 'ChannelController@pointList')->name('channel.point.list');
                 Route::post('/points/purchase', 'ChannelController@requestPointPurchase')->name('channel.point.purchase');
                 Route::post('/points/refund', 'ChannelController@requestPointRefund')->name('channel.point.refund');

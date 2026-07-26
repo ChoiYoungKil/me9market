@@ -12,8 +12,12 @@ use App\Models\Banner;
 use App\Models\Coupon;
 use App\Models\User;
 use App\Models\Order;
+use App\Models\OrdersProduct;
 use App\Models\NewsletterSubscriber;
+use App\Models\Distributor;
+use App\Support\OrderItemStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class AdminRoutesTest extends TestCase
@@ -180,11 +184,109 @@ class AdminRoutesTest extends TestCase
         $this->actingAs($admin, 'admin')->get('/admin/coupons')->assertStatus(200);
         $this->actingAs($admin, 'admin')->get('/admin/users')->assertStatus(200);
         $this->actingAs($admin, 'admin')->get('/admin/orders')->assertStatus(200);
+        $this->actingAs($admin, 'admin')->get('/admin/order-managers')->assertStatus(200);
         $this->actingAs($admin, 'admin')->get('/admin/subscribers')->assertStatus(200);
 
         // Sub-routes and slugs (using vendor admin to avoid toArray() on null vendor_id)
         $this->actingAs($vendorAdmin, 'admin')->get('/admin/update-vendor-details/personal')->assertStatus(200);
         $this->actingAs($vendorAdmin, 'admin')->get('/admin/update-vendor-details/business')->assertStatus(200);
         $this->actingAs($vendorAdmin, 'admin')->get('/admin/update-vendor-details/bank')->assertStatus(200);
+    }
+
+    public function test_admin_can_manage_order_managers_and_open_distributor_portal()
+    {
+        list($admin, $vendor, $section, $category, $brand, $product, $banner, $coupon, $user, $order) = $this->createSetup();
+
+        $this->actingAs($admin, 'admin')->post('/admin/order-managers', [
+            'status' => 1,
+            'email' => 'distributor-admin@example.com',
+            'name' => 'Distributor Admin',
+            'phone' => '01099998888',
+            'password' => 'secret123',
+        ])->assertRedirect(route('admin.order_managers.index'));
+
+        $this->assertDatabaseHas('distributors', [
+            'email' => 'distributor-admin@example.com',
+            'name' => 'Distributor Admin',
+            'status' => 1,
+        ]);
+
+        $manager = Distributor::where('email', 'distributor-admin@example.com')->firstOrFail();
+
+        $this->actingAs($admin, 'admin')
+            ->get('/admin/order-managers')
+            ->assertStatus(200)
+            ->assertSee(route('distributor.login'))
+            ->assertSee('distributor-admin@example.com')
+            ->assertSee('PW초기화');
+
+        $this->actingAs($admin, 'admin')->post("/admin/order-managers/{$manager->id}/update", [
+            'status' => 0,
+            'email' => 'distributor-updated@example.com',
+            'name' => 'Updated Distributor',
+            'phone' => '01077776666',
+        ])->assertRedirect(route('admin.order_managers.index'));
+
+        $this->assertDatabaseHas('distributors', [
+            'id' => $manager->id,
+            'email' => 'distributor-updated@example.com',
+            'name' => 'Updated Distributor',
+            'status' => 0,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->post("/admin/order-managers/{$manager->id}/reset-password")
+            ->assertRedirect(route('admin.order_managers.index'));
+
+        $manager->refresh();
+        $this->assertTrue(Hash::check('123456', $manager->password));
+
+        $this->actingAs($admin, 'admin')
+            ->post("/admin/order-managers/{$manager->id}/portal")
+            ->assertRedirect(route('distributor.orders.pending'));
+
+        $this->assertSame($manager->id, session('distributor_id'));
+        $this->assertSame('distributor-updated@example.com', session('distributor_email'));
+
+        $product->update([
+            'distributor_id' => $manager->id,
+            'order_manager_enabled' => true,
+        ]);
+
+        OrdersProduct::create([
+            'order_id' => $order->id,
+            'user_id' => $user->id,
+            'vendor_id' => $vendor->id,
+            'admin_id' => $admin->id,
+            'product_id' => $product->id,
+            'distributor_id' => $manager->id,
+            'product_code' => $product->product_code,
+            'product_name' => 'Distributor Linked Product',
+            'product_color' => 'Silver',
+            'product_size' => '기본옵션',
+            'product_price' => 1200,
+            'product_qty' => 1,
+            'line_total' => 1200,
+            'item_status' => 'Payment Captured',
+            'status_code' => OrderItemStatus::PAID,
+        ]);
+
+        $this->withSession([
+            'distributor_id' => $manager->id,
+            'distributor_name' => 'Updated Distributor',
+            'distributor_email' => 'distributor-updated@example.com',
+        ])->get(route('distributor.orders.pending'))
+            ->assertStatus(200)
+            ->assertSee('Distributor Linked Product');
+
+        $this->actingAs($admin, 'admin')
+            ->post("/admin/order-managers/{$manager->id}/portal", ['destination' => 'completed'])
+            ->assertRedirect(route('distributor.orders.completed'));
+
+        $this->actingAs($admin, 'admin')
+            ->post("/admin/order-managers/{$manager->id}/delete")
+            ->assertRedirect(route('admin.order_managers.index'));
+
+        $this->assertDatabaseMissing('distributors', ['id' => $manager->id]);
     }
 }

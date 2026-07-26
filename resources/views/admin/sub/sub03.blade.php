@@ -120,7 +120,7 @@
                             <div class="btm_btn right mt10">
                                 <a href="#" class="col2 f_l">EXCEL</a>
                                 <a href="#" class="reset1">초기화</a>
-                                <a href="#">검색</a>
+                                <a href="#" class="type2">검색</a>
                             </div>
                         </div>
                     </div>

@@ -89,7 +89,7 @@
                                 </table>
                             </div>
 
-                            <div class="btm_btn right mt10" style="display: flex; justify-content: flex-end; gap: 5px;">
+                            <div class="btm_btn right mt10 search-actions">
                                 <button type="submit" class="btn01">검색</button>
                                 <a href="{{ url('admin/users') }}" class="btn01 col3">초기화</a>
                             </div>

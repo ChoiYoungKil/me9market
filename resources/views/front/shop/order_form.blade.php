@@ -1,6 +1,16 @@
 @extends('layouts.frontend')
 
 @section('content')
+<style>
+    .order-form-control {
+        width: 100%;
+        height: 42px;
+        border: 1px solid #cfd4dc;
+        border-radius: 6px;
+        padding: 0 10px;
+        box-sizing: border-box;
+    }
+</style>
 <div id="contents" style="padding: 100px 0; min-height: 600px; background:#f6f7f9;">
     <form action="{{ route('front.shop.order.checkout') }}" method="POST" style="max-width:1180px; margin:0 auto; display:grid; grid-template-columns:minmax(0,1fr) 360px; gap:20px;">
         @csrf
@@ -27,13 +37,13 @@
 
             <h2 style="font-size:18px; margin-top:28px;">주문자/배송 정보</h2>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                <label>이름<input name="name" value="{{ old('name', Auth::user()->name ?? '홍길동') }}" required style="width:100%; height:42px; border:1px solid #cfd4dc; border-radius:6px; padding:0 10px;"></label>
-                <label>연락처<input name="mobile" value="{{ old('mobile', Auth::user()->mobile ?? '010-1234-5678') }}" required style="width:100%; height:42px; border:1px solid #cfd4dc; border-radius:6px; padding:0 10px;"></label>
-                <label>이메일<input name="email" value="{{ old('email', Auth::user()->email ?? 'guest@me9.local') }}" required style="width:100%; height:42px; border:1px solid #cfd4dc; border-radius:6px; padding:0 10px;"></label>
-                <label>우편번호<input name="pincode" value="{{ old('pincode', '04524') }}" required style="width:100%; height:42px; border:1px solid #cfd4dc; border-radius:6px; padding:0 10px;"></label>
-                <label style="grid-column:1 / -1;">주소<input name="address" value="{{ old('address', '서울특별시 중구 세종대로 110') }}" required style="width:100%; height:42px; border:1px solid #cfd4dc; border-radius:6px; padding:0 10px;"></label>
-                <label>시/도<input name="city" value="{{ old('city', '서울특별시') }}" style="width:100%; height:42px; border:1px solid #cfd4dc; border-radius:6px; padding:0 10px;"></label>
-                <label>구/군<input name="state" value="{{ old('state', '중구') }}" style="width:100%; height:42px; border:1px solid #cfd4dc; border-radius:6px; padding:0 10px;"></label>
+                <label>이름<input name="name" value="{{ old('name', Auth::user()->name ?? '홍길동') }}" required class="order-form-control"></label>
+                <label>연락처<input name="mobile" value="{{ old('mobile', Auth::user()->mobile ?? '010-1234-5678') }}" required class="order-form-control"></label>
+                <label>이메일<input name="email" value="{{ old('email', Auth::user()->email ?? 'guest@me9.local') }}" required class="order-form-control"></label>
+                <label>우편번호<input name="pincode" value="{{ old('pincode', '04524') }}" required class="order-form-control"></label>
+                <label style="grid-column:1 / -1;">주소<input name="address" value="{{ old('address', '서울특별시 중구 세종대로 110') }}" required class="order-form-control"></label>
+                <label>시/도<input name="city" value="{{ old('city', '서울특별시') }}" class="order-form-control"></label>
+                <label>구/군<input name="state" value="{{ old('state', '중구') }}" class="order-form-control"></label>
             </div>
         </div>
 

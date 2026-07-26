@@ -57,15 +57,17 @@
                 $isProductManagement = in_array($currentPage, ['products', 'categories', 'sections', 'brands', 'filters', 'attributes']);
                 $isSupport = in_array($currentPage, ['notices', 'faqs', 'contacts']);
                 $isSettlement = $currentPage === 'settlements';
+                $isOrderManagement = $currentPage === 'order_managers';
             @endphp
             <div class="t_menu">
                 <ul>
                     <li><a href="#" class="{{ $isSettings ? 'on' : '' }}">환경설정</a></li>
                     <li><a href="{{ url('admin/users') }}" class="{{ $isUserManagement ? 'on' : '' }}">회원관리</a></li>
-                    <li><a href="{{ url('admin/products') }}" class="{{ $isProductManagement ? 'on' : '' }}">상품관리</a>
+                <li><a href="{{ url('admin/products') }}" class="{{ $isProductManagement ? 'on' : '' }}">상품관리</a>
                     </li>
                     <li><a href="{{ url('admin/notices') }}" class="{{ $isSupport ? 'on' : '' }}">고객센터</a></li>
-                    <li><a href="#">판매사이트관리</a></li>
+                    <li><a href="{{ route('admin.channel_points.index') }}" class="{{ $currentPage === 'channel_points' ? 'on' : '' }}">포인트관리</a></li>
+                    <li><a href="{{ route('admin.order_managers.index') }}" class="{{ $isOrderManagement ? 'on' : '' }}">발주관리</a></li>
                     <li><a href="{{ route('admin.settlements.index') }}" class="{{ $isSettlement ? 'on' : '' }}">정산관리</a></li>
                 </ul>
             </div>

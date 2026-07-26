@@ -43,7 +43,7 @@
                                         <tr>
                                             <th class="w160"><span>* 대상 상품 선택</span></th>
                                             <td>
-                                                <select name="product_id" required style="width: 100%; max-width: 400px; padding: 5px; height: 32px;">
+                                                <select name="product_id" required class="wFull">
                                                     <option value="">대상을 선택해 주세요</option>
                                                     @foreach($products as $prod)
                                                         <option value="{{ $prod->id }}">{{ $prod->product_name }} (코드: {{ $prod->product_code }})</option>
@@ -57,7 +57,7 @@
                                         <tr>
                                             <th class="w160"><span>* 목표 최소 수량 (개)</span></th>
                                             <td>
-                                                <input type="number" name="min_quantity" value="{{ old('min_quantity', 100) }}" required style="width: 200px;">
+                                                <input type="text" name="min_quantity" value="{{ old('min_quantity', 100) }}" class="w160" inputmode="numeric" pattern="[0-9]*" required>
                                                 <span class="fs2 col2" style="margin-left: 10px;">달성 목표 최소 수량을 숫자로 입력하세요.</span>
                                             </td>
                                         </tr>
@@ -67,11 +67,11 @@
                                                 <div style="display:grid; gap:8px; max-width:760px;">
                                                     @for($i = 0; $i < 4; $i++)
                                                         <div style="display:flex; align-items:center; gap:8px;">
-                                                            <input type="number" name="tier_min_quantity[]" value="{{ old('tier_min_quantity.' . $i, $i === 0 ? 1 : '') }}" placeholder="시작수량" style="width:120px;">
+                                                            <input type="text" name="tier_min_quantity[]" value="{{ old('tier_min_quantity.' . $i, $i === 0 ? 1 : '') }}" class="w160" inputmode="numeric" pattern="[0-9]*" placeholder="시작수량">
                                                             <span>개부터</span>
-                                                            <input type="number" name="tier_max_quantity[]" value="{{ old('tier_max_quantity.' . $i, $i === 0 ? 100 : '') }}" placeholder="종료수량" style="width:120px;">
+                                                            <input type="text" name="tier_max_quantity[]" value="{{ old('tier_max_quantity.' . $i, $i === 0 ? 100 : '') }}" class="w160" inputmode="numeric" pattern="[0-9]*" placeholder="종료수량">
                                                             <span>개까지</span>
-                                                            <input type="number" name="tier_unit_price[]" value="{{ old('tier_unit_price.' . $i, $i === 0 ? 15000 : '') }}" placeholder="개당 판매가" style="width:140px;">
+                                                            <input type="text" name="tier_unit_price[]" value="{{ old('tier_unit_price.' . $i, $i === 0 ? 15000 : '') }}" class="w160" inputmode="numeric" pattern="[0-9]*" placeholder="개당 판매가">
                                                             <span>원</span>
                                                         </div>
                                                     @endfor
@@ -83,11 +83,11 @@
                                             <th class="w160"><span>* 진행 기간 설정</span></th>
                                             <td>
                                                 <div class="date_bx" style="display: flex; align-items: center; gap: 5px;">
-                                                    <input type="text" name="start_date" id="start_date" class="datepicker" value="{{ old('start_date', date('Y-m-d')) }}"
-                                                        style="width: 120px;" readonly placeholder="시작일 선택">
+                                                    <input type="text" name="start_date" id="start_date" class="datepicker w160" value="{{ old('start_date', date('Y-m-d')) }}"
+                                                        readonly placeholder="시작일 선택">
                                                     <span>~</span>
-                                                    <input type="text" name="end_date" id="end_date" class="datepicker" value="{{ old('end_date', date('Y-m-d', strtotime('+7 days'))) }}"
-                                                        style="width: 120px;" readonly placeholder="종료일 선택">
+                                                    <input type="text" name="end_date" id="end_date" class="datepicker w160" value="{{ old('end_date', date('Y-m-d', strtotime('+7 days'))) }}"
+                                                        readonly placeholder="종료일 선택">
                                                 </div>
                                             </td>
                                         </tr>

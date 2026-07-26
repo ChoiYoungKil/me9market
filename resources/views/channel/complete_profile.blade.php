@@ -131,7 +131,7 @@
                                                         <th class="w160"><span>정산용 계좌번호</span></th>
                                                         <td colspan="3">
                                                             <div class="bank_bx">
-                                                                <select name="bank_name" style="width: 120px;" required>
+                                                                <select name="bank_name" class="w160" required>
                                                                     <option value="" disabled selected>은행선택</option>
                                                                     <option value="국민은행">국민은행</option>
                                                                     <option value="신한은행">신한은행</option>

@@ -1,6 +1,41 @@
 @extends('layouts.channel')
 
 @section('content')
+    <style>
+        .product-own-search {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .product-own-search .btn01.arrow {
+            width: 100px;
+            height: 34px;
+            line-height: 32px;
+        }
+
+        .product-own-list-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .product-own-list-actions .btn01 {
+            height: 34px;
+            line-height: 32px;
+            font-size: 12px;
+            text-align: center;
+            padding: 0;
+        }
+
+        .product-own-list-actions .btn-excel {
+            width: 140px;
+        }
+
+        .product-own-list-actions .btn-create {
+            width: 100px;
+        }
+    </style>
 
 
     @php
@@ -41,11 +76,10 @@
                                     <tr>
                                         <th class="w160"><span>상품명</span></th>
                                         <td colspan="3">
-                                            <div class="r_btn_w" style="display: flex; align-items: center; gap: 5px;">
+                                            <div class="r_btn_w product-own-search">
                                                 <input type="text" name="q" value="{{ $filters['q'] ?? '' }}" placeholder="상품명 또는 상품코드를 입력해 주세요."
-                                                    style="flex: 1; height: 34px; border: 1px solid #ddd; padding: 0 10px;">
-                                                <a id="arrow1" class="btn01 arrow"
-                                                    style="width: 100px; height: 34px; line-height: 32px;"><span>상세검색</span></a>
+                                                    class="wFull">
+                                                <a id="arrow1" class="btn01 arrow"><span>상세검색</span></a>
                                             </div>
                                         </td>
                                     </tr>
@@ -66,7 +100,7 @@
                                         <td colspan="3">
                                             <ul class="type_bx w600">
                                                 <li>
-                                                    <select name="category_id">
+                                                    <select name="category_id" class="wFull">
                                                         <option value="">전체 상품분류</option>
                                                         @foreach($categoryOptions ?? [] as $category)
                                                             <option value="{{ $category['id'] }}" {{ (int)($filters['category_id'] ?? 0) === (int)$category['id'] ? 'selected' : '' }}>
@@ -126,10 +160,9 @@
                             </table>
                         </div>
 
-                        <div class="btm_btn right mt10" style="margin-bottom: 40px;">
-                            <button type="submit" class="type2"
-                                style="border: none; cursor: pointer; width: 120px; height: 32px; line-height: 32px; font-size: 14px; font-weight: 700;">검색</button>
-                            <a href="{{ route('channel.product_own') }}" class="col5" style="display:inline-block; width:80px; height:32px; line-height:32px; text-align:center;">초기화</a>
+                        <div class="btm_btn right mt10 search-actions mb40">
+                            <button type="submit" class="type2">검색</button>
+                            <a href="{{ route('channel.product_own') }}" class="type2 col5">초기화</a>
                         </div>
                         </form>
 
@@ -138,17 +171,15 @@
                             <div class="left_bx">
                                 <div class="count">총 <strong>{{ $products->total() }}</strong> 건</div>
                             </div>
-                            <div class="right_bx" style="display: flex; gap: 10px; align-items: center;">
-                                <select id="perPageSelect" style="padding: 0 10px; border: 1px solid #ddd; height: 34px;">
+                            <div class="right_bx product-own-list-actions">
+                                <select id="perPageSelect" class="w160">
                                     @foreach([20, 40, 60, 80, 100] as $perPageOption)
                                         <option value="{{ $perPageOption }}" {{ (int)($filters['per_page'] ?? 20) === $perPageOption ? 'selected' : '' }}>{{ $perPageOption }}개씩 보기</option>
                                     @endforeach
                                 </select>
-                                <a href="{{ route('channel.product.own.export', request()->query()) }}" class="btn01 col2"
-                                    style="height: 34px; line-height: 32px; font-size: 12px; width: 140px; text-align: center; padding: 0;">EXCEL
+                                <a href="{{ route('channel.product.own.export', request()->query()) }}" class="btn01 col2 btn-excel">EXCEL
                                     다운로드</a>
-                                <a href="{{ route('channel.product.base.create') }}" class="btn01 col5"
-                                    style="height: 34px; line-height: 32px; font-size: 12px; width: 100px; text-align: center; padding: 0;">상품등록</a>
+                                <a href="{{ route('channel.product.base.create') }}" class="btn01 col5 btn-create">상품등록</a>
                             </div>
                         </div>
 

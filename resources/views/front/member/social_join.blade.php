@@ -3,6 +3,21 @@
 @section('page_type', 'sub')
 
 @section('content')
+<style>
+    .social-join-input {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
+
+    .social-join-input[readonly] {
+        background: #f8fafc;
+        color: #64748b;
+    }
+</style>
 <div id="container">
     <div id="contents">
         <div class="row" style="padding: 60px 0;">
@@ -17,12 +32,12 @@
                     @csrf
                     <div style="margin-bottom: 20px;">
                         <label for="email" style="display: block; font-size: 14px; font-weight: 600; color: #333; margin-bottom: 8px;">연동된 이메일</label>
-                        <input type="text" id="email" name="email" value="kakao_user123@kakao.com" readonly style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; box-sizing: border-box; background: #f8fafc; color: #64748b;">
+                        <input type="text" id="email" name="email" value="kakao_user123@kakao.com" readonly class="social-join-input">
                     </div>
 
                     <div style="margin-bottom: 20px;">
                         <label for="name" style="display: block; font-size: 14px; font-weight: 600; color: #333; margin-bottom: 8px;">이름 (성명)</label>
-                        <input type="text" id="name" name="name" placeholder="실명을 입력해 주세요" required style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; box-sizing: border-box;">
+                        <input type="text" id="name" name="name" placeholder="실명을 입력해 주세요" required class="social-join-input">
                     </div>
 
                     <div style="margin-bottom: 30px; border-top: 1px solid #f1f5f9; padding-top: 20px;">

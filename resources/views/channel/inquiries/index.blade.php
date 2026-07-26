@@ -29,7 +29,7 @@
                                         <tr>
                                             <th class="w160"><span>처리상태</span></th>
                                             <td>
-                                                <select name="status">
+                                                <select name="status" class="w160">
                                                     <option value="">전체</option>
                                                     @foreach($statusLabels as $value => $label)
                                                         <option value="{{ $value }}" @selected(request('status') === $value)>{{ $label }}</option>
@@ -38,15 +38,15 @@
                                             </td>
                                             <th class="w160"><span>검색어</span></th>
                                             <td>
-                                                <input type="text" name="keyword" value="{{ request('keyword') }}" placeholder="제목, 내용, 이름, 이메일">
+                                                <input type="text" name="keyword" value="{{ request('keyword') }}" placeholder="제목, 내용, 이름, 이메일" class="wFull">
                                             </td>
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
-                            <div class="btm_btn right mt10">
-                                <button type="submit" style="height: 36px; padding: 0 18px; border: 0; background: #3470f7; color: #fff; font-weight: 700; cursor: pointer;">검색</button>
-                                <a href="{{ route('channel.inquiries.index') }}">초기화</a>
+                            <div class="btm_btn right mt10 search-actions">
+                                <button type="submit" class="type2">검색</button>
+                                <a href="{{ route('channel.inquiries.index') }}" class="type2 col5">초기화</a>
                             </div>
                         </form>
 

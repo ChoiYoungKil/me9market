@@ -2,6 +2,11 @@
 
 
 @section('content')
+    <style>
+        .h200 {
+            height: 200px;
+        }
+    </style>
     <div class="main-panel">
         <div class="content-wrapper">
             <div class="row">
@@ -85,7 +90,7 @@
 
                                     {{-- Note: Dynamic Filters are applied to `categories` (parent categories and subcategories (child categories)), and not `sections`! --}}
                                     <label for="cat_ids">Select Category</label>
-                                    <select name="cat_ids[]" id="cat_ids" class="form-control text-dark" multiple style="height: 200px"> {{-- We used the Square Brackets [] in name="cat_ids[]" is an array because we used the "multiple" HTML attribute to be able to choose multiple categories at the same time --}}
+                                    <select name="cat_ids[]" id="cat_ids" class="form-control text-dark h200" multiple> {{-- We used the Square Brackets [] in name="cat_ids[]" is an array because we used the "multiple" HTML attribute to be able to choose multiple categories at the same time --}}
                                         <option value="">Select Category</option>
                                         @foreach ($categories as $section) {{-- $categories are ALL the `sections` with their related 'parent' categories (if any (if exist)) and subcategories or `child` categories (if any (if exist)) --}} {{-- Check FilterController.php --}}
                                             <optgroup label="{{ $section['name'] }}"> {{-- sections --}}

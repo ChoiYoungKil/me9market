@@ -71,7 +71,7 @@
                                     <tr>
                                         <th class="w160"><span>상태</span></th>
                                         <td>
-                                            <select name="status" style="width:160px;">
+                                            <select name="status" class="w160">
                                                 @foreach($statusLabels as $value => $label)
                                                     <option value="{{ $value }}" {{ $status === $value ? 'selected' : '' }}>{{ $label }}</option>
                                                 @endforeach
@@ -79,7 +79,7 @@
                                         </td>
                                         <th class="w160"><span>구분</span></th>
                                         <td>
-                                            <select name="type" style="width:180px;">
+                                            <select name="type" class="w160">
                                                 <option value="all" {{ $type === 'all' ? 'selected' : '' }}>전체</option>
                                                 @foreach($typeLabels as $value => $label)
                                                     <option value="{{ $value }}" {{ $type === $value ? 'selected' : '' }}>{{ $label }}</option>

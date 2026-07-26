@@ -144,7 +144,7 @@
                                                     <form action="{{ route('channel.product.categories.update', $middle->id) }}" method="POST" style="display:flex; gap:8px; align-items:center;">
                                                         @csrf
                                                         <input type="text" name="category_name" value="{{ $middle->category_name }}" style="height:34px; border:1px solid #ddd; padding:0 8px; width:180px;">
-                                                        <select name="status" style="height:34px;">
+                                                        <select name="status" class="w160">
                                                             <option value="1" {{ $middle->status == 1 ? 'selected' : '' }}>사용</option>
                                                             <option value="0" {{ $middle->status == 0 ? 'selected' : '' }}>미사용</option>
                                                         </select>
@@ -167,7 +167,7 @@
                                                         <form action="{{ route('channel.product.categories.update', $minor->id) }}" method="POST" style="display:flex; gap:8px; align-items:center;">
                                                             @csrf
                                                             <input type="text" name="category_name" value="{{ $minor->category_name }}" style="height:34px; border:1px solid #ddd; padding:0 8px; width:180px;">
-                                                            <select name="status" style="height:34px;">
+                                                            <select name="status" class="w160">
                                                                 <option value="1" {{ $minor->status == 1 ? 'selected' : '' }}>사용</option>
                                                                 <option value="0" {{ $minor->status == 0 ? 'selected' : '' }}>미사용</option>
                                                             </select>

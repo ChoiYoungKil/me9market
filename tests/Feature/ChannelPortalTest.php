@@ -28,14 +28,14 @@ class ChannelPortalTest extends TestCase
         $admin->type = 'vendor';
         $admin->vendor_id = 1;
         $admin->mobile = '01012345678';
-        $admin->email = 'john@admin.com';
+        $admin->email = 'channel-vendor-login@example.com';
         $admin->password = bcrypt('123456');
         $admin->confirm = 'Yes';
         $admin->status = 1;
         $admin->save();
 
         $response = $this->post('/channel/login', [
-            'email' => 'john@admin.com',
+            'email' => 'channel-vendor-login@example.com',
             'password' => '123456',
         ]);
 
@@ -50,14 +50,14 @@ class ChannelPortalTest extends TestCase
         $admin->type = 'superadmin';
         $admin->vendor_id = 0;
         $admin->mobile = '01012345678';
-        $admin->email = 'admin@admin.com';
+        $admin->email = 'superadmin@example.com';
         $admin->password = bcrypt('123456');
         $admin->confirm = 'Yes';
         $admin->status = 1;
         $admin->save();
 
         $response = $this->post('/channel/login', [
-            'email' => 'admin@admin.com',
+            'email' => 'superadmin@example.com',
             'password' => '123456',
         ]);
 

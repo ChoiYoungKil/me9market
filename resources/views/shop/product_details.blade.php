@@ -23,6 +23,16 @@
     $mainImageName = $galleryImages->first();
     $mainImageUrl = $mainImageName ? asset('front/images/product_images/large/' . $mainImageName) : asset('front/images/product_images/small/no-image.png');
 @endphp
+<style>
+    .shop-form-control {
+        width: 100%;
+        height: 44px;
+        border: 1px solid #cfd4dc;
+        border-radius: 6px;
+        padding: 0 10px;
+        box-sizing: border-box;
+    }
+</style>
 <div style="background: #f6f7f9; min-height: 100vh; padding-bottom: 50px;">
     <div style="background: #111827; color: #fff; padding: 22px 32px;">
         <div style="max-width: 1180px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;">
@@ -67,12 +77,12 @@
                     @csrf
                     <input type="hidden" name="shop_product_id" value="{{ $shopProduct->id }}">
                     <label style="font-weight: 800;">옵션</label>
-                    <select name="option" style="height: 44px; border: 1px solid #cfd4dc; border-radius: 6px; padding: 0 10px;">
+                    <select name="option" class="shop-form-control">
                         <option value="{{ $product->product_color }}/기본">{{ $product->product_color }} / 기본</option>
                         <option value="{{ $product->product_color }}/추가옵션">{{ $product->product_color }} / 추가옵션</option>
                     </select>
                     <label style="font-weight: 800;">수량</label>
-                    <input type="number" name="qty" value="1" min="1" max="{{ $shopProduct->purchase_limit ?: 99 }}" style="height: 44px; border: 1px solid #cfd4dc; border-radius: 6px; padding: 0 10px;">
+                    <input type="text" name="qty" value="1" min="1" max="{{ $shopProduct->purchase_limit ?: 99 }}" inputmode="numeric" pattern="[0-9]*" class="shop-form-control">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px;">
                         <button type="submit" style="height: 48px; border: 1px solid #111827; border-radius: 6px; background: #fff; font-weight: 900; cursor: pointer;">장바구니 담기</button>
                         <button type="submit" name="buy_now" value="1" style="height: 48px; border: 0; border-radius: 6px; background: #111827; color: #fff; font-weight: 900; cursor: pointer;">바로 구매</button>

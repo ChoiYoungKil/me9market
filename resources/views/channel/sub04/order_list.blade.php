@@ -61,7 +61,7 @@
                                         <td colspan="3">
                                             <div class="r_btn_w">
                                                 <div class="search_w01">
-                                                    <select name="search_type">
+                                                    <select name="search_type" class="w160">
                                                         <option value="all" {{ ($filters['search_type'] ?? 'all') === 'all' ? 'selected' : '' }}>전체</option>
                                                         <option value="order_no" {{ ($filters['search_type'] ?? '') === 'order_no' ? 'selected' : '' }}>주문번호</option>
                                                         <option value="product_name" {{ ($filters['search_type'] ?? '') === 'product_name' ? 'selected' : '' }}>상품명</option>
@@ -144,7 +144,7 @@
                             </table>
                         </div>
 
-                        <div class="btm_btn right mt10 order-search-actions">
+                        <div class="btm_btn right mt10 order-search-actions search-actions">
                             <button type="submit" class="type2 order-search-submit">검색</button>
                             <a href="{{ $searchAction }}" class="col5">초기화</a>
                         </div>
@@ -163,10 +163,10 @@
                                 <li><a href="{{ route('channel.order.exchange_list') }}" class="{{ $orderTab === 'exchange' ? 'on active' : '' }}" @if($orderTab === 'exchange') aria-current="page" @endif><span>교환목록</span></a></li>
                             </ul>
                         </div>
-                        <div class="list_top1" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div class="list_top1">
                             <div class="count">총 <strong>{{ $orders->total() }}</strong> 건</div>
-                            <div class="right_bx" style="display: flex; gap: 10px; align-items: center;">
-                                <select id="perPageSelect" style="padding: 0 10px; border: 1px solid #ddd; height: 34px;">
+                            <div class="right_bx list-top-actions">
+                                <select id="perPageSelect" class="w160">
                                     @foreach([20, 40, 60, 80, 100] as $perPageOption)
                                         <option value="{{ $perPageOption }}" {{ (int)($filters['per_page'] ?? 20) === $perPageOption ? 'selected' : '' }}>{{ $perPageOption }}개씩 보기</option>
                                     @endforeach

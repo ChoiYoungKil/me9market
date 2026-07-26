@@ -103,7 +103,7 @@
                                                         <tr>
                                                             <th class="w160"><span>질문</span></th>
                                                             <td colspan="3">
-                                                                <input type="text" style="width: 100%;" id="question"
+                                                                <input type="text" class="wFull" id="question"
                                                                     placeholder="질문을 입력하세요" name="question" @if (!empty($faq['question']))
                                                                     value="{{ $faq['question'] }}" @else
                                                                     value="{{ old('question') }}" @endif required>

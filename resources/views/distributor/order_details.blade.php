@@ -153,6 +153,14 @@
             border-color: var(--primary);
         }
 
+        .form-control.w150 {
+            max-width: 150px;
+        }
+
+        .form-control.w250 {
+            max-width: 250px;
+        }
+
         .btn {
             background: var(--primary);
             color: white;
@@ -250,12 +258,12 @@
                 <div class="grid-details">
                     <div class="detail-label">수령인</div>
                     <div class="detail-value">
-                        <input type="text" name="receiver" value="{{ $order['receiver'] }}" class="form-control" required style="max-width: 250px;">
+                        <input type="text" name="receiver" value="{{ $order['receiver'] }}" class="form-control w250" required>
                     </div>
 
                     <div class="detail-label">우편번호</div>
                     <div class="detail-value">
-                        <input type="text" name="zipcode" value="{{ $order['zipcode'] }}" class="form-control" required style="max-width: 150px;">
+                        <input type="text" name="zipcode" value="{{ $order['zipcode'] }}" class="form-control w150" required>
                     </div>
 
                     <div class="detail-label">배송지 주소</div>
@@ -272,7 +280,7 @@
 
                     <div class="detail-label">택배사 선택</div>
                     <div class="detail-value">
-                        <select name="courier" class="form-control" style="max-width: 250px;">
+                        <select name="courier" class="form-control w250">
                             <option value="">선택</option>
                             <option value="CJ대한통운" {{ $order['courier'] == 'CJ대한통운' ? 'selected' : '' }}>CJ대한통운</option>
                             <option value="우체국택배" {{ $order['courier'] == '우체국택배' ? 'selected' : '' }}>우체국택배</option>
@@ -283,12 +291,12 @@
 
                     <div class="detail-label">운송장 번호</div>
                     <div class="detail-value">
-                        <input type="text" name="tracking_no" value="{{ $order['tracking_no'] === '-' ? '' : $order['tracking_no'] }}" placeholder="숫자만 입력해 주세요" class="form-control" style="max-width: 250px;">
+                        <input type="text" name="tracking_no" value="{{ $order['tracking_no'] === '-' ? '' : $order['tracking_no'] }}" placeholder="숫자만 입력해 주세요" class="form-control w250">
                     </div>
 
                     <div class="detail-label">처리 상태</div>
                     <div class="detail-value">
-                        <select name="status_code" class="form-control" style="max-width: 250px;">
+                        <select name="status_code" class="form-control w250">
                             @foreach($order['status_options'] as $code => $label)
                                 <option value="{{ $code }}" {{ $order['status_code'] === $code ? 'selected' : '' }}>{{ $label }}</option>
                             @endforeach

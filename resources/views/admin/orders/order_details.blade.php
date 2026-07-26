@@ -426,8 +426,8 @@
                                                     </select>
 
                                                     {{-- // 참고: 배송 프로세스에는 "수동"과 "자동"의 두 가지 유형이 있습니다. "수동"은 소규모 비즈니스와 같은 경우로, 택배 기사가 배송을 위해 주문을 픽업하기 위해 소유자 창고에 도착하고 소규모 비즈니스 소유자가 택배 기사로부터 배송 세부 정보(예: 택배사 이름, 운송장 번호 등)를 가져와 관리자 패널의 "주문 상태 업데이트" 섹션('admin' 수행) 또는 "항목 상태 업데이트" 섹션('vendor' 또는 'admin' 수행)에 직접 입력하는 경우입니다(admin/orders/order_details.blade.php에서). "자동" 배송 프로세스를 사용하면 타사 API를 통합하고 주문이 배송 파트너에게 직접 전달되며 업데이트는 택배사 측에서 이루어지고 주문은 고객에게 자동으로 배송됩니다. --}}
-                                                    <input style="width: 110px" type="text" name="item_courier_name"    id="item_courier_name"    placeholder="Item Courier Name"    @if (!empty($product['courier_name']))    value="{{ $product['courier_name'] }}"    @endif> {{-- 이 입력 필드는 'Shipped' <option>이 선택된 경우에만 나타납니다. admin/js/custom.js 확인 --}}
-                                                    <input style="width: 110px" type="text" name="item_tracking_number" id="item_tracking_number" placeholder="Item Tracking Number" @if (!empty($product['tracking_number'])) value="{{ $product['tracking_number'] }}" @endif> {{-- 이 입력 필드는 'Shipped' <option>이 선택된 경우에만 나타납니다. admin/js/custom.js 확인 --}}
+                                                    <input class="w160" type="text" name="item_courier_name"    id="item_courier_name"    placeholder="Item Courier Name"    @if (!empty($product['courier_name']))    value="{{ $product['courier_name'] }}"    @endif> {{-- 이 입력 필드는 'Shipped' <option>이 선택된 경우에만 나타납니다. admin/js/custom.js 확인 --}}
+                                                    <input class="w160" type="text" name="item_tracking_number" id="item_tracking_number" placeholder="Item Tracking Number" @if (!empty($product['tracking_number'])) value="{{ $product['tracking_number'] }}" @endif> {{-- 이 입력 필드는 'Shipped' <option>이 선택된 경우에만 나타납니다. admin/js/custom.js 확인 --}}
 
                                                     <button type="submit">Update</button>
                                                 </form>

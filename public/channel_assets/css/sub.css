@@ -18,6 +18,15 @@
   max-width: 160px !important;
 }
 
+.w300 {
+  max-width: 300px !important;
+}
+
+.wFull {
+  max-width: 100% !important;
+  width: 100% !important;
+}
+
 .w200 {
   max-width: 200px !important;
 }
@@ -262,14 +271,17 @@
   font-size: 12px;
 }
 
-.btm_btn.order-search-actions {
+.btm_btn.order-search-actions,
+.btm_btn.search-actions {
   display: flex;
   justify-content: flex-end;
   align-items: center;
   gap: 5px;
 }
 
-.btm_btn.order-search-actions .order-search-submit {
+.btm_btn.order-search-actions .order-search-submit,
+.btm_btn.search-actions button,
+.btm_btn.search-actions a {
   max-width: 90px;
   width: 100%;
   height: 30px;
@@ -285,6 +297,7 @@
   text-align: center;
   cursor: pointer;
   box-sizing: border-box;
+  margin-right: 0;
 }
 
 .btm_btn.order-search-actions a {
@@ -344,6 +357,66 @@
   border-color: transparent;
   color: #aaaaaa;
   background: url(../images/icon/reset1.png) no-repeat right 17px center;
+}
+
+.list-inline-search {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  margin-left: 20px;
+}
+
+.list-top-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.list-inline-search select,
+.list-top-actions select {
+  width: 160px;
+  height: 40px;
+  border: 1px solid #eeeeee;
+  border-radius: 5px;
+  box-sizing: border-box;
+  padding: 0 30px 0 15px;
+  font-size: 14px;
+  color: #444444;
+  letter-spacing: -0.03em;
+  background: url(../images/icon/arrow2.png) no-repeat right 10px center #fff;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  outline: none;
+}
+
+.list-inline-search input[type=text] {
+  width: 300px;
+  height: 40px;
+  border: 1px solid #eeeeee;
+  border-radius: 5px;
+  box-sizing: border-box;
+  padding: 0 15px;
+  font-size: 14px;
+  color: #444444;
+  letter-spacing: -0.03em;
+  outline: none;
+}
+
+.list-inline-search button,
+.list-inline-search .btn02,
+.list-top-actions .btn02 {
+  height: 40px;
+  line-height: 38px;
+  padding: 0 15px;
+  box-sizing: border-box;
+  vertical-align: top;
+}
+
+.list-inline-search button {
+  border: 0;
+  cursor: pointer;
+  font-family: inherit;
 }
 
 .btm_btn .page_bx1 {

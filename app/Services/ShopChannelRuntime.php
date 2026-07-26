@@ -29,6 +29,49 @@ class ShopChannelRuntime
     private const CART_KEY = 'shop_channel_cart';
     private const CHANNEL_KEY = 'shop_channel_id';
 
+    public function ensureAdminLoginAccount(): Admin
+    {
+        $admin = Admin::where('email', 'admin@admin.com')->first();
+        if (!$admin) {
+            $admin = new Admin();
+            $admin->name = 'Me9 전체관리자';
+            $admin->type = 'admin';
+            $admin->vendor_id = 0;
+            $admin->mobile = '010-0000-0000';
+            $admin->email = 'admin@admin.com';
+            $admin->password = Hash::make('123456');
+            $admin->confirm = 'Yes';
+            $admin->status = 1;
+            $admin->save();
+
+            return $admin;
+        }
+
+        $dirty = false;
+        if (!Hash::check('123456', $admin->password)) {
+            $admin->password = Hash::make('123456');
+            $dirty = true;
+        }
+        if ($admin->type === 'vendor') {
+            $admin->type = 'admin';
+            $admin->vendor_id = 0;
+            $dirty = true;
+        }
+        if ((string) $admin->status !== '1') {
+            $admin->status = 1;
+            $dirty = true;
+        }
+        if ($admin->confirm !== 'Yes') {
+            $admin->confirm = 'Yes';
+            $dirty = true;
+        }
+        if ($dirty) {
+            $admin->save();
+        }
+
+        return $admin;
+    }
+
     public function ensureDemoData(): ShopChannel
     {
         $distributor = Distributor::firstOrCreate(
@@ -111,23 +154,7 @@ class ShopChannelRuntime
             $admin->save();
         }
 
-        $superAdmin = Admin::where('email', 'admin@admin.com')->first();
-        if (!$superAdmin) {
-            $superAdmin = new Admin();
-            $superAdmin->name = 'Me9 전체관리자';
-            $superAdmin->type = 'admin';
-            $superAdmin->vendor_id = 0;
-            $superAdmin->mobile = '010-0000-0000';
-            $superAdmin->email = 'admin@admin.com';
-            $superAdmin->password = Hash::make('123456');
-            $superAdmin->confirm = 'Yes';
-            $superAdmin->status = 1;
-            $superAdmin->save();
-        } elseif (!Hash::check('123456', $superAdmin->password)) {
-            $superAdmin->password = Hash::make('123456');
-            $superAdmin->status = 1;
-            $superAdmin->save();
-        }
+        $this->ensureAdminLoginAccount();
 
         $section = Section::where('name', '라이프스타일')->first();
         if (!$section) {

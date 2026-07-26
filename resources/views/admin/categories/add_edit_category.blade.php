@@ -116,7 +116,7 @@
                                                             <th class="w160"><span>분류 이미지</span></th>
                                                             <td colspan="3">
                                                                 <div class="fileBox">
-                                                                    <input class="fileName" value="" placeholder="파일을 선택하세요"
+                                                                    <input type="text" class="fileName" value="" placeholder="파일을 선택하세요"
                                                                         readonly>
                                                                     <label for="category_image" class="btn_file">파일
                                                                         선택</label>
@@ -156,7 +156,7 @@
                                                             <th class="w160"><span>분류 설명</span></th>
                                                             <td colspan="3">
                                                                 <textarea name="description" id="description" rows="4"
-                                                                    style="width: 100%; padding: 10px; border: 1px solid #ddd;">{{ $category['description'] ?? '' }}</textarea>
+                                                                    class="wFull">{{ $category['description'] ?? '' }}</textarea>
                                                             </td>
                                                         </tr>
                                                     </tbody>
@@ -173,7 +173,7 @@
                                                         <tr>
                                                             <th class="w160"><span>메타 제목</span></th>
                                                             <td colspan="3">
-                                                                <input type="text" style="width: 100%;" id="meta_title"
+                                                                <input type="text" class="wFull" id="meta_title"
                                                                     placeholder="메타 제목을 입력하세요" name="meta_title" @if (!empty($category['meta_title']))
                                                                     value="{{ $category['meta_title'] }}" @else
                                                                     value="{{ old('meta_title') }}" @endif>
@@ -182,7 +182,7 @@
                                                         <tr>
                                                             <th class="w160"><span>메타 설명</span></th>
                                                             <td colspan="3">
-                                                                <input type="text" style="width: 100%;"
+                                                                <input type="text" class="wFull"
                                                                     id="meta_description" placeholder="메타 설명을 입력하세요"
                                                                     name="meta_description" @if (!empty($category['meta_description']))
                                                                     value="{{ $category['meta_description'] }}" @else
@@ -192,7 +192,7 @@
                                                         <tr>
                                                             <th class="w160"><span>메타 키워드</span></th>
                                                             <td colspan="3">
-                                                                <input type="text" style="width: 100%;" id="meta_keywords"
+                                                                <input type="text" class="wFull" id="meta_keywords"
                                                                     placeholder="메타 키워드를 입력하세요 (쉼표로 구분)"
                                                                     name="meta_keywords" @if (!empty($category['meta_keywords']))
                                                                     value="{{ $category['meta_keywords'] }}" @else
@@ -205,8 +205,7 @@
                                         </div>
 
                                         <!-- 버튼 -->
-                                        <div class="btm_btn center mt40"
-                                            style="display: flex; justify-content: center; gap: 10px;">
+                                        <div class="btm_btn center mt40 form-button-row">
                                             <a href="{{ url('admin/categories') }}" class="btn01 col3">취소</a>
                                             <button type="submit" class="btn01 col5">저장</button>
                                         </div>

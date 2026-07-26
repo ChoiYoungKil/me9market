@@ -25,4 +25,9 @@ class Distributor extends Authenticatable
     {
         return $this->hasMany(Product::class);
     }
+
+    public function ordersProducts()
+    {
+        return $this->hasMany(OrdersProduct::class);
+    }
 }

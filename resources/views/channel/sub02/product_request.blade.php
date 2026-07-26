@@ -79,7 +79,7 @@
                                     </table>
                                 </div>
 
-                                <div class="btm_btn right mt10" style="margin-bottom: 40px;">
+                                <div class="btm_btn right mt10 search-actions mb40">
                                     <button type="submit" class="type2">검색</button>
                                     <a href="{{ route('channel.product_request') }}" class="type2 col5">초기화</a>
                                 </div>
@@ -88,7 +88,7 @@
                             <div class="list_top1" style="display: flex; justify-content: space-between; align-items: center;">
                                 <div class="count">총 <strong>{{ $requests->total() }}</strong> 건</div>
                                 <div class="right_bx" style="display: flex; gap: 10px; align-items: center;">
-                                    <select id="perPageSelect" style="padding: 0 10px; border: 1px solid #ddd; height: 34px;">
+                                    <select id="perPageSelect" class="w160">
                                         @foreach([20, 40, 60, 80, 100] as $perPageOption)
                                             <option value="{{ $perPageOption }}" {{ (int)($filters['per_page'] ?? 20) === $perPageOption ? 'selected' : '' }}>{{ $perPageOption }}개씩 보기</option>
                                         @endforeach

@@ -292,7 +292,7 @@
                                                             <tr>
                                                                 <th class="w160"><span>메타 제목</span></th>
                                                                 <td colspan="3">
-                                                                    <input type="text" style="width: 100%;" id="meta_title"
+                                                                    <input type="text" class="wFull" id="meta_title"
                                                                         placeholder="메타 제목을 입력하세요" name="meta_title" @if (!empty($product['meta_title']))
                                                                         value="{{ $product['meta_title'] }}" @else
                                                                         value="{{ old('meta_title') }}" @endif>
@@ -301,7 +301,7 @@
                                                             <tr>
                                                                 <th class="w160"><span>메타 설명</span></th>
                                                                 <td colspan="3">
-                                                                    <input type="text" style="width: 100%;"
+                                                                    <input type="text" class="wFull"
                                                                         id="meta_description" placeholder="메타 설명을 입력하세요"
                                                                         name="meta_description" @if (!empty($product['meta_description']))
                                                                         value="{{ $product['meta_description'] }}" @else
@@ -311,7 +311,7 @@
                                                             <tr>
                                                                 <th class="w160"><span>메타 키워드</span></th>
                                                                 <td colspan="3">
-                                                                    <input type="text" style="width: 100%;"
+                                                                    <input type="text" class="wFull"
                                                                         id="meta_keywords"
                                                                         placeholder="메타 키워드를 입력하세요 (쉼표로 구분)"
                                                                         name="meta_keywords" @if (!empty($product['meta_keywords']))

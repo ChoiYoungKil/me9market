@@ -36,7 +36,7 @@
                                     <tr>
                                         <th><span>정산 기간</span></th>
                                         <td>
-                                            <select name="period" style="width:200px;">
+                                            <select name="period" class="w160">
                                                 @foreach($periodOptions as $value => $label)
                                                     <option value="{{ $value }}" {{ $period === $value ? 'selected' : '' }}>{{ $label }}</option>
                                                 @endforeach

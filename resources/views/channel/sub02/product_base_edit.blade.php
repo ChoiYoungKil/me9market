@@ -327,7 +327,7 @@
 	                                        <tr>
 	                                            <th>상품설명</th>
 	                                            <td colspan="3">
-	                                                <textarea name="description" id="product_description_editor" class="wFull" style="min-height: 220px; padding: 10px; border: 1px solid #ddd;">{{ old('description', $product->description) }}</textarea>
+	                                                <textarea name="description" id="product_description_editor" class="wFull">{{ old('description', $product->description) }}</textarea>
 	                                            </td>
 	                                        </tr>
                                     </tbody>
@@ -506,21 +506,21 @@
                                             <tr class="product-option-row">
                                                 <td>
                                                     <input type="hidden" name="option_ids[]" value="{{ $option['id'] ?? '' }}">
-                                                    <input type="text" name="option_names[]" value="{{ $option['option_name'] ?? '기본옵션' }}" style="width:100%; height:34px; border:1px solid #ddd; padding:0 8px;">
+                                                    <input type="text" name="option_names[]" value="{{ $option['option_name'] ?? '기본옵션' }}" class="wFull">
                                                 </td>
                                                 <td>
-                                                    <select name="option_types[]" style="width:100%; height:34px;">
+                                                    <select name="option_types[]" class="wFull">
                                                         <option value="text" {{ ($option['option_type'] ?? '') === 'text' ? 'selected' : '' }}>비고형</option>
                                                         <option value="general" {{ ($option['option_type'] ?? 'general') === 'general' ? 'selected' : '' }}>일반선택형</option>
                                                         <option value="price" {{ ($option['option_type'] ?? '') === 'price' ? 'selected' : '' }}>금액선택형</option>
                                                     </select>
                                                 </td>
-                                                <td><input type="text" name="option_values[]" value="{{ $option['option_value'] ?? '' }}" placeholder="예: S, 블랙, 추가상품" style="width:100%; height:34px; border:1px solid #ddd; padding:0 8px;"></td>
-                                                <td><input type="text" name="option_skus[]" value="{{ $option['sku'] ?? '' }}" placeholder="자동생성 가능" style="width:100%; height:34px; border:1px solid #ddd; padding:0 8px;"></td>
-                                                <td><input type="number" name="option_prices[]" value="{{ $option['price'] ?? old('product_price', $product->product_price ?? 0) }}" min="0" step="1" style="width:100%; height:34px; border:1px solid #ddd; padding:0 8px;"></td>
-	                                                <td class="stock-column"><input type="text" name="option_stocks[]" value="{{ $option['stock'] ?? 0 }}" inputmode="numeric" pattern="[0-9]*" style="width:100%; height:34px; border:1px solid #ddd; padding:0 8px;"></td>
+                                                <td><input type="text" name="option_values[]" value="{{ $option['option_value'] ?? '' }}" placeholder="예: S, 블랙, 추가상품" class="wFull"></td>
+                                                <td><input type="text" name="option_skus[]" value="{{ $option['sku'] ?? '' }}" placeholder="자동생성 가능" class="wFull"></td>
+                                                <td><input type="text" name="option_prices[]" value="{{ $option['price'] ?? old('product_price', $product->product_price ?? 0) }}" inputmode="numeric" pattern="[0-9]*" class="wFull"></td>
+	                                                <td class="stock-column"><input type="text" name="option_stocks[]" value="{{ $option['stock'] ?? 0 }}" inputmode="numeric" pattern="[0-9]*" class="wFull"></td>
                                                 <td>
-                                                    <select name="option_statuses[]" style="width:100%; height:34px;">
+                                                    <select name="option_statuses[]" class="wFull">
                                                         <option value="1" {{ ($option['status'] ?? 1) == 1 ? 'selected' : '' }}>사용</option>
                                                         <option value="0" {{ ($option['status'] ?? 1) == 0 ? 'selected' : '' }}>중지</option>
                                                     </select>
@@ -595,7 +595,7 @@
                                         <tr id="detail_text_row">
                                             <th>상세 텍스트</th>
                                             <td>
-                                                <textarea name="detail_text" class="wFull" style="min-height: 180px; padding: 10px; border: 1px solid #ddd;">{{ old('detail_text', $product->detail_text ?? '') }}</textarea>
+                                                <textarea name="detail_text" class="wFull">{{ old('detail_text', $product->detail_text ?? '') }}</textarea>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -1139,13 +1139,13 @@
 	        var basePrice = basePriceInput && basePriceInput.value ? basePriceInput.value : '0';
 	        return '' +
 	            '<tr class="product-option-row">' +
-	            '<td><input type="hidden" name="option_ids[]" value=""><input type="text" name="option_names[]" value="기본옵션" style="width:100%; height:34px; border:1px solid #ddd; padding:0 8px;"></td>' +
-	            '<td><select name="option_types[]" style="width:100%; height:34px;"><option value="text">비고형</option><option value="general" selected>일반선택형</option><option value="price">금액선택형</option></select></td>' +
-	            '<td><input type="text" name="option_values[]" value="" placeholder="예: S, 블랙, 추가상품" style="width:100%; height:34px; border:1px solid #ddd; padding:0 8px;"></td>' +
-	            '<td><input type="text" name="option_skus[]" value="" placeholder="자동생성 가능" style="width:100%; height:34px; border:1px solid #ddd; padding:0 8px;"></td>' +
-	            '<td><input type="number" name="option_prices[]" value="' + basePrice + '" min="0" step="1" style="width:100%; height:34px; border:1px solid #ddd; padding:0 8px;"></td>' +
-	            '<td class="stock-column"><input type="text" name="option_stocks[]" value="0" inputmode="numeric" pattern="[0-9]*" style="width:100%; height:34px; border:1px solid #ddd; padding:0 8px;"></td>' +
-	            '<td><select name="option_statuses[]" style="width:100%; height:34px;"><option value="1" selected>사용</option><option value="0">중지</option></select></td>' +
+	            '<td><input type="hidden" name="option_ids[]" value=""><input type="text" name="option_names[]" value="기본옵션" class="wFull"></td>' +
+	            '<td><select name="option_types[]" class="wFull"><option value="text">비고형</option><option value="general" selected>일반선택형</option><option value="price">금액선택형</option></select></td>' +
+	            '<td><input type="text" name="option_values[]" value="" placeholder="예: S, 블랙, 추가상품" class="wFull"></td>' +
+	            '<td><input type="text" name="option_skus[]" value="" placeholder="자동생성 가능" class="wFull"></td>' +
+	            '<td><input type="text" name="option_prices[]" value="' + basePrice + '" inputmode="numeric" pattern="[0-9]*" class="wFull"></td>' +
+	            '<td class="stock-column"><input type="text" name="option_stocks[]" value="0" inputmode="numeric" pattern="[0-9]*" class="wFull"></td>' +
+	            '<td><select name="option_statuses[]" class="wFull"><option value="1" selected>사용</option><option value="0">중지</option></select></td>' +
 	            '<td><button type="button" class="remove-option-row" style="height:32px; border:1px solid #ddd; background:#fff; padding:0 8px;">삭제</button></td>' +
 	            '</tr>';
 	    }

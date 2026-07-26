@@ -3,6 +3,24 @@
 @section('page_type', 'sub')
 
 @section('content')
+<style>
+    .large-layer-input {
+        width: 100%;
+        padding: 10px 14px;
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(0,0,0,0.2);
+        color: #fff;
+        outline: none;
+        box-sizing: border-box;
+    }
+
+    .large-layer-checkbox {
+        width: 16px;
+        height: 16px;
+        accent-color: #3b82f6;
+    }
+</style>
 <div id="contents">
     <div class="row">
         <div class="box box1">
@@ -52,11 +70,11 @@
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                                 <div>
                                     <label style="display: block; font-size: 12px; font-weight: 600; color: #94a3b8; margin-bottom: 6px;">파트너사 상호명 *</label>
-                                    <input type="text" required placeholder="예: (주)글로벌네트웍스" style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.2); color: #fff; outline: none; box-sizing: border-box;">
+                                    <input type="text" required placeholder="예: (주)글로벌네트웍스" class="large-layer-input">
                                 </div>
                                 <div>
                                     <label style="display: block; font-size: 12px; font-weight: 600; color: #94a3b8; margin-bottom: 6px;">사업자등록번호 *</label>
-                                    <input type="text" required placeholder="000-00-00000" style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.2); color: #fff; outline: none; box-sizing: border-box;">
+                                    <input type="text" required placeholder="000-00-00000" class="large-layer-input">
                                 </div>
                             </div>
                         </div>
@@ -67,21 +85,21 @@
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
                                 <div>
                                     <label style="display: block; font-size: 12px; font-weight: 600; color: #94a3b8; margin-bottom: 6px;">로그인 ID (이메일) *</label>
-                                    <input type="email" required placeholder="manager@partner.com" style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.2); color: #fff; outline: none; box-sizing: border-box;">
+                                    <input type="email" required placeholder="manager@partner.com" class="large-layer-input">
                                 </div>
                                 <div>
                                     <label style="display: block; font-size: 12px; font-weight: 600; color: #94a3b8; margin-bottom: 6px;">초기 비밀번호 *</label>
-                                    <input type="password" required placeholder="••••••••" style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.2); color: #fff; outline: none; box-sizing: border-box;">
+                                    <input type="password" required placeholder="••••••••" class="large-layer-input">
                                 </div>
                             </div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                                 <div>
                                     <label style="display: block; font-size: 12px; font-weight: 600; color: #94a3b8; margin-bottom: 6px;">담당자 성명 *</label>
-                                    <input type="text" required placeholder="홍길동" style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.2); color: #fff; outline: none; box-sizing: border-box;">
+                                    <input type="text" required placeholder="홍길동" class="large-layer-input">
                                 </div>
                                 <div>
                                     <label style="display: block; font-size: 12px; font-weight: 600; color: #94a3b8; margin-bottom: 6px;">담당자 연락처 *</label>
-                                    <input type="text" required placeholder="010-0000-0000" style="width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); background: rgba(0,0,0,0.2); color: #fff; outline: none; box-sizing: border-box;">
+                                    <input type="text" required placeholder="010-0000-0000" class="large-layer-input">
                                 </div>
                             </div>
                         </div>
@@ -92,16 +110,16 @@
                             <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 12px; padding: 20px;">
                                 <div style="display: flex; gap: 30px; flex-wrap: wrap;">
                                     <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; color: #cbd5e1;">
-                                        <input type="checkbox" checked style="width: 16px; height: 16px; accent-color: #3b82f6;"> 상품 관리 권한
+                                        <input type="checkbox" checked class="large-layer-checkbox"> 상품 관리 권한
                                     </label>
                                     <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; color: #cbd5e1;">
-                                        <input type="checkbox" checked style="width: 16px; height: 16px; accent-color: #3b82f6;"> 주문/배송 관리 권한
+                                        <input type="checkbox" checked class="large-layer-checkbox"> 주문/배송 관리 권한
                                     </label>
                                     <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; color: #cbd5e1;">
-                                        <input type="checkbox" style="width: 16px; height: 16px; accent-color: #3b82f6;"> 정산 대시보드 권한
+                                        <input type="checkbox" class="large-layer-checkbox"> 정산 대시보드 권한
                                     </label>
                                     <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 14px; cursor: pointer; color: #cbd5e1;">
-                                        <input type="checkbox" style="width: 16px; height: 16px; accent-color: #3b82f6;"> 고객센터 및 공지관리 권한
+                                        <input type="checkbox" class="large-layer-checkbox"> 고객센터 및 공지관리 권한
                                     </label>
                                 </div>
                             </div>

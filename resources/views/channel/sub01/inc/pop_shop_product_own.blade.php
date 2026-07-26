@@ -68,8 +68,8 @@
                                 </tbody>
                             </table>
                         </div>
-                        <div class="btm_btn right mt10">
-                            <a href="#">검색</a>
+                        <div class="btm_btn right mt10 search-actions">
+                            <a href="#" class="type2">검색</a>
                         </div>
                     </div>
 

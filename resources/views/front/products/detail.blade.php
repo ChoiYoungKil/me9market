@@ -334,7 +334,7 @@
                                 <div class="quantity-wrapper u-s-m-b-22">
                                     <span>Quantity:</span>
                                     <div class="quantity">
-                                        <input class="quantity-text-field" type="number" name="quantity" value="1">
+                                        <input class="quantity-text-field" type="text" name="quantity" value="1" inputmode="numeric" pattern="[0-9]*">
                                     </div>
                                 </div>
                                 <div>

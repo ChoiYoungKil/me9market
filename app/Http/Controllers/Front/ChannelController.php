@@ -1832,7 +1832,7 @@ class ChannelController extends Controller
         }
     }
 
-    public function orderManagerList()
+    public function orderManagerList(Request $request)
     {
         if (!Auth::guard('admin')->check()) {
             return redirect()->route('channel.login');
@@ -1840,14 +1840,96 @@ class ChannelController extends Controller
 
         app(\App\Services\ShopChannelRuntime::class)->ensureDemoData();
 
+        $keyword = trim((string) $request->query('keyword', ''));
+
         $managers = \App\Models\Distributor::withCount('products')
+            ->when($keyword !== '', function ($query) use ($keyword) {
+                $query->where(function ($inner) use ($keyword) {
+                    $inner->where('email', 'like', '%' . $keyword . '%')
+                        ->orWhere('name', 'like', '%' . $keyword . '%');
+                });
+            })
             ->orderByDesc('id')
             ->get();
 
         return view('channel.sub00.order_manager_list', [
             'dep1_id' => '00',
             'managers' => $managers,
+            'keyword' => $keyword,
         ]);
+    }
+
+    public function storeOrderManager(Request $request)
+    {
+        if (!Auth::guard('admin')->check()) {
+            return redirect()->route('channel.login');
+        }
+
+        $data = $request->validate([
+            'status' => 'required|in:0,1',
+            'email' => 'required|email|max:255|unique:distributors,email',
+            'name' => 'required|string|max:100',
+            'phone' => 'nullable|string|max:50',
+            'password' => 'nullable|string|min:6|max:100',
+        ]);
+
+        \App\Models\Distributor::create([
+            'status' => (int) $data['status'],
+            'email' => $data['email'],
+            'name' => $data['name'],
+            'phone' => $data['phone'] ?? null,
+            'password' => \Illuminate\Support\Facades\Hash::make($data['password'] ?? '123456'),
+        ]);
+
+        return back()->with('flash_message_success', '발주담당자가 등록되었습니다. 비밀번호 미입력 시 기본 비밀번호는 123456입니다.');
+    }
+
+    public function updateOrderManager(Request $request, $id)
+    {
+        if (!Auth::guard('admin')->check()) {
+            return redirect()->route('channel.login');
+        }
+
+        $manager = \App\Models\Distributor::findOrFail($id);
+
+        $data = $request->validate([
+            'status' => 'required|in:0,1',
+            'email' => 'required|email|max:255|unique:distributors,email,' . $manager->id,
+            'name' => 'required|string|max:100',
+            'phone' => 'nullable|string|max:50',
+            'password' => 'nullable|string|min:6|max:100',
+        ]);
+
+        $payload = [
+            'status' => (int) $data['status'],
+            'email' => $data['email'],
+            'name' => $data['name'],
+            'phone' => $data['phone'] ?? null,
+        ];
+
+        if (!empty($data['password'])) {
+            $payload['password'] = \Illuminate\Support\Facades\Hash::make($data['password']);
+        }
+
+        $manager->update($payload);
+
+        return back()->with('flash_message_success', '발주담당자 정보가 수정되었습니다.');
+    }
+
+    public function openOrderManagerPortal($id)
+    {
+        if (!Auth::guard('admin')->check()) {
+            return redirect()->route('channel.login');
+        }
+
+        $manager = \App\Models\Distributor::findOrFail($id);
+
+        \Illuminate\Support\Facades\Session::put('distributor_id', $manager->id);
+        \Illuminate\Support\Facades\Session::put('distributor_name', $manager->name);
+        \Illuminate\Support\Facades\Session::put('distributor_email', $manager->email);
+
+        return redirect()->route('distributor.orders.pending')
+            ->with('flash_message_success', $manager->name . ' 발주사 페이지로 연결되었습니다.');
     }
 
     public function pointList(Request $request)

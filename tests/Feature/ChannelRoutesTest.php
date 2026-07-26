@@ -9,6 +9,7 @@ use App\Models\ShopChannel;
 use App\Models\ShopChannelProduct;
 use App\Models\ShopCancelRefundPolicy;
 use App\Models\ShopChannelNotice;
+use App\Models\Distributor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -144,6 +145,34 @@ class ChannelRoutesTest extends TestCase
         $this->actingAs($admin, 'admin')->get('/channel/settings/refund')->assertStatus(200);
         $this->actingAs($admin, 'admin')->get("/channel/settings/refund/{$policy->id}")->assertStatus(200);
         $this->actingAs($admin, 'admin')->get('/channel/settings/sub-accounts')->assertStatus(200);
+    }
+
+    public function test_channel_order_manager_can_be_created_and_open_distributor_portal()
+    {
+        list($vendor, $admin) = $this->createSetup();
+
+        $this->actingAs($admin, 'admin')->post('/channel/settings/order-manager/store', [
+            'status' => 1,
+            'email' => 'orders-manager@example.com',
+            'name' => 'Orders Manager',
+            'phone' => '01012345678',
+            'password' => 'secret123',
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('distributors', [
+            'email' => 'orders-manager@example.com',
+            'name' => 'Orders Manager',
+            'status' => 1,
+        ]);
+
+        $manager = Distributor::where('email', 'orders-manager@example.com')->firstOrFail();
+
+        $this->actingAs($admin, 'admin')
+            ->post("/channel/settings/order-manager/{$manager->id}/portal")
+            ->assertRedirect(route('distributor.orders.pending'));
+
+        $this->assertSame($manager->id, session('distributor_id'));
+        $this->assertSame($manager->email, session('distributor_email'));
     }
 
     public function test_authenticated_shop_routes()

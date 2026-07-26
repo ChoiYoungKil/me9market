@@ -92,7 +92,7 @@
                                         <tr>
                                             <th><span>답변내용</span></th>
                                             <td>
-                                                <textarea name="admin_reply" required style="width: 100%; min-height: 180px; padding: 12px; border: 1px solid #ddd; box-sizing: border-box;">{{ old('admin_reply', $inquiry->admin_reply) }}</textarea>
+                                                <textarea name="admin_reply" required class="wFull">{{ old('admin_reply', $inquiry->admin_reply) }}</textarea>
                                                 @error('admin_reply')
                                                     <p style="margin-top: 6px; color: #ef4444;">{{ $message }}</p>
                                                 @enderror

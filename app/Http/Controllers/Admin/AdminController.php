@@ -22,6 +22,7 @@ use App\Models\Vendor;
 use App\Models\VendorsBusinessDetail;
 use App\Models\VendorsBankDetail;
 use App\Models\Country;
+use App\Services\ShopChannelRuntime;
 use Illuminate\Support\Facades\Hash;
 
 class AdminController extends Controller
@@ -51,6 +52,10 @@ class AdminController extends Controller
     }
 
     public function login(Request $request) { // 'admin' 가드를 사용한 로그인 (판매자 또는 관리자)
+        if (app()->environment('local')) {
+            app(ShopChannelRuntime::class)->ensureAdminLoginAccount();
+        }
+
         if (Auth::guard('admin')->check()) {
              // 이미 로그인된 경우 유형에 따라 리다이렉트
              if (Auth::guard('admin')->user()->type == 'vendor') {

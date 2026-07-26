@@ -127,24 +127,24 @@
                                 <div class="count">총 <strong>{{ $notices->total() }}</strong> 개</div>
 
                                 <form action="{{ route('channel.shop_community') }}" method="GET"
-                                    style="display: flex; gap: 5px; align-items: center; margin-left: 20px;">
+                                    class="list-inline-search">
                                     <input type="hidden" name="shop_id" value="{{ $shopId }}">
                                     <input type="hidden" name="per_page" value="{{ $perPage }}">
 
-                                    <select name="search_type">
+                                    <select name="search_type" class="w160">
                                         <option value="both" {{ $searchType == 'both' ? 'selected' : '' }}>제목+내용</option>
                                         <option value="title" {{ $searchType == 'title' ? 'selected' : '' }}>제목</option>
                                         <option value="content" {{ $searchType == 'content' ? 'selected' : '' }}>내용</option>
                                     </select>
 
                                     <input type="text" name="search_value" placeholder="검색어를 입력하세요"
-                                        value="{{ $searchValue }}">
-                                    <button type="submit">검색</button>
+                                        value="{{ $searchValue }}" class="w300">
+                                    <button type="submit" class="btn02 col5">검색</button>
                                 </form>
                             </div>
 
                             <div class="right_bx" style="display: flex; gap: 10px; align-items: center;">
-                                <select id="perPageSelect" style="padding: 0 10px; border: 1px solid #ddd; height: 34px;">
+                                <select id="perPageSelect" class="w160">
                                     <option value="20" {{ $perPage == 20 ? 'selected' : '' }}>20개씩 보기</option>
                                     <option value="40" {{ $perPage == 40 ? 'selected' : '' }}>40개씩 보기</option>
                                     <option value="60" {{ $perPage == 60 ? 'selected' : '' }}>60개씩 보기</option>

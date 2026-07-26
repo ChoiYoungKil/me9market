@@ -80,7 +80,7 @@
                                                         <tr>
                                                             <th class="w160"><span>제목</span></th>
                                                             <td colspan="3">
-                                                                <input type="text" style="width: 100%;" id="title"
+                                                                <input type="text" class="wFull" id="title"
                                                                     placeholder="제목을 입력하세요" name="title" @if (!empty($notice['title']))
                                                                     value="{{ $notice['title'] }}" @else
                                                                     value="{{ old('title') }}" @endif required>

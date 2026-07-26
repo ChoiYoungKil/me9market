@@ -104,7 +104,7 @@
                                     <tr>
                                         <th class="w160"><span>내역 구분</span></th>
                                         <td>
-                                            <select name="history" style="width:180px;">
+                                            <select name="history" class="w160">
                                                 @foreach($historyLabels as $value => $label)
                                                     <option value="{{ $value }}" {{ ($filters['history'] ?? 'all') === $value ? 'selected' : '' }}>{{ $label }}</option>
                                                 @endforeach
@@ -112,7 +112,7 @@
                                         </td>
                                         <th class="w160"><span>상태</span></th>
                                         <td>
-                                            <select name="status" style="width:160px;">
+                                            <select name="status" class="w160">
                                                 @foreach($statusLabels as $value => $label)
                                                     <option value="{{ $value }}" {{ ($filters['status'] ?? 'all') === $value ? 'selected' : '' }}>{{ $label }}</option>
                                                 @endforeach
@@ -211,13 +211,13 @@
                                                                 <tr>
                                                                     <th class="w160"><span>환급 포인트<em>필수</em></span></th>
                                                                     <td colspan="3">
-                                                                        <input type="number" name="points" min="1000" step="1000" required {{ $canRequestRefund ? '' : 'disabled' }}>
+                                                                        <input type="text" name="points" class="w160" inputmode="numeric" pattern="[0-9]*" required {{ $canRequestRefund ? '' : 'disabled' }}>
                                                                         <p class="mt10 fcol3">포인트는 1,000P 단위로 환급 요청할 수 있습니다.</p>
                                                                     </td>
                                                                 </tr>
                                                                 <tr>
                                                                     <th class="w160"><span>메모</span></th>
-                                                                    <td colspan="3"><textarea name="memo" {{ $canRequestRefund ? '' : 'disabled' }}></textarea></td>
+                                                                    <td colspan="3"><textarea name="memo" class="wFull" {{ $canRequestRefund ? '' : 'disabled' }}></textarea></td>
                                                                 </tr>
                                                             </tbody>
                                                         </table>
@@ -256,7 +256,7 @@
                                                                 <tr>
                                                                     <th class="w160"><span>포인트<em>필수</em></span></th>
                                                                     <td colspan="3">
-                                                                        <input type="number" name="points" min="1000" step="1000" required>
+                                                                        <input type="text" name="points" class="w160" inputmode="numeric" pattern="[0-9]*" required>
                                                                         <p class="mt10 fcol1">1P = 1원 기준으로 승인 후 보유 포인트에 반영됩니다.</p>
                                                                     </td>
                                                                 </tr>
@@ -277,7 +277,7 @@
                                                                 </tr>
                                                                 <tr>
                                                                     <th class="w160"><span>메모</span></th>
-                                                                    <td colspan="3"><textarea name="memo"></textarea></td>
+                                                                    <td colspan="3"><textarea name="memo" class="wFull"></textarea></td>
                                                                 </tr>
                                                             </tbody>
                                                         </table>

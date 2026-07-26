@@ -4,10 +4,13 @@ namespace Tests\Feature;
 
 use Tests\TestCase;
 use App\Models\Admin;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 
 class AdminLoginTest extends TestCase
 {
+    use RefreshDatabase;
+
     public function test_admin_login_success(): void
     {
         // 1. 테스트가 seed 데이터에 의존하지 않도록 관리자 계정을 준비

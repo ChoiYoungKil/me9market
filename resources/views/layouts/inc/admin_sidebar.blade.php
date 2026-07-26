@@ -38,17 +38,16 @@
                                     href="{{ url('admin/contacts') }}">제휴/문의</a></li>
                         </ul>
                     </li>
-                    <li class="dep1 icon1_5 arrow">
-                        <a href="#">발주관리담당</a>
+                    <li
+                        class="dep1 icon1_5 arrow @if(Session::get('page') == 'order_managers') on @endif">
+                        <a href="#">발주관리</a>
                         <ul class="dep2_wrap">
-                            <li class="on"><a href="#">세부메뉴 001</a></li> <!-- on -->
-                            <li><a href="#">세부메뉴 002</a></li>
-                            <li><a href="#">세부메뉴 003</a></li>
-                            <li><a href="#">로딩화면</a></li>
+                            <li @if(Session::get('page') == 'order_managers') class="on" @endif><a
+                                    href="{{ route('admin.order_managers.index') }}">발주사 관리</a></li>
                         </ul>
                     </li>
-                    <li class="dep1 icon1_5">
-                        <a href="#">포인트관리</a>
+                    <li class="dep1 icon1_5 @if(Session::get('page') == 'channel_points') on @endif">
+                        <a href="{{ route('admin.channel_points.index') }}">포인트관리</a>
                     </li>
                     <li class="dep1 icon1_6">
                         <a href="#">배송비설정</a>
