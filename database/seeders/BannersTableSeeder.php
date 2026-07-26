@@ -40,6 +40,11 @@ class BannersTableSeeder extends Seeder
             ],
         ];
         // Note: Check DatabaseSeeder.php!
-        \App\Models\Banner::insert($bannerRecords);
+        foreach ($bannerRecords as $record) {
+            \Illuminate\Support\Facades\DB::table('banners')->updateOrInsert(
+                ['id' => $record['id']],
+                $record
+            );
+        }
     }
 }

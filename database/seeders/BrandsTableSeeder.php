@@ -28,6 +28,11 @@ class BrandsTableSeeder extends Seeder
             ['id' => 7, 'name' => 'MI'     , 'status' => 1],
         ];
         // Note: Check DatabaseSeeder.php!
-        \App\Models\Brand::insert($brandRecords);
+        foreach ($brandRecords as $record) {
+            \Illuminate\Support\Facades\DB::table('brands')->updateOrInsert(
+                ['id' => $record['id']],
+                $record
+            );
+        }
     }
 }

@@ -202,19 +202,36 @@
 
                 @php
                     $purchasedItems = $order->orders_products->filter(function($p) {
-                        return !in_array($p->item_status, ['Confirmed', 'Cancelled', 'Cancel Requested', 'Return Requested', 'Returned', 'Exchange Requested', 'Exchanged']);
+                        return !in_array($p->normalized_status, [
+                            \App\Support\OrderItemStatus::CONFIRMED,
+                            \App\Support\OrderItemStatus::CANCELLED,
+                            \App\Support\OrderItemStatus::CANCEL_REQUESTED,
+                            \App\Support\OrderItemStatus::RETURN_REQUESTED,
+                            \App\Support\OrderItemStatus::RETURNED,
+                            \App\Support\OrderItemStatus::EXCHANGE_REQUESTED,
+                            \App\Support\OrderItemStatus::EXCHANGED,
+                        ], true);
                     });
                     $confirmedItems = $order->orders_products->filter(function($p) {
-                        return $p->item_status == 'Confirmed';
+                        return $p->normalized_status === \App\Support\OrderItemStatus::CONFIRMED;
                     });
                     $cancelledItems = $order->orders_products->filter(function($p) {
-                        return in_array($p->item_status, ['Cancel Requested', 'Cancelled']);
+                        return in_array($p->normalized_status, [
+                            \App\Support\OrderItemStatus::CANCEL_REQUESTED,
+                            \App\Support\OrderItemStatus::CANCELLED,
+                        ], true);
                     });
                     $returnedItems = $order->orders_products->filter(function($p) {
-                        return in_array($p->item_status, ['Return Requested', 'Returned']);
+                        return in_array($p->normalized_status, [
+                            \App\Support\OrderItemStatus::RETURN_REQUESTED,
+                            \App\Support\OrderItemStatus::RETURNED,
+                        ], true);
                     });
                     $exchangedItems = $order->orders_products->filter(function($p) {
-                        return in_array($p->item_status, ['Exchange Requested', 'Exchanged']);
+                        return in_array($p->normalized_status, [
+                            \App\Support\OrderItemStatus::EXCHANGE_REQUESTED,
+                            \App\Support\OrderItemStatus::EXCHANGED,
+                        ], true);
                     });
                 @endphp
 
@@ -241,10 +258,10 @@
                                 <td style="padding: 20px 15px; text-align: right; font-size: 14px; color: #333; font-weight: 600;">{{ number_format($prod->product_price) }} 원</td>
                                 <td style="padding: 20px 15px; text-align: center;">
                                     <div style="display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;">
-                                        @if(in_array($prod->item_status, ['New', 'In Process']))
+                                        @if(in_array($prod->normalized_status, [\App\Support\OrderItemStatus::PAID, \App\Support\OrderItemStatus::READY_TO_SHIP], true))
                                             <button onclick="openCancelModal({{ $prod->id }}, '{{ addslashes($prod->product_name) }}', '옵션: {{ $prod->product_size }} / 수량: {{ $prod->product_qty }}개')" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: 600;">취소신청</button>
                                         @endif
-                                        @if(in_array($prod->item_status, ['Shipped', 'Delivered']))
+                                        @if(in_array($prod->normalized_status, [\App\Support\OrderItemStatus::SHIPPING, \App\Support\OrderItemStatus::DELIVERED], true))
                                             <button onclick="openReturnModal({{ $prod->id }}, '{{ addslashes($prod->product_name) }}', '옵션: {{ $prod->product_size }} / 수량: {{ $prod->product_qty }}개')" style="background: #f59e0b; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: 600;">반품신청</button>
                                             <button onclick="openExchangeModal({{ $prod->id }}, '{{ addslashes($prod->product_name) }}', '옵션: {{ $prod->product_size }} / 수량: {{ $prod->product_qty }}개')" style="background: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: 600;">교환신청</button>
                                         @endif
@@ -339,7 +356,7 @@
                                 </td>
                                 <td style="padding: 15px; text-align: center;">
                                     <span style="background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;">
-                                        {{ $prod->item_status == 'Cancel Requested' ? '취소신청' : '취소완료' }}
+                                        {{ $prod->normalized_status === \App\Support\OrderItemStatus::CANCEL_REQUESTED ? '취소신청' : '취소완료' }}
                                     </span>
                                 </td>
                             </tr>
@@ -391,7 +408,7 @@
                                 </td>
                                 <td style="padding: 15px; text-align: center;">
                                     <span style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;">
-                                        {{ $prod->item_status == 'Return Requested' ? '반품신청' : '반품완료' }}
+                                        {{ $prod->normalized_status === \App\Support\OrderItemStatus::RETURN_REQUESTED ? '반품신청' : '반품완료' }}
                                     </span>
                                 </td>
                             </tr>
@@ -443,7 +460,7 @@
                                 </td>
                                 <td style="padding: 15px; text-align: center;">
                                     <span style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;">
-                                        {{ $prod->item_status == 'Exchange Requested' ? '교환신청' : '교환완료' }}
+                                        {{ $prod->normalized_status === \App\Support\OrderItemStatus::EXCHANGE_REQUESTED ? '교환신청' : '교환완료' }}
                                     </span>
                                 </td>
                             </tr>

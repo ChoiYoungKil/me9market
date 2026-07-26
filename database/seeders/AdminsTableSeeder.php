@@ -48,7 +48,14 @@ class AdminsTableSeeder extends Seeder
                 'status'    => 1, // Our authentication logic in the login() method in the AdminController won't allow this admin logging in in case of 'status' = 0
             ],
         ];
-        // Note: Check DatabaseSeeder.php
-        \App\Models\Admin::insert($adminRecords);
+        foreach ($adminRecords as $record) {
+            $email = $record['email'];
+            unset($record['id']);
+
+            \App\Models\Admin::updateOrCreate(
+                ['email' => $email],
+                $record
+            );
+        }
     }
 }

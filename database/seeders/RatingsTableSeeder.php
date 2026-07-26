@@ -34,6 +34,11 @@ class RatingsTableSeeder extends Seeder
         ];
 
         // Note: Check DatabaseSeeder.php!
-        \App\Models\Rating::insert($ratingRecords);
+        foreach ($ratingRecords as $record) {
+            \Illuminate\Support\Facades\DB::table('ratings')->updateOrInsert(
+                ['id' => $record['id']],
+                $record
+            );
+        }
     }
 }

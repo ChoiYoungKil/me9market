@@ -10,6 +10,7 @@ use App\Models\Order;
 use App\Models\OrdersProduct;
 use App\Models\OrderClaim;
 use App\Services\ChannelPointService;
+use App\Support\OrderItemStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -95,7 +96,7 @@ class ChannelOrderTest extends TestCase
         $item->product_size = 'M';
         $item->product_price = 100.0;
         $item->product_qty = 1;
-        $item->item_status = 'New';
+        $item->setStatus(OrderItemStatus::PAID);
         $item->save();
 
         return [$vendor, $admin, $shop, $product, $order, $item];
@@ -122,7 +123,8 @@ class ChannelOrderTest extends TestCase
 
         $this->assertDatabaseHas('orders_products', [
             'id' => $item->id,
-            'item_status' => 'shipping',
+            'status_code' => OrderItemStatus::SHIPPING,
+            'item_status' => OrderItemStatus::label(OrderItemStatus::SHIPPING),
             'courier_name' => 'FastDelivery',
             'tracking_number' => 'TRACK123',
         ]);

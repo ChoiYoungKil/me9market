@@ -28,6 +28,11 @@ class VendorsBankDetailsTableSeeder extends Seeder
             ],
         ];
         // Note: Check DatabaseSeeder.php
-        \App\Models\VendorsBankDetail::insert($vendorsBankDetailsRecords);
+        foreach ($vendorsBankDetailsRecords as $record) {
+            \Illuminate\Support\Facades\DB::table('vendors_bank_details')->updateOrInsert(
+                ['id' => $record['id']],
+                $record
+            );
+        }
     }
 }

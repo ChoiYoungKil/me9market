@@ -44,6 +44,11 @@ class DeliveryAddressTableSeeder extends Seeder
         ];
 
         // Note: Check DatabaseSeeder.php!
-        \App\Models\DeliveryAddress::insert($deliveryRecords);
+        foreach ($deliveryRecords as $record) {
+            \Illuminate\Support\Facades\DB::table('delivery_addresses')->updateOrInsert(
+                ['id' => $record['id']],
+                $record
+            );
+        }
     }
 }

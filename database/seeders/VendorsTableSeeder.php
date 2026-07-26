@@ -33,6 +33,14 @@ class VendorsTableSeeder extends Seeder
         ];
 
         // Note: Check DatabaseSeeder.php
-        \App\Models\Vendor::insert($vendorRecords);
+        foreach ($vendorRecords as $record) {
+            $email = $record['email'];
+            unset($record['id']);
+
+            \App\Models\Vendor::updateOrCreate(
+                ['email' => $email],
+                $record
+            );
+        }
     }
 }

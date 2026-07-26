@@ -47,6 +47,11 @@ class FiltersValuesTableSeeder extends Seeder
             ],
         ];
         // Note: Check DatabaseSeeder.php!
-        \App\Models\ProductsFiltersValue::insert($filtervalueRecords);
+        foreach ($filtervalueRecords as $record) {
+            \Illuminate\Support\Facades\DB::table('products_filters_values')->updateOrInsert(
+                ['id' => $record['id']],
+                $record
+            );
+        }
     }
 }

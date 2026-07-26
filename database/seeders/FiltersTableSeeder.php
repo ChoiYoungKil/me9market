@@ -37,6 +37,11 @@ class FiltersTableSeeder extends Seeder
             ],
         ];
         // Note: Check DatabaseSeeder.php!
-        \App\Models\ProductsFilter::insert($filterRecords);
+        foreach ($filterRecords as $record) {
+            \Illuminate\Support\Facades\DB::table('products_filters')->updateOrInsert(
+                ['id' => $record['id']],
+                $record
+            );
+        }
     }
 }

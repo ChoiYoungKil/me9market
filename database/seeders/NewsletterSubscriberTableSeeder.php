@@ -28,6 +28,11 @@ class NewsletterSubscriberTableSeeder extends Seeder
         ];
 
         // Note: Check DatabaseSeeder.php!
-        \App\Models\NewsletterSubscriber::insert($subscriberRecords);
+        foreach ($subscriberRecords as $record) {
+            \Illuminate\Support\Facades\DB::table('newsletter_subscribers')->updateOrInsert(
+                ['id' => $record['id']],
+                $record
+            );
+        }
     }
 }

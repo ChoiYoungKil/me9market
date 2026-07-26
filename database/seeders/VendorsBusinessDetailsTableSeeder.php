@@ -37,6 +37,11 @@ class VendorsBusinessDetailsTableSeeder extends Seeder
             ],
         ];
         // Note: Check DatabaseSeeder.php
-        \App\Models\VendorsBusinessDetail::insert($vendorsBusinessDetailsRecords);
+        foreach ($vendorsBusinessDetailsRecords as $record) {
+            \Illuminate\Support\Facades\DB::table('vendors_business_details')->updateOrInsert(
+                ['id' => $record['id']],
+                $record
+            );
+        }
     }
 }

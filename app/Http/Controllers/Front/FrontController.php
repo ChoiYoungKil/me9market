@@ -289,8 +289,8 @@ class FrontController extends Controller
                 'product_size' => 'RD/S',
                 'product_price' => 3500,
                 'product_qty' => 1,
-                'item_status' => 'New',
                 'status_code' => OrderItemStatus::PAID,
+                'item_status' => OrderItemStatus::label(OrderItemStatus::PAID),
             ],
             [
                 'product_id' => $productIds['a0030'],
@@ -300,8 +300,8 @@ class FrontController extends Controller
                 'product_size' => 'RD/M',
                 'product_price' => 4500,
                 'product_qty' => 1,
-                'item_status' => 'Shipped',
                 'status_code' => OrderItemStatus::SHIPPING,
+                'item_status' => OrderItemStatus::label(OrderItemStatus::SHIPPING),
             ],
         ];
 
@@ -319,7 +319,8 @@ class FrontController extends Controller
                     'shop_channel_product_id' => $shopProductIds[$item['product_code']],
                     'admin_id' => $adminId,
                     'product_id' => $item['product_id'],
-                    'status_code' => OrderItemStatus::normalize($existing->item_status ?: $existing->status_code),
+                    'status_code' => OrderItemStatus::normalize($existing->status_code ?: $existing->item_status),
+                    'item_status' => OrderItemStatus::label(OrderItemStatus::normalize($existing->status_code ?: $existing->item_status)),
                     'updated_at' => $now,
                 ]);
                 continue;

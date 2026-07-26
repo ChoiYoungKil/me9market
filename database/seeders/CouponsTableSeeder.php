@@ -46,6 +46,11 @@ class CouponsTableSeeder extends Seeder
         ];
 
         // Note: Check DatabaseSeeder.php!
-        \App\Models\Coupon::insert($couponRecords);
+        foreach ($couponRecords as $record) {
+            \Illuminate\Support\Facades\DB::table('coupons')->updateOrInsert(
+                ['id' => $record['id']],
+                $record
+            );
+        }
     }
 }

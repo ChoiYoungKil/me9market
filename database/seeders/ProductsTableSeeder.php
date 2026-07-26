@@ -68,6 +68,11 @@ class ProductsTableSeeder extends Seeder
         ];
 
         // Note: Check DatabaseSeeder.php
-        \App\Models\Product::insert($productRecords);
+        foreach ($productRecords as $record) {
+            \Illuminate\Support\Facades\DB::table('products')->updateOrInsert(
+                ['id' => $record['id']],
+                $record
+            );
+        }
     }
 }

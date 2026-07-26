@@ -65,6 +65,11 @@ class OrderStatusTableSeeder extends Seeder
         ];
 
         // Note: Check DatabaseSeeder.php!
-        \App\Models\OrderStatus::insert($orderStatusRecords);
+        foreach ($orderStatusRecords as $record) {
+            \Illuminate\Support\Facades\DB::table('order_statuses')->updateOrInsert(
+                ['id' => $record['id']],
+                $record
+            );
+        }
     }
 }

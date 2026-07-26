@@ -56,7 +56,6 @@ class ChannelOrderController extends Controller
 
                 foreach ($items as $item) {
                     $item->setStatus($status);
-                    $item->item_status = $data['status'];
 
                     if ($status === OrderItemStatus::SHIPPING) {
                         $item->courier_name = $data['courier_name'];

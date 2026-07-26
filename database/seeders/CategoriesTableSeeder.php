@@ -64,6 +64,11 @@ class CategoriesTableSeeder extends Seeder
         ];
 
         // Note: Check DatabaseSeeder.php
-        \App\Models\Category::insert($categoryRecords);
+        foreach ($categoryRecords as $record) {
+            \App\Models\Category::updateOrCreate(
+                ['id' => $record['id']],
+                $record
+            );
+        }
     }
 }

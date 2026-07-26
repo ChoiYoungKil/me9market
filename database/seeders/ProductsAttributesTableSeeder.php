@@ -53,6 +53,11 @@ class ProductsAttributesTableSeeder extends Seeder
 
 
         // Note: Check DatabaseSeeder.php
-        \App\Models\ProductsAttribute::insert($productAttributesRecords);
+        foreach ($productAttributesRecords as $record) {
+            \Illuminate\Support\Facades\DB::table('products_attributes')->updateOrInsert(
+                ['id' => $record['id']],
+                $record
+            );
+        }
     }
 }

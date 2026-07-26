@@ -25,6 +25,11 @@ class SectionsTableSeeder extends Seeder
         ];
 
         // Note: Check DatabaseSeeder.php
-        \App\Models\Section::insert($sectionRecords);
+        foreach ($sectionRecords as $record) {
+            \App\Models\Section::updateOrCreate(
+                ['id' => $record['id']],
+                $record
+            );
+        }
     }
 }
