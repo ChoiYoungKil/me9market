@@ -9,6 +9,7 @@ use App\Models\ShopChannel;
 use App\Models\Order;
 use App\Models\OrdersProduct;
 use App\Models\OrderClaim;
+use App\Models\ShopChannelProduct;
 use App\Services\ChannelPointService;
 use App\Support\OrderItemStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -275,5 +276,33 @@ class ChannelOrderTest extends TestCase
             ->assertStatus(200)
             ->assertSee('P123')
             ->assertSee('교환요청');
+    }
+
+    public function test_order_list_uses_shop_channel_product_link_when_vendor_id_is_missing()
+    {
+        list($vendor, $admin, $shop, $product, $order, $item) = $this->createSetup();
+
+        $shopProduct = ShopChannelProduct::create([
+            'shop_channel_id' => $shop->id,
+            'product_id' => $product->id,
+            'product_type' => 'own',
+            'status' => 1,
+            'constraint_type' => 'none',
+            'stock' => 10,
+            'product_price' => 80,
+            'selling_price' => 120,
+            'profit' => 40,
+        ]);
+
+        $item->vendor_id = 0;
+        $item->shop_channel_id = null;
+        $item->shop_channel_product_id = $shopProduct->id;
+        $item->save();
+
+        $this->actingAs($admin, 'admin')
+            ->get('/channel/order/list')
+            ->assertStatus(200)
+            ->assertSee('P123')
+            ->assertSee('Test Product');
     }
 }

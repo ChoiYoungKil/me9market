@@ -22,6 +22,8 @@ use App\Models\User;
 use App\Models\Country;
 use App\Models\ShippingCharge;
 use App\Models\OrdersProduct;
+use App\Models\ShopChannelProduct;
+use App\Support\OrderItemStatus;
 
 class ProductsController extends Controller
 {
@@ -1055,15 +1057,19 @@ class ProductsController extends Controller
                 $cartItem->user_id  = Auth::user()->id; 
 
                 // orders_products 테이블을 채우기 위해 products 테이블에서 장바구니 상품의 세부 정보 가져오기
-                $getProductDetails = Product::select('product_code', 'product_name', 'product_color', 'admin_id', 'vendor_id')->where('id', $item['product_id'])->first()->toArray();
+                $getProductDetails = Product::select('id', 'product_code', 'product_name', 'product_color', 'admin_id', 'vendor_id', 'product_price')->where('id', $item['product_id'])->first()->toArray();
+                $shopChannelProduct = $this->resolveCheckoutShopChannelProduct((int) $item['product_id'], (int) ($getProductDetails['vendor_id'] ?? 0));
 
                 // orders_products 테이블 데이터 계속 입력
                 $cartItem->admin_id        = $getProductDetails['admin_id'];
-                $cartItem->vendor_id       = $getProductDetails['vendor_id'];
+                $cartItem->vendor_id       = $shopChannelProduct?->shopChannel?->vendor_id ?: $getProductDetails['vendor_id'];
+                $cartItem->shop_channel_id = $shopChannelProduct?->shop_channel_id;
+                $cartItem->shop_channel_product_id = $shopChannelProduct?->id;
+                $cartItem->distributor_id  = $shopChannelProduct?->distributor_id;
 
                 
-                if ($getProductDetails['vendor_id'] > 0) { // 판매자가 'vendor'인 경우
-                    $vendorCommission = Vendor::getVendorCommission($getProductDetails['vendor_id']);
+                if ($cartItem->vendor_id > 0) { // 판매자가 'vendor'인 경우
+                    $vendorCommission = Vendor::getVendorCommission($cartItem->vendor_id);
                     $cartItem->commission  = $vendorCommission;
                 }
 
@@ -1074,7 +1080,12 @@ class ProductsController extends Controller
                 $cartItem->product_size    = $item['size'];
 
                 $getDiscountAttributePrice = Product::getDiscountAttributePrice($item['product_id'], $item['size']); 
-                $cartItem->product_price   = $getDiscountAttributePrice['final_price'];
+                $checkoutUnitPrice = $shopChannelProduct && $shopChannelProduct->selling_price > 0
+                    ? $shopChannelProduct->selling_price
+                    : $getDiscountAttributePrice['final_price'];
+                $cartItem->product_price   = $checkoutUnitPrice;
+                $cartItem->supply_price    = $shopChannelProduct?->product_price ?: $getProductDetails['product_price'];
+                $cartItem->selling_price   = $checkoutUnitPrice;
 
 
                 
@@ -1087,6 +1098,8 @@ class ProductsController extends Controller
 
 
                 $cartItem->product_qty     = $item['quantity'];
+                $cartItem->line_total      = $checkoutUnitPrice * $item['quantity'];
+                $cartItem->setStatus(OrderItemStatus::PAID);
 
                 $cartItem->save(); // orders_products 테이블에 데이터 삽입
 
@@ -1200,6 +1213,31 @@ class ProductsController extends Controller
                 echo '해당 우편번호는 배송이 가능합니다.';
             }
         }
+    }
+
+    private function resolveCheckoutShopChannelProduct(int $productId, int $productVendorId = 0): ?ShopChannelProduct
+    {
+        $query = ShopChannelProduct::with('shopChannel')
+            ->where('product_id', $productId)
+            ->where('status', 1)
+            ->whereHas('shopChannel', function ($shopQuery) {
+                $shopQuery->where('status', 1);
+            });
+
+        if ($productVendorId > 0) {
+            $preferred = (clone $query)
+                ->whereHas('shopChannel', function ($shopQuery) use ($productVendorId) {
+                    $shopQuery->where('vendor_id', $productVendorId);
+                })
+                ->orderByDesc('id')
+                ->first();
+
+            if ($preferred) {
+                return $preferred;
+            }
+        }
+
+        return $query->orderByDesc('id')->first();
     }
 
 }

@@ -1307,6 +1307,25 @@ class ChannelController extends Controller
 
     private function fetchOrders($vendor_id, array $baseStatusKeys = [], array $filters = [])
     {
+        $vendorShopIds = DB::table('shop_channels')
+            ->where('vendor_id', $vendor_id)
+            ->pluck('id')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+        $vendorShopProductIds = empty($vendorShopIds)
+            ? []
+            : DB::table('shop_channel_products')
+                ->whereIn('shop_channel_id', $vendorShopIds)
+                ->pluck('id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
+        $vendorProductIds = empty($vendorShopIds)
+            ? []
+            : DB::table('shop_channel_products')
+                ->whereIn('shop_channel_id', $vendorShopIds)
+                ->pluck('product_id')
+                ->map(fn ($id) => (int) $id)
+                ->all();
         $selectedStatusKeys = $filters['order_statuses'] ?? [];
         $effectiveStatusKeys = $baseStatusKeys;
         if (!empty($selectedStatusKeys)) {
@@ -1317,8 +1336,19 @@ class ChannelController extends Controller
 
         $statusValues = $this->orderStatusQueryValues($effectiveStatusKeys);
         $hasImpossibleStatusFilter = !empty($selectedStatusKeys) && !empty($baseStatusKeys) && empty($effectiveStatusKeys);
-        $itemFilter = function ($q) use ($vendor_id, $filters, $statusValues, $hasImpossibleStatusFilter) {
-            $q->where('vendor_id', $vendor_id);
+        $itemFilter = function ($q) use ($vendor_id, $vendorShopIds, $vendorShopProductIds, $vendorProductIds, $filters, $statusValues, $hasImpossibleStatusFilter) {
+            $q->where(function ($ownerQuery) use ($vendor_id, $vendorShopIds, $vendorShopProductIds, $vendorProductIds) {
+                $ownerQuery->where('vendor_id', $vendor_id);
+                if (!empty($vendorShopIds)) {
+                    $ownerQuery->orWhereIn('shop_channel_id', $vendorShopIds);
+                }
+                if (!empty($vendorShopProductIds)) {
+                    $ownerQuery->orWhereIn('shop_channel_product_id', $vendorShopProductIds);
+                }
+                if (!empty($vendorProductIds)) {
+                    $ownerQuery->orWhereIn('product_id', $vendorProductIds);
+                }
+            });
 
             if ($hasImpossibleStatusFilter) {
                 $q->whereRaw('1 = 0');
@@ -1372,7 +1402,7 @@ class ChannelController extends Controller
         $keyword = $filters['keyword'] ?? '';
         $searchType = $filters['search_type'] ?? 'all';
         if ($keyword !== '' && $searchType === 'all') {
-            $query->where(function ($mixedQuery) use ($keyword, $vendor_id, $statusValues, $hasImpossibleStatusFilter, $filters) {
+            $query->where(function ($mixedQuery) use ($keyword, $vendor_id, $vendorShopIds, $vendorShopProductIds, $vendorProductIds, $statusValues, $hasImpossibleStatusFilter, $filters) {
                 $orderNumber = $this->orderNumberSearchValue($keyword);
                 $mixedQuery->where(function ($orderQuery) use ($keyword, $orderNumber) {
                     if ($orderNumber !== null) {
@@ -1382,8 +1412,19 @@ class ChannelController extends Controller
                     $orderQuery->orWhere('name', 'like', '%' . $keyword . '%')
                         ->orWhere('email', 'like', '%' . $keyword . '%')
                         ->orWhere('mobile', 'like', '%' . $keyword . '%');
-                })->orWhereHas('orders_products', function ($itemQuery) use ($keyword, $vendor_id, $statusValues, $hasImpossibleStatusFilter, $filters) {
-                    $itemQuery->where('vendor_id', $vendor_id);
+                })->orWhereHas('orders_products', function ($itemQuery) use ($keyword, $vendor_id, $vendorShopIds, $vendorShopProductIds, $vendorProductIds, $statusValues, $hasImpossibleStatusFilter, $filters) {
+                    $itemQuery->where(function ($ownerQuery) use ($vendor_id, $vendorShopIds, $vendorShopProductIds, $vendorProductIds) {
+                        $ownerQuery->where('vendor_id', $vendor_id);
+                        if (!empty($vendorShopIds)) {
+                            $ownerQuery->orWhereIn('shop_channel_id', $vendorShopIds);
+                        }
+                        if (!empty($vendorShopProductIds)) {
+                            $ownerQuery->orWhereIn('shop_channel_product_id', $vendorShopProductIds);
+                        }
+                        if (!empty($vendorProductIds)) {
+                            $ownerQuery->orWhereIn('product_id', $vendorProductIds);
+                        }
+                    });
                     if ($hasImpossibleStatusFilter) {
                         $itemQuery->whereRaw('1 = 0');
                         return;

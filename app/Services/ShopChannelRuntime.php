@@ -74,7 +74,7 @@ class ShopChannelRuntime
 
     public function ensureDemoData(): ShopChannel
     {
-        $distributor = Distributor::firstOrCreate(
+        $distributor = Distributor::updateOrCreate(
             ['email' => 'partner@main.com'],
             [
                 'name' => '주식회사 메인공급처',
