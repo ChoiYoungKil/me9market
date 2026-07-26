@@ -197,13 +197,15 @@
 
             // Confirm Delete
             $(".confirmDelete").click(function (e) {
+                e.preventDefault();
+                e.stopPropagation();
                 var module = $(this).attr('module');
                 var moduleid = $(this).attr('moduleid');
                 if (!confirm("정말로 삭제하시겠습니까?")) {
                     return false;
                 }
                 if (module == 'notice-attachment') {
-                    window.location.href = "/admin/delete-notice-attachment/" + moduleid;
+                    submitAdminDelete("/admin/delete-notice-attachment/" + moduleid);
                 }
             });
         });

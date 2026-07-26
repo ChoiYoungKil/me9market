@@ -84,6 +84,20 @@ class ChannelPointTest extends TestCase
         $service->requestRefund($vendor->id, 10000, '운영 중 환급 요청', null, $admin->id);
     }
 
+    public function test_pending_refunds_reserve_available_seller_points()
+    {
+        [$vendor, $admin, $shop] = $this->setupVendor();
+        $service = app(ChannelPointService::class);
+        $purchase = $service->requestPurchase($vendor->id, 100000, 'card', null, null, $admin->id);
+        $service->approve($purchase, $admin->id);
+        $shop->update(['status' => 0]);
+
+        $service->requestRefund($vendor->id, 70000, '1차 환급 요청', null, $admin->id);
+
+        $this->expectException(ValidationException::class);
+        $service->requestRefund($vendor->id, 40000, '잔액 초과 환급 요청', null, $admin->id);
+    }
+
     public function test_purchase_confirm_payback_deducts_seller_points_and_credits_user()
     {
         [$vendor, $admin, $shop] = $this->setupVendor();

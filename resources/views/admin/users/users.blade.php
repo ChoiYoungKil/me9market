@@ -227,11 +227,14 @@
 
             // Confirm Delete
             $(".confirmDelete").click(function (e) {
+                e.preventDefault();
+                e.stopPropagation();
                 var module = $(this).attr('module');
                 var moduleid = $(this).attr('moduleid');
                 if (!confirm("정말로 삭제하시겠습니까?")) {
                     return false;
                 }
+                submitAdminDelete("/admin/delete-" + module + "/" + moduleid);
             });
 
             // Update User Status

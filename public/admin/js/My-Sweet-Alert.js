@@ -45,7 +45,7 @@ $(document).on('click', '.confirmDelete', function() { // correcting the issue o
             )
 
             // We added this line by ourselves (to go to this route to delete the said module ...)
-            window.location = '/admin/delete-' + module + '/' + moduleid; // e.g.    '/admin/delete-sections/3'    or    '/admin/delete-category/5'    or    '/admin/delete-category-image/4'    or    /admin/delete-subscriber/43
+            submitAdminDelete('/admin/delete-' + module + '/' + moduleid);
         }
     })
 });

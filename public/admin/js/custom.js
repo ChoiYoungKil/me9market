@@ -423,7 +423,7 @@ $(document).ready(function() {
 
         // After the CDNs block in the country, I resorted to this solution:
         if (confirm('Are you sure you want to delete this?')) {
-            window.location = '/admin/delete-' + module + '/' + moduleid; // e.g.    '/admin/delete-sections/3'    or    '/admin/delete-category/5'    or    '/admin/delete-category-image/4'    or    /admin/delete-subscriber/43
+            submitAdminDelete('/admin/delete-' + module + '/' + moduleid);
         } else {
             return false; // return true    means STOP THE EXECUTION! Don't Do Anything! You can't do what you want to do!
         }
@@ -446,11 +446,27 @@ $(document).ready(function() {
                 )
 
                 // We added this line by ourselves (to go to this route to delete the said module ...)
-                window.location = '/admin/delete-' + module + '/' + moduleid; // e.g.    '/admin/delete-sections/3'    or    '/admin/delete-category/5'    or    '/admin/delete-category-image/4'    or    /admin/delete-subscriber/43
+                submitAdminDelete('/admin/delete-' + module + '/' + moduleid);
                 }
             })
         */
     });
+
+    window.submitAdminDelete = function(action) {
+        var csrf = $('meta[name="csrf-token"]').attr('content');
+        var form = $('<form>', {
+            method: 'POST',
+            action: action,
+            style: 'display:none'
+        });
+        form.append($('<input>', {
+            type: 'hidden',
+            name: '_token',
+            value: csrf
+        }));
+        $('body').append(form);
+        form.trigger('submit');
+    };
 
 
 

@@ -409,15 +409,17 @@
 
             // Confirm Delete
             $(".confirmDelete").click(function (e) {
+                e.preventDefault();
+                e.stopPropagation();
                 var module = $(this).attr('module');
                 var moduleid = $(this).attr('moduleid');
                 if (!confirm("정말로 삭제하시겠습니까?")) {
                     return false;
                 }
                 if (module == 'product-image') {
-                    window.location.href = "/admin/delete-product-image/" + moduleid;
+                    submitAdminDelete("/admin/delete-product-image/" + moduleid);
                 } else if (module == 'product-video') {
-                    window.location.href = "/admin/delete-product-video/" + moduleid;
+                    submitAdminDelete("/admin/delete-product-video/" + moduleid);
                 }
             });
         });

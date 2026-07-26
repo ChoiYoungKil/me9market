@@ -289,4 +289,19 @@ class AdminRoutesTest extends TestCase
 
         $this->assertDatabaseMissing('distributors', ['id' => $manager->id]);
     }
+
+    public function test_admin_delete_routes_require_post_requests()
+    {
+        list($admin, $vendor, $section) = $this->createSetup();
+
+        $this->actingAs($admin, 'admin')
+            ->get("/admin/delete-section/{$section->id}")
+            ->assertStatus(405);
+
+        $this->actingAs($admin, 'admin')
+            ->post("/admin/delete-section/{$section->id}")
+            ->assertRedirect('/');
+
+        $this->assertDatabaseMissing('sections', ['id' => $section->id]);
+    }
 }

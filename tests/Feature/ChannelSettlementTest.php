@@ -8,6 +8,8 @@ use App\Models\Product;
 use App\Models\ShopChannel;
 use App\Models\Order;
 use App\Models\OrdersProduct;
+use App\Services\SettlementCalculator;
+use App\Support\OrderItemStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use Carbon\Carbon;
@@ -234,5 +236,60 @@ class ChannelSettlementTest extends TestCase
         $this->assertTrue($orders[0]->relationLoaded('order'));
         $this->assertEquals('Test Product', $orders[0]->product->product_name);
         $this->assertEquals($order->id, $orders[0]->order->id);
+    }
+
+    public function test_settlement_calculator_allocates_shipping_points_and_commission()
+    {
+        list($vendor, $admin, $shop, $product) = $this->createSetup();
+        $product->update(['reward_points' => 100]);
+
+        $order = new Order;
+        $order->user_id = 1;
+        $order->name = 'Customer Name';
+        $order->address = 'Test Address';
+        $order->city = 'Seoul';
+        $order->state = 'Seoul';
+        $order->country = 'Korea';
+        $order->pincode = '12345';
+        $order->mobile = '01011112222';
+        $order->email = 'customer@example.com';
+        $order->shipping_charges = 3000;
+        $order->used_point = 1000;
+        $order->order_status = 'Payment Captured';
+        $order->payment_method = 'Card';
+        $order->payment_gateway = 'Me9';
+        $order->grand_total = 22000;
+        $order->save();
+
+        $item = new OrdersProduct;
+        $item->order_id = $order->id;
+        $item->user_id = 1;
+        $item->vendor_id = $vendor->id;
+        $item->shop_channel_id = $shop->id;
+        $item->admin_id = $admin->id;
+        $item->product_id = $product->id;
+        $item->product_code = $product->product_code;
+        $item->product_name = $product->product_name;
+        $item->product_color = $product->product_color;
+        $item->product_size = 'M';
+        $item->product_price = 10000;
+        $item->selling_price = 10000;
+        $item->supply_price = 7000;
+        $item->product_qty = 2;
+        $item->line_total = 20000;
+        $item->status_code = OrderItemStatus::CONFIRMED;
+        $item->item_status = OrderItemStatus::label(OrderItemStatus::CONFIRMED);
+        $item->confirmed_at = Carbon::parse('2026-05-15 12:00:00');
+        $item->save();
+
+        $summary = app(SettlementCalculator::class)->preview('2026-05', $vendor->id)->first();
+
+        $this->assertNotNull($summary);
+        $this->assertEquals(23000.0, $summary['gross_sales_amount']);
+        $this->assertEquals(14000.0, $summary['supply_amount']);
+        $this->assertEquals(3170.0, $summary['admin_amount']);
+        $this->assertEquals(200.0, $summary['point_deposit_amount']);
+        $this->assertEquals(1000.0, $summary['point_used_amount']);
+        $this->assertEquals(19630.0, $summary['settlement_amount']);
     }
 }

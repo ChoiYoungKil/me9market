@@ -74,6 +74,10 @@ class ShopChannelRuntime
 
     public function ensureDemoData(): ShopChannel
     {
+        if (!$this->canSeedDemoData()) {
+            return ShopChannel::where('status', 1)->orderBy('id')->firstOrFail();
+        }
+
         $distributor = Distributor::updateOrCreate(
             ['email' => 'partner@main.com'],
             [
@@ -409,7 +413,9 @@ class ShopChannelRuntime
 
     public function enterChannel(string $entryCode): ?ShopChannel
     {
-        $this->ensureDemoData();
+        if ($this->canSeedDemoData()) {
+            $this->ensureDemoData();
+        }
 
         $shop = ShopChannel::where('channel_code', $entryCode)
             ->orWhere('password', $entryCode)
@@ -422,6 +428,12 @@ class ShopChannelRuntime
         Session::put(self::CHANNEL_KEY, $shop->id);
 
         return $shop;
+    }
+
+    private function canSeedDemoData(): bool
+    {
+        return app()->environment(['local', 'testing'])
+            || (bool) config('shop_channel.seed_demo_data', false);
     }
 
     public function products(?string $type = null)

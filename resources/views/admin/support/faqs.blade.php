@@ -342,12 +342,14 @@
 
             // Confirm Delete
             $(".confirmDelete").click(function (e) {
+                e.preventDefault();
+                e.stopPropagation();
                 var module = $(this).attr('module');
                 var moduleid = $(this).attr('moduleid');
                 if (!confirm("정말로 삭제하시겠습니까?")) {
                     return false;
                 }
-                window.location.href = "/admin/delete-faq/" + moduleid;
+                submitAdminDelete("/admin/delete-faq/" + moduleid);
             });
         });
     </script>

@@ -79,7 +79,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
 
         Route::get('admins/{type?}', 'AdminController@admins')->name('admin.admins'); // 인증된 사용자 등급(superadmin, admin, subadmin, vendor)에 따른 관리자 목록 표시. Optional Route Parameter '?' 사용 (전달되지 않으면 모든 목록 표시)
         Route::match(['get', 'post'], 'add-edit-admin/{id?}', 'AdminController@addEditAdmin'); // 관리자/판매자 추가 및 수정
-        Route::get('delete-admin/{id}', 'AdminController@deleteAdmin'); // 관리자/판매자 삭제
+        Route::post('delete-admin/{id}', 'AdminController@deleteAdmin'); // 관리자/판매자 삭제
         
         Route::get('view-vendor-details/{id}', 'AdminController@viewVendorDetails'); // 관리자 관리 테이블에서 입점업체 상세 정보 보기 (superadmin, admin, subadmin인 경우)
         Route::post('update-admin-status', 'AdminController@updateAdminStatus'); // AJAX를 사용한 관리자 상태 업데이트 (admins.blade.php)
@@ -89,7 +89,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         // 섹션 (Sections, Categories, Subcategories, Products, Attributes)
         Route::get('sections', 'SectionController@sections')->name('admin.sections');
         Route::post('update-section-status', 'SectionController@updateSectionStatus'); // AJAX를 사용한 섹션 상태 업데이트 (sections.blade.php)
-        Route::get('delete-section/{id}', 'SectionController@deleteSection'); // 섹션 삭제 (sections.blade.php)
+        Route::post('delete-section/{id}', 'SectionController@deleteSection'); // 섹션 삭제 (sections.blade.php)
         Route::match(['get', 'post'], 'add-edit-section/{id?}', 'SectionController@addEditSection'); // {id?}는 선택적 파라미터로, 전달되면 수정, 없으면 추가를 의미합니다.
 
         // 카테고리 (Categories)
@@ -97,58 +97,58 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::post('update-category-status', 'CategoryController@updateCategoryStatus'); // AJAX를 사용한 카테고리 상태 업데이트 (categories.blade.php)
         Route::match(['get', 'post'], 'add-edit-category/{id?}', 'CategoryController@addEditCategory'); // {id?}는 선택적 파라미터로, 전달되면 수정, 없으면 추가를 의미합니다.
         Route::get('append-categories-level', 'CategoryController@appendCategoryLevel'); // 선택된 섹션에 따른 카테고리 레벨 표시 (AJAX, append_categories_level.blade.php)
-        Route::get('delete-category/{id}', 'CategoryController@deleteCategory'); // 카테고리 삭제 (categories.blade.php)
-        Route::get('delete-category-image/{id}', 'CategoryController@deleteCategoryImage'); // 카테고리 이미지 삭제 (서버 및 데이터베이스 모두)
+        Route::post('delete-category/{id}', 'CategoryController@deleteCategory'); // 카테고리 삭제 (categories.blade.php)
+        Route::post('delete-category-image/{id}', 'CategoryController@deleteCategoryImage'); // 카테고리 이미지 삭제 (서버 및 데이터베이스 모두)
 
         // 브랜드 (Brands)
         Route::get('brands', 'BrandController@brands')->name('admin.brands');
         Route::post('update-brand-status', 'BrandController@updateBrandStatus'); // AJAX를 사용한 브랜드 상태 업데이트 (brands.blade.php)
-        Route::get('delete-brand/{id}', 'BrandController@deleteBrand'); // 브랜드 삭제 (brands.blade.php)
+        Route::post('delete-brand/{id}', 'BrandController@deleteBrand'); // 브랜드 삭제 (brands.blade.php)
         Route::match(['get', 'post'], 'add-edit-brand/{id?}', 'BrandController@addEditBrand'); // {id?}는 선택적 파라미터로, 전달되면 수정, 없으면 추가를 의미합니다.
 
         // 상품 (Products)
         Route::get('products', 'ProductsController@products')->name('admin.products'); // 상품 목록 렌더링
         Route::post('update-product-status', 'ProductsController@updateProductStatus'); // AJAX를 사용한 상품 상태 업데이트 (products.blade.php)
-        Route::get('delete-product/{id}', 'ProductsController@deleteProduct'); // 상품 삭제 (products.blade.php)
+        Route::post('delete-product/{id}', 'ProductsController@deleteProduct'); // 상품 삭제 (products.blade.php)
         Route::match(['get', 'post'], 'add-edit-product/{id?}', 'ProductsController@addEditProduct'); // {id?}는 선택적 파라미터로, 전달되면 수정, 없으면 추가를 의미합니다.    // GET 요청은 뷰 렌더링, POST 요청은 폼 제출
-        Route::get('delete-product-image/{id}', 'ProductsController@deleteProductImage'); // 상품 이미지 삭제 (서버 및 데이터베이스)
-        Route::get('delete-product-video/{id}', 'ProductsController@deleteProductVideo'); // 상품 동영상 삭제 (서버 및 데이터베이스)
+        Route::post('delete-product-image/{id}', 'ProductsController@deleteProductImage'); // 상품 이미지 삭제 (서버 및 데이터베이스)
+        Route::post('delete-product-video/{id}', 'ProductsController@deleteProductVideo'); // 상품 동영상 삭제 (서버 및 데이터베이스)
 
         // 속성 (Attributes)
         Route::match(['get', 'post'], 'add-edit-attributes/{id}', 'ProductsController@addAttributes'); // GET 요청 뷰 렌더링, POST 요청 폼 제출
         Route::post('update-attribute-status', 'ProductsController@updateAttributeStatus'); // AJAX를 사용한 속성 상태 업데이트 (add_edit_attributes.blade.php)
-        Route::get('delete-attribute/{id}', 'ProductsController@deleteAttribute'); // 속성 삭제 (add_edit_attributes.blade.php)
+        Route::post('delete-attribute/{id}', 'ProductsController@deleteAttribute'); // 속성 삭제 (add_edit_attributes.blade.php)
         Route::match(['get', 'post'], 'edit-attributes/{id}', 'ProductsController@editAttributes'); // 속성 수정
 
         // 이미지 (Images)
         Route::match(['get', 'post'], 'add-images/{id}', 'ProductsController@addImages'); // GET 요청 뷰 렌더링, POST 요청 폼 제출
         Route::post('update-image-status', 'ProductsController@updateImageStatus'); // AJAX를 사용한 이미지 상태 업데이트 (add_images.blade.php)
-        Route::get('delete-image/{id}', 'ProductsController@deleteImage'); // 이미지 삭제 (add_images.blade.php)
+        Route::post('delete-image/{id}', 'ProductsController@deleteImage'); // 이미지 삭제 (add_images.blade.php)
 
         // 배너 (Banners)
         Route::get('banners', 'BannersController@banners')->name('admin.banners');
         Route::post('update-banner-status', 'BannersController@updateBannerStatus'); // AJAX를 사용한 배너 상태 업데이트 (banners.blade.php)
-        Route::get('delete-banner/{id}', 'BannersController@deleteBanner'); // 배너 삭제 (banners.blade.php)
+        Route::post('delete-banner/{id}', 'BannersController@deleteBanner'); // 배너 삭제 (banners.blade.php)
         Route::match(['get', 'post'], 'add-edit-banner/{id?}', 'BannersController@addEditBanner'); // {id?}는 선택적 파라미터로, 전달되면 수정, 없으면 추가를 의미합니다.    // GET 요청은 뷰 렌더링, POST 요청은 폼 제출
 
         // 고객센터 - 공지사항 (Notices)
         Route::get('notices', 'SupportController@notices')->name('admin.notices');
         Route::match(['get', 'post'], 'add-edit-notice/{id?}', 'SupportController@addEditNotice');
-        Route::get('delete-notice/{id}', 'SupportController@deleteNotice');
-        Route::get('delete-notice-attachment/{id}', 'SupportController@deleteNoticeAttachment');
+        Route::post('delete-notice/{id}', 'SupportController@deleteNotice');
+        Route::post('delete-notice-attachment/{id}', 'SupportController@deleteNoticeAttachment');
         Route::post('update-notice-status', 'SupportController@updateNoticeStatus');
 
         // 고객센터 - 자주묻는질문 (FAQs)
         Route::get('faqs', 'SupportController@faqs')->name('admin.faqs');
         Route::match(['get', 'post'], 'add-edit-faq/{id?}', 'SupportController@addEditFaq');
-        Route::get('delete-faq/{id}', 'SupportController@deleteFaq');
+        Route::post('delete-faq/{id}', 'SupportController@deleteFaq');
         Route::post('update-faq-status', 'SupportController@updateFaqStatus');
 
         // 고객센터 - 제휴/문의 (Contacts)
         Route::get('contacts', 'SupportController@contacts')->name('admin.contacts');
         Route::get('view-contact/{id}', 'SupportController@viewContact');
         Route::post('update-contact/{id}', 'SupportController@updateContact');
-        Route::get('delete-contact/{id}', 'SupportController@deleteContact');
+        Route::post('delete-contact/{id}', 'SupportController@deleteContact');
 
         // 필터 (Filters)
         Route::get('filters', 'FilterController@filters'); // filters.blade.php 렌더링
@@ -162,7 +162,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         // 쿠폰 (Coupons)
         Route::get('coupons', 'CouponsController@coupons')->name('admin.coupons'); // admin/coupons/coupons.blade.php 렌더링
         Route::post('update-coupon-status', 'CouponsController@updateCouponStatus'); // AJAX를 사용한 쿠폰 상태 업데이트 (active/inactive)
-        Route::get('delete-coupon/{id}', 'CouponsController@deleteCoupon'); // AJAX를 사용한 쿠폰 삭제
+        Route::post('delete-coupon/{id}', 'CouponsController@deleteCoupon'); // AJAX를 사용한 쿠폰 삭제
 
         // {id?} 선택적 파라미터 전달 시 쿠폰 수정, 아니면 쿠폰 추가. GET 요청은 뷰 렌더링, POST 요청은 폼 제출
         Route::match(['get', 'post'], 'add-edit-coupon/{id?}', 'CouponsController@addEditCoupon'); // {id?}는 선택적 파라미터로, 전달되면 수정, 없으면 추가를 의미합니다.    // GET 요청은 뷰 렌더링, POST 요청은 폼 제출
@@ -171,7 +171,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::get('users', 'UserController@users')->name('admin.users'); // admin/users/users.blade.php 렌더링
         Route::post('update-user-status', 'UserController@updateUserStatus'); // AJAX를 사용한 사용자 상태 업데이트
         Route::match(['get', 'post'], 'add-edit-user/{id?}', 'UserController@addEditUser'); // 사용자 추가 및 수정
-        Route::get('delete-user/{id}', 'UserController@deleteUser'); // 사용자 삭제
+        Route::post('delete-user/{id}', 'UserController@deleteUser'); // 사용자 삭제
 
         // 주문 (Orders)
         // admin/orders/orders.blade.php 렌더링 (주문 관리)
@@ -233,7 +233,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::post('update-subscriber-status', 'NewsletterController@updateSubscriberStatus');
 
         // AJAX를 사용한 구독자 삭제
-        Route::get('delete-subscriber/{id}', 'NewsletterController@deleteSubscriber');
+        Route::post('delete-subscriber/{id}', 'NewsletterController@deleteSubscriber');
 
 
 
@@ -248,7 +248,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::post('update-rating-status', 'RatingController@updateRatingStatus');
 
         // AJAX를 사용한 평가 삭제
-        Route::get('delete-rating/{id}', 'RatingController@deleteRating');
+        Route::post('delete-rating/{id}', 'RatingController@deleteRating');
     });
 
 });
