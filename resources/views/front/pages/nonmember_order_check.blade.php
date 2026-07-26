@@ -3,6 +3,7 @@
 @section('page_type', 'sub')
 
 @section('content')
+@php($showDemoCredentials = config('shop_channel.show_demo_credentials', false))
 <style>
     #container {
         padding-top: 100px;
@@ -30,11 +31,13 @@
                 <div style="text-align: center; margin-bottom: 30px;">
                     <h2 style="font-size: 24px; font-weight: 700; color: #111; margin: 0 0 10px 0;">비회원 주문 조회</h2>
                     <p style="font-size: 14px; color: #666; margin: 0 0 15px 0;">주문 시 입력하신 주문번호와 연락처를 입력해 주세요.</p>
-                    <div style="background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; font-size: 12px; color: #475569; text-align: left; line-height: 1.5;">
-                        <strong>💡 테스트 정보:</strong><br>
-                        - 주문번호: <code style="background: #e2e8f0; padding: 2px 4px; border-radius: 4px; font-weight: bold; color: #000;">Me9-Shop-0032022</code><br>
-                        - 연락처: <code style="background: #e2e8f0; padding: 2px 4px; border-radius: 4px; font-weight: bold; color: #000;">010-1234-5678</code>
-                    </div>
+                    @if($showDemoCredentials)
+                        <div style="background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; font-size: 12px; color: #475569; text-align: left; line-height: 1.5;">
+                            <strong>테스트 정보:</strong><br>
+                            - 주문번호: <code style="background: #e2e8f0; padding: 2px 4px; border-radius: 4px; font-weight: bold; color: #000;">Me9-Shop-0032022</code><br>
+                            - 연락처: <code style="background: #e2e8f0; padding: 2px 4px; border-radius: 4px; font-weight: bold; color: #000;">010-1234-5678</code>
+                        </div>
+                    @endif
                 </div>
 
                 @if(Session::has('flash_message_error'))
@@ -47,12 +50,12 @@
                     @csrf
                     <div style="margin-bottom: 20px;">
                         <label for="order_id" style="display: block; font-size: 14px; font-weight: 600; color: #333; margin-bottom: 8px;">주문번호</label>
-                        <input type="text" id="order_id" name="order_id" value="Me9-Shop-0032022" placeholder="주문번호 입력 (예: Me9-Shop-0032022)" required class="nonmember-check-input">
+                        <input type="text" id="order_id" name="order_id" value="{{ $showDemoCredentials ? 'Me9-Shop-0032022' : '' }}" placeholder="주문번호 입력" required class="nonmember-check-input">
                     </div>
 
                     <div style="margin-bottom: 30px;">
                         <label for="phone" style="display: block; font-size: 14px; font-weight: 600; color: #333; margin-bottom: 8px;">연락처</label>
-                        <input type="text" id="phone" name="phone" value="010-1234-5678" placeholder="'-' 제외하고 입력" required class="nonmember-check-input">
+                        <input type="text" id="phone" name="phone" value="{{ $showDemoCredentials ? '010-1234-5678' : '' }}" placeholder="'-' 제외하고 입력" required class="nonmember-check-input">
                     </div>
 
                     <button type="submit" style="width: 100%; background: #6366f1; color: white; padding: 14px; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 0.2s;">조회하기</button>

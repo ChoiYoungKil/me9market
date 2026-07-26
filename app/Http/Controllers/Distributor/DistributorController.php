@@ -15,7 +15,7 @@ class DistributorController extends Controller
 {
     private function ensureRuntime(): void
     {
-        app(ShopChannelRuntime::class)->ensureDemoData();
+        app(ShopChannelRuntime::class)->seedDemoDataIfAllowed();
     }
 
     private function currentDistributor(): ?Distributor

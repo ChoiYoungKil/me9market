@@ -254,6 +254,7 @@ class ChannelSettlementTest extends TestCase
         $order->mobile = '01011112222';
         $order->email = 'customer@example.com';
         $order->shipping_charges = 3000;
+        $order->coupon_amount = 2000;
         $order->used_point = 1000;
         $order->order_status = 'Payment Captured';
         $order->payment_method = 'Card';
@@ -285,11 +286,11 @@ class ChannelSettlementTest extends TestCase
         $summary = app(SettlementCalculator::class)->preview('2026-05', $vendor->id)->first();
 
         $this->assertNotNull($summary);
-        $this->assertEquals(23000.0, $summary['gross_sales_amount']);
+        $this->assertEquals(21000.0, $summary['gross_sales_amount']);
         $this->assertEquals(14000.0, $summary['supply_amount']);
-        $this->assertEquals(3170.0, $summary['admin_amount']);
+        $this->assertEquals(2890.0, $summary['admin_amount']);
         $this->assertEquals(200.0, $summary['point_deposit_amount']);
         $this->assertEquals(1000.0, $summary['point_used_amount']);
-        $this->assertEquals(19630.0, $summary['settlement_amount']);
+        $this->assertEquals(17910.0, $summary['settlement_amount']);
     }
 }

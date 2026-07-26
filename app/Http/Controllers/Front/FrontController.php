@@ -113,7 +113,10 @@ class FrontController extends Controller
     {
         $orderId = 32022;
         $now = now();
-        $shop = app(ShopChannelRuntime::class)->ensureDemoData();
+        $shop = app(ShopChannelRuntime::class)->seedDemoDataIfAllowed();
+        if (!$shop) {
+            return;
+        }
         $vendorId = (int) $shop->vendor_id;
         $adminId = (int) (DB::table('admins')
             ->where('vendor_id', $vendorId)
@@ -522,7 +525,7 @@ class FrontController extends Controller
 
     public function shopGate()
     {
-        app(ShopChannelRuntime::class)->ensureDemoData();
+        app(ShopChannelRuntime::class)->seedDemoDataIfAllowed();
         return view('shop.gate');
     }
 
@@ -537,7 +540,12 @@ class FrontController extends Controller
             return redirect()->route('shop.channel_main')->with('flash_message_success', $shop->channel_name . '에 입장했습니다.');
         }
 
-        return redirect()->back()->with('flash_message_error', '입장 코드가 올바르지 않습니다. 테스트 기본 코드는 me9 입니다.');
+        $message = '입장 코드가 올바르지 않습니다.';
+        if (config('shop_channel.show_demo_credentials', false)) {
+            $message .= ' 테스트 기본 코드는 me9 입니다.';
+        }
+
+        return redirect()->back()->with('flash_message_error', $message);
     }
 
     public function shopEnter(string $channelCode)
@@ -653,7 +661,7 @@ class FrontController extends Controller
 
     public function storyboardTestbed()
     {
-        app(ShopChannelRuntime::class)->ensureDemoData();
+        app(ShopChannelRuntime::class)->seedDemoDataIfAllowed();
 
         return view('front.storyboard_testbed');
     }

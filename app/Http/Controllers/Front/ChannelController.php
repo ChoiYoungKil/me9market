@@ -104,14 +104,14 @@ class ChannelController extends Controller
 
     public function login()
     {
-        app(ShopChannelRuntime::class)->ensureDemoData();
+        app(ShopChannelRuntime::class)->seedDemoDataIfAllowed();
 
         return view('channel.login');
     }
 
     public function loginUser(Request $request)
     {
-        app(ShopChannelRuntime::class)->ensureDemoData();
+        app(ShopChannelRuntime::class)->seedDemoDataIfAllowed();
 
         if (Auth::guard('admin')->check()) {
             if (Auth::guard('admin')->user()->type == 'vendor') {
@@ -1879,7 +1879,7 @@ class ChannelController extends Controller
             return redirect()->route('channel.login');
         }
 
-        app(\App\Services\ShopChannelRuntime::class)->ensureDemoData();
+        app(\App\Services\ShopChannelRuntime::class)->seedDemoDataIfAllowed();
 
         $keyword = trim((string) $request->query('keyword', ''));
 

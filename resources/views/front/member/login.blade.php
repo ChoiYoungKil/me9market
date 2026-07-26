@@ -8,6 +8,7 @@
 @endphp
 
 @section('content')
+    @php($showDemoCredentials = config('shop_channel.show_demo_credentials', false))
     <div id="login">
         <div class="box box1">
             <div class="inner_bx">
@@ -22,16 +23,18 @@
                         {{ Session::get('success_message') }}
                     </div>
                 @endif
-                <div style="background: rgba(0,0,0,0.03); border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; font-size: 12px; color: #475569; text-align: left; line-height: 1.5; margin-bottom: 15px;">
-                    <strong>💡 테스트 정보:</strong><br>
-                    - 아이디: <code style="background: #e2e8f0; padding: 2px 4px; border-radius: 4px; font-weight: bold; color: #000;">user@user.com</code><br>
-                    - 비밀번호: <code style="background: #e2e8f0; padding: 2px 4px; border-radius: 4px; font-weight: bold; color: #000;">123456</code>
-                </div>
+                @if($showDemoCredentials)
+                    <div style="background: rgba(0,0,0,0.03); border: 1px solid #e2e8f0; border-radius: 8px; padding: 12px; font-size: 12px; color: #475569; text-align: left; line-height: 1.5; margin-bottom: 15px;">
+                        <strong>테스트 정보:</strong><br>
+                        - 아이디: <code style="background: #e2e8f0; padding: 2px 4px; border-radius: 4px; font-weight: bold; color: #000;">user@user.com</code><br>
+                        - 비밀번호: <code style="background: #e2e8f0; padding: 2px 4px; border-radius: 4px; font-weight: bold; color: #000;">123456</code>
+                    </div>
+                @endif
                 <form action="/member/login" method="POST">
                     @csrf
                     <div class="f_bx">
-                        <input class="mt0" type="text" name="login_id" value="user@user.com" placeholder="아이디를 입력해 주세요" required>
-                        <input type="password" name="password" value="123456" placeholder="비밀번호를 입력해 주세요" required>
+                        <input class="mt0" type="text" name="login_id" value="{{ $showDemoCredentials ? 'user@user.com' : '' }}" placeholder="아이디를 입력해 주세요" required>
+                        <input type="password" name="password" value="{{ $showDemoCredentials ? '123456' : '' }}" placeholder="비밀번호를 입력해 주세요" required>
                         <ul class="chk01">
                             <li>
                                 <input type="checkbox" id="idSave" name="remember">

@@ -145,7 +145,8 @@ class SettlementCalculator
     private function calculateItemRows(OrdersProduct $item, string $period): Collection
     {
         $quantity = (int) $item->product_qty;
-        $grossSales = round((float) ($item->line_total > 0 ? $item->line_total : $item->product_price * $quantity), 2);
+        $lineTotal = (float) ($item->line_total > 0 ? $item->line_total : $item->product_price * $quantity);
+        $grossSales = round(max($lineTotal - $this->allocatedCouponAmount($item), 0), 2);
         $supplyUnit = (float) ($item->supply_price > 0 ? $item->supply_price : $item->product_price);
         $supplyAmount = round($supplyUnit * $quantity, 2);
         $shippingAmount = $this->allocatedShippingAmount($item);
@@ -420,6 +421,23 @@ class SettlementCalculator
         }
 
         return round($usedPoint * ($lineTotal / $orderTotal), 2);
+    }
+
+    private function allocatedCouponAmount(OrdersProduct $item): float
+    {
+        $couponAmount = (float) ($item->order?->coupon_amount ?? 0);
+        if ($couponAmount <= 0 || !$item->order_id) {
+            return 0;
+        }
+
+        $lineTotal = (float) ($item->line_total > 0 ? $item->line_total : $item->product_price * $item->product_qty);
+        $orderTotal = $this->orderLineTotal((int) $item->order_id);
+
+        if ($orderTotal <= 0) {
+            return 0;
+        }
+
+        return round($couponAmount * ($lineTotal / $orderTotal), 2);
     }
 
     private function orderLineTotal(int $orderId): float

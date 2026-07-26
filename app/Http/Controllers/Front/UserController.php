@@ -641,7 +641,11 @@ class UserController extends Controller
 
     private function ensureMypageDevDataExists($userId)
     {
-        $shop = app(\App\Services\ShopChannelRuntime::class)->ensureDemoData();
+        $shop = app(\App\Services\ShopChannelRuntime::class)->seedDemoDataIfAllowed();
+        if (!$shop) {
+            return;
+        }
+
         $vendorId = $shop->vendor_id;
 
         // 1. Ensure vendors_business_details exists for the demo shop vendor

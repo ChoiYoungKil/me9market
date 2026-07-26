@@ -394,9 +394,14 @@ class ShopChannelRuntime
         });
     }
 
+    public function seedDemoDataIfAllowed(): ?ShopChannel
+    {
+        return $this->canSeedDemoData() ? $this->ensureDemoData() : null;
+    }
+
     public function currentChannel(): ShopChannel
     {
-        $this->ensureDemoData();
+        $this->seedDemoDataIfAllowed();
 
         $shop = null;
         if (Session::has(self::CHANNEL_KEY)) {
@@ -404,7 +409,10 @@ class ShopChannelRuntime
         }
 
         if (!$shop) {
-            $shop = ShopChannel::where('channel_code', 'me9')->firstOrFail();
+            $shop = ShopChannel::where('channel_code', 'me9')
+                ->where('status', 1)
+                ->first()
+                ?: ShopChannel::where('status', 1)->orderBy('id')->firstOrFail();
             Session::put(self::CHANNEL_KEY, $shop->id);
         }
 
@@ -413,9 +421,7 @@ class ShopChannelRuntime
 
     public function enterChannel(string $entryCode): ?ShopChannel
     {
-        if ($this->canSeedDemoData()) {
-            $this->ensureDemoData();
-        }
+        $this->seedDemoDataIfAllowed();
 
         $shop = ShopChannel::where('channel_code', $entryCode)
             ->orWhere('password', $entryCode)
@@ -430,10 +436,9 @@ class ShopChannelRuntime
         return $shop;
     }
 
-    private function canSeedDemoData(): bool
+    public function canSeedDemoData(): bool
     {
-        return app()->environment(['local', 'testing'])
-            || (bool) config('shop_channel.seed_demo_data', false);
+        return (bool) config('shop_channel.seed_demo_data', false);
     }
 
     public function products(?string $type = null)

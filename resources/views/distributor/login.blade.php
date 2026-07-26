@@ -151,6 +151,7 @@
     </style>
 </head>
 <body>
+    @php($showDemoCredentials = config('shop_channel.show_demo_credentials', false))
 
     <div class="login-card">
         <div class="logo">Me9 Partner Portal</div>
@@ -172,19 +173,21 @@
             @csrf
             <div class="form-group">
                 <label for="email">담당자 이메일</label>
-                <input type="email" name="email" id="email" class="form-control" placeholder="partner@domain.com" required value="{{ old('email', 'partner@main.com') }}">
+                <input type="email" name="email" id="email" class="form-control" placeholder="partner@domain.com" required value="{{ old('email', $showDemoCredentials ? 'partner@main.com' : '') }}">
             </div>
             <div class="form-group">
                 <label for="password">비밀번호</label>
-                <input type="password" name="password" id="password" class="form-control" placeholder="••••••••" required value="123456">
+                <input type="password" name="password" id="password" class="form-control" placeholder="••••••••" required value="{{ $showDemoCredentials ? '123456' : '' }}">
             </div>
 
             <button type="submit" class="btn-submit">발주처 시스템 로그인</button>
         </form>
 
-        <div class="hint">
-            * 테스트 계정: partner@main.com / 123456
-        </div>
+        @if($showDemoCredentials)
+            <div class="hint">
+                * 테스트 계정: partner@main.com / 123456
+            </div>
+        @endif
     </div>
 
 </body>

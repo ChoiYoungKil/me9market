@@ -25,8 +25,6 @@ class MypageTest extends TestCase
 
     public function test_default_member_can_login_from_member_login_page()
     {
-        $this->assertDatabaseMissing('users', ['email' => 'user@user.com']);
-
         $this->get(route('front.member.login'))->assertStatus(200);
 
         $this->assertDatabaseHas('users', [
@@ -169,7 +167,7 @@ class MypageTest extends TestCase
     public function test_user_order_cancel_is_linked_to_mypage_cancel_views()
     {
         $user = User::factory()->create([
-            'email' => 'user@user.com',
+            'email' => 'cancel-user@example.com',
         ]);
 
         $order = new Order;

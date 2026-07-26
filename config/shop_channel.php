@@ -1,0 +1,8 @@
+<?php
+
+$isNonProduction = env('APP_ENV', 'production') !== 'production';
+
+return [
+    'seed_demo_data' => env('SHOP_CHANNEL_SEED_DEMO_DATA', $isNonProduction),
+    'show_demo_credentials' => env('SHOP_CHANNEL_SHOW_DEMO_CREDENTIALS', $isNonProduction),
+];
