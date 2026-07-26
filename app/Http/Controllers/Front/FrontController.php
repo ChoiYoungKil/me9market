@@ -20,7 +20,6 @@ class FrontController extends Controller
 
     public function notice(Request $request)
     {
-        $this->ensureCustomerCenterSeeded();
         $query = Notice::where('status', 1)->orderBy('is_important', 'desc')->orderBy('created_at', 'desc');
 
         // 검색 기능
@@ -60,7 +59,6 @@ class FrontController extends Controller
 
     public function faq(Request $request)
     {
-        $this->ensureCustomerCenterSeeded();
         $query = Faq::where('status', 1)->orderBy('order', 'asc')->orderBy('created_at', 'desc');
 
         // 카테고리 필터
@@ -655,87 +653,8 @@ class FrontController extends Controller
 
     public function storyboardTestbed()
     {
-        $this->ensureCustomerCenterSeeded();
         app(ShopChannelRuntime::class)->ensureDemoData();
 
         return view('front.storyboard_testbed');
-    }
-
-    private function ensureCustomerCenterSeeded()
-    {
-        // 1. Seed Notices if empty
-        if (\Illuminate\Support\Facades\DB::table('notices')->count() == 0) {
-            \Illuminate\Support\Facades\DB::table('notices')->insert([
-                [
-                    'id' => 1,
-                    'title' => '[중요] Me9 Market 서비스 정기 점검 안내',
-                    'content' => '안녕하세요. Me9 Market 입니다. 서비스 안정화를 위해 정기 점검이 진행될 예정이오니 서비스 이용에 참고하시기 바랍니다.',
-                    'is_important' => true,
-                    'view_count' => 124,
-                    'status' => 1,
-                    'created_at' => now()->subDays(5),
-                    'updated_at' => now()->subDays(5)
-                ],
-                [
-                    'id' => 2,
-                    'title' => '배송 지연 관련 안내 및 사과문',
-                    'content' => '최근 기상 악화로 인해 일부 지역 배송이 지연되고 있습니다. 머리 숙여 사과드리며 최대한 신속히 배송해 드리겠습니다.',
-                    'is_important' => false,
-                    'view_count' => 45,
-                    'status' => 1,
-                    'created_at' => now()->subDays(2),
-                    'updated_at' => now()->subDays(2)
-                ],
-                [
-                    'id' => 3,
-                    'title' => '신용카드 무이자 할부 혜택 변경 안내',
-                    'content' => '2026년 7월 기준 카드사 무이자 할부 혜택 변경 내용을 안내해 드립니다. 자세한 내용은 상세 이미지를 참고해 주세요.',
-                    'is_important' => false,
-                    'view_count' => 88,
-                    'status' => 1,
-                    'created_at' => now()->subDay(),
-                    'updated_at' => now()->subDay()
-                ]
-            ]);
-        }
-
-        // 2. Seed Faqs if empty
-        if (\Illuminate\Support\Facades\DB::table('faqs')->count() == 0) {
-            \Illuminate\Support\Facades\DB::table('faqs')->insert([
-                [
-                    'id' => 1,
-                    'category' => '주문/배송',
-                    'question' => '비회원 주문 조회는 어떻게 하나요?',
-                    'answer' => '메인 홈페이지 우측 상단 또는 로그인 화면 하단의 [주문조회] 메뉴에서 주문 완료 시 부여된 주문번호와 결제 시 입력했던 연락처를 입력하시면 실시간으로 주문상세 내역 확인 및 취소/반품/교환 처리가 가능합니다.',
-                    'order' => 1,
-                    'view_count' => 230,
-                    'status' => 1,
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ],
-                [
-                    'id' => 2,
-                    'category' => '환불/반품',
-                    'question' => '반품 수거 신청은 어떻게 처리되나요?',
-                    'answer' => '반품 신청 시 [자동회수]를 선택하시면 지정된 배송주소로 택배사 기사님이 영업일 기준 2~3일 내에 수거하러 방문합니다. [수동회수]를 선택하시면 본인이 직접 선불 택배를 이용하여 지정된 회수 주소(서울시 마포구 공덕동)로 제품을 발송해 주셔야 합니다.',
-                    'order' => 2,
-                    'view_count' => 150,
-                    'status' => 1,
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ],
-                [
-                    'id' => 3,
-                    'category' => '회원정보',
-                    'question' => '간편 회원가입 시 필수 동의 항목이 무엇인가요?',
-                    'answer' => '간편회원 가입 및 연동 진행 시 이용약관 동의 및 개인정보 수집 및 이용에 관한 안내는 필수 동의 사항입니다. 마케팅 활용동의 및 알림 정보 수신동의 등은 선택 동의 사항으로 회원 가입 후 회원정보 수정 메뉴에서 변경하실 수 있습니다.',
-                    'order' => 3,
-                    'view_count' => 95,
-                    'status' => 1,
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]
-            ]);
-        }
     }
 }

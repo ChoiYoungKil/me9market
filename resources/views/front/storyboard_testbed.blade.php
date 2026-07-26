@@ -13,7 +13,7 @@
                 ['slide' => '006', 'screen' => 'RF-01-02', 'name' => '서비스안내', 'intent' => '서비스 개념을 소개하는 정적 안내 페이지', 'url' => '/service', 'state' => 'mock', 'note' => '소개 화면 확인용'],
                 ['slide' => '008', 'screen' => 'RF-01-03', 'name' => '주요기능', 'intent' => '플랫폼 핵심 기능 소개', 'url' => '/features', 'state' => 'mock', 'note' => '소개 화면 확인용'],
                 ['slide' => '010', 'screen' => 'RF-01-04', 'name' => '가입안내', 'intent' => '가입 절차와 권한 단계 안내', 'url' => '/subscription-information', 'state' => 'mock', 'note' => '소개 화면 확인용'],
-                ['slide' => '012-015', 'screen' => 'RF-01-05', 'name' => '고객센터', 'intent' => '공지사항, FAQ, 제휴/문의 등록 및 관리자 답변 흐름', 'url' => '/notice', 'state' => 'done', 'note' => '공지/FAQ/문의 라우트 구현됨'],
+                ['slide' => '012-015', 'screen' => 'RF-01-05', 'name' => '고객센터', 'intent' => '공지사항, FAQ, 제휴/문의 등록 및 관리자 답변 흐름', 'url' => '/notice', 'state' => 'done', 'note' => '전체관리자 공지사항/FAQ/제휴문의 데이터와 프론트 고객센터가 동일 DB로 연동됨'],
                 ['slide' => '017-023', 'screen' => 'RF-01-06', 'name' => '비회원 주문조회', 'intent' => '주문코드와 연락처로 주문 상세, 취소/반품/교환/구매확정/문의 처리', 'url' => '/nonmember/order/check', 'state' => 'done', 'note' => '주문 상세와 상품별 취소/반품/교환/구매확정 흐름 구현됨'],
                 ['slide' => '025-033', 'screen' => 'RF-01-07-01~08', 'name' => '로그인/회원가입/아이디·비밀번호 찾기', 'intent' => '일반 회원과 간편 회원의 가입 및 계정 복구', 'url' => '/member/login', 'state' => 'done', 'note' => '일반/소셜 보완가입 화면과 단계별 입력 흐름 구현됨'],
                 ['slide' => '034-061', 'screen' => 'RF-01-07-09~22', 'name' => '마이페이지', 'intent' => '대시보드, 회원정보, 배송지, 탈퇴, 방문채널, 포인트, 장바구니, 찜, 주문/클레임 관리', 'url' => '/mypage/main', 'state' => 'done', 'note' => '주문/클레임/포인트/장바구니/찜 실제 데이터 연동 구현됨'],

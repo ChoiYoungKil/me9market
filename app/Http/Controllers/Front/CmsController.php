@@ -5,12 +5,13 @@ namespace App\Http\Controllers\Front;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Contact;
+use Illuminate\Support\Facades\Auth;
 
 class CmsController extends Controller
 {
     // GET 요청으로 Contact Us 페이지(front/pages/contact.blade.php)를 렌더링하거나 POST 요청으로 HTML 폼 제출 처리    
     public function contact(Request $request) {
-        if (!\Illuminate\Support\Facades\Auth::check()) {
+        if (!Auth::check()) {
             return redirect()->route('front.member.login')->with('error_message', '제휴/문의는 회원만 작성할 수 있습니다. 로그인 후 이용해주세요.');
         }
 
@@ -67,6 +68,7 @@ class CmsController extends Controller
 
             // DB 저장
             $contact = new Contact();
+            $contact->user_id = Auth::id();
             $contact->company = $data['company_name'];
             $contact->name = $data['manager_name'];
             $contact->phone = $data['manager_tel_1'] . '-' . $data['manager_tel_2'] . '-' . $data['manager_tel_3'];

@@ -68,7 +68,7 @@
                                             </td>
                                             <td>
                                                 <a href="{{ url('admin/view-contact/'.$contact->id) }}" class="btn02">보기</a>
-                                                <a href="{{ url('admin/delete-contact/'.$contact->id) }}" class="btn02" style="color:red" onclick="return confirm('정말 삭제하시겠습니까?')">삭제</a>
+                                                <a href="JavaScript:void(0)" class="btn02 confirmDelete" module="contact" moduleid="{{ $contact->id }}" style="color:red">삭제</a>
                                             </td>
                                         </tr>
                                     @endforeach
