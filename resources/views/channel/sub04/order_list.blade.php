@@ -163,7 +163,7 @@
                                 <li><a href="{{ route('channel.order.exchange_list') }}" class="{{ $orderTab === 'exchange' ? 'on active' : '' }}" @if($orderTab === 'exchange') aria-current="page" @endif><span>교환목록</span></a></li>
                             </ul>
                         </div>
-                        <div class="list_top1">
+                        <div class="list_top1 channel-list-top">
                             <div class="count">총 <strong>{{ $orders->total() }}</strong> 건</div>
                             <div class="right_bx list-top-actions">
                                 <select id="perPageSelect" class="w160">
@@ -331,7 +331,7 @@
 @endsection
 
     @push('scripts')
-        <script src="/channel_assets/js/order_management.js"></script>
+        <script src="/channel_assets/js/order_management.js?v={{ filemtime(public_path('channel_assets/js/order_management.js')) }}"></script>
         <script type="text/javascript">
             $(".btn01.arrow").click(function () {
                 var thisId = $(this).attr("id");

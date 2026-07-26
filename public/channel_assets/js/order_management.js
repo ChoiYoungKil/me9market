@@ -9,6 +9,62 @@ function numberFormat(val) {
     return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
+function orderItemsArray(orderData) {
+    if (!orderData || !orderData.items) return [];
+    return Array.isArray(orderData.items) ? orderData.items : Object.values(orderData.items);
+}
+
+function orderClaimsArray(orderData) {
+    if (!orderData || !orderData.claims_data) return [];
+    return Array.isArray(orderData.claims_data) ? orderData.claims_data : Object.values(orderData.claims_data);
+}
+
+function normalizedOrderItemStatus(item) {
+    var status = (item && (item.status || item.status_code || item.item_status || item.status_label) || "").toString().trim();
+    var label = (item && item.status_label || "").toString().trim();
+    var value = status || label;
+    var map = {
+        "New": "paid",
+        "Payment Captured": "paid",
+        "결제완료": "paid",
+        "In Process": "ready_to_ship",
+        "배송준비중": "ready_to_ship",
+        "배송대기": "ready_to_ship",
+        "Shipped": "shipping",
+        "shipped": "shipping",
+        "shipping": "shipping",
+        "배송중": "shipping",
+        "Delivered": "delivered",
+        "배송완료": "delivered",
+        "Confirmed": "confirmed",
+        "구매확정": "confirmed",
+        "Cancel Requested": "cancel_requested",
+        "취소요청": "cancel_requested",
+        "Cancelled": "cancelled",
+        "취소완료": "cancelled",
+        "Return Requested": "return_requested",
+        "반품요청": "return_requested",
+        "Returned": "returned",
+        "반품완료": "returned",
+        "Exchange Requested": "exchange_requested",
+        "교환요청": "exchange_requested",
+        "Exchanged": "exchanged",
+        "교환완료": "exchanged"
+    };
+
+    return map[value] || value || "paid";
+}
+
+function orderItemsByStatus(orderItems, statusKeys) {
+    return orderItems.filter(function (item) {
+        return statusKeys.indexOf(normalizedOrderItemStatus(item)) !== -1;
+    });
+}
+
+function appendEmptyOrderItemsRow($tbody, colspan) {
+    $tbody.append('<tr><td colspan="' + colspan + '">해당 상태의 주문 상품이 없습니다.</td></tr>');
+}
+
 function openOrderModal(modalId, orderData) {
     var $modal = $(".popup_bx[data-id='" + modalId + "']");
     if ($modal.length === 0) return;
@@ -24,7 +80,7 @@ function openOrderModal(modalId, orderData) {
     $modal.find("input[name='order_id']").val(orderData.id);
 
     // If it's a detail popup, populate all of them
-    if (modalId === 'pop1_1' || modalId === 'pop1_3' || modalId === 'pop1_4' || modalId === 'pop1_5') {
+    if (modalId === 'pop1_1' || modalId === 'pop1_2' || modalId === 'pop1_3' || modalId === 'pop1_4' || modalId === 'pop1_5') {
         populateAllDetailPopups(orderData);
         return;
     }
@@ -45,8 +101,9 @@ function openOrderModal(modalId, orderData) {
         var $tbody = $modal.find("#" + prefix + "_order_items");
         $tbody.empty();
 
-        if (orderData.items && orderData.items.length > 0) {
-            orderData.items.forEach(function (item) {
+        var modalItems = orderItemsArray(orderData);
+        if (modalItems.length > 0) {
+            modalItems.forEach(function (item) {
                 var row = `
                     <tr>
                         <td><input type="checkbox" name="item_ids[]" value="${item.id}" checked></td>
@@ -70,8 +127,31 @@ function openOrderModal(modalId, orderData) {
     }
 }
 
+function switchOrderDetailPopup(popId, $currentPopup) {
+    if (window.currentOrder) {
+        populateAllDetailPopups(window.currentOrder);
+    }
+
+    if ($currentPopup && $currentPopup.length) {
+        $currentPopup.stop().fadeOut(300);
+    }
+
+    var $nextPopup = $(".popup_bx[data-id='" + popId + "']");
+    $nextPopup.stop().fadeIn(300);
+    $nextPopup.scrollTop(0);
+    $("body").addClass("scroll_lock");
+}
+
+$(document).on("click", ".popup_bx .tab_bx1 a[data-pop]", function (event) {
+    event.preventDefault();
+    switchOrderDetailPopup($(this).attr("data-pop"), $(this).closest(".popup_bx"));
+});
+
 // Populate details modals dynamically
 function populateAllDetailPopups(orderData) {
+    var orderItems = orderItemsArray(orderData);
+    var orderClaims = orderClaimsArray(orderData);
+
     // 1. pop1_1 (주문 정보)
     $("#pop_info_order_no").text(orderData.order_no);
     $("#pop_info_order_date").text(orderData.created_at);
@@ -104,8 +184,9 @@ function populateAllDetailPopups(orderData) {
     // Items list pop1_1
     var $infoTbody = $("#pop_info_order_items_body");
     $infoTbody.empty();
-    if (orderData.items && orderData.items.length > 0) {
-        orderData.items.forEach(function(item) {
+    if (orderItems.length > 0) {
+        orderItems.forEach(function(item) {
+            var statusText = item.status_label || item.status || '-';
             var row = `
                 <tr>
                     <td>${item.product_type || '자사'}</td>
@@ -113,9 +194,9 @@ function populateAllDetailPopups(orderData) {
                     <td>${item.product_code}</td>
                     <td>${item.option_name}</td>
                     <td>${item.qty}</td>
-                    <td>${item.status.includes('Cancel') || item.status.includes('취소') ? item.qty : 0}</td>
-                    <td>${item.status.includes('Return') || item.status.includes('반품') ? item.qty : 0}</td>
-                    <td>${item.status.includes('Exchange') || item.status.includes('교환') ? item.qty : 0}</td>
+                    <td>${statusText.includes('Cancel') || statusText.includes('취소') ? item.qty : 0}</td>
+                    <td>${statusText.includes('Return') || statusText.includes('반품') ? item.qty : 0}</td>
+                    <td>${statusText.includes('Exchange') || statusText.includes('교환') ? item.qty : 0}</td>
                     <td class="t_r">${numberFormat(item.price * item.qty)} 원</td>
                     <td class="t_r">${numberFormat(item.price * item.qty)} 원</td>
                     <td class="t_r">0 원</td>
@@ -124,7 +205,7 @@ function populateAllDetailPopups(orderData) {
                     <td class="t_r">0 p</td>
                     <td class="t_r"><span class="bold fcol4">${numberFormat(item.price * item.qty)} 원</span></td>
                     <td class="t_r">0 p</td>
-                    <td>${item.status_label || item.status}</td>
+                    <td>${statusText}</td>
                     <td>${item.courier_name || '-'}</td>
                     <td>${item.tracking_number || '-'}</td>
                 </tr>
@@ -133,8 +214,48 @@ function populateAllDetailPopups(orderData) {
         });
     }
 
-    // 2. pop1_3 (취소 주문 정보)
-    var cancelClaim = orderData.claims_data ? orderData.claims_data.find(c => c.type === 'cancel') : null;
+    // 2. pop1_2 (정상 주문 정보)
+    $("#pop_normal_order_no").text(orderData.order_no);
+    $("#pop_normal_order_date").text(orderData.created_at);
+    $("#pop_normal_shop_name").text(orderData.shop_name);
+    $("#pop_normal_payment_date").text(orderData.payment_date || orderData.created_at);
+
+    var $normalTbody = $("#pop_normal_order_items_body");
+    $normalTbody.empty();
+    var normalItems = orderItemsByStatus(orderItems, ["paid", "ready_to_ship", "shipping", "delivered", "confirmed"]);
+    if (normalItems.length > 0) {
+        normalItems.forEach(function(item) {
+            var statusText = item.status_label || item.status || '-';
+            var lineAmount = (item.line_total || item.total_price || (item.price * item.qty) || 0);
+            var cancelledQty = statusText.includes('Cancel') || statusText.includes('취소') ? item.qty : 0;
+            var returnedQty = statusText.includes('Return') || statusText.includes('반품') ? item.qty : 0;
+            var exchangedQty = statusText.includes('Exchange') || statusText.includes('교환') ? item.qty : 0;
+            var row = `
+                <tr>
+                    <td><input type="checkbox" name="item_ids[]" value="${item.id}" checked></td>
+                    <td>${statusText}</td>
+                    <td class="t_l"><span class="fcol2">${item.product_name || '-'}</span></td>
+                    <td>${item.product_code || '-'}</td>
+                    <td>${item.option_name || '-'}</td>
+                    <td>${item.qty || 0}</td>
+                    <td>${cancelledQty}</td>
+                    <td>${returnedQty}</td>
+                    <td>${exchangedQty}</td>
+                    <td class="t_r">${numberFormat(lineAmount)} 원</td>
+                    <td class="t_r">${numberFormat(lineAmount)} 원</td>
+                    <td class="t_r">0 원</td>
+                    <td class="t_r">0 원</td>
+                    <td class="t_r">0 원</td>
+                </tr>
+            `;
+            $normalTbody.append(row);
+        });
+    } else {
+        appendEmptyOrderItemsRow($normalTbody, 14);
+    }
+
+    // 3. pop1_3 (취소 주문 정보)
+    var cancelClaim = orderClaims.find(c => c.type === 'cancel') || null;
     $("#pop_cancel_order_no").text(orderData.order_no);
     $("#pop_cancel_claim_no").text(cancelClaim ? 'C-' + cancelClaim.id : '-');
     $("#pop_cancel_request_date").text(cancelClaim ? cancelClaim.created_at : '-');
@@ -146,8 +267,9 @@ function populateAllDetailPopups(orderData) {
     // Items list pop1_3
     var $cancelTbody = $("#pop_cancel_order_items_body");
     $cancelTbody.empty();
-    if (orderData.items && orderData.items.length > 0) {
-        orderData.items.forEach(function(item) {
+    var cancelItems = orderItemsByStatus(orderItems, ["cancel_requested", "cancelled"]);
+    if (cancelItems.length > 0) {
+        cancelItems.forEach(function(item) {
             var row = `
                 <tr>
                     <td><input type="checkbox" name="item_ids[]" value="${item.id}" checked></td>
@@ -168,10 +290,12 @@ function populateAllDetailPopups(orderData) {
             `;
             $cancelTbody.append(row);
         });
+    } else {
+        appendEmptyOrderItemsRow($cancelTbody, 14);
     }
 
-    // 3. pop1_4 (반품 주문 정보)
-    var returnClaim = orderData.claims_data ? orderData.claims_data.find(c => c.type === 'return') : null;
+    // 4. pop1_4 (반품 주문 정보)
+    var returnClaim = orderClaims.find(c => c.type === 'return') || null;
     $("#pop_return_order_no").text(orderData.order_no);
     $("#pop_return_claim_no").text(returnClaim ? 'R-' + returnClaim.id : '-');
     $("#pop_return_shop_name").text(orderData.shop_name);
@@ -187,8 +311,9 @@ function populateAllDetailPopups(orderData) {
     // Items list pop1_4
     var $returnTbody = $("#pop_return_order_items_body");
     $returnTbody.empty();
-    if (orderData.items && orderData.items.length > 0) {
-        orderData.items.forEach(function(item) {
+    var returnItems = orderItemsByStatus(orderItems, ["return_requested", "returned"]);
+    if (returnItems.length > 0) {
+        returnItems.forEach(function(item) {
             var row = `
                 <tr>
                     <td><input type="checkbox" name="item_ids[]" value="${item.id}" checked></td>
@@ -207,10 +332,12 @@ function populateAllDetailPopups(orderData) {
             `;
             $returnTbody.append(row);
         });
+    } else {
+        appendEmptyOrderItemsRow($returnTbody, 12);
     }
 
-    // 4. pop1_5 (교환 주문 정보)
-    var exchangeClaim = orderData.claims_data ? orderData.claims_data.find(c => c.type === 'exchange') : null;
+    // 5. pop1_5 (교환 주문 정보)
+    var exchangeClaim = orderClaims.find(c => c.type === 'exchange') || null;
     $("#pop_exchange_order_no").text(orderData.order_no);
     $("#pop_exchange_claim_no").text(exchangeClaim ? 'E-' + exchangeClaim.id : '-');
     $("#pop_exchange_shop_name").text(orderData.shop_name);
@@ -226,8 +353,9 @@ function populateAllDetailPopups(orderData) {
     // Items list pop1_5
     var $exchangeTbody = $("#pop_exchange_order_items_body");
     $exchangeTbody.empty();
-    if (orderData.items && orderData.items.length > 0) {
-        orderData.items.forEach(function(item) {
+    var exchangeItems = orderItemsByStatus(orderItems, ["exchange_requested", "exchanged"]);
+    if (exchangeItems.length > 0) {
+        exchangeItems.forEach(function(item) {
             var row = `
                 <tr>
                     <td><input type="checkbox" name="item_ids[]" value="${item.id}" checked></td>
@@ -244,6 +372,8 @@ function populateAllDetailPopups(orderData) {
             `;
             $exchangeTbody.append(row);
         });
+    } else {
+        appendEmptyOrderItemsRow($exchangeTbody, 10);
     }
 }
 

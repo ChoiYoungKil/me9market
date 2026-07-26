@@ -191,6 +191,12 @@ class ChannelOrderTest extends TestCase
             'id' => $item->id,
             'item_status' => '취소완료',
         ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get('/channel/order/cancel/list')
+            ->assertStatus(200)
+            ->assertSee('P123')
+            ->assertSee('취소완료');
     }
 
     public function test_request_return_creates_claim_and_updates_status()
@@ -224,6 +230,12 @@ class ChannelOrderTest extends TestCase
             'id' => $item->id,
             'item_status' => '반품요청',
         ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get('/channel/order/return/list')
+            ->assertStatus(200)
+            ->assertSee('P123')
+            ->assertSee('반품요청');
     }
 
     public function test_request_exchange_creates_claim_and_updates_status()
@@ -257,5 +269,11 @@ class ChannelOrderTest extends TestCase
             'id' => $item->id,
             'item_status' => '교환요청',
         ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get('/channel/order/exchange/list')
+            ->assertStatus(200)
+            ->assertSee('P123')
+            ->assertSee('교환요청');
     }
 }

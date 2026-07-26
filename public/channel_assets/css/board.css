@@ -13,6 +13,8 @@
 .list_top1.btn .count {width: 50%; box-sizing: border-box;}
 .list_top1.btn .btn_bx {width: 50%; box-sizing: border-box; text-align: right;}
 .list_top1.btn .btn_bx a {display: inline-block;}
+.list_top1.channel-list-top {justify-content: space-between; gap: 12px; border-bottom: none; padding-bottom: 0;}
+.list_top1.channel-list-top .right_bx {margin-left: auto; display: flex; justify-content: flex-end; align-items: center; gap: 10px; flex-wrap: wrap;}
 
 
 

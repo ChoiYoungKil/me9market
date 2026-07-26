@@ -15,19 +15,6 @@
                         <li><a href="#" data-pop="pop1_5"><span>교환 주문</span></a></li>
                     </ul>
                 </div>
-                <script type="text/javascript">
-                    $(".popup_bx[data-id='pop1_2'] .tab_bx1 li a").click(function () {
-                        if ($(this).attr("data-pop")) {
-                            var popId = $(this).attr("data-pop");
-                            $(this).parents(".popup_bx").stop().fadeOut(300);
-                            $(".popup_bx[data-id='" + popId + "']").stop().fadeIn(300);
-                            $(".popup_bx[data-id='" + popId + "']").scrollTop(0);
-
-                            return false;
-                        }
-                    });
-                </script>
-
                 <div class="conbx">
                     <div class="con_w">
                         <div class="ttl01">정상주문정보</div>
@@ -42,15 +29,15 @@
                                 <tbody class="textL">
                                     <tr>
                                         <th class="w160"><span>주문번호</span></th>
-                                        <td>Me9-000939393</td>
+                                        <td id="pop_normal_order_no">Me9-000939393</td>
                                         <th class="w160"><span>주문일시</span></th>
-                                        <td>2024-10-01 09:02:12</td>
+                                        <td id="pop_normal_order_date">2024-10-01 09:02:12</td>
                                     </tr>
                                     <tr>
                                         <th class="w160"><span>판매처</span></th>
-                                        <td>Shop채널명</td>
+                                        <td id="pop_normal_shop_name">Shop채널명</td>
                                         <th class="w160"><span>결제일시</span></th>
-                                        <td>2024-10-01 10:02:12</td>
+                                        <td id="pop_normal_payment_date">2024-10-01 10:02:12</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -94,7 +81,7 @@
                                         <th>배송비</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="pop_normal_order_items_body">
                                     <tr>
                                         <td><input type="checkbox"></td>
                                         <td>배송대기</td>

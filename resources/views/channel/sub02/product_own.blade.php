@@ -166,12 +166,9 @@
                         </div>
                         </form>
 
-                        <div class="list_top1"
-                            style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: none; padding-bottom: 0;">
-                            <div class="left_bx">
-                                <div class="count">총 <strong>{{ $products->total() }}</strong> 건</div>
-                            </div>
-                            <div class="right_bx product-own-list-actions">
+                        <div class="list_top1 channel-list-top">
+                            <div class="count">총 <strong>{{ $products->total() }}</strong> 건</div>
+                            <div class="right_bx list-top-actions product-own-list-actions">
                                 <select id="perPageSelect" class="w160">
                                     @foreach([20, 40, 60, 80, 100] as $perPageOption)
                                         <option value="{{ $perPageOption }}" {{ (int)($filters['per_page'] ?? 20) === $perPageOption ? 'selected' : '' }}>{{ $perPageOption }}개씩 보기</option>

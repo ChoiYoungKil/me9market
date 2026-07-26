@@ -85,9 +85,9 @@
                                 </div>
                             </form>
 
-                            <div class="list_top1" style="display: flex; justify-content: space-between; align-items: center;">
+                            <div class="list_top1 channel-list-top">
                                 <div class="count">총 <strong>{{ $requests->total() }}</strong> 건</div>
-                                <div class="right_bx" style="display: flex; gap: 10px; align-items: center;">
+                                <div class="right_bx list-top-actions">
                                     <select id="perPageSelect" class="w160">
                                         @foreach([20, 40, 60, 80, 100] as $perPageOption)
                                             <option value="{{ $perPageOption }}" {{ (int)($filters['per_page'] ?? 20) === $perPageOption ? 'selected' : '' }}>{{ $perPageOption }}개씩 보기</option>

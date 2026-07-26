@@ -15,19 +15,6 @@
                         <li><a href="#" class="on"><span>교환 주문</span></a></li>
                     </ul>
                 </div>
-                <script type="text/javascript">
-                    $(".popup_bx[data-id='pop1_5'] .tab_bx1 li a").click(function () {
-                        if ($(this).attr("data-pop")) {
-                            var popId = $(this).attr("data-pop");
-                            $(this).parents(".popup_bx").stop().fadeOut(300);
-                            $(".popup_bx[data-id='" + popId + "']").stop().fadeIn(300);
-                            $(".popup_bx[data-id='" + popId + "']").scrollTop(0);
-
-                            return false;
-                        }
-                    });
-                </script>
-
                 <div class="conbx">
                     <div class="con_w">
                         <div class="ttl01">교환 주문 정보 (1)</div>
