@@ -142,7 +142,7 @@ class ChannelSettlementTest extends TestCase
         $this->assertEquals(30.0, $settlement->commission);
         $this->assertEquals(170.0, $settlement->settlement_amount);
         $this->assertEquals(12.5, $settlement->rate);
-        $this->assertEquals('정산완료', $settlement->status);
+        $this->assertEquals('구매확정 기준', $settlement->status);
     }
 
     public function test_settlement_view_displays_detailed_orders()
@@ -292,5 +292,65 @@ class ChannelSettlementTest extends TestCase
         $this->assertEquals(200.0, $summary['point_deposit_amount']);
         $this->assertEquals(1000.0, $summary['point_used_amount']);
         $this->assertEquals(17910.0, $summary['settlement_amount']);
+    }
+
+    public function test_own_pg_settlement_tracks_sales_without_me9_payout()
+    {
+        list($vendor, $admin, $shop, $product) = $this->createSetup();
+        $shop->update(['use_own_pg' => true, 'pg_provider' => 'kcp']);
+
+        $order = new Order;
+        $order->user_id = 1;
+        $order->name = 'Customer Name';
+        $order->address = 'Test Address';
+        $order->city = 'Seoul';
+        $order->state = 'Seoul';
+        $order->country = 'Korea';
+        $order->pincode = '12345';
+        $order->mobile = '01011112222';
+        $order->email = 'customer@example.com';
+        $order->shipping_charges = 0;
+        $order->order_status = 'Payment Captured';
+        $order->payment_method = 'Card';
+        $order->payment_gateway = 'Own PG';
+        $order->grand_total = 200;
+        $order->save();
+
+        $item = new OrdersProduct;
+        $item->order_id = $order->id;
+        $item->user_id = 1;
+        $item->vendor_id = $vendor->id;
+        $item->shop_channel_id = $shop->id;
+        $item->admin_id = $admin->id;
+        $item->product_id = $product->id;
+        $item->product_code = $product->product_code;
+        $item->product_name = $product->product_name;
+        $item->product_color = $product->product_color;
+        $item->product_size = 'M';
+        $item->product_price = 100;
+        $item->selling_price = 100;
+        $item->product_qty = 2;
+        $item->line_total = 200;
+        $item->status_code = OrderItemStatus::CONFIRMED;
+        $item->item_status = OrderItemStatus::label(OrderItemStatus::CONFIRMED);
+        $item->confirmed_at = Carbon::parse('2026-05-15 12:00:00');
+        $item->save();
+
+        $calculator = app(SettlementCalculator::class);
+        $summary = $calculator->preview('2026-05', $vendor->id)->first();
+
+        $this->assertNotNull($summary);
+        $this->assertEquals('own_pg', $summary['payment_gateway_type']);
+        $this->assertEquals(200.0, $summary['invoice_sales_amount']);
+        $this->assertEquals(0.0, $summary['payout_amount']);
+        $this->assertEquals(0.0, $summary['settlement_amount']);
+        $this->assertEquals(30.0, $summary['admin_amount']);
+
+        $runs = $calculator->generate('2026-05', $admin->id);
+        $run = $runs->first();
+
+        $this->assertEquals('own_pg', $run->payment_gateway_type);
+        $this->assertEquals(0.0, (float) $run->payout_amount);
+        $this->assertEquals('own_pg', $run->items->first()->payment_gateway_type);
     }
 }

@@ -9,6 +9,33 @@ class Vendor extends Model
 {
     use HasFactory;
 
+    protected $fillable = [
+        'name',
+        'mobile',
+        'email',
+        'address',
+        'city',
+        'state',
+        'country',
+        'pincode',
+        'commission',
+        'status',
+        'use_own_pg',
+        'pg_provider',
+        'pg_merchant_id',
+        'pg_site_code',
+        'pg_client_key',
+        'pg_secret_key',
+    ];
+
+    protected $casts = [
+        'use_own_pg' => 'boolean',
+        'pg_merchant_id' => 'encrypted',
+        'pg_site_code' => 'encrypted',
+        'pg_client_key' => 'encrypted',
+        'pg_secret_key' => 'encrypted',
+    ];
+
 
     // 입점업체(vendors)와 입점업체 상세 정보(vendors_business_details)의 관계
     public function vendorbusinessdetails() {    

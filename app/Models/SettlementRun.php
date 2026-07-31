@@ -9,6 +9,7 @@ class SettlementRun extends Model
     protected $fillable = [
         'settlement_key',
         'settlement_role',
+        'payment_gateway_type',
         'period',
         'vendor_id',
         'shop_channel_id',

@@ -103,7 +103,8 @@
                                                 <td>
                                                     @if($point['can_convert'])
                                                         <a href="javascript:;" class="pop_btn btn01 col2" data-pop="pop_convert"
-                                                            data-points="{{ $point['available_points'] }}">전환</a>
+                                                            data-points="{{ $point['available_points'] }}"
+                                                            data-shop-channel-id="{{ $point['shop_channel_id'] }}">전환</a>
                                                     @else
                                                         <span class="fcol6">전환 불가</span>
                                                     @endif
@@ -149,11 +150,14 @@
                     </div>
 
                     <!-- 하단버튼 -->
-                    <div class="btm_btn mt10" style="display: flex; justify-content: center; gap: 10px;">
-                        <a href="javascript:;" onclick="alert('전환되었습니다.'); location.reload();"
-                            style="max-width: 120px; background-color: #444;">확인</a>
-                        <a href="#" class="col5 close_btn" style="max-width: 120px; background-color: #aaa;">취소</a>
-                    </div>
+                    <form method="POST" action="{{ route('mypage.point.convert') }}">
+                        @csrf
+                        <input type="hidden" name="shop_channel_id" id="convert_shop_channel_id" value="">
+                        <div class="btm_btn mt10" style="display: flex; justify-content: center; gap: 10px;">
+                            <button type="submit" style="max-width: 120px; background-color: #444; color: #fff; border: 0;">확인</button>
+                            <a href="#" class="col5 close_btn" style="max-width: 120px; background-color: #aaa;">취소</a>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -228,8 +232,10 @@
             $(".pop_btn").click(function () {
                 var popId = $(this).attr("data-pop");
                 var points = $(this).attr("data-points");
+                var shopChannelId = $(this).attr("data-shop-channel-id");
 
                 $("#convert_points_display").text(points);
+                $("#convert_shop_channel_id").val(shopChannelId || "");
 
                 $(".popup_bx[data-id='" + popId + "']").stop().fadeIn(300);
                 $(".popup_bx[data-id='" + popId + "']").scrollTop(0);

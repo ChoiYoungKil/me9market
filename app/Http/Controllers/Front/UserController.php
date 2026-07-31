@@ -1727,10 +1727,24 @@ class UserController extends Controller
             ->sum('points');
 
         $visitedVendorIds = \App\Models\VisitedChannel::where('user_id', $user->id)->pluck('vendor_id');
-        $shops = \App\Models\ShopChannel::whereIn('vendor_id', $visitedVendorIds)
-            ->with('vendor')
-            ->orderByDesc('id')
-            ->get();
+        $pointShopIds = \App\Models\PointTransaction::where('user_id', $user->id)
+            ->whereNotNull('shop_channel_id')
+            ->pluck('shop_channel_id');
+        $shops = ($visitedVendorIds->isEmpty() && $pointShopIds->isEmpty())
+            ? collect()
+            : \App\Models\ShopChannel::where(function ($query) use ($visitedVendorIds, $pointShopIds) {
+                    if ($visitedVendorIds->isNotEmpty()) {
+                        $query->whereIn('vendor_id', $visitedVendorIds);
+                    }
+
+                    if ($pointShopIds->isNotEmpty()) {
+                        $method = $visitedVendorIds->isNotEmpty() ? 'orWhereIn' : 'whereIn';
+                        $query->{$method}('id', $pointShopIds);
+                    }
+                })
+                ->with('vendor')
+                ->orderByDesc('id')
+                ->get();
 
         $pointsList = $shops->values()->map(function ($shop, $index) use ($user) {
             $availablePoints = \App\Models\PointTransaction::where('user_id', $user->id)
@@ -1741,10 +1755,11 @@ class UserController extends Controller
                 'no' => $index + 1,
                 'seller_name' => $shop->vendor?->name ?? $shop->channel_name,
                 'channel_code' => $shop->channel_code,
-                'status' => (int) $shop->status === 1 ? '운영' : '중지',
+                'status' => (int) $shop->status === 1 ? '운영' : (($shop->closure_status ?? 'none') === 'approved' ? '운영중지 승인' : '중지'),
                 'available_points' => $availablePoints,
                 'has_shop' => true,
-                'can_convert' => $availablePoints > 0,
+                'shop_channel_id' => $shop->id,
+                'can_convert' => $availablePoints > 0 && (int) $shop->status !== 1 && ($shop->closure_status ?? 'none') === 'approved',
             ];
         })->all();
 
@@ -1761,6 +1776,55 @@ class UserController extends Controller
         })->all();
 
         return view('front.mypage.sub01.point_status', compact('user', 'channelPoints', 'me9Points', 'pointsList', 'shopChannels'));
+    }
+
+    public function convertChannelPoint(Request $request)
+    {
+        $user = Auth::user();
+
+        $data = $request->validate([
+            'shop_channel_id' => 'required|integer|exists:shop_channels,id',
+        ]);
+
+        $shop = \App\Models\ShopChannel::findOrFail($data['shop_channel_id']);
+        if ((int) $shop->status === 1 || ($shop->closure_status ?? 'none') !== 'approved') {
+            return back()->with('error_message', 'Shop 채널 운영중지 승인 완료 후 Me9 포인트로 전환할 수 있습니다.');
+        }
+
+        try {
+            \Illuminate\Support\Facades\DB::transaction(function () use ($user, $shop) {
+                $availablePoints = \App\Models\PointTransaction::where('user_id', $user->id)
+                    ->where('shop_channel_id', $shop->id)
+                    ->lockForUpdate()
+                    ->sum('points');
+
+                if ($availablePoints <= 0) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'shop_channel_id' => '전환 가능한 채널 포인트가 없습니다.',
+                    ]);
+                }
+
+                \App\Models\PointTransaction::create([
+                    'user_id' => $user->id,
+                    'shop_channel_id' => $shop->id,
+                    'type' => 'convert_out',
+                    'points' => -$availablePoints,
+                    'description' => $shop->channel_name . ' 채널 포인트 Me9 포인트 전환 차감',
+                ]);
+
+                \App\Models\PointTransaction::create([
+                    'user_id' => $user->id,
+                    'shop_channel_id' => null,
+                    'type' => 'convert_in',
+                    'points' => $availablePoints,
+                    'description' => $shop->channel_name . ' 채널 포인트 Me9 포인트 전환 적립',
+                ]);
+            });
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return back()->withErrors($e->errors());
+        }
+
+        return back()->with('success_message', '채널 포인트를 Me9 포인트로 전환했습니다.');
     }
 
     public function pointHistory(Request $request)

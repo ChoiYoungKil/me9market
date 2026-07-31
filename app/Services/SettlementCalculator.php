@@ -95,23 +95,6 @@ class SettlementCalculator
         });
     }
 
-    public function complete(SettlementRun $run, int $adminId): SettlementRun
-    {
-        return DB::transaction(function () use ($run, $adminId) {
-            $run->update([
-                'status' => 'completed',
-                'executed_at' => now(),
-                'executed_by' => $adminId,
-            ]);
-
-            $itemIds = $run->items()->pluck('order_product_id');
-            OrdersProduct::whereIn('id', $itemIds)->update(['settlement_status' => 'completed']);
-            $run->items()->update(['status' => 'completed']);
-
-            return $run->fresh('items');
-        });
-    }
-
     private function confirmedItems(string $period, ?int $vendorId = null, ?int $shopChannelId = null)
     {
         [$from, $to] = $this->periodRange($period);
@@ -153,13 +136,17 @@ class SettlementCalculator
         $invoiceGross = round($grossSales + $shippingAmount, 2);
         $salesProfit = max($grossSales - $supplyAmount, 0);
         $shop = $item->shopChannel ?: $this->fallbackShopForVendor((int) $item->vendor_id);
+        $usesOwnPg = (bool) ($shop?->use_own_pg ?? false);
+        $paymentGatewayType = $usesOwnPg ? 'own_pg' : 'me9_pg';
         $shopProduct = $item->shopChannelProduct;
         $vendor = $item->product?->vendor;
-        $settlementType = (int) ($shop?->settlement_type ?: 1);
-        $settlementRate = (float) ($shop?->settlement_rate ?? $vendor?->commission ?? 0);
+        $settlementType = (int) ($shopProduct?->settlement_type_snapshot ?: $shop?->settlement_type ?: 1);
+        $settlementRate = (float) ($shopProduct?->settlement_rate_snapshot ?? $shop?->settlement_rate ?? $vendor?->commission ?? 0);
         $commissionAmount = $this->commissionAmount($invoiceGross, $quantity, $settlementType, $settlementRate);
         $confirmedAt = $item->confirmed_at ?: $item->updated_at;
-        $rewardPoints = round(max(0, (float) ($item->product?->reward_points ?? 0)) * $quantity, 2);
+        $rewardPoints = $usesOwnPg
+            ? 0
+            : round(max(0, (float) ($item->product?->reward_points ?? 0)) * $quantity, 2);
         $usedPointAmount = $this->allocatedUsedPointAmount($item);
         $productType = $shopProduct?->product_type ?: 'own';
         $isShared = in_array($productType, ['public', 'partial'], true);
@@ -175,14 +162,15 @@ class SettlementCalculator
                     'vendor_name' => $shop?->vendor?->name ?: '판매자 #' . $item->vendor_id,
                     'gross_sales_amount' => $invoiceGross,
                     'supply_amount' => $supplyAmount,
-                'sales_profit_amount' => $salesProfit,
-                'invoice_sales_amount' => $invoiceGross,
-                'invoice_purchase_amount' => $commissionAmount,
-                'point_deposit_amount' => $rewardPoints,
-                'point_used_amount' => $usedPointAmount,
-                    'settlement_amount' => round($invoiceGross - $commissionAmount - $rewardPoints, 2),
+                    'sales_profit_amount' => $salesProfit,
+                    'invoice_sales_amount' => $invoiceGross,
+                    'invoice_purchase_amount' => $commissionAmount,
+                    'point_deposit_amount' => $rewardPoints,
+                    'point_used_amount' => $usedPointAmount,
+                    'payment_gateway_type' => $paymentGatewayType,
+                    'settlement_amount' => $usesOwnPg ? 0 : round($invoiceGross - $commissionAmount - $rewardPoints, 2),
                     'admin_amount' => $commissionAmount,
-                    'payout_amount' => round($invoiceGross - $commissionAmount - $rewardPoints, 2),
+                    'payout_amount' => $usesOwnPg ? 0 : round($invoiceGross - $commissionAmount - $rewardPoints, 2),
                     'settlement_type' => $settlementType,
                     'settlement_rate' => $settlementRate,
                     'confirmed_at' => $confirmedAt,
@@ -207,9 +195,10 @@ class SettlementCalculator
                     'invoice_purchase_amount' => round($commissionAmount + $rebateAmount, 2),
                     'point_deposit_amount' => 0,
                     'point_used_amount' => $usedPointAmount,
-                    'settlement_amount' => round($invoiceGross - $commissionAmount - $rebateAmount, 2),
+                    'payment_gateway_type' => $paymentGatewayType,
+                    'settlement_amount' => $usesOwnPg ? 0 : round($invoiceGross - $commissionAmount - $rebateAmount, 2),
                     'admin_amount' => $commissionAmount,
-                    'payout_amount' => round($invoiceGross - $commissionAmount - $rebateAmount, 2),
+                    'payout_amount' => $usesOwnPg ? 0 : round($invoiceGross - $commissionAmount - $rebateAmount, 2),
                     'settlement_type' => $settlementType,
                     'settlement_rate' => $settlementRate,
                     'confirmed_at' => $confirmedAt,
@@ -225,9 +214,10 @@ class SettlementCalculator
                     'invoice_purchase_amount' => 0,
                     'point_deposit_amount' => $rewardPoints,
                     'point_used_amount' => 0,
-                    'settlement_amount' => round($rebateAmount - $rewardPoints, 2),
+                    'payment_gateway_type' => $paymentGatewayType,
+                    'settlement_amount' => $usesOwnPg ? 0 : round($rebateAmount - $rewardPoints, 2),
                     'admin_amount' => 0,
-                    'payout_amount' => round($rebateAmount - $rewardPoints, 2),
+                    'payout_amount' => $usesOwnPg ? 0 : round($rebateAmount - $rewardPoints, 2),
                     'settlement_type' => $settlementType,
                     'settlement_rate' => $settlementRate,
                     'confirmed_at' => $confirmedAt,
@@ -247,9 +237,10 @@ class SettlementCalculator
                 'invoice_purchase_amount' => 0,
                 'point_deposit_amount' => 0,
                 'point_used_amount' => 0,
-                'settlement_amount' => round($supplyAmount + $shippingAmount, 2),
+                'payment_gateway_type' => $paymentGatewayType,
+                'settlement_amount' => $usesOwnPg ? 0 : round($supplyAmount + $shippingAmount, 2),
                 'admin_amount' => 0,
-                'payout_amount' => round($supplyAmount + $shippingAmount, 2),
+                'payout_amount' => $usesOwnPg ? 0 : round($supplyAmount + $shippingAmount, 2),
                 'settlement_type' => $settlementType,
                 'settlement_rate' => $settlementRate,
                 'confirmed_at' => $confirmedAt,
@@ -265,9 +256,10 @@ class SettlementCalculator
                 'invoice_purchase_amount' => round($supplyAmount + $shippingAmount + $commissionAmount, 2),
                 'point_deposit_amount' => $rewardPoints,
                 'point_used_amount' => $usedPointAmount,
-                'settlement_amount' => round($invoiceGross - $supplyAmount - $shippingAmount - $commissionAmount - $rewardPoints, 2),
+                'payment_gateway_type' => $paymentGatewayType,
+                'settlement_amount' => $usesOwnPg ? 0 : round($invoiceGross - $supplyAmount - $shippingAmount - $commissionAmount - $rewardPoints, 2),
                 'admin_amount' => $commissionAmount,
-                'payout_amount' => round($invoiceGross - $supplyAmount - $shippingAmount - $commissionAmount - $rewardPoints, 2),
+                'payout_amount' => $usesOwnPg ? 0 : round($invoiceGross - $supplyAmount - $shippingAmount - $commissionAmount - $rewardPoints, 2),
                 'settlement_type' => $settlementType,
                 'settlement_rate' => $settlementRate,
                 'confirmed_at' => $confirmedAt,
@@ -302,6 +294,7 @@ class SettlementCalculator
         return [
             'settlement_key' => $first['settlement_key'],
             'settlement_role' => $first['settlement_role'] ?? 'seller',
+            'payment_gateway_type' => $first['payment_gateway_type'] ?? 'me9_pg',
             'period' => $period,
             'vendor_id' => $first['vendor_id'],
             'shop_channel_id' => $first['shop_channel_id'],
@@ -326,6 +319,7 @@ class SettlementCalculator
                 ->only([
                     'order_product_id',
                     'settlement_role',
+                    'payment_gateway_type',
                     'order_id',
                     'vendor_id',
                     'shop_channel_id',

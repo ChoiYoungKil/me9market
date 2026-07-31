@@ -39,6 +39,11 @@
                                     <a href="#" class="btn01 col5 pop_btn" data-pop="pop1_1">판매상품 추가</a>
                                 </div>
                             </div>
+                            @if(!empty($shop?->use_own_pg))
+                                <div class="alert" style="background:#fff7e6; border:1px solid #ffd591; color:#7a4b00; padding:12px 15px; margin-bottom:15px;">
+                                    자사 PG 사용 Shop 채널은 Ver3.0 기준에 따라 자사상품만 판매할 수 있으며, 공유상품/제휴상품 추가와 지급포인트 설정이 제한됩니다.
+                                </div>
+                            @endif
 
                             <div class="tb01 ovS">
                                 <table>

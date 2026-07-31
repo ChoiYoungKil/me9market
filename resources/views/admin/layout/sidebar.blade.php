@@ -281,6 +281,33 @@
                 </div>
             </li>
 
+            <li class="nav-item">
+                <a @if (in_array(Session::get('page'), ['settlements', 'shop-channel-closures', 'channel-points']))
+                style="background: #052CA3 !important; color: #FFF !important" @endif class="nav-link"
+                    data-toggle="collapse" href="#ui-me9-operations" aria-expanded="false"
+                    aria-controls="ui-me9-operations">
+                    <i class="icon-layout menu-icon"></i>
+                    <span class="menu-title">Me9 운영관리</span>
+                    <i class="menu-arrow"></i>
+                </a>
+                <div class="collapse" id="ui-me9-operations">
+                    <ul class="nav flex-column sub-menu" style="background: #fff !important; color: #052CA3 !important">
+                        <li class="nav-item"> <a @if (Session::get('page') == 'settlements')
+                        style="background: #052CA3 !important; color: #FFF !important" @else
+                                style="background: #fff !important; color: #052CA3 !important" @endif class="nav-link"
+                                href="{{ route('admin.settlements.index') }}">정산관리</a></li>
+                        <li class="nav-item"> <a @if (Session::get('page') == 'channel-points')
+                        style="background: #052CA3 !important; color: #FFF !important" @else
+                                style="background: #fff !important; color: #052CA3 !important" @endif class="nav-link"
+                                href="{{ route('admin.channel_points.index') }}">판매자 포인트</a></li>
+                        <li class="nav-item"> <a @if (Session::get('page') == 'shop-channel-closures')
+                        style="background: #052CA3 !important; color: #FFF !important" @else
+                                style="background: #fff !important; color: #052CA3 !important" @endif class="nav-link"
+                                href="{{ route('admin.shop_channel_closures.index') }}">운영중지 승인</a></li>
+                    </ul>
+                </div>
+            </li>
+
         @endif
 
     </ul>

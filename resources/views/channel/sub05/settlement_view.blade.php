@@ -11,6 +11,10 @@
         'shared_free_supplier' => '공유상품 제공자(자유가)',
         'shared_free_reseller' => '공유상품 판매자(자유가)',
     ];
+    $pgLabels = [
+        'own_pg' => '자사PG',
+        'me9_pg' => '공용PG',
+    ];
 @endphp
 
 @section('content')
@@ -48,14 +52,28 @@
                                         <tr>
                                             <th>주문건수</th>
                                             <td>{{ number_format($summary->order_count) }} 건</td>
+                                            <th>PG구분</th>
+                                            <td>{{ $pgLabels[$summary->payment_gateway_type ?? 'me9_pg'] ?? '공용PG' }}</td>
+                                        </tr>
+                                        <tr>
                                             <th>품목수량</th>
                                             <td>{{ number_format($summary->quantity) }} 개</td>
+                                            <th>지급 기준</th>
+                                            <td>
+                                                @if(($summary->payment_gateway_type ?? 'me9_pg') === 'own_pg')
+                                                    자사PG 결제건은 채널이 직접 수납하므로 Me9 지급액은 0원입니다.
+                                                @else
+                                                    공용PG 수납액에서 수수료/포인트를 차감해 지급합니다.
+                                                @endif
+                                            </td>
                                         </tr>
                                         <tr>
                                             <th>매출 / 매입</th>
-                                            <td>{{ number_format($summary->invoice_sales_amount ?? $summary->gross_sales_amount) }} 원 / {{ number_format($summary->invoice_purchase_amount ?? 0) }} 원</td>
+                                            <td colspan="3">{{ number_format($summary->invoice_sales_amount ?? $summary->gross_sales_amount) }} 원 / {{ number_format($summary->invoice_purchase_amount ?? 0) }} 원</td>
+                                        </tr>
+                                        <tr>
                                             <th>지급액</th>
-                                            <td><strong class="fcol4">{{ number_format($summary->payout_amount ?? $summary->settlement_amount) }} 원</strong></td>
+                                            <td colspan="3"><strong class="fcol4">{{ number_format($summary->payout_amount ?? $summary->settlement_amount) }} 원</strong></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -73,6 +91,8 @@
                                     <col width="">
                                     <col width="80px">
                                     <col width="120px">
+                                    <col width="90px">
+                                    <col width="120px">
                                     <col width="120px">
                                     <col width="120px">
                                     <col width="120px">
@@ -84,6 +104,7 @@
                                         <th>상품정보</th>
                                         <th>수량</th>
                                         <th>역할</th>
+                                        <th>PG구분</th>
                                         <th>매출</th>
                                         <th>매입</th>
                                         <th>포인트</th>
@@ -101,14 +122,20 @@
                                             </td>
                                             <td>{{ $item->quantity }}</td>
                                             <td>{{ $roleLabels[$item->settlement_role ?? 'seller'] ?? ($item->settlement_role ?? 'seller') }}</td>
+                                            <td>{{ $pgLabels[$item->payment_gateway_type ?? 'me9_pg'] ?? '공용PG' }}</td>
                                             <td class="t_r">{{ number_format($item->invoice_sales_amount ?? $item->gross_sales_amount) }} 원</td>
                                             <td class="t_r">{{ number_format($item->invoice_purchase_amount ?? 0) }} 원</td>
                                             <td class="t_r">{{ number_format($item->point_deposit_amount ?? 0) }} / {{ number_format($item->point_used_amount ?? 0) }} P</td>
-                                            <td class="t_r"><span class="bold">{{ number_format($item->payout_amount ?? $item->settlement_amount) }} 원</span></td>
+                                            <td class="t_r">
+                                                <span class="bold">{{ number_format($item->payout_amount ?? $item->settlement_amount) }} 원</span>
+                                                @if(($item->payment_gateway_type ?? 'me9_pg') === 'own_pg')
+                                                    <p class="fcol1" style="font-size:12px;">지급 제외</p>
+                                                @endif
+                                            </td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="9" class="no_data">내역이 없습니다.</td>
+                                            <td colspan="10" class="no_data">내역이 없습니다.</td>
                                         </tr>
                                     @endforelse
                                 </tbody>
@@ -117,7 +144,7 @@
                                         <tr>
                                             <th colspan="3">상세 합계</th>
                                             <th class="t_r">{{ number_format($totals['quantity']) }}</th>
-                                            <th></th>
+                                            <th colspan="2"></th>
                                             <th class="t_r">{{ number_format($totals['invoice_sales_amount'] ?? $totals['gross_sales_amount']) }} 원</th>
                                             <th class="t_r">{{ number_format($totals['invoice_purchase_amount'] ?? 0) }} 원</th>
                                             <th class="t_r">{{ number_format($totals['point_deposit_amount'] ?? 0) }} / {{ number_format($totals['point_used_amount'] ?? 0) }} P</th>

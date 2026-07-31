@@ -359,6 +359,59 @@
                                 </table>
                             </div>
 
+                            <div class="ttl01 mt40">Shop 채널 PG 정보 <span class="col2 fs2">( 자사 PG를 사용하는 경우 자사상품만 판매 가능하며, 적립 포인트 제공이 불가능합니다. )</span></div>
+                            <div class="tb01">
+                                <table>
+                                    <colgroup>
+                                        <col width="175px">
+                                        <col width="">
+                                        <col width="175px">
+                                        <col width="">
+                                    </colgroup>
+                                    <tbody class="textL">
+                                        <tr>
+                                            <th class="w160"><span>자사 PG 사용여부</span></th>
+                                            <td colspan="3">
+                                                <ul class="chk01">
+                                                    <li>
+                                                        <input type="radio" name="use_own_pg" value="0" id="radio_pg_1" {{ old('use_own_pg', '0') == '0' ? 'checked' : '' }}>
+                                                        <label for="radio_pg_1">미사용</label>
+                                                    </li>
+                                                    <li>
+                                                        <input type="radio" name="use_own_pg" value="1" id="radio_pg_2" {{ old('use_own_pg') == '1' ? 'checked' : '' }}>
+                                                        <label for="radio_pg_2">사용</label>
+                                                    </li>
+                                                </ul>
+                                                <div class="col2 fs2 mt5">판매인증 완료 채널만 사용할 수 있습니다. 사용 시 공유상품/제휴상품 탭과 지급포인트 설정이 제한됩니다.</div>
+                                            </td>
+                                        </tr>
+                                        <tr class="own_pg_row" style="display: {{ old('use_own_pg') == '1' ? 'table-row' : 'none' }};">
+                                            <th class="w160"><span>자사 PG 모듈</span></th>
+                                            <td>
+                                                <select name="pg_provider" class="w160">
+                                                    <option value="">PG사 선택</option>
+                                                    <option value="inicis" {{ old('pg_provider') == 'inicis' ? 'selected' : '' }}>KG 이니시스</option>
+                                                    <option value="kcp" {{ old('pg_provider') == 'kcp' ? 'selected' : '' }}>NHN KCP</option>
+                                                    <option value="toss" {{ old('pg_provider') == 'toss' ? 'selected' : '' }}>토스페이먼츠</option>
+                                                </select>
+                                            </td>
+                                            <th class="w160"><span>상점 ID</span></th>
+                                            <td><input type="text" name="pg_merchant_id" value="{{ old('pg_merchant_id') }}" class="wFull"></td>
+                                        </tr>
+                                        <tr class="own_pg_row" style="display: {{ old('use_own_pg') == '1' ? 'table-row' : 'none' }};">
+                                            <th class="w160"><span>사이트코드</span></th>
+                                            <td><input type="text" name="pg_site_code" value="{{ old('pg_site_code') }}" class="wFull"></td>
+                                            <th class="w160"><span>Client Key</span></th>
+                                            <td><input type="text" name="pg_client_key" value="{{ old('pg_client_key') }}" class="wFull"></td>
+                                        </tr>
+                                        <tr class="own_pg_row" style="display: {{ old('use_own_pg') == '1' ? 'table-row' : 'none' }};">
+                                            <th class="w160"><span>Secret Key</span></th>
+                                            <td colspan="3"><input type="password" name="pg_secret_key" class="wFull"></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
                             <!-- 관리자 정보 -->
                             <div class="ttl01 mt40">Shop 채널 (모니터링) 관리자 정보</div>
                             <div class="tb01">
@@ -537,6 +590,14 @@
                     $(".og_tag_bx").stop().fadeIn(200);
                 } else {
                     $(".og_tag_bx").stop().fadeOut(200);
+                }
+            });
+
+            $("input[name='use_own_pg']").change(function () {
+                if ($("#radio_pg_2").is(":checked")) {
+                    $(".own_pg_row").stop().fadeIn(200);
+                } else {
+                    $(".own_pg_row").stop().fadeOut(200);
                 }
             });
 

@@ -16,7 +16,7 @@
                 ['slide' => '012-015', 'screen' => 'RF-01-05', 'name' => '고객센터', 'intent' => '공지사항, FAQ, 제휴/문의 등록 및 관리자 답변 흐름', 'url' => '/notice', 'state' => 'done', 'note' => '전체관리자 공지사항/FAQ/제휴문의 데이터와 프론트 고객센터가 동일 DB로 연동됨'],
                 ['slide' => '017-023', 'screen' => 'RF-01-06', 'name' => '비회원 주문조회', 'intent' => '주문코드와 연락처로 주문 상세, 취소/반품/교환/구매확정/문의 처리', 'url' => '/nonmember/order/check', 'state' => 'done', 'note' => '주문 상세와 상품별 취소/반품/교환/구매확정 흐름 구현됨'],
                 ['slide' => '025-033', 'screen' => 'RF-01-07-01~08', 'name' => '로그인/회원가입/아이디·비밀번호 찾기', 'intent' => '일반 회원과 간편 회원의 가입 및 계정 복구', 'url' => '/member/login', 'state' => 'done', 'note' => '일반/소셜 보완가입 화면과 단계별 입력 흐름 구현됨'],
-                ['slide' => '034-061', 'screen' => 'RF-01-07-09~22', 'name' => '마이페이지', 'intent' => '대시보드, 회원정보, 배송지, 탈퇴, 방문채널, 포인트, 장바구니, 찜, 주문/클레임 관리', 'url' => '/mypage/main', 'state' => 'done', 'note' => '주문/클레임/포인트/장바구니/찜 실제 데이터 연동 구현됨'],
+                ['slide' => '034-061', 'screen' => 'RF-01-07-09~22', 'name' => '마이페이지', 'intent' => '대시보드, 회원정보, 배송지, 탈퇴, 방문채널, 포인트, 장바구니, 찜, 주문/클레임 관리', 'url' => '/mypage/main', 'state' => 'done', 'note' => '주문/클레임/포인트/장바구니/찜 실제 데이터 연동 및 운영종료 Shop 채널 포인트의 Me9 포인트 전환 처리 구현됨'],
             ],
             'flows' => [
                 ['label' => '비회원 주문조회', 'steps' => ['주문조회 입력', '주문 상세 확인', '상품별 취소/반품/교환/구매확정', '판매자 문의 등록']],
@@ -29,18 +29,18 @@
             'title' => '채널 관리자',
             'intent' => '판매자가 Shop 채널을 만들고 상품, 주문, 정산, 운영정책을 관리하는 백오피스입니다.',
             'summary' => ['채널 관리자 로그인', 'Shop 채널 등록/수정', '상품 추가/요청', '공동구매', '주문관리', '정산/정책/포인트'],
-            'status' => '구현',
+            'status' => '부분 구현',
             'accent' => '#059669',
             'items' => [
                 ['slide' => '064-067', 'screen' => 'RF-02-01~02', 'name' => '로그인 / 대시보드', 'intent' => '판매자 인증 후 주문상태와 매출 현황을 확인', 'url' => '/channel/login', 'state' => 'done', 'note' => 'admin guard 기반 판매자 로그인'],
-                ['slide' => '069-070', 'screen' => 'RF-02-03', 'name' => '정보 관리', 'intent' => '채널 관리자 정보와 비밀번호 관리', 'url' => '/channel/settings/info', 'state' => 'done', 'note' => '기본 정보/비밀번호 변경 구현됨'],
-                ['slide' => '072-087', 'screen' => 'RF-02-04-01~04', 'name' => 'Shop 채널 목록/등록/상세/수정', 'intent' => '공개여부, 입장코드, 키워드, 기간, 로고, 배너, OG, 관리자 정보 설정', 'url' => '/channel/shop/list', 'state' => 'done', 'note' => 'Shop 채널 목록/등록/상세/수정과 주요 DB 저장 경로 구현됨'],
-                ['slide' => '088-104', 'screen' => 'RF-02-04-05~09', 'name' => 'Shop 채널 판매상품/공지', 'intent' => '자사/공유/제휴 상품을 채널에 붙이고 채널 공지 운영', 'url' => '/channel/shop/product01', 'state' => 'done', 'note' => 'ShopChannelProduct 연결과 채널 공지 CRUD 구현됨'],
+                ['slide' => '069-070', 'screen' => 'RF-02-03', 'name' => '정보 관리', 'intent' => '채널 관리자 정보와 비밀번호, 판매인증/수수료/자사 PG/운영중지 요청 확인', 'url' => '/channel/settings/info', 'state' => 'done', 'note' => '기본 정보/비밀번호 변경, 판매자 자사 PG 정보 저장, Shop 채널 운영중지 요청 및 최고관리자 승인 연동 구현됨'],
+                ['slide' => '072-087', 'screen' => 'RF-02-04-01~04', 'name' => 'Shop 채널 목록/등록/상세/수정', 'intent' => '공개여부, 입장코드, 키워드, 기간, 로고, 배너, OG, 자사 PG, 관리자 정보 설정', 'url' => '/channel/shop/list', 'state' => 'done', 'note' => 'Shop 채널 등록/수정/상세 DB 저장과 Ver3 자사 PG 사용 여부, PG사 정보, 판매인증 조건 검증 구현됨'],
+                ['slide' => '088-104', 'screen' => 'RF-02-04-05~09', 'name' => 'Shop 채널 판매상품/공지', 'intent' => '자사/공유/제휴 상품을 채널에 붙이고 채널 공지 운영', 'url' => '/channel/shop/product01', 'state' => 'done', 'note' => 'ShopChannelProduct 연결, 등록 시점 수수료 스냅샷, 자사 PG 채널의 공유/제휴 상품 차단, 채널 공지 CRUD 구현됨'],
                 ['slide' => '106-123', 'screen' => 'RF-02-05', 'name' => '상품관리', 'intent' => '자사상품 등록, 공개/부분공개, 제약조건, 판매요청 관리', 'url' => '/channel/product/own', 'state' => 'done', 'note' => '자사/공유/제휴 상품 관리와 삭제 제한 로직 구현됨'],
                 ['slide' => '124-132', 'screen' => 'RF-02-06', 'name' => '공동구매관리', 'intent' => '공동구매 상품 등록, 기간, 혜택, 발주 담당자 설정', 'url' => '/channel/joint-purchase/list', 'state' => 'done', 'note' => '공동구매 수량별 가격 구간 등록/수정, 누적 수량 도달 시 기존 주문 재가격 산정 구현됨'],
                 ['slide' => '134-162', 'screen' => 'RF-02-07', 'name' => '주문관리', 'intent' => '주문 상세, 정상/취소/반품/교환 주문 처리와 송장 입력', 'url' => '/channel/order/list', 'state' => 'done', 'note' => 'Shop 주문 상태 동기화, 클레임/송장 처리, 배송 안내 SMS 포인트 차감, 공동구매 재결제 예정 차액 표시 구현됨'],
-                ['slide' => '164-166', 'screen' => 'RF-02-08', 'name' => '정산관리', 'intent' => '기간별 정산 집행 현황과 상세 정산 확인', 'url' => '/channel/settlement/list', 'state' => 'done', 'note' => '구매확정 상품과 Shop 채널 요율 기준 정산 조회, 공동구매 재가격 line_total 기준 정산 반영 구현됨'],
-                ['slide' => '168-197', 'screen' => 'RF-02-09~13', 'name' => '서브관리자/발주담당/포인트/배송비/환불정책', 'intent' => '운영 보조 계정과 정책성 데이터를 관리', 'url' => '/channel/settings/points', 'state' => 'done', 'note' => '판매자 포인트 구매/사용/SMS차감/환급 요청 원장과 정책 화면 데이터 흐름 구현됨'],
+                ['slide' => '168-172', 'screen' => 'RF-02-08-01', 'name' => '채널 정산관리', 'intent' => '기간별 정산 집행 현황과 상세 정산/엑셀 확인', 'url' => '/channel/settlement/list', 'state' => 'done', 'note' => '구매확정 상품, 공동구매 재가격, 쿠폰, 수수료 스냅샷 기준 정산 구현됨. 전체관리자 집행현황/첨부자료가 채널관리자에게 노출되고, 자사PG 건은 매출은 표시하되 Me9 지급액 0원으로 표기됨'],
+                ['slide' => '188-191', 'screen' => 'RF-02-11-01', 'name' => '채널 포인트 관리', 'intent' => '포인트 분배/소진 중심의 판매자 포인트 원장 확인', 'url' => '/channel/settings/points', 'state' => 'done', 'note' => 'Ver3 기준 채널 화면의 포인트 구매/충전 요청 UI를 제거하고, 고객 페이백/SMS 차감 및 이전 구매/환급 원장 조회 중심으로 정리됨'],
             ],
             'flows' => [
                 ['label' => 'Shop 채널 생성', 'steps' => ['채널 로그인', 'Shop 채널 등록', '채널 정보 확인', '판매상품 추가', '채널 공지 등록']],
@@ -96,8 +96,8 @@
             'items' => [
                 ['slide' => '247', 'screen' => 'RF-05-01', 'name' => '전체관리자 로그인', 'intent' => '별도 관리자 주소로 로그인', 'url' => '/admin/login', 'state' => 'done', 'note' => '기존 admin guard 로그인'],
                 ['slide' => '249', 'screen' => 'RF-05-02-01', 'name' => '대시보드', 'intent' => '3분할 블록형 대시보드와 메뉴 구조', 'url' => '/admin/dashboard', 'state' => 'partial', 'note' => '기존 관리자 대시보드와 혼재'],
-                ['slide' => '164-166 연계', 'screen' => 'RF-05-SETTLEMENT', 'name' => '전체관리자 정산관리', 'intent' => '구매확정 주문을 기준으로 채널별 요율 정산자료를 생성하고 완료 처리', 'url' => '/admin/settlements', 'state' => 'done', 'note' => 'settlement_runs, settlement_items 별도 테이블과 Shop 채널 정산 요율, 공동구매 재가격 금액 연동'],
-                ['slide' => '포인트 연계', 'screen' => 'RF-05-POINTS', 'name' => '판매자 포인트 판매/사용 내역', 'intent' => '판매자 포인트 구매 승인, 환급 승인, 고객 페이백/SMS 사용 차감 원장 관리', 'url' => '/admin/channel-points', 'state' => 'done', 'note' => '판매자 포인트 구매/환급 승인과 사용 내역 전체관리자 원장 구현됨'],
+                ['slide' => '173-176', 'screen' => 'RF-02-08-02', 'name' => '전체관리자 정산관리', 'intent' => '채널아이디/정산년월 기준 집행 등록, 채널 지급액/청구액 상세 확인', 'url' => '/admin/settlements', 'state' => 'done', 'note' => '구매확정 주문 기준 settlement_runs/items 생성, 수수료/PG구분 스냅샷, 집행 타이틀/금액/첨부자료 등록, 상세 엑셀, 추가배송비 엑셀, 지급액/청구액 상세 새창 구현됨. 정산 완료 상태변경은 사용하지 않으며 집행 현황으로 확인'],
+                ['slide' => '포인트 연계', 'screen' => 'RF-05-POINTS', 'name' => '판매자 포인트 분배/소진 내역', 'intent' => '고객 페이백, SMS 사용 차감, 이전 구매/환급 원장을 전체관리자가 확인', 'url' => '/admin/channel-points', 'state' => 'partial', 'note' => '채널 화면은 Ver3 분배/소진 중심으로 정리됨. 전체관리자 원장은 이전 구매/환급 데이터 호환을 위해 승인 기능을 유지'],
                 ['slide' => '250-254', 'screen' => 'RF-05-02-02~06', 'name' => '리스트/갤러리/보기 패턴', 'intent' => '관리자 공통 화면 패턴', 'url' => '/admin/sub03', 'state' => 'partial', 'note' => '패턴 확인용 sub 화면 존재'],
                 ['slide' => '255-258', 'screen' => 'RF-05-02-07~10', 'name' => '입력/팝업/레이어 패턴', 'intent' => '폼, 작은 레이어, 별도 팝업, 대형 딤 레이어', 'url' => '/admin/sub02', 'state' => 'partial', 'note' => '여러 샘플 페이지로 분산'],
                 ['slide' => '259', 'screen' => 'RF-05-02-11', 'name' => '상태 진행창', 'intent' => 'Ajax/대용량 처리 중 전체 화면 클릭 방지 로딩', 'url' => '/admin/loading', 'state' => 'partial', 'note' => '로딩 샘플 화면'],
@@ -131,8 +131,9 @@
     ];
 
     $quickMenus = [
-        ['title' => '전체관리자 정산관리', 'desc' => '정산자료 생성, 상세 품목, 완료 처리', 'url' => '/admin/settlements'],
-        ['title' => '전체관리자 포인트내역', 'desc' => '판매자 포인트 구매 승인, 환급, 사용 차감', 'url' => '/admin/channel-points'],
+        ['title' => '전체관리자 정산관리', 'desc' => '정산자료 생성, 상세 품목, 집행 현황 등록', 'url' => '/admin/settlements'],
+        ['title' => '전체관리자 포인트내역', 'desc' => '포인트 분배/소진 및 이전 요청 원장', 'url' => '/admin/channel-points'],
+        ['title' => '마이페이지 포인트 전환', 'desc' => '운영종료 Shop 채널 포인트를 Me9 포인트로 전환', 'url' => '/mypage/points/status'],
         ['title' => '채널 정산관리', 'desc' => 'Shop 채널별 기간 정산 조회', 'url' => '/channel/settlement/list'],
         ['title' => '채널 주문목록', 'desc' => '주문/취소/반품/교환 상태 검색', 'url' => '/channel/order/list'],
         ['title' => '공동구매 주문목록', 'desc' => '공동구매 주문만 분리 조회', 'url' => '/channel/order/joint/list'],
@@ -625,7 +626,7 @@
         <div class="topbar-inner">
             <div class="brand">
                 <h1>Me9 Market 스토리보드 검증보드</h1>
-                <p>M9-SB-Ver2.0.2 기준 RF-01~RF-05 기획 의도와 현재 구현 화면을 한 곳에서 점검합니다.</p>
+                <p>M9-SB-Ver3.0.0 기준 RF-01~RF-05 기획 의도와 현재 구현 화면을 한 곳에서 점검합니다.</p>
             </div>
             <a class="home-link" href="/">메인 홈</a>
         </div>
@@ -786,7 +787,7 @@
         @endforeach
 
         <footer>
-            M9-SB-Ver2.0.2 기준으로 정리된 개발 검증용 페이지입니다. 운영 구현 여부는 각 화면의 상태와 현재 확인 포인트를 기준으로 판단합니다.
+            M9-SB-Ver3.0.0 기준으로 정리된 개발 검증용 페이지입니다. 운영 구현 여부는 각 화면의 상태와 현재 확인 포인트를 기준으로 판단합니다.
         </footer>
     </main>
 

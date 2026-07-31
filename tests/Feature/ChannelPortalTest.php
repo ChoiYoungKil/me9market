@@ -7,6 +7,7 @@ use App\Models\Vendor;
 use App\Models\VendorsBusinessDetail;
 use App\Models\VendorsBankDetail;
 use App\Models\ShopCancelRefundPolicy;
+use App\Models\ShopChannel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -144,6 +145,58 @@ class ChannelPortalTest extends TestCase
         ]);
     }
 
+    public function test_certified_vendor_can_register_shop_channel_with_own_pg()
+    {
+        $vendor = new Vendor;
+        $vendor->name = 'Certified Vendor';
+        $vendor->mobile = '010-1234-5678';
+        $vendor->email = 'certified-vendor@example.com';
+        $vendor->status = 1;
+        $vendor->commission = 0;
+        $vendor->confirm = 'Yes';
+        $vendor->save();
+
+        $admin = new Admin;
+        $admin->name = 'Certified Admin';
+        $admin->type = 'vendor';
+        $admin->vendor_id = $vendor->id;
+        $admin->mobile = '01012345678';
+        $admin->email = 'certified-admin@example.com';
+        $admin->password = bcrypt('password');
+        $admin->status = 1;
+        $admin->save();
+
+        $response = $this->actingAs($admin, 'admin')->post(route('channel.shop_register.submit'), [
+            'channel_code' => 'Me9-Ver3-PG',
+            'status' => 1,
+            'is_public' => 1,
+            'channel_name' => 'Ver3 PG Shop',
+            'copyright' => 'Me9',
+            'keywords' => ['ver3', 'pg'],
+            'use_period_type' => 0,
+            'use_logo' => 0,
+            'use_banner' => 0,
+            'use_og' => 0,
+            'use_own_pg' => 1,
+            'pg_provider' => 'toss',
+            'pg_merchant_id' => 'merchant-ver3',
+            'pg_site_code' => 'site-ver3',
+            'pg_client_key' => 'client-ver3',
+            'pg_secret_key' => 'secret-ver3',
+            'use_admin' => 0,
+        ]);
+
+        $response->assertRedirect(route('channel.shop_list'));
+
+        $shop = ShopChannel::where('channel_code', 'Me9-Ver3-PG')->firstOrFail();
+        $this->assertTrue((bool) $shop->use_own_pg);
+        $this->assertSame('toss', $shop->pg_provider);
+        $this->assertSame('merchant-ver3', $shop->pg_merchant_id);
+        $this->assertSame('site-ver3', $shop->pg_site_code);
+        $this->assertSame('client-ver3', $shop->pg_client_key);
+        $this->assertSame('secret-ver3', $shop->pg_secret_key);
+    }
+
     public function test_channel_cancel_refund_policy_crud()
     {
         $vendor = new Vendor;
@@ -242,6 +295,52 @@ class ChannelPortalTest extends TestCase
 
         $this->assertDatabaseMissing('shop_cancel_refund_policies', [
             'id' => $policyId,
+        ]);
+    }
+
+    public function test_admin_can_approve_shop_channel_closure_request()
+    {
+        $admin = new Admin;
+        $admin->name = 'Super Admin';
+        $admin->type = 'superadmin';
+        $admin->vendor_id = 0;
+        $admin->mobile = '01012345678';
+        $admin->email = 'closure-admin@example.com';
+        $admin->password = bcrypt('password');
+        $admin->confirm = 'Yes';
+        $admin->status = 1;
+        $admin->save();
+
+        $vendor = Vendor::create([
+            'name' => '운영중지 판매자',
+            'mobile' => '010-9999-0000',
+            'email' => 'closure-vendor@example.com',
+            'status' => 1,
+            'commission' => 10,
+        ]);
+
+        $shop = ShopChannel::create([
+            'vendor_id' => $vendor->id,
+            'channel_code' => 'close-test-shop',
+            'status' => 0,
+            'closure_status' => 'requested',
+            'closure_requested_at' => now(),
+            'is_public' => 1,
+            'is_member_only' => 0,
+            'channel_name' => '운영중지 요청 채널',
+            'copyright' => 'Me9',
+            'keywords' => [],
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->post(route('admin.shop_channel_closures.approve', $shop->id))
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('shop_channels', [
+            'id' => $shop->id,
+            'status' => 0,
+            'closure_status' => 'approved',
+            'closure_reviewed_by' => $admin->id,
         ]);
     }
 }

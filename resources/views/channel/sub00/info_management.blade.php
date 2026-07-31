@@ -511,6 +511,100 @@
                             @endif
                         </div>
                         <div class="con_w">
+                            <div class="ttl01">자사 PG 정보</div>
+                            <div class="tb01">
+                                <table>
+                                    <colgroup>
+                                        <col width="175px">
+                                        <col width="">
+                                        <col width="175px">
+                                        <col width="">
+                                    </colgroup>
+                                    <tbody class="textL">
+                                        <tr>
+                                            <th class="w160"><span>자사 PG 사용</span></th>
+                                            <td colspan="3">
+                                                <ul class="chk01">
+                                                    <li>
+                                                        <input type="radio" name="use_own_pg" id="vendor_pg_off" value="0" {{ !($vendor->use_own_pg ?? false) ? 'checked' : '' }}>
+                                                        <label for="vendor_pg_off">사용안함</label>
+                                                    </li>
+                                                    <li>
+                                                        <input type="radio" name="use_own_pg" id="vendor_pg_on" value="1" {{ ($vendor->use_own_pg ?? false) ? 'checked' : '' }}>
+                                                        <label for="vendor_pg_on">사용</label>
+                                                    </li>
+                                                </ul>
+                                                <p class="mt10 fcol1">판매인증 완료 후 등록할 수 있으며, 자사 PG 사용 채널은 자사상품 판매만 허용됩니다.</p>
+                                            </td>
+                                        </tr>
+                                        <tr class="vendor_pg_row">
+                                            <th class="w160"><span>PG사</span></th>
+                                            <td>
+                                                <select name="pg_provider" class="w160">
+                                                    <option value="">선택</option>
+                                                    <option value="inicis" {{ ($vendor->pg_provider ?? '') === 'inicis' ? 'selected' : '' }}>KG 이니시스</option>
+                                                    <option value="kcp" {{ ($vendor->pg_provider ?? '') === 'kcp' ? 'selected' : '' }}>NHN KCP</option>
+                                                    <option value="toss" {{ ($vendor->pg_provider ?? '') === 'toss' ? 'selected' : '' }}>토스페이먼츠</option>
+                                                </select>
+                                            </td>
+                                            <th class="w160"><span>상점 ID</span></th>
+                                            <td><input type="text" name="pg_merchant_id" value="{{ old('pg_merchant_id', $vendor->pg_merchant_id ?? '') }}" class="w200"></td>
+                                        </tr>
+                                        <tr class="vendor_pg_row">
+                                            <th class="w160"><span>사이트 코드</span></th>
+                                            <td><input type="text" name="pg_site_code" value="{{ old('pg_site_code', $vendor->pg_site_code ?? '') }}" class="w200"></td>
+                                            <th class="w160"><span>Client Key</span></th>
+                                            <td><input type="text" name="pg_client_key" value="{{ old('pg_client_key', $vendor->pg_client_key ?? '') }}" class="wFull"></td>
+                                        </tr>
+                                        <tr class="vendor_pg_row">
+                                            <th class="w160"><span>Secret Key</span></th>
+                                            <td colspan="3">
+                                                <input type="password" name="pg_secret_key" value="" placeholder="{{ !empty($vendor->pg_secret_key) ? '등록된 키 유지' : 'Secret Key 입력' }}" class="wFull">
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="con_w">
+                            <div class="ttl01">Shop 채널 운영중지 요청</div>
+                            <div class="tb01">
+                                <table>
+                                    <colgroup>
+                                        <col width="175px">
+                                        <col width="">
+                                    </colgroup>
+                                    <tbody class="textL">
+                                        <tr>
+                                            <th class="w160"><span>요청 상태</span></th>
+                                            <td>
+                                                @php
+                                                    $closureStatus = \App\Models\ShopChannel::where('vendor_id', $admin->vendor_id)->pluck('closure_status')->filter()->unique()->values();
+                                                    $hasApprovedClosure = $closureStatus->contains('approved');
+                                                    $hasRequestedClosure = $closureStatus->contains('requested');
+                                                @endphp
+                                                @if($hasApprovedClosure && $closureStatus->count() === 1)
+                                                    승인완료
+                                                @elseif($hasRequestedClosure)
+                                                    승인대기
+                                                @else
+                                                    미요청
+                                                @endif
+                                                <p class="mt10 fcol1">운영중지 승인 완료 후 판매자 포인트 환급 및 고객의 채널 포인트 Me9 전환이 가능합니다.</p>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <th class="w160"><span>요청 메모</span></th>
+                                            <td><textarea name="closure_memo" class="wFull"></textarea></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="btm_btn mt10">
+                                <button type="submit" class="btn01 col5" style="border:0;" formaction="{{ route('channel.operation_stop.request') }}" formmethod="post">운영중지 요청</button>
+                            </div>
+                        </div>
+                        <div class="con_w">
                             <div class="ttl01 brb">약관동의</div>
                             <div class="agree01">
                                 <div class="c_w" style="border-bottom: 1px solid #eee; padding: 20px 0;">
@@ -584,6 +678,14 @@
 
             return false;
         });
+
+        function toggleVendorPgRows() {
+            var enabled = $("input[name='use_own_pg']:checked").val() === '1';
+            $(".vendor_pg_row").toggle(enabled);
+        }
+
+        $("input[name='use_own_pg']").on('change', toggleVendorPgRows);
+        toggleVendorPgRows();
 
         /* 파일 */
         var uploadFile = $('.fileBox .uploadBtn');

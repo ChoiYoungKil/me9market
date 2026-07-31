@@ -205,6 +205,14 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::get('settlements', 'SettlementController@index')->name('admin.settlements.index');
         Route::post('settlements/generate', 'SettlementController@generate')->name('admin.settlements.generate');
         Route::get('settlements/preview', 'SettlementController@preview')->name('admin.settlements.preview');
+        Route::post('settlements/executions', 'SettlementController@storeExecution')->name('admin.settlements.executions.store');
+        Route::get('settlements/executions/{id}/download', 'SettlementController@downloadExecutionAttachment')->name('admin.settlements.executions.download');
+        Route::get('settlements/{id}/export', 'SettlementController@export')->name('admin.settlements.export');
+        Route::get('settlements/{id}/extra-shipping/export', 'SettlementController@exportExtraShipping')->name('admin.settlements.extra_shipping.export');
+        Route::get('settlements/{id}/payout', 'SettlementController@payoutDetail')->name('admin.settlements.payout');
+        Route::get('settlements/{id}/billing', 'SettlementController@billingDetail')->name('admin.settlements.billing');
+        Route::get('settlements/{id}/payout/export', 'SettlementController@payoutExport')->name('admin.settlements.payout.export');
+        Route::get('settlements/{id}/billing/export', 'SettlementController@billingExport')->name('admin.settlements.billing.export');
         Route::get('settlements/{id}', 'SettlementController@show')->name('admin.settlements.show');
         Route::post('settlements/{id}/complete', 'SettlementController@complete')->name('admin.settlements.complete');
 
@@ -212,6 +220,11 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::get('channel-points', 'ChannelPointController@index')->name('admin.channel_points.index');
         Route::post('channel-points/{id}/approve', 'ChannelPointController@approve')->name('admin.channel_points.approve');
         Route::post('channel-points/{id}/reject', 'ChannelPointController@reject')->name('admin.channel_points.reject');
+
+        // Shop 채널 운영중지 승인
+        Route::get('shop-channel-closures', 'ShopChannelClosureController@index')->name('admin.shop_channel_closures.index');
+        Route::post('shop-channel-closures/{id}/approve', 'ShopChannelClosureController@approve')->name('admin.shop_channel_closures.approve');
+        Route::post('shop-channel-closures/{id}/reject', 'ShopChannelClosureController@reject')->name('admin.shop_channel_closures.reject');
 
         // 배송비 관리 모듈 (Shipping Charges module)
         // 배송비 관리 페이지 (admin/shipping/shipping_charges.blade.php) 렌더링 (관리자 전용)
@@ -449,6 +462,7 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
             Route::prefix('settlement')->group(function () {
                 Route::get('/list', 'ChannelSettlementController@index')->name('channel.settlement.list');
                 Route::get('/view/{period}', 'ChannelSettlementController@view')->name('channel.settlement.view');
+                Route::get('/executions/{id}/download', 'ChannelSettlementController@downloadExecutionAttachment')->name('channel.settlement.executions.download');
             });
 
             // Joint Purchase Management (Sub03) (RF-02-06-XX)
@@ -474,6 +488,7 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
 
                 Route::get('/info', 'ChannelController@infoManagement')->name('channel.info.management');
                 Route::post('/info/update', 'ChannelController@updateInfo')->name('channel.info.update');
+                Route::post('/operation-stop', 'ChannelController@requestOperationStop')->name('channel.operation_stop.request');
                 Route::post('/update-password', 'ChannelController@updatePassword')->name('channel.update_password');
                 Route::get('/order-manager', 'ChannelController@orderManagerList')->name('channel.order.manager');
                 Route::post('/order-manager/store', 'ChannelController@storeOrderManager')->name('channel.order.manager.store');
@@ -514,6 +529,7 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
         
         // 포인트 관리
         Route::get('/points/status', 'UserController@pointStatus')->name('mypage.point.status');
+        Route::post('/points/convert', 'UserController@convertChannelPoint')->name('mypage.point.convert');
         Route::get('/points/history', 'UserController@pointHistory')->name('mypage.point.history');
 
         // 장바구니 목록

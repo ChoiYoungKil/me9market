@@ -11,6 +11,10 @@
             'shared_free_supplier' => '공유상품 제공자(자유가)',
             'shared_free_reseller' => '공유상품 판매자(자유가)',
         ];
+        $pgLabels = [
+            'own_pg' => '자사PG',
+            'me9_pg' => '공용PG',
+        ];
     @endphp
     <div id="contents">
         <div class="row">
@@ -49,12 +53,22 @@
                                         <td>{{ $settlement->settlement_type == 2 ? '판매 개당 금액' : '판매금액 대비 %' }} / {{ number_format($settlement->settlement_rate, 2) }}{{ $settlement->settlement_type == 2 ? '원' : '%' }}</td>
                                         <th>상태</th>
                                         <td>
-                                            @if($settlement->status === 'completed')
-                                                정산완료
-                                            @elseif($settlement->status === 'preview')
-                                                미생성 미리보기
+                                            @if($settlement->status === 'preview')
+                                                구매확정 기준 미리보기
                                             @else
-                                                생성완료
+                                                정산자료 생성
+                                            @endif
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>PG구분</th>
+                                        <td>{{ $pgLabels[$settlement->payment_gateway_type ?? 'me9_pg'] ?? '공용PG' }}</td>
+                                        <th>지급 기준</th>
+                                        <td>
+                                            @if(($settlement->payment_gateway_type ?? 'me9_pg') === 'own_pg')
+                                                자사PG 결제건은 채널이 직접 수납하므로 Me9 지급액은 0원입니다.
+                                            @else
+                                                공용PG 수납액에서 수수료/포인트를 차감해 지급합니다.
                                             @endif
                                         </td>
                                     </tr>
@@ -87,13 +101,14 @@
                         </div>
 
                         <div class="btm_btn right mt10" style="margin-bottom:10px;">
-                            @if(!$isPreview && $settlement->status !== 'completed')
-                                <form method="POST" action="{{ route('admin.settlements.complete', $settlement->id) }}" style="display:inline;">
-                                    @csrf
-                                    <button type="submit" class="btn02" onclick="return confirm('정산 완료 처리하시겠습니까? 완료 후 해당 주문 품목은 정산완료 상태가 됩니다.');">정산완료 처리</button>
-                                </form>
-                            @elseif($isPreview)
+                            @if($isPreview)
                                 <span class="fcol1" style="margin-right:10px;">정산자료 생성 전 미리보기입니다.</span>
+                            @endif
+                            @if(!$isPreview)
+                                <a href="{{ route('admin.settlements.payout', $settlement->id) }}" class="btn02" target="_blank">지급액 상세</a>
+                                <a href="{{ route('admin.settlements.billing', $settlement->id) }}" class="btn02" target="_blank">청구액 상세</a>
+                                <a href="{{ route('admin.settlements.export', $settlement->id) }}" class="btn02">상세 엑셀</a>
+                                <a href="{{ route('admin.settlements.extra_shipping.export', $settlement->id) }}" class="btn02">추가배송비 엑셀</a>
                             @endif
                             <a href="{{ route('admin.settlements.index', ['period' => $settlement->period]) }}" class="btn02 col5">목록</a>
                         </div>
@@ -107,6 +122,7 @@
                                     <col width="260px">
                                     <col width="80px">
                                     <col width="120px">
+                                    <col width="90px">
                                     <col width="130px">
                                     <col width="130px">
                                     <col width="130px">
@@ -121,6 +137,7 @@
                                         <th>상품명</th>
                                         <th>수량</th>
                                         <th>역할</th>
+                                        <th>PG구분</th>
                                         <th>매출</th>
                                         <th>매입</th>
                                         <th>포인트</th>
@@ -137,15 +154,21 @@
                                             <td class="t_l">{{ $item->product_name }}</td>
                                             <td class="t_r">{{ number_format($item->quantity) }}</td>
                                             <td>{{ $roleLabels[$item->settlement_role ?? 'seller'] ?? ($item->settlement_role ?? 'seller') }}</td>
+                                            <td>{{ $pgLabels[$item->payment_gateway_type ?? 'me9_pg'] ?? '공용PG' }}</td>
                                             <td class="t_r">{{ number_format($item->invoice_sales_amount ?? $item->gross_sales_amount) }}원</td>
                                             <td class="t_r">{{ number_format($item->invoice_purchase_amount ?? 0) }}원</td>
                                             <td class="t_r">{{ number_format($item->point_deposit_amount ?? 0) }} / {{ number_format($item->point_used_amount ?? 0) }}P</td>
-                                            <td class="t_r bold fcol4">{{ number_format($item->payout_amount ?? $item->settlement_amount) }}원</td>
+                                            <td class="t_r bold fcol4">
+                                                {{ number_format($item->payout_amount ?? $item->settlement_amount) }}원
+                                                @if(($item->payment_gateway_type ?? 'me9_pg') === 'own_pg')
+                                                    <p class="fcol1" style="font-size:12px;">지급 제외</p>
+                                                @endif
+                                            </td>
                                             <td class="t_r">{{ number_format($item->admin_amount) }}원</td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="11" class="no_data">정산 상세 품목이 없습니다.</td>
+                                            <td colspan="12" class="no_data">정산 상세 품목이 없습니다.</td>
                                         </tr>
                                     @endforelse
                                 </tbody>
@@ -154,7 +177,7 @@
                                         <tr>
                                             <th colspan="4">상세 합계</th>
                                             <th class="t_r">{{ number_format($detailTotals['quantity']) }}</th>
-                                            <th></th>
+                                            <th colspan="2"></th>
                                             <th class="t_r">{{ number_format($detailTotals['invoice_sales_amount'] ?? $detailTotals['gross_sales_amount']) }}원</th>
                                             <th class="t_r">{{ number_format($detailTotals['invoice_purchase_amount'] ?? 0) }}원</th>
                                             <th class="t_r">{{ number_format($detailTotals['point_deposit_amount'] ?? 0) }} / {{ number_format($detailTotals['point_used_amount'] ?? 0) }}P</th>

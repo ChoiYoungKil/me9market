@@ -82,9 +82,9 @@ class ChannelPointService
         return DB::transaction(function () use ($vendorId, $points, $memo, $shopChannelId, $adminId) {
             $this->lockVendorPoints($vendorId);
 
-            if ($this->hasActiveChannel($vendorId)) {
+            if (!$this->canRequestRefund($vendorId)) {
                 throw ValidationException::withMessages([
-                    'points' => '포인트 환급은 판매자가 운영 중인 Shop 채널을 모두 종료한 경우에만 요청할 수 있습니다.',
+                    'points' => '포인트 환급은 Shop 채널 운영중지 요청이 최고관리자 승인 완료된 경우에만 요청할 수 있습니다.',
                 ]);
             }
 
@@ -156,7 +156,11 @@ class ChannelPointService
             return null;
         }
 
-        $item->loadMissing(['product', 'order']);
+        $item->loadMissing(['product', 'order', 'shopChannel']);
+        if ($item->shopChannel?->use_own_pg) {
+            return null;
+        }
+
         $points = max(0, (int) ($item->product?->reward_points ?? 0)) * max(1, (int) $item->product_qty);
 
         if ($points <= 0) {
@@ -241,6 +245,36 @@ class ChannelPointService
         return ShopChannel::where('vendor_id', $vendorId)
             ->where('status', 1)
             ->exists();
+    }
+
+    public function hasPendingClosure(int $vendorId): bool
+    {
+        if (!Schema::hasTable('shop_channels') || !Schema::hasColumn('shop_channels', 'closure_status')) {
+            return false;
+        }
+
+        return ShopChannel::where('vendor_id', $vendorId)
+            ->where('closure_status', 'requested')
+            ->exists();
+    }
+
+    public function canRequestRefund(int $vendorId): bool
+    {
+        if ($this->hasActiveChannel($vendorId)) {
+            return false;
+        }
+
+        if (!Schema::hasTable('shop_channels') || !Schema::hasColumn('shop_channels', 'closure_status')) {
+            return true;
+        }
+
+        return ShopChannel::where('vendor_id', $vendorId)->exists()
+            && ShopChannel::where('vendor_id', $vendorId)
+                ->where('closure_status', 'approved')
+                ->exists()
+            && !ShopChannel::where('vendor_id', $vendorId)
+                ->whereNotIn('closure_status', ['approved'])
+                ->exists();
     }
 
     private function assertPositivePointAmount(int $points): void

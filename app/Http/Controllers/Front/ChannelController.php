@@ -226,6 +226,17 @@ class ChannelController extends Controller
         // 조건부 유효성 검사 추가
         $data = $request->all();
 
+        $messages = [
+            'channel_name.required' => '채널명을 입력해 주세요.',
+            'copyright.required' => '카피라이트를 입력해 주세요.',
+            'keywords.required' => '최소 하나 이상의 키워드를 입력해 주세요.',
+            'start_date.required' => '사용 시작 날짜를 선택해 주세요.',
+            'start_hour.required' => '사용 시작 시간을 선택해 주세요.',
+            'end_date.required' => '사용 종료 날짜를 선택해 주세요.',
+            'end_date.after_or_equal' => '종료일은 시작일 이후여야 합니다.',
+            'end_hour.required' => '사용 종료 시간을 선택해 주세요.',
+        ];
+
         // 비공개시 비밀번호 체크
         if (($data['is_public'] ?? '1') == '0') {
             $rules['password'] = 'required|min:4';
@@ -271,6 +282,23 @@ class ChannelController extends Controller
             $messages['og_title.required'] = 'OG Title을 입력해 주세요.';
             $messages['og_description.required'] = 'OG Description을 입력해 주세요.';
             $messages['og_image.required'] = 'OG 이미지를 업로드해 주세요.';
+        }
+
+        if (($data['use_own_pg'] ?? '0') == '1') {
+            $vendor = \App\Models\Vendor::find($admin->vendor_id);
+            if (!$vendor || (int) $vendor->status !== 1) {
+                return back()->withInput()->withErrors(['use_own_pg' => '판매인증이 완료된 채널만 자사 PG를 사용할 수 있습니다.']);
+            }
+
+            $rules['pg_provider'] = 'required|in:inicis,kcp,toss';
+            $rules['pg_merchant_id'] = 'required|string|max:255';
+            $rules['pg_client_key'] = 'required|string|max:255';
+            $rules['pg_secret_key'] = 'required|string|max:255';
+            $messages['pg_provider.required'] = '자사 PG사를 선택해 주세요.';
+            $messages['pg_provider.in'] = '지원하는 PG사를 선택해 주세요.';
+            $messages['pg_merchant_id.required'] = '자사 PG 상점 ID를 입력해 주세요.';
+            $messages['pg_client_key.required'] = '자사 PG Client Key를 입력해 주세요.';
+            $messages['pg_secret_key.required'] = '자사 PG Secret Key를 입력해 주세요.';
         }
 
         // 관리자 정보 체크
@@ -363,6 +391,13 @@ class ChannelController extends Controller
             $shop->og_image = 'uploads/shop/og/' . $fileName;
         }
 
+        $shop->use_own_pg = ($data['use_own_pg'] ?? '0') == '1';
+        $shop->pg_provider = $shop->use_own_pg ? ($data['pg_provider'] ?? null) : null;
+        $shop->pg_merchant_id = $shop->use_own_pg ? ($data['pg_merchant_id'] ?? null) : null;
+        $shop->pg_site_code = $shop->use_own_pg ? ($data['pg_site_code'] ?? null) : null;
+        $shop->pg_client_key = $shop->use_own_pg ? ($data['pg_client_key'] ?? null) : null;
+        $shop->pg_secret_key = $shop->use_own_pg ? ($data['pg_secret_key'] ?? null) : null;
+
         // 관리자 정보 처리
         $shop->use_admin = $data['use_admin'] ?? 0;
         $shop->admin_name = $data['admin_name'] ?? null;
@@ -411,9 +446,11 @@ class ChannelController extends Controller
         if (!$shopId) {
             $shop = \App\Models\ShopChannel::where('vendor_id', $admin->vendor_id)->first();
             $shopId = $shop ? $shop->id : null;
+        } else {
+            $shop = \App\Models\ShopChannel::where('vendor_id', $admin->vendor_id)->where('id', $shopId)->first();
         }
 
-        if (!$shopId) {
+        if (!$shopId || !$shop) {
             return redirect()->route('channel.shop_list')->with('error_message', 'Shop 채널을 먼저 등록해 주세요.');
         }
 
@@ -441,6 +478,7 @@ class ChannelController extends Controller
             'dep1_id' => '01',
             'products' => $products,
             'shopId' => $shopId,
+            'shop' => $shop,
             'ownProducts' => $ownProducts
         ]);
     }
@@ -455,9 +493,11 @@ class ChannelController extends Controller
         if (!$shopId) {
             $shop = \App\Models\ShopChannel::where('vendor_id', $admin->vendor_id)->first();
             $shopId = $shop ? $shop->id : null;
+        } else {
+            $shop = \App\Models\ShopChannel::where('vendor_id', $admin->vendor_id)->where('id', $shopId)->first();
         }
 
-        if (!$shopId) {
+        if (!$shopId || !$shop) {
             return redirect()->route('channel.shop_list')->with('error_message', 'Shop 채널을 먼저 등록해 주세요.');
         }
 
@@ -485,6 +525,7 @@ class ChannelController extends Controller
             'dep1_id' => '01',
             'products' => $products,
             'shopId' => $shopId,
+            'shop' => $shop,
             'ownProducts' => $ownProducts
         ]);
     }
@@ -1082,16 +1123,22 @@ class ChannelController extends Controller
             }
         }
 
-        $messages = [
-            'channel_name.required' => '채널명을 입력해 주세요.',
-            'copyright.required' => '카피라이트를 입력해 주세요.',
-            'keywords.required' => '최소 하나 이상의 키워드를 입력해 주세요.',
-            'start_date.required' => '사용 시작 날짜를 선택해 주세요.',
-            'start_hour.required' => '사용 시작 시간을 선택해 주세요.',
-            'end_date.required' => '사용 종료 날짜를 선택해 주세요.',
-            'end_date.after_or_equal' => '종료일은 시작일 이후여야 합니다.',
-            'end_hour.required' => '사용 종료 시간을 선택해 주세요.',
-        ];
+        if (($data['use_own_pg'] ?? '0') == '1') {
+            $vendor = \App\Models\Vendor::find($admin->vendor_id);
+            if (!$vendor || (int) $vendor->status !== 1) {
+                return back()->withInput()->withErrors(['use_own_pg' => '판매인증이 완료된 채널만 자사 PG를 사용할 수 있습니다.']);
+            }
+
+            $rules['pg_provider'] = 'required|in:inicis,kcp,toss';
+            $rules['pg_merchant_id'] = 'required|string|max:255';
+            $rules['pg_client_key'] = 'required|string|max:255';
+            $rules['pg_secret_key'] = ($shop->pg_secret_key ? 'nullable' : 'required') . '|string|max:255';
+            $messages['pg_provider.required'] = '자사 PG사를 선택해 주세요.';
+            $messages['pg_provider.in'] = '지원하는 PG사를 선택해 주세요.';
+            $messages['pg_merchant_id.required'] = '자사 PG 상점 ID를 입력해 주세요.';
+            $messages['pg_client_key.required'] = '자사 PG Client Key를 입력해 주세요.';
+            $messages['pg_secret_key.required'] = '자사 PG Secret Key를 입력해 주세요.';
+        }
 
         $request->validate($rules, $messages);
 
@@ -1156,6 +1203,17 @@ class ChannelController extends Controller
             $fileName = time() . '_og.' . $file->getClientOriginalExtension();
             $file->move(public_path('uploads/shop/og'), $fileName);
             $shop->og_image = 'uploads/shop/og/' . $fileName;
+        }
+
+        $shop->use_own_pg = ($data['use_own_pg'] ?? '0') == '1';
+        $shop->pg_provider = $shop->use_own_pg ? ($data['pg_provider'] ?? null) : null;
+        $shop->pg_merchant_id = $shop->use_own_pg ? ($data['pg_merchant_id'] ?? null) : null;
+        $shop->pg_site_code = $shop->use_own_pg ? ($data['pg_site_code'] ?? null) : null;
+        $shop->pg_client_key = $shop->use_own_pg ? ($data['pg_client_key'] ?? null) : null;
+        if ($shop->use_own_pg && array_key_exists('pg_secret_key', $data)) {
+            $shop->pg_secret_key = $data['pg_secret_key'] ?: $shop->pg_secret_key;
+        } elseif (!$shop->use_own_pg) {
+            $shop->pg_secret_key = null;
         }
 
         // 관리자 정보 처리
@@ -1765,11 +1823,47 @@ class ChannelController extends Controller
         if ($request->isMethod('post')) {
             $data = $request->all();
 
-            // 1. Update Vendor table (basic info)
-            if (isset($data['shop_name'])) {
-                \App\Models\Vendor::where('id', $admin->vendor_id)->update([
-                    'name' => $data['shop_name']
-                ]);
+            $vendor = \App\Models\Vendor::find($admin->vendor_id);
+
+            if ($request->boolean('use_own_pg') && (int) ($vendor->status ?? 0) !== 1) {
+                return redirect()->back()
+                    ->withInput()
+                    ->with('error_message', '판매인증이 완료된 회원사만 자사 PG를 등록할 수 있습니다.');
+            }
+
+            $request->validate([
+                'pg_provider' => 'nullable|required_if:use_own_pg,1|in:inicis,kcp,toss',
+                'pg_merchant_id' => 'nullable|required_if:use_own_pg,1|string|max:255',
+                'pg_site_code' => 'nullable|string|max:255',
+                'pg_client_key' => 'nullable|required_if:use_own_pg,1|string|max:255',
+                'pg_secret_key' => 'nullable|string|max:255',
+            ]);
+
+            // 1. Update Vendor table (basic info + Ver3 PG info)
+            if ($vendor) {
+                $vendorPayload = [];
+                if (isset($data['shop_name'])) {
+                    $vendorPayload['name'] = $data['shop_name'];
+                }
+
+                $vendorPayload['use_own_pg'] = $request->boolean('use_own_pg');
+                if ($request->boolean('use_own_pg')) {
+                    $vendorPayload['pg_provider'] = $data['pg_provider'] ?? null;
+                    $vendorPayload['pg_merchant_id'] = $data['pg_merchant_id'] ?? null;
+                    $vendorPayload['pg_site_code'] = $data['pg_site_code'] ?? null;
+                    $vendorPayload['pg_client_key'] = $data['pg_client_key'] ?? null;
+                    if (!empty($data['pg_secret_key'])) {
+                        $vendorPayload['pg_secret_key'] = $data['pg_secret_key'];
+                    }
+                } else {
+                    $vendorPayload['pg_provider'] = null;
+                    $vendorPayload['pg_merchant_id'] = null;
+                    $vendorPayload['pg_site_code'] = null;
+                    $vendorPayload['pg_client_key'] = null;
+                    $vendorPayload['pg_secret_key'] = null;
+                }
+
+                $vendor->fill($vendorPayload)->save();
             }
 
             // 2. Prepare Detailed Info
@@ -2008,12 +2102,55 @@ class ChannelController extends Controller
             'dep1_id' => '00',
             'summary' => $pointService->summaryForVendor($vendorId),
             'transactions' => $transactions,
-            'canRequestRefund' => !$pointService->hasActiveChannel($vendorId),
+            'canRequestRefund' => $pointService->canRequestRefund($vendorId),
+            'hasActiveChannel' => $pointService->hasActiveChannel($vendorId),
+            'hasPendingClosure' => $pointService->hasPendingClosure($vendorId),
             'filters' => [
                 'history' => $history,
                 'status' => $status,
             ],
         ]);
+    }
+
+    public function requestOperationStop(Request $request)
+    {
+        if (!Auth::guard('admin')->check()) {
+            return redirect()->route('channel.login');
+        }
+
+        $data = $request->validate([
+            'closure_memo' => 'nullable|string|max:255',
+        ]);
+
+        $admin = Auth::guard('admin')->user();
+        $vendorId = (int) ($admin->vendor_id ?? 0);
+        $channels = \App\Models\ShopChannel::where('vendor_id', $vendorId)->get();
+
+        if ($channels->isEmpty()) {
+            return redirect()->back()->with('error_message', '운영중지 요청할 Shop 채널이 없습니다.');
+        }
+
+        $activeChannels = $channels->where('status', 1);
+        if ($activeChannels->isNotEmpty()) {
+            return redirect()->back()->with('error_message', '운영 중인 Shop 채널이 있어 운영중지 요청을 접수할 수 없습니다. 먼저 판매 상태를 종료해 주세요.');
+        }
+
+        foreach ($channels as $channel) {
+            if ($channel->closure_status === 'approved') {
+                continue;
+            }
+
+            $channel->forceFill([
+                'closure_status' => 'requested',
+                'closure_requested_at' => now(),
+                'closure_approved_at' => null,
+                'closure_rejected_at' => null,
+                'closure_reviewed_by' => null,
+                'closure_memo' => $data['closure_memo'] ?? null,
+            ])->save();
+        }
+
+        return redirect()->back()->with('success_message', 'Shop 채널 운영중지 요청이 접수되었습니다. 최고관리자 승인 후 포인트 환급과 Me9 포인트 전환이 가능합니다.');
     }
 
     public function requestPointPurchase(Request $request)

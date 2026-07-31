@@ -71,7 +71,7 @@ class ChannelProductController extends Controller
                 $pricing = $this->resolveShopProductPricing($product, $shop, (float) $data['selling_price'], 'own');
 
                 // Create Mapping
-                \App\Models\ShopChannelProduct::create([
+                \App\Models\ShopChannelProduct::create(array_merge([
                     'shop_channel_id' => $shop->id,
                     'product_id' => $product->id,
                     'distributor_id' => $product->distributor_id,
@@ -83,7 +83,7 @@ class ChannelProductController extends Controller
                     'product_price' => $pricing['product_price'],
                     'selling_price' => $pricing['selling_price'],
                     'profit' => $pricing['profit'],
-                ]);
+                ], $this->settlementSnapshot($shop, $pricing, 'seller')));
 
                 return response()->json(['status' => true, 'message' => '상품이 성공적으로 채널에 추가되었습니다.']);
 
@@ -122,6 +122,7 @@ class ChannelProductController extends Controller
                 if (!$shop) {
                     return response()->json(['status' => false, 'message' => '채널 권한이 없습니다.']);
                 }
+                $this->assertOwnPgProductAllowed($shop, 'public');
 
                 $product = Product::where('id', $data['product_id'])
                     ->first();
@@ -139,7 +140,7 @@ class ChannelProductController extends Controller
 
                 $pricing = $this->resolveShopProductPricing($product, $shop, (float) $data['selling_price'], 'public');
 
-                \App\Models\ShopChannelProduct::create([
+                \App\Models\ShopChannelProduct::create(array_merge([
                     'shop_channel_id' => $shop->id,
                     'product_id' => $product->id,
                     'distributor_id' => $product->distributor_id,
@@ -151,7 +152,7 @@ class ChannelProductController extends Controller
                     'product_price' => $pricing['product_price'],
                     'selling_price' => $pricing['selling_price'],
                     'profit' => $pricing['profit'],
-                ]);
+                ], $this->settlementSnapshot($shop, $pricing, $pricing['price_decider'] ?? 'reseller')));
 
                 return response()->json(['status' => true, 'message' => '공유 상품이 성공적으로 추가되었습니다.']);
             } catch (ValidationException $e) {
@@ -190,6 +191,7 @@ class ChannelProductController extends Controller
                 if (!$shop) {
                     return response()->json(['status' => false, 'message' => '채널 권한이 없습니다.']);
                 }
+                $this->assertOwnPgProductAllowed($shop, 'partial');
 
                 $product = Product::where('id', $data['product_id'])
                     ->first();
@@ -208,7 +210,7 @@ class ChannelProductController extends Controller
                 $pricing = $this->resolveShopProductPricing($product, $shop, (float) $data['selling_price'], 'partial');
 
                 // 부분 공유 상품은 승인 대기로 등록 (status = 0, partial_approved 처리 등)
-                \App\Models\ShopChannelProduct::create([
+                \App\Models\ShopChannelProduct::create(array_merge([
                     'shop_channel_id' => $shop->id,
                     'product_id' => $product->id,
                     'distributor_id' => $product->distributor_id,
@@ -222,7 +224,7 @@ class ChannelProductController extends Controller
                     'product_price' => $pricing['product_price'],
                     'selling_price' => $pricing['selling_price'],
                     'profit' => $pricing['profit'],
-                ]);
+                ], $this->settlementSnapshot($shop, $pricing, $pricing['price_decider'] ?? 'reseller')));
 
                 return response()->json(['status' => true, 'message' => '판매 권한 요청이 성공적으로 접수되었습니다. (승인 대기)']);
 
@@ -292,10 +294,12 @@ class ChannelProductController extends Controller
         $shopProduct->stock = $product->stock ?? null;
 
         try {
+            $this->assertOwnPgProductAllowed($shop, 'partial');
             $pricing = $this->resolveShopProductPricing($product, $shop, (float) $data['selling_price'], 'partial');
             $shopProduct->product_price = $pricing['product_price'];
             $shopProduct->selling_price = $pricing['selling_price'];
             $shopProduct->profit = $pricing['profit'];
+            $shopProduct->fill($this->settlementSnapshot($shop, $pricing, $pricing['price_decider'] ?? 'reseller'));
             $shopProduct->save();
         } catch (ValidationException $e) {
             return response()->json(['status' => false, 'message' => collect($e->errors())->flatten()->first() ?: $e->getMessage()]);
@@ -393,6 +397,7 @@ class ChannelProductController extends Controller
         $shopProduct->status = $request->input('status');
         
         $shopProduct->profit = $pricing['profit'];
+        $shopProduct->fill($this->settlementSnapshot($shop, $pricing, $pricing['price_decider'] ?? 'seller'));
         
         $shopProduct->save();
 
@@ -499,9 +504,11 @@ class ChannelProductController extends Controller
 
     private function resolveShopProductPricing(Product $product, \App\Models\ShopChannel $shop, float $sellingPrice, string $productType): array
     {
+        $this->assertOwnPgProductAllowed($shop, $productType);
+
         $supplyPrice = (float) $product->product_price;
         $shippingFee = $this->productShippingFee($product);
-        $rewardPoints = max(0, (float) ($product->reward_points ?? 0));
+        $rewardPoints = $shop->use_own_pg ? 0 : max(0, (float) ($product->reward_points ?? 0));
         $settlementType = (int) ($shop->settlement_type ?: 1);
         $settlementRate = (float) ($shop->settlement_rate ?? 0);
         $isShared = in_array($productType, ['public', 'partial'], true);
@@ -530,6 +537,8 @@ class ChannelProductController extends Controller
                 'selling_price' => $fixedPrice,
                 'minimum_price' => $fixedPrice,
                 'profit' => round($rebate - $commission - $rewardPoints, 2),
+                'maximum_reward_points' => max(0, (int) round($rebate - $commission)),
+                'price_decider' => 'supplier',
             ];
         }
 
@@ -557,6 +566,28 @@ class ChannelProductController extends Controller
             'selling_price' => $sellingPrice,
             'minimum_price' => $minimumPrice,
             'profit' => round($sellingPrice + $shippingFee - $supplyPrice - $shippingFee - $commission - $rewardPoints, 2),
+            'maximum_reward_points' => max(0, (int) round($sellingPrice - $supplyPrice - $commission)),
+            'price_decider' => $isShared ? 'reseller' : 'seller',
+        ];
+    }
+
+    private function assertOwnPgProductAllowed(\App\Models\ShopChannel $shop, string $productType): void
+    {
+        if ($shop->use_own_pg && in_array($productType, ['public', 'partial'], true)) {
+            throw ValidationException::withMessages([
+                'product_type' => '자사 PG를 사용하는 Shop 채널은 자사상품만 판매할 수 있습니다.',
+            ]);
+        }
+    }
+
+    private function settlementSnapshot(\App\Models\ShopChannel $shop, array $pricing, string $priceDecider): array
+    {
+        return [
+            'settlement_type_snapshot' => (int) ($shop->settlement_type ?: 1),
+            'settlement_rate_snapshot' => (float) ($shop->settlement_rate ?? 0),
+            'minimum_selling_price' => $pricing['minimum_price'] ?? null,
+            'maximum_reward_points' => (int) ($pricing['maximum_reward_points'] ?? max(0, (int) round($pricing['profit'] ?? 0))),
+            'price_decider' => $priceDecider,
         ];
     }
 
@@ -564,7 +595,7 @@ class ChannelProductController extends Controller
     {
         $supplyPrice = (float) $product->product_price;
         $shippingFee = $this->productShippingFee($product);
-        $rewardPoints = max(0, (float) ($product->reward_points ?? 0));
+        $rewardPoints = $shop->use_own_pg ? 0 : max(0, (float) ($product->reward_points ?? 0));
         $settlementType = (int) ($shop->settlement_type ?: 1);
         $settlementRate = (float) ($shop->settlement_rate ?? 0);
 

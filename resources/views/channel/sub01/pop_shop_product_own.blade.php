@@ -8,12 +8,16 @@
                 <div class="tab_bx1">
                     <ul>
                         <li><a href="#" class="on"><span>지사상품</span></a></li>
-                        <li><a href="#" data-pop="pop1_2"><span>공유상품</span></a></li>
-                        <li><a href="#" data-pop="pop1_3"><span>부분공유상품</span></a></li>
+                        <li><a href="#" @if(empty($shop?->use_own_pg)) data-pop="pop1_2" @else class="pg_blocked" @endif><span>공유상품</span></a></li>
+                        <li><a href="#" @if(empty($shop?->use_own_pg)) data-pop="pop1_3" @else class="pg_blocked" @endif><span>부분공유상품</span></a></li>
                     </ul>
                 </div>
                 <script type="text/javascript">
                     $(".popup_bx[data-id='pop1_1'] .tab_bx1 li a").click(function () {
+                        if ($(this).hasClass("pg_blocked")) {
+                            alert("자사 PG 사용 Shop 채널은 자사상품만 판매할 수 있습니다.");
+                            return false;
+                        }
                         if ($(this).attr("data-pop")) {
                             var popId = $(this).attr("data-pop");
                             $(this).parents(".popup_bx").stop().fadeOut(300);

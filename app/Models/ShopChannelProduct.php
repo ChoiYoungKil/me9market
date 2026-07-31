@@ -26,6 +26,11 @@ class ShopChannelProduct extends Model
         'product_price',
         'selling_price',
         'profit',
+        'settlement_type_snapshot',
+        'settlement_rate_snapshot',
+        'minimum_selling_price',
+        'maximum_reward_points',
+        'price_decider',
     ];
 
     protected $casts = [

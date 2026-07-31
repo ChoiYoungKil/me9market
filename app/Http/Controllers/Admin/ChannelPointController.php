@@ -13,7 +13,7 @@ class ChannelPointController extends Controller
 {
     public function index(Request $request, ChannelPointService $pointService)
     {
-        Session::put('page', 'channel_points');
+        Session::put('page', 'channel-points');
 
         $status = $request->query('status', 'all');
         $type = $request->query('type', 'all');

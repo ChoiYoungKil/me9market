@@ -93,6 +93,47 @@
                                 </table>
                             </div>
                         </div>
+                        <div class="con_w">
+                            <div class="ttl01">Shop 채널 PG 정보</div>
+                            <div class="tb01">
+                                <table>
+                                    <colgroup>
+                                        <col width="175px">
+                                        <col width="">
+                                        <col width="175px">
+                                        <col width="">
+                                    </colgroup>
+                                    <tbody class="textL">
+                                        <tr>
+                                            <th class="w160"><span>자사 PG 사용여부</span></th>
+                                            <td>{{ $shop->use_own_pg ? '사용' : '사용하지 않음' }}</td>
+                                            <th class="w160"><span>자사 PG 모듈</span></th>
+                                            <td>
+                                                @if($shop->use_own_pg)
+                                                    {{ ['inicis' => 'KG 이니시스', 'kcp' => 'NHN KCP', 'toss' => '토스페이먼츠'][$shop->pg_provider] ?? '-' }}
+                                                @else
+                                                    -
+                                                @endif
+                                            </td>
+                                        </tr>
+                                        @if($shop->use_own_pg)
+                                            <tr>
+                                                <th class="w160"><span>상점 ID</span></th>
+                                                <td>{{ $shop->pg_merchant_id ?: '-' }}</td>
+                                                <th class="w160"><span>사이트코드</span></th>
+                                                <td>{{ $shop->pg_site_code ?: '-' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <th class="w160"><span>Client Key</span></th>
+                                                <td>********</td>
+                                                <th class="w160"><span>Secret Key</span></th>
+                                                <td>********</td>
+                                            </tr>
+                                        @endif
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                         @if($shop->use_admin == 1)
                         <div class="con_w">
                             <div class="ttl01">Shop 채널 (모니터링) 관리자 정보</div>

@@ -90,7 +90,11 @@ class ChannelPointTest extends TestCase
         $service = app(ChannelPointService::class);
         $purchase = $service->requestPurchase($vendor->id, 100000, 'card', null, null, $admin->id);
         $service->approve($purchase, $admin->id);
-        $shop->update(['status' => 0]);
+        $shop->update([
+            'status' => 0,
+            'closure_status' => 'approved',
+            'closure_approved_at' => now(),
+        ]);
 
         $service->requestRefund($vendor->id, 70000, '1차 환급 요청', null, $admin->id);
 

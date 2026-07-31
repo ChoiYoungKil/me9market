@@ -10,6 +10,7 @@ class SettlementItem extends Model
         'settlement_run_id',
         'order_product_id',
         'settlement_role',
+        'payment_gateway_type',
         'order_id',
         'vendor_id',
         'shop_channel_id',

@@ -301,4 +301,57 @@ class ChannelProductTest extends TestCase
 
         $this->assertEquals(1, $shopProduct->fresh()->status);
     }
+
+    public function test_own_pg_channel_blocks_shared_products_and_stores_snapshot()
+    {
+        list($vendor, $admin, $shop, $product) = $this->createSetup();
+        $shop->forceFill([
+            'use_own_pg' => true,
+            'pg_provider' => 'toss',
+            'pg_merchant_id' => 'merchant-1',
+            'pg_client_key' => 'client-1',
+            'pg_secret_key' => 'secret-1',
+        ])->save();
+
+        $publicProduct = Product::create([
+            'section_id' => 1,
+            'category_id' => 1,
+            'brand_id' => 1,
+            'vendor_id' => 999,
+            'admin_id' => 999,
+            'admin_type' => 'vendor',
+            'product_name' => 'Own PG Block Product',
+            'product_code' => 'PG-BLOCK',
+            'product_color' => 'Red',
+            'product_price' => 200.0,
+            'product_discount' => 0.0,
+            'product_weight' => 600,
+            'status' => 1,
+        ]);
+
+        $this->actingAs($admin, 'admin')->post('/channel/shop/product/public/store', [
+            'shop_id' => $shop->id,
+            'product_id' => $publicProduct->id,
+            'selling_price' => 250.0,
+        ], ['X-Requested-With' => 'XMLHttpRequest'])
+            ->assertJson([
+                'status' => false,
+                'message' => '자사 PG를 사용하는 Shop 채널은 자사상품만 판매할 수 있습니다.',
+            ]);
+
+        $this->actingAs($admin, 'admin')->post('/channel/shop/product/own/store', [
+            'shop_id' => $shop->id,
+            'product_id' => $product->id,
+            'selling_price' => 120.0,
+        ], ['X-Requested-With' => 'XMLHttpRequest'])
+            ->assertJson(['status' => true]);
+
+        $shopProduct = ShopChannelProduct::where('shop_channel_id', $shop->id)
+            ->where('product_id', $product->id)
+            ->firstOrFail();
+
+        $this->assertSame(1, (int) $shopProduct->settlement_type_snapshot);
+        $this->assertSame(10.0, (float) $shopProduct->settlement_rate_snapshot);
+        $this->assertSame('seller', $shopProduct->price_decider);
+    }
 }

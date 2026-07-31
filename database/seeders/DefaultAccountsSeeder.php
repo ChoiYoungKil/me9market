@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\Admin;
+use App\Models\Distributor;
 use App\Models\User;
 use App\Models\Vendor;
 use Illuminate\Support\Facades\Hash;
@@ -34,6 +35,8 @@ class DefaultAccountsSeeder extends Seeder
             ]);
         } else {
             $admin->update([
+                'type' => 'superadmin',
+                'vendor_id' => 0,
                 'password' => Hash::make('123456'),
                 'confirm'   => 'Yes',
                 'status'   => 1,
@@ -41,9 +44,9 @@ class DefaultAccountsSeeder extends Seeder
         }
 
         // 2. 판매자 벤더 정보 생성 (vendor_id = 1 대응)
-        $vendor = Vendor::find(1);
+        $vendor = Vendor::where('email', 'john@admin.com')->first() ?: Vendor::find(1);
         if (!$vendor) {
-            Vendor::create([
+            $vendor = Vendor::create([
                 'id'      => 1,
                 'name'    => 'Default Shop Vendor',
                 'address' => 'Seoul, Korea',
@@ -58,6 +61,9 @@ class DefaultAccountsSeeder extends Seeder
             ]);
         } else {
             $vendor->update([
+                'name'    => $vendor->name ?: 'Default Shop Vendor',
+                'mobile'  => $vendor->mobile ?: '01011112222',
+                'email'   => $vendor->email ?: 'john@admin.com',
                 'confirm' => 'Yes',
                 'status'  => 1,
             ]);
@@ -70,7 +76,7 @@ class DefaultAccountsSeeder extends Seeder
             Admin::create([
                 'name'      => 'John Singh - Vendor',
                 'type'      => 'vendor',
-                'vendor_id' => 1,
+                'vendor_id' => $vendor->id,
                 'mobile'    => '01011112222',
                 'email'     => 'john@admin.com',
                 'password'  => Hash::make('123456'),
@@ -83,7 +89,7 @@ class DefaultAccountsSeeder extends Seeder
                 'password' => Hash::make('123456'),
                 'confirm'   => 'Yes',
                 'status'   => 1,
-                'vendor_id' => 1,
+                'vendor_id' => $vendor->id,
             ]);
         }
 
@@ -110,6 +116,27 @@ class DefaultAccountsSeeder extends Seeder
                 'password' => Hash::make('123456'),
                 'status'   => 1,
             ]);
+        }
+
+        // 5. 발주사 기본 계정
+        foreach (['partner@main.com', 'distributor@me9.com'] as $email) {
+            $distributor = Distributor::where('email', $email)->first();
+            if (!$distributor) {
+                Distributor::create([
+                    'name' => $email === 'partner@main.com' ? '메인 발주사' : '기본 발주사',
+                    'email' => $email,
+                    'password' => Hash::make('123456'),
+                    'phone' => '01044445555',
+                    'status' => 1,
+                ]);
+            } else {
+                $distributor->update([
+                    'name' => $distributor->name ?: ($email === 'partner@main.com' ? '메인 발주사' : '기본 발주사'),
+                    'password' => Hash::make('123456'),
+                    'phone' => $distributor->phone ?: '01044445555',
+                    'status' => 1,
+                ]);
+            }
         }
     }
 }

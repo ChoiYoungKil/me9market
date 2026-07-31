@@ -7,6 +7,8 @@ use App\Models\DeliveryAddress;
 use App\Models\Order;
 use App\Models\OrderClaim;
 use App\Models\OrdersProduct;
+use App\Models\PointTransaction;
+use App\Models\ShopChannel;
 use App\Support\OrderItemStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -328,5 +330,80 @@ class MypageTest extends TestCase
             ->assertSee('aria-label="반품완료 1건"', false)
             ->assertSee('aria-label="교환신청 1건"', false)
             ->assertSee('aria-label="교환완료 1건"', false);
+    }
+
+    public function test_approved_closed_channel_points_can_convert_to_me9_points()
+    {
+        $user = User::factory()->create();
+        $shop = ShopChannel::create([
+            'vendor_id' => 1,
+            'channel_code' => 'stopped-shop',
+            'status' => 0,
+            'closure_status' => 'approved',
+            'is_public' => 1,
+            'is_member_only' => 0,
+            'channel_name' => '운영종료 채널',
+            'copyright' => 'Me9',
+            'keywords' => [],
+        ]);
+
+        PointTransaction::create([
+            'user_id' => $user->id,
+            'shop_channel_id' => $shop->id,
+            'type' => 'earn',
+            'points' => 1000,
+            'description' => '테스트 적립',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('mypage.point.convert'), ['shop_channel_id' => $shop->id])
+            ->assertRedirect();
+
+        $this->assertSame(0, (int) PointTransaction::where('user_id', $user->id)->where('shop_channel_id', $shop->id)->sum('points'));
+        $this->assertSame(1000, (int) PointTransaction::where('user_id', $user->id)->whereNull('shop_channel_id')->sum('points'));
+        $this->assertDatabaseHas('point_transactions', [
+            'user_id' => $user->id,
+            'shop_channel_id' => $shop->id,
+            'type' => 'convert_out',
+            'points' => -1000,
+        ]);
+        $this->assertDatabaseHas('point_transactions', [
+            'user_id' => $user->id,
+            'shop_channel_id' => null,
+            'type' => 'convert_in',
+            'points' => 1000,
+        ]);
+    }
+
+    public function test_unapproved_channel_points_cannot_convert_to_me9_points()
+    {
+        $user = User::factory()->create();
+        $shop = ShopChannel::create([
+            'vendor_id' => 1,
+            'channel_code' => 'unapproved-shop',
+            'status' => 0,
+            'closure_status' => 'requested',
+            'is_public' => 1,
+            'is_member_only' => 0,
+            'channel_name' => '승인대기 채널',
+            'copyright' => 'Me9',
+            'keywords' => [],
+        ]);
+
+        PointTransaction::create([
+            'user_id' => $user->id,
+            'shop_channel_id' => $shop->id,
+            'type' => 'earn',
+            'points' => 1000,
+            'description' => '테스트 적립',
+        ]);
+
+        $this->actingAs($user)
+            ->post(route('mypage.point.convert'), ['shop_channel_id' => $shop->id])
+            ->assertRedirect()
+            ->assertSessionHas('error_message', 'Shop 채널 운영중지 승인 완료 후 Me9 포인트로 전환할 수 있습니다.');
+
+        $this->assertSame(1000, (int) PointTransaction::where('user_id', $user->id)->where('shop_channel_id', $shop->id)->sum('points'));
+        $this->assertSame(0, (int) PointTransaction::where('user_id', $user->id)->whereNull('shop_channel_id')->sum('points'));
     }
 }

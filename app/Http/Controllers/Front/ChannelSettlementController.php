@@ -6,9 +6,11 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\SettlementRun;
+use App\Models\SettlementExecution;
 use App\Services\SettlementCalculator;
 use App\Support\OrderItemStatus;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Storage;
 
 class ChannelSettlementController extends Controller
 {
@@ -56,15 +58,34 @@ class ChannelSettlementController extends Controller
         ];
 
         $settlements = $this->paginateRows($rows, $request, 20, route('channel.settlement.list'));
+        $executions = SettlementExecution::with(['shopChannel'])
+            ->where('period', $period)
+            ->where('vendor_id', $vendor_id)
+            ->latest('executed_at')
+            ->latest('id')
+            ->get();
 
         return view('channel.sub05.settlement_list', [
             'settlements' => $settlements,
+            'executions' => $executions,
             'dep1_id' => '05',
             'period' => $period,
             'periodOptions' => $periodOptions,
             'totals' => $totals,
             'rate' => $rate,
         ]);
+    }
+
+    public function downloadExecutionAttachment($id)
+    {
+        $admin = Auth::guard('admin')->user();
+        $execution = SettlementExecution::where('vendor_id', $admin->vendor_id)->findOrFail($id);
+
+        if (!$execution->attachment_path || !Storage::disk('public')->exists($execution->attachment_path)) {
+            abort(404);
+        }
+
+        return Storage::disk('public')->download($execution->attachment_path, $execution->attachment_name ?: basename($execution->attachment_path));
     }
 
     public function view(Request $request, $period, SettlementCalculator $calculator)
@@ -142,9 +163,9 @@ class ChannelSettlementController extends Controller
     private function statusLabel(string $status): string
     {
         return [
-            'completed' => '정산완료',
-            'pending' => '정산대기',
-            'preview' => '정산완료',
+            'completed' => '정산자료 생성',
+            'pending' => '정산자료 생성',
+            'preview' => '구매확정 기준',
         ][$status] ?? $status;
     }
 

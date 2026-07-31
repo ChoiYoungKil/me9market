@@ -54,13 +54,13 @@
                     </li>
                     <li class="icon7">
                         <div class="txt_w">
-                            <div class="txt1">정산대기</div>
+                            <div class="txt1">정산대상</div>
                             <div class="txt2"><strong>{{ $counts['settlement_wait'] ?? 0 }}</strong> 건</div>
                         </div>
                     </li>
                     <li class="icon8">
                         <div class="txt_w">
-                            <div class="txt1">정산완료</div>
+                            <div class="txt1">집행등록</div>
                             <div class="txt2"><strong>{{ $counts['settlement_complete'] ?? 0 }}</strong> 건</div>
                         </div>
                     </li>

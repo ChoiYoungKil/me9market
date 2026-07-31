@@ -8,9 +8,13 @@
             'seller' => '자사상품 판매자',
             'shared_fixed_supplier' => '공유상품 제공자(고정가)',
             'shared_fixed_reseller' => '공유상품 판매자(수수료)',
-            'shared_free_supplier' => '공유상품 제공자(자유가)',
-            'shared_free_reseller' => '공유상품 판매자(자유가)',
-        ];
+        'shared_free_supplier' => '공유상품 제공자(자유가)',
+        'shared_free_reseller' => '공유상품 판매자(자유가)',
+    ];
+    $pgLabels = [
+        'own_pg' => '자사PG',
+        'me9_pg' => '공용PG',
+    ];
     @endphp
     <div id="contents">
         <div class="row">
@@ -57,6 +61,7 @@
                                     <col width="170px">
                                     <col width="150px">
                                     <col width="100px">
+                                    <col width="90px">
                                     <col width="140px">
                                     <col width="140px">
                                     <col width="140px">
@@ -72,6 +77,7 @@
                                         <th>Shop 채널</th>
                                         <th>정산역할</th>
                                         <th>정산방식</th>
+                                        <th>PG구분</th>
                                         <th>주문건수</th>
                                         <th>매출</th>
                                         <th>매입</th>
@@ -93,19 +99,23 @@
                                                     {{ (int)$settlement->settlement_type === 2 ? '판매 개당 금액' : '판매금액 대비 %' }}
                                                     / {{ number_format($settlement->settlement_rate, 2) }}{{ (int)$settlement->settlement_type === 2 ? '원' : '%' }}
                                                 </td>
+                                                <td>{{ $pgLabels[$settlement->payment_gateway_type ?? 'me9_pg'] ?? '공용PG' }}</td>
                                                 <td>{{ number_format($settlement->order_count) }} 건</td>
                                                 <td class="t_r">{{ number_format($settlement->invoice_sales_amount ?? $settlement->gross_sales_amount) }} 원</td>
                                                 <td class="t_r">{{ number_format($settlement->invoice_purchase_amount ?? 0) }} 원</td>
                                                 <td class="t_r">{{ number_format($settlement->point_deposit_amount ?? 0) }} P</td>
                                                 <td class="t_r">{{ number_format($settlement->point_used_amount ?? 0) }} P</td>
-                                                <td class="t_r"><span class="bold fcol4">{{ number_format($settlement->payout_amount ?? $settlement->settlement_amount) }} 원</span></td>
+                                                <td class="t_r">
+                                                    <span class="bold fcol4">{{ number_format($settlement->payout_amount ?? $settlement->settlement_amount) }} 원</span>
+                                                    @if(($settlement->payment_gateway_type ?? 'me9_pg') === 'own_pg')
+                                                        <p class="fcol1" style="font-size:12px;">Me9 지급대상 아님</p>
+                                                    @endif
+                                                </td>
                                                 <td>
-                                                    @if(($settlement->run_status ?? $settlement->status) === 'completed')
-                                                        정산완료
-                                                    @elseif(($settlement->run_status ?? $settlement->status) === 'pending')
-                                                        생성완료
+                                                    @if(in_array(($settlement->run_status ?? $settlement->status), ['completed', 'pending'], true))
+                                                        정산자료 생성
                                                     @else
-                                                        미정산
+                                                        구매확정 기준
                                                     @endif
                                                 </td>
                                                 <td>
@@ -116,14 +126,14 @@
                                         @endforeach
                                     @else
                                         <tr>
-                                            <td colspan="12" class="no_data">정산 내역이 없습니다.</td>
+                                            <td colspan="13" class="no_data">정산 내역이 없습니다.</td>
                                         </tr>
                                     @endif
                                 </tbody>
                                 @if($settlements->total() > 0)
                                     <tfoot>
                                         <tr>
-                                            <th colspan="4">합계</th>
+                                            <th colspan="5">합계</th>
                                             <th>{{ number_format($totals['order_count']) }} 건</th>
                                             <th class="t_r">{{ number_format($totals['invoice_sales_amount'] ?? $totals['gross_sales_amount']) }} 원</th>
                                             <th class="t_r">{{ number_format($totals['invoice_purchase_amount'] ?? 0) }} 원</th>
@@ -139,6 +149,55 @@
 
                         <div class="page_bx1">
                             {{ $settlements->links() }}
+                        </div>
+
+                        <div class="ttl01 mt30">정산 집행 현황</div>
+                        <div class="tb01 ovS">
+                            <table>
+                                <colgroup>
+                                    <col width="80px">
+                                    <col width="140px">
+                                    <col width="180px">
+                                    <col width="220px">
+                                    <col width="130px">
+                                    <col width="160px">
+                                    <col width="">
+                                </colgroup>
+                                <thead>
+                                    <tr>
+                                        <th>No</th>
+                                        <th>집행일</th>
+                                        <th>Shop 채널</th>
+                                        <th>집행 내역</th>
+                                        <th>금액</th>
+                                        <th>첨부자료</th>
+                                        <th>메모</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($executions as $execution)
+                                        <tr>
+                                            <td>{{ $loop->iteration }}</td>
+                                            <td>{{ optional($execution->executed_at)->format('Y-m-d') }}</td>
+                                            <td>{{ $execution->shopChannel?->channel_name ?? '-' }}</td>
+                                            <td>{{ $execution->title }}</td>
+                                            <td class="t_r">{{ number_format($execution->amount) }} 원</td>
+                                            <td>
+                                                @if($execution->attachment_path)
+                                                    <a href="{{ route('channel.settlement.executions.download', $execution->id) }}" class="btn02">다운로드</a>
+                                                @else
+                                                    -
+                                                @endif
+                                            </td>
+                                            <td>{{ $execution->memo ?: '-' }}</td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="7" class="no_data">정산 집행 내역이 없습니다.</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
