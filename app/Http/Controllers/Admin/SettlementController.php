@@ -367,7 +367,7 @@ class SettlementController extends Controller
             $pointPayment = (float) $item->point_used_amount;
             $pgPayment = max(0, (float) $item->invoice_sales_amount - $pointPayment);
             $smsFee = (float) data_get($orderItem, 'sms_fee', 0);
-            $smsCount = $smsFee > 0 ? max(1, (int) ceil($smsFee / 20)) : 0;
+            $smsCount = (int) data_get($orderItem, 'sms_count', 0);
 
             return [
                 optional($item->confirmed_at)->format('Y-m-d H:i'),
@@ -493,7 +493,7 @@ class SettlementController extends Controller
             $usesOwnPg = ($item->payment_gateway_type ?? null) === 'own_pg'
                 || (bool) data_get($orderItem, 'shopChannel.use_own_pg', false);
             $pgPayment = max(0, (float) $item->invoice_sales_amount - (float) $item->point_used_amount);
-            $payoutAmount = $usesOwnPg ? 0 : (float) $item->payout_amount;
+            $payoutAmount = (float) $item->payout_amount;
 
             return [
                 optional($item->confirmed_at)->format('Y-m-d H:i'),
@@ -508,7 +508,9 @@ class SettlementController extends Controller
                 max(0, (float) $item->invoice_sales_amount - (float) $item->gross_sales_amount),
                 0,
                 $payoutAmount,
-                $usesOwnPg ? '자사PG 결제건은 Me9 지급 대상 아님' : '공용PG 수납 기준 지급',
+                $usesOwnPg
+                    ? ($payoutAmount > 0 ? '자사PG 주문의 Me9 포인트 결제분 지급' : '자사PG 결제건은 Me9 지급 대상 아님')
+                    : '공용PG 수납 기준 지급',
             ];
         });
     }
@@ -517,9 +519,11 @@ class SettlementController extends Controller
     {
         return $settlement->items->map(function ($item) {
             $smsFee = (float) data_get($item->orderItem, 'sms_fee', 0);
-            $billingAmount = (float) $item->invoice_purchase_amount + $smsFee + (float) $item->point_deposit_amount;
             $usesOwnPg = ($item->payment_gateway_type ?? null) === 'own_pg'
                 || (bool) data_get($item->orderItem, 'shopChannel.use_own_pg', false);
+            $billingAmount = $usesOwnPg
+                ? max(0, $smsFee - (float) $item->point_used_amount)
+                : (float) $item->invoice_purchase_amount + $smsFee + (float) $item->point_deposit_amount;
 
             return [
                 optional($item->confirmed_at)->format('Y-m-d H:i'),

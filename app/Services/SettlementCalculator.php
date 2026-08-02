@@ -148,6 +148,9 @@ class SettlementCalculator
             ? 0
             : round(max(0, (float) ($item->product?->reward_points ?? 0)) * $quantity, 2);
         $usedPointAmount = $this->allocatedUsedPointAmount($item);
+        $smsFee = (float) ($item->sms_fee ?? 0);
+        $ownPgPayoutAmount = $usesOwnPg ? max(0, round($usedPointAmount - $smsFee, 2)) : 0;
+        $settlementCommissionAmount = $usesOwnPg ? 0 : $commissionAmount;
         $productType = $shopProduct?->product_type ?: 'own';
         $isShared = in_array($productType, ['public', 'partial'], true);
         $isFixedShared = $isShared
@@ -164,13 +167,13 @@ class SettlementCalculator
                     'supply_amount' => $supplyAmount,
                     'sales_profit_amount' => $salesProfit,
                     'invoice_sales_amount' => $invoiceGross,
-                    'invoice_purchase_amount' => $commissionAmount,
+                    'invoice_purchase_amount' => $settlementCommissionAmount,
                     'point_deposit_amount' => $rewardPoints,
                     'point_used_amount' => $usedPointAmount,
                     'payment_gateway_type' => $paymentGatewayType,
-                    'settlement_amount' => $usesOwnPg ? 0 : round($invoiceGross - $commissionAmount - $rewardPoints, 2),
-                    'admin_amount' => $commissionAmount,
-                    'payout_amount' => $usesOwnPg ? 0 : round($invoiceGross - $commissionAmount - $rewardPoints, 2),
+                    'settlement_amount' => $usesOwnPg ? $ownPgPayoutAmount : round($invoiceGross - $commissionAmount - $rewardPoints, 2),
+                    'admin_amount' => $settlementCommissionAmount,
+                    'payout_amount' => $usesOwnPg ? $ownPgPayoutAmount : round($invoiceGross - $commissionAmount - $rewardPoints, 2),
                     'settlement_type' => $settlementType,
                     'settlement_rate' => $settlementRate,
                     'confirmed_at' => $confirmedAt,

@@ -159,6 +159,11 @@ class ChannelOrderTest extends TestCase
             'status' => 'approved',
             'memo' => '배송중 안내 문자 발송',
         ]);
+        $this->assertDatabaseHas('orders_products', [
+            'id' => $item->id,
+            'sms_count' => 1,
+            'sms_fee' => 20,
+        ]);
     }
 
     public function test_request_cancel_creates_claim_and_updates_status()

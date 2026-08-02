@@ -48,6 +48,8 @@ class OrdersProduct extends Model
         'return_shipping_fee',
         'exchange_shipping_fee',
         'extra_shipping_fee',
+        'sms_count',
+        'sms_fee',
     ];
 
     protected $casts = [
@@ -57,6 +59,8 @@ class OrdersProduct extends Model
         'return_shipping_fee' => 'integer',
         'exchange_shipping_fee' => 'integer',
         'extra_shipping_fee' => 'integer',
+        'sms_count' => 'integer',
+        'sms_fee' => 'integer',
     ];
 
     public function product()

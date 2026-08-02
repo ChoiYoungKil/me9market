@@ -305,13 +305,20 @@ class ChannelOrderController extends Controller
             ->groupBy('shop_channel_id');
 
         foreach ($itemsByChannel as $shopChannelId => $channelItems) {
-            app(ChannelPointService::class)->recordSmsDebit(
+            $transaction = app(ChannelPointService::class)->recordSmsDebit(
                 $vendorId,
                 1,
                 20,
                 (int) $shopChannelId,
                 OrderItemStatus::label($status) . ' 안내 문자 발송'
             );
+
+            if ($transaction) {
+                $item = $channelItems->first();
+                $item->sms_count = (int) $item->sms_count + 1;
+                $item->sms_fee = (int) $item->sms_fee + abs((int) $transaction->points);
+                $item->save();
+            }
         }
     }
 }

@@ -516,7 +516,7 @@ class ChannelSettlementTest extends TestCase
         $this->assertEquals(200.0, $summary['invoice_sales_amount']);
         $this->assertEquals(0.0, $summary['payout_amount']);
         $this->assertEquals(0.0, $summary['settlement_amount']);
-        $this->assertEquals(30.0, $summary['admin_amount']);
+        $this->assertEquals(0.0, $summary['admin_amount']);
 
         $runs = $calculator->generate('2026-05', $admin->id);
         $run = $runs->first();
@@ -524,5 +524,77 @@ class ChannelSettlementTest extends TestCase
         $this->assertEquals('own_pg', $run->payment_gateway_type);
         $this->assertEquals(0.0, (float) $run->payout_amount);
         $this->assertEquals('own_pg', $run->items->first()->payment_gateway_type);
+    }
+
+    public function test_own_pg_point_payment_creates_me9_payout_after_sms_fee()
+    {
+        list($vendor, $admin, $shop, $product) = $this->createSetup();
+        $shop->update(['use_own_pg' => true, 'pg_provider' => 'kcp']);
+
+        $order = new Order;
+        $order->user_id = 1;
+        $order->name = 'Customer Name';
+        $order->address = 'Test Address';
+        $order->city = 'Seoul';
+        $order->state = 'Seoul';
+        $order->country = 'Korea';
+        $order->pincode = '12345';
+        $order->mobile = '01011112222';
+        $order->email = 'customer@example.com';
+        $order->shipping_charges = 2500;
+        $order->used_point = 3000;
+        $order->order_status = 'Payment Captured';
+        $order->payment_method = 'Card';
+        $order->payment_gateway = 'Own PG';
+        $order->grand_total = 12500;
+        $order->save();
+
+        $item = new OrdersProduct;
+        $item->order_id = $order->id;
+        $item->user_id = 1;
+        $item->vendor_id = $vendor->id;
+        $item->shop_channel_id = $shop->id;
+        $item->admin_id = $admin->id;
+        $item->product_id = $product->id;
+        $item->product_code = $product->product_code;
+        $item->product_name = $product->product_name;
+        $item->product_color = $product->product_color;
+        $item->product_size = 'M';
+        $item->product_price = 10000;
+        $item->selling_price = 10000;
+        $item->product_qty = 1;
+        $item->line_total = 10000;
+        $item->sms_count = 2;
+        $item->sms_fee = 100;
+        $item->status_code = OrderItemStatus::CONFIRMED;
+        $item->item_status = OrderItemStatus::label(OrderItemStatus::CONFIRMED);
+        $item->confirmed_at = Carbon::parse('2026-05-15 12:00:00');
+        $item->save();
+
+        $calculator = app(SettlementCalculator::class);
+        $summary = $calculator->preview('2026-05', $vendor->id)->first();
+
+        $this->assertNotNull($summary);
+        $this->assertEquals('own_pg', $summary['payment_gateway_type']);
+        $this->assertEquals(12500.0, $summary['invoice_sales_amount']);
+        $this->assertEquals(0.0, $summary['invoice_purchase_amount']);
+        $this->assertEquals(3000.0, $summary['point_used_amount']);
+        $this->assertEquals(2900.0, $summary['payout_amount']);
+        $this->assertEquals(2900.0, $summary['settlement_amount']);
+        $this->assertEquals(0.0, $summary['admin_amount']);
+
+        $run = $calculator->generate('2026-05', $admin->id)->first();
+
+        $response = $this->actingAs($admin, 'admin')->get(route('admin.settlements.export', $run->id));
+        $response->assertOk();
+        $this->assertStringContainsString('일반,자사,상품판매,9500,3000,10000,2500,0,0,0,2,100,0,2900', $response->streamedContent());
+
+        $response = $this->actingAs($admin, 'admin')->get(route('admin.settlements.payout.export', $run->id));
+        $response->assertOk();
+        $this->assertStringContainsString('자사PG,9500,0,0,3000,12500,0,0,2900', $response->streamedContent());
+
+        $response = $this->actingAs($admin, 'admin')->get(route('admin.settlements.billing.export', $run->id));
+        $response->assertOk();
+        $this->assertStringContainsString('자사PG,0,0,100,0,0', $response->streamedContent());
     }
 }
