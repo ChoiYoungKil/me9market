@@ -20,6 +20,8 @@ class AdminsTableSeeder extends Seeder
         // My code: (Check DatabaseSeeder.php page too)
         // Database Seeding    // https://laravel.com/docs/9.x/seeding
         // Note: Check DatabaseSeeder.php
+        $vendorId = \App\Models\Vendor::where('email', 'john@admin.com')->value('id') ?: 1;
+
         $adminRecords = [
             [
                 'id'        => 1,
@@ -39,7 +41,7 @@ class AdminsTableSeeder extends Seeder
                 'id'        => 2,
                 'name'      => 'John Singh - Vendor',
                 'type'      => 'vendor',
-                'vendor_id' => 1, // `vendor_id` is one 1 because 'type' is 'vendor'
+                'vendor_id' => $vendorId,
                 'mobile'    => '9700000000',
                 'email'     => 'john@admin.com',
                 'password'  => '$2a$12$xvkjSScUPRexfcJTAy9ATutIeGUuRgJrjDIdL/.xlrddEvRZINpeC', // This is the encryption of '123456'    // using https://bcrypt-generator.com/

@@ -43,11 +43,10 @@ class DefaultAccountsSeeder extends Seeder
             ]);
         }
 
-        // 2. 판매자 벤더 정보 생성 (vendor_id = 1 대응)
-        $vendor = Vendor::where('email', 'john@admin.com')->first() ?: Vendor::find(1);
-        if (!$vendor) {
-            $vendor = Vendor::create([
-                'id'      => 1,
+        // 2. 판매자 벤더 정보 생성
+        $vendor = Vendor::updateOrCreate(
+            ['email' => 'john@admin.com'],
+            [
                 'name'    => 'Default Shop Vendor',
                 'address' => 'Seoul, Korea',
                 'city'    => 'Seoul',
@@ -55,19 +54,10 @@ class DefaultAccountsSeeder extends Seeder
                 'country' => 'Korea',
                 'pincode' => '12345',
                 'mobile'  => '01011112222',
-                'email'   => 'john@admin.com',
                 'confirm' => 'Yes',
                 'status'  => 1,
-            ]);
-        } else {
-            $vendor->update([
-                'name'    => $vendor->name ?: 'Default Shop Vendor',
-                'mobile'  => $vendor->mobile ?: '01011112222',
-                'email'   => $vendor->email ?: 'john@admin.com',
-                'confirm' => 'Yes',
-                'status'  => 1,
-            ]);
-        }
+            ]
+        );
 
         // 3. 채널관리자 (Vendor Admin)
         // 기존에 john@admin.com이 있는지 확인 후 생성/업데이트
