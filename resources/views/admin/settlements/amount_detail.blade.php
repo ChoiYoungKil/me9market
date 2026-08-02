@@ -48,7 +48,7 @@
                                         <col width="150px"><col width="100px"><col width="150px"><col width="100px">
                                         <col width="120px"><col width="120px"><col width="120px">
                                         <col width="120px"><col width="120px"><col width="120px"><col width="120px">
-                                        <col width="130px"><col width="230px">
+                                        <col width="120px"><col width="130px"><col width="230px">
                                     </colgroup>
                                     <thead>
                                         <tr>
@@ -63,6 +63,7 @@
                                             <th>상품가</th>
                                             <th>배송비</th>
                                             <th>할인금액</th>
+                                            <th>매출액</th>
                                             <th>채널 지급액</th>
                                             <th>지급사유</th>
                                         </tr>
@@ -79,7 +80,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="{{ $mode === 'billing' ? 10 : 13 }}" class="no_data">상세 내역이 없습니다.</td>
+                                            <td colspan="{{ $mode === 'billing' ? 10 : 14 }}" class="no_data">상세 내역이 없습니다.</td>
                                         </tr>
                                     @endforelse
                                 </tbody>

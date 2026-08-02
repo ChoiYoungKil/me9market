@@ -524,6 +524,12 @@ class ChannelSettlementTest extends TestCase
         $this->assertEquals('own_pg', $run->payment_gateway_type);
         $this->assertEquals(0.0, (float) $run->payout_amount);
         $this->assertEquals('own_pg', $run->items->first()->payment_gateway_type);
+
+        $response = $this->actingAs($admin, 'admin')->get(route('admin.settlements.payout.export', $run->id));
+        $response->assertOk();
+        $csv = $response->streamedContent();
+        $this->assertStringContainsString('"자사PG 결제액","공용PG 결제액",자사포인트,Me9포인트,상품가,배송비,할인금액,매출액,"채널 지급액"', $csv);
+        $this->assertStringContainsString('자사PG,200,0,0,0,200,0,0,200,0', $csv);
     }
 
     public function test_own_pg_point_payment_creates_me9_payout_after_sms_fee()
@@ -591,7 +597,7 @@ class ChannelSettlementTest extends TestCase
 
         $response = $this->actingAs($admin, 'admin')->get(route('admin.settlements.payout.export', $run->id));
         $response->assertOk();
-        $this->assertStringContainsString('자사PG,9500,0,0,3000,12500,0,0,2900', $response->streamedContent());
+        $this->assertStringContainsString('자사PG,9500,0,0,3000,10000,2500,0,12500,2900', $response->streamedContent());
 
         $response = $this->actingAs($admin, 'admin')->get(route('admin.settlements.billing.export', $run->id));
         $response->assertOk();

@@ -230,7 +230,7 @@ class SettlementController extends Controller
 
         return $this->downloadCsv(
             'settlement_payout_' . $settlement->period . '_' . $settlement->id . '.csv',
-            ['등록일', '채널아이디', '주문번호', 'PG구분', '자사PG 결제액', '공용PG 결제액', '자사포인트', 'Me9포인트', '상품가', '배송비', '할인금액', '채널 지급액', '지급사유'],
+            ['등록일', '채널아이디', '주문번호', 'PG구분', '자사PG 결제액', '공용PG 결제액', '자사포인트', 'Me9포인트', '상품가', '배송비', '할인금액', '매출액', '채널 지급액', '지급사유'],
             $this->payoutRows($settlement)
         );
     }
@@ -395,6 +395,17 @@ class SettlementController extends Controller
         return data_get($orderItem, 'joint_purchase_id') ? '공동구매' : '일반';
     }
 
+    private function orderItemLineTotal($orderItem, int $quantity = 1): float
+    {
+        $lineTotal = (float) data_get($orderItem, 'line_total', 0);
+
+        if ($lineTotal > 0) {
+            return $lineTotal;
+        }
+
+        return (float) data_get($orderItem, 'product_price', 0) * max(1, (int) data_get($orderItem, 'product_qty', $quantity));
+    }
+
     private function allocatedOrderAmount($orderItem, string $field): float
     {
         $amount = (float) data_get($orderItem, 'order.' . $field, 0);
@@ -494,6 +505,9 @@ class SettlementController extends Controller
                 || (bool) data_get($orderItem, 'shopChannel.use_own_pg', false);
             $pgPayment = max(0, (float) $item->invoice_sales_amount - (float) $item->point_used_amount);
             $payoutAmount = (float) $item->payout_amount;
+            $productAmount = $this->orderItemLineTotal($orderItem, (int) $item->quantity);
+            $shippingAmount = $this->allocatedOrderAmount($orderItem, 'shipping_charges');
+            $discountAmount = $this->allocatedOrderAmount($orderItem, 'coupon_amount');
 
             return [
                 optional($item->confirmed_at)->format('Y-m-d H:i'),
@@ -504,9 +518,10 @@ class SettlementController extends Controller
                 $usesOwnPg ? 0 : $pgPayment,
                 0,
                 (float) $item->point_used_amount,
-                (float) $item->gross_sales_amount,
-                max(0, (float) $item->invoice_sales_amount - (float) $item->gross_sales_amount),
-                0,
+                $productAmount,
+                $shippingAmount,
+                $discountAmount,
+                (float) $item->invoice_sales_amount,
                 $payoutAmount,
                 $usesOwnPg
                     ? ($payoutAmount > 0 ? '자사PG 주문의 Me9 포인트 결제분 지급' : '자사PG 결제건은 Me9 지급 대상 아님')
