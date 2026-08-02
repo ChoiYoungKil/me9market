@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\SettlementExecution;
 use App\Models\SettlementRun;
 use App\Services\SettlementCalculator;
+use App\Support\OrderItemStatus;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
@@ -275,29 +276,12 @@ class SettlementController extends Controller
 
     public function exportExtraShipping($id)
     {
-        $settlement = SettlementRun::with('items.orderItem')->findOrFail($id);
-
-        $rows = $settlement->items->map(function ($item) {
-            $orderItem = $item->orderItem;
-            $extraShipping = (int) data_get($orderItem, 'return_shipping_fee', 0)
-                + (int) data_get($orderItem, 'exchange_shipping_fee', 0)
-                + (int) data_get($orderItem, 'extra_shipping_fee', 0);
-
-            return [
-                $item->order_no,
-                $item->product_name,
-                $item->status,
-                $extraShipping,
-                data_get($orderItem, 'courier_name', ''),
-                data_get($orderItem, 'tracking_number', ''),
-                optional($item->confirmed_at)->format('Y-m-d H:i'),
-            ];
-        });
+        $settlement = SettlementRun::with('items.orderItem.shopChannel')->findOrFail($id);
 
         return $this->downloadCsv(
             'settlement_extra_shipping_' . $settlement->period . '_' . $settlement->id . '.csv',
-            ['주문번호', '상품명', '상태', '추가배송비', '택배사', '송장번호', '처리일'],
-            $rows
+            ['주문번호', '상품명', '상태', 'PG구분', '반품배송비', '교환배송비', '기타추가배송비', '추가배송비 합계', '택배사', '송장번호', '처리일'],
+            $this->extraShippingRows($settlement)
         );
     }
 
@@ -448,6 +432,46 @@ class SettlementController extends Controller
         return in_array($role, ['shared_fixed_reseller', 'shared_free_reseller'], true)
             ? '위탁판매'
             : '상품판매';
+    }
+
+    private function extraShippingRows(SettlementRun $settlement)
+    {
+        return $settlement->items
+            ->filter(function ($item) {
+                $orderItem = $item->orderItem;
+                $usesOwnPg = ($item->payment_gateway_type ?? null) === 'own_pg'
+                    || (bool) data_get($orderItem, 'shopChannel.use_own_pg', false);
+
+                return !$usesOwnPg && $this->extraShippingTotal($orderItem) > 0;
+            })
+            ->map(function ($item) {
+                $orderItem = $item->orderItem;
+                $returnFee = (int) data_get($orderItem, 'return_shipping_fee', 0);
+                $exchangeFee = (int) data_get($orderItem, 'exchange_shipping_fee', 0);
+                $extraFee = (int) data_get($orderItem, 'extra_shipping_fee', 0);
+
+                return [
+                    $item->order_no,
+                    $item->product_name,
+                    OrderItemStatus::label(OrderItemStatus::normalize(data_get($orderItem, 'status_code') ?: data_get($orderItem, 'item_status'))),
+                    $this->paymentGatewayLabel('me9_pg'),
+                    $returnFee,
+                    $exchangeFee,
+                    $extraFee,
+                    $returnFee + $exchangeFee + $extraFee,
+                    data_get($orderItem, 'courier_name', ''),
+                    data_get($orderItem, 'tracking_number', ''),
+                    optional($item->confirmed_at)->format('Y-m-d H:i'),
+                ];
+            })
+            ->values();
+    }
+
+    private function extraShippingTotal($orderItem): int
+    {
+        return (int) data_get($orderItem, 'return_shipping_fee', 0)
+            + (int) data_get($orderItem, 'exchange_shipping_fee', 0)
+            + (int) data_get($orderItem, 'extra_shipping_fee', 0);
     }
 
     private function amountDetail($id, string $mode)

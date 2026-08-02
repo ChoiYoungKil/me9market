@@ -351,6 +351,121 @@ class ChannelSettlementTest extends TestCase
         $this->assertStringContainsString('일반,자사,상품판매,20000,1000,20000,3000,2000,2890,0,0,0,200,17910', $csv);
     }
 
+    public function test_extra_shipping_export_only_includes_common_pg_items_with_extra_shipping()
+    {
+        list($vendor, $admin, $shop, $product) = $this->createSetup();
+
+        $ownPgShop = ShopChannel::create([
+            'vendor_id' => $vendor->id,
+            'channel_code' => 'ownpg',
+            'channel_name' => 'Own PG Channel',
+            'copyright' => 'Test Copyright',
+            'keywords' => '[]',
+            'settlement_type' => 1,
+            'settlement_rate' => 12.5,
+            'use_own_pg' => true,
+            'pg_provider' => 'kcp',
+            'status' => 1,
+        ]);
+
+        $order = new Order;
+        $order->user_id = 1;
+        $order->name = 'Customer Name';
+        $order->address = 'Test Address';
+        $order->city = 'Seoul';
+        $order->state = 'Seoul';
+        $order->country = 'Korea';
+        $order->pincode = '12345';
+        $order->mobile = '01011112222';
+        $order->email = 'customer@example.com';
+        $order->shipping_charges = 0;
+        $order->order_status = 'Payment Captured';
+        $order->payment_method = 'Card';
+        $order->payment_gateway = 'Me9';
+        $order->grand_total = 40000;
+        $order->save();
+
+        $commonItem = OrdersProduct::create([
+            'order_id' => $order->id,
+            'user_id' => 1,
+            'vendor_id' => $vendor->id,
+            'shop_channel_id' => $shop->id,
+            'admin_id' => $admin->id,
+            'product_id' => $product->id,
+            'product_code' => $product->product_code,
+            'product_name' => 'Common PG Extra Shipping',
+            'product_color' => $product->product_color,
+            'product_size' => 'M',
+            'product_price' => 10000,
+            'selling_price' => 10000,
+            'product_qty' => 1,
+            'line_total' => 10000,
+            'status_code' => OrderItemStatus::CONFIRMED,
+            'item_status' => OrderItemStatus::label(OrderItemStatus::CONFIRMED),
+            'return_shipping_fee' => 3000,
+            'exchange_shipping_fee' => 2500,
+            'extra_shipping_fee' => 500,
+            'confirmed_at' => Carbon::parse('2026-05-15 12:00:00'),
+        ]);
+
+        OrdersProduct::create([
+            'order_id' => $order->id,
+            'user_id' => 1,
+            'vendor_id' => $vendor->id,
+            'shop_channel_id' => $shop->id,
+            'admin_id' => $admin->id,
+            'product_id' => $product->id,
+            'product_code' => $product->product_code,
+            'product_name' => 'Common PG No Extra Shipping',
+            'product_color' => $product->product_color,
+            'product_size' => 'L',
+            'product_price' => 10000,
+            'selling_price' => 10000,
+            'product_qty' => 1,
+            'line_total' => 10000,
+            'status_code' => OrderItemStatus::CONFIRMED,
+            'item_status' => OrderItemStatus::label(OrderItemStatus::CONFIRMED),
+            'confirmed_at' => Carbon::parse('2026-05-15 12:00:00'),
+        ]);
+
+        OrdersProduct::create([
+            'order_id' => $order->id,
+            'user_id' => 1,
+            'vendor_id' => $vendor->id,
+            'shop_channel_id' => $ownPgShop->id,
+            'admin_id' => $admin->id,
+            'product_id' => $product->id,
+            'product_code' => $product->product_code,
+            'product_name' => 'Own PG Extra Shipping',
+            'product_color' => $product->product_color,
+            'product_size' => 'S',
+            'product_price' => 10000,
+            'selling_price' => 10000,
+            'product_qty' => 1,
+            'line_total' => 10000,
+            'status_code' => OrderItemStatus::CONFIRMED,
+            'item_status' => OrderItemStatus::label(OrderItemStatus::CONFIRMED),
+            'return_shipping_fee' => 3000,
+            'confirmed_at' => Carbon::parse('2026-05-15 12:00:00'),
+        ]);
+
+        $runs = app(SettlementCalculator::class)->generate('2026-05', $admin->id);
+        $commonRun = $runs->firstWhere('payment_gateway_type', 'me9_pg');
+        $ownPgRun = $runs->firstWhere('payment_gateway_type', 'own_pg');
+
+        $response = $this->actingAs($admin, 'admin')->get(route('admin.settlements.extra_shipping.export', $commonRun->id));
+        $response->assertOk();
+
+        $csv = $response->streamedContent();
+        $this->assertStringContainsString('주문번호,상품명,상태,PG구분,반품배송비,교환배송비,기타추가배송비,"추가배송비 합계",택배사,송장번호,처리일', $csv);
+        $this->assertStringContainsString('"' . $commonItem->product_name . '",구매확정,공용PG,3000,2500,500,6000', $csv);
+        $this->assertStringNotContainsString('Common PG No Extra Shipping', $csv);
+
+        $response = $this->actingAs($admin, 'admin')->get(route('admin.settlements.extra_shipping.export', $ownPgRun->id));
+        $response->assertOk();
+        $this->assertStringNotContainsString('Own PG Extra Shipping', $response->streamedContent());
+    }
+
     public function test_own_pg_settlement_tracks_sales_without_me9_payout()
     {
         list($vendor, $admin, $shop, $product) = $this->createSetup();

@@ -45,12 +45,18 @@ class OrdersProduct extends Model
         'shipped_at',
         'delivered_at',
         'confirmed_at',
+        'return_shipping_fee',
+        'exchange_shipping_fee',
+        'extra_shipping_fee',
     ];
 
     protected $casts = [
         'shipped_at' => 'datetime',
         'delivered_at' => 'datetime',
         'confirmed_at' => 'datetime',
+        'return_shipping_fee' => 'integer',
+        'exchange_shipping_fee' => 'integer',
+        'extra_shipping_fee' => 'integer',
     ];
 
     public function product()
