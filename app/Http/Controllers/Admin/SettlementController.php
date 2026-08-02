@@ -524,7 +524,7 @@ class SettlementController extends Controller
                 (float) $item->invoice_sales_amount,
                 $payoutAmount,
                 $usesOwnPg
-                    ? ($payoutAmount > 0 ? '자사PG 주문의 Me9 포인트 결제분 지급' : '자사PG 결제건은 Me9 지급 대상 아님')
+                    ? ($payoutAmount > 0 ? '자사PG 주문의 Me9 포인트 결제분 지급' : '자사PG 결제분 제외')
                     : '공용PG 수납 기준 지급',
             ];
         });
