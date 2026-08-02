@@ -108,7 +108,7 @@
                                                 <td class="t_r">
                                                     <span class="bold fcol4">{{ number_format($settlement->payout_amount ?? $settlement->settlement_amount) }} 원</span>
                                                     @if(($settlement->payment_gateway_type ?? 'me9_pg') === 'own_pg')
-                                                        <p class="fcol1" style="font-size:12px;">Me9 지급대상 아님</p>
+                                                        <p class="fcol1" style="font-size:12px;">자사PG 결제분 제외</p>
                                                     @endif
                                                 </td>
                                                 <td>

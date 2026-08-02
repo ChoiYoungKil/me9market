@@ -66,7 +66,7 @@
                                         <th>지급 기준</th>
                                         <td>
                                             @if(($settlement->payment_gateway_type ?? 'me9_pg') === 'own_pg')
-                                                자사PG 결제건은 채널이 직접 수납하므로 Me9 지급액은 0원입니다.
+                                                자사PG 결제분은 채널이 직접 수납하므로 지급 대상이 아니며, Me9 포인트 결제분이 있는 경우에만 SMS 비용 차감 후 지급합니다.
                                             @else
                                                 공용PG 수납액에서 수수료/포인트를 차감해 지급합니다.
                                             @endif
@@ -161,7 +161,7 @@
                                             <td class="t_r bold fcol4">
                                                 {{ number_format($item->payout_amount ?? $item->settlement_amount) }}원
                                                 @if(($item->payment_gateway_type ?? 'me9_pg') === 'own_pg')
-                                                    <p class="fcol1" style="font-size:12px;">지급 제외</p>
+                                                    <p class="fcol1" style="font-size:12px;">자사PG 결제분 제외, Me9 포인트분만 지급</p>
                                                 @endif
                                             </td>
                                             <td class="t_r">{{ number_format($item->admin_amount) }}원</td>
