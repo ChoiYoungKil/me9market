@@ -294,6 +294,63 @@ class ChannelSettlementTest extends TestCase
         $this->assertEquals(17910.0, $summary['settlement_amount']);
     }
 
+    public function test_admin_settlement_export_uses_storyboard_detail_columns()
+    {
+        list($vendor, $admin, $shop, $product) = $this->createSetup();
+        $product->update(['reward_points' => 100]);
+
+        $order = new Order;
+        $order->user_id = 1;
+        $order->name = 'Customer Name';
+        $order->address = 'Test Address';
+        $order->city = 'Seoul';
+        $order->state = 'Seoul';
+        $order->country = 'Korea';
+        $order->pincode = '12345';
+        $order->mobile = '01011112222';
+        $order->email = 'customer@example.com';
+        $order->shipping_charges = 3000;
+        $order->coupon_amount = 2000;
+        $order->used_point = 1000;
+        $order->order_status = 'Payment Captured';
+        $order->payment_method = 'Card';
+        $order->payment_gateway = 'Me9';
+        $order->grand_total = 22000;
+        $order->save();
+
+        $item = new OrdersProduct;
+        $item->order_id = $order->id;
+        $item->user_id = 1;
+        $item->vendor_id = $vendor->id;
+        $item->shop_channel_id = $shop->id;
+        $item->admin_id = $admin->id;
+        $item->product_id = $product->id;
+        $item->product_code = $product->product_code;
+        $item->product_name = $product->product_name;
+        $item->product_color = $product->product_color;
+        $item->product_size = 'M';
+        $item->product_price = 10000;
+        $item->selling_price = 10000;
+        $item->supply_price = 7000;
+        $item->product_qty = 2;
+        $item->line_total = 20000;
+        $item->status_code = OrderItemStatus::CONFIRMED;
+        $item->item_status = OrderItemStatus::label(OrderItemStatus::CONFIRMED);
+        $item->confirmed_at = Carbon::parse('2026-05-15 12:00:00');
+        $item->save();
+
+        $run = app(SettlementCalculator::class)->generate('2026-05', $admin->id)->first();
+
+        $response = $this->actingAs($admin, 'admin')->get(route('admin.settlements.export', $run->id));
+        $response->assertOk();
+
+        $csv = $response->streamedContent();
+        $this->assertStringContainsString('등록일,주문번호,주문유형,상품유형,구분,PG결제,포인트결제,상품가,배송비,할인금액,상품+수수료,배송비', $csv);
+        $this->assertStringContainsString('"SMS수수료 건수","SMS수수료 비용",제공포인트,정산비용', $csv);
+        $this->assertStringContainsString('"2026-05-15 12:00",Me9-', $csv);
+        $this->assertStringContainsString('일반,자사,상품판매,20000,1000,20000,3000,2000,2890,0,0,0,200,17910', $csv);
+    }
+
     public function test_own_pg_settlement_tracks_sales_without_me9_payout()
     {
         list($vendor, $admin, $shop, $product) = $this->createSetup();

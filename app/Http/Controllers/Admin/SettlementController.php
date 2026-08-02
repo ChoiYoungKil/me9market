@@ -247,46 +247,29 @@ class SettlementController extends Controller
 
     public function export($id)
     {
-        $settlement = SettlementRun::with('items')->findOrFail($id);
+        $settlement = SettlementRun::with(['items.orderItem.order', 'items.orderItem.shopChannelProduct'])->findOrFail($id);
 
         return $this->downloadCsv(
             'settlement_' . $settlement->period . '_' . $settlement->id . '.csv',
             [
+                '등록일',
                 '주문번호',
-                '상품코드',
-                '상품명',
-                '수량',
-                'PG구분',
-                '매출',
-                '매입',
-                '판매이익',
-                '포인트예수금',
-                '포인트사용',
-                '지급액',
-                '정산방식',
-                '정산율',
-                'Me9수수료',
-                '구매확정일',
-                '상태',
+                '주문유형',
+                '상품유형',
+                '구분',
+                'PG결제',
+                '포인트결제',
+                '상품가',
+                '배송비',
+                '할인금액',
+                '상품+수수료',
+                '배송비',
+                'SMS수수료 건수',
+                'SMS수수료 비용',
+                '제공포인트',
+                '정산비용',
             ],
-            $settlement->items->map(fn ($item) => [
-                $item->order_no,
-                $item->product_code,
-                $item->product_name,
-                $item->quantity,
-                $this->paymentGatewayLabel($item->payment_gateway_type ?? 'me9_pg'),
-                $item->gross_sales_amount,
-                $item->supply_amount,
-                $item->sales_profit_amount,
-                $item->point_deposit_amount,
-                $item->point_used_amount,
-                $item->payout_amount,
-                $this->settlementTypeLabel($item->settlement_type),
-                $item->settlement_rate,
-                $item->admin_amount,
-                optional($item->confirmed_at)->format('Y-m-d H:i'),
-                $item->status,
-            ])
+            $this->settlementExcelRows($settlement)
         );
     }
 
@@ -382,6 +365,89 @@ class SettlementController extends Controller
     private function settlementTypeLabel($type): string
     {
         return (string) $type === '2' ? '매출이익' : '공급가';
+    }
+
+    private function settlementExcelRows(SettlementRun $settlement)
+    {
+        return $settlement->items->map(function ($item) {
+            $orderItem = $item->orderItem;
+            $lineTotal = (float) data_get($orderItem, 'line_total', 0);
+
+            if ($lineTotal <= 0) {
+                $lineTotal = (float) data_get($orderItem, 'product_price', 0) * max(1, (int) data_get($orderItem, 'product_qty', $item->quantity));
+            }
+
+            $shippingAmount = $this->allocatedOrderAmount($orderItem, 'shipping_charges');
+            $discountAmount = $this->allocatedOrderAmount($orderItem, 'coupon_amount');
+            $productAmount = $lineTotal;
+            $pointPayment = (float) $item->point_used_amount;
+            $pgPayment = max(0, (float) $item->invoice_sales_amount - $pointPayment);
+            $smsFee = (float) data_get($orderItem, 'sms_fee', 0);
+            $smsCount = $smsFee > 0 ? max(1, (int) ceil($smsFee / 20)) : 0;
+
+            return [
+                optional($item->confirmed_at)->format('Y-m-d H:i'),
+                $item->order_no,
+                $this->orderTypeLabel($orderItem),
+                $this->productTypeLabel(data_get($orderItem, 'shopChannelProduct.product_type')),
+                $this->settlementRoleTypeLabel($item->settlement_role ?? 'seller'),
+                $pgPayment,
+                $pointPayment,
+                $productAmount,
+                $shippingAmount,
+                $discountAmount,
+                (float) $item->invoice_purchase_amount,
+                0,
+                $smsCount,
+                $smsFee,
+                (float) $item->point_deposit_amount,
+                (float) $item->payout_amount,
+            ];
+        });
+    }
+
+    private function orderTypeLabel($orderItem): string
+    {
+        return data_get($orderItem, 'joint_purchase_id') ? '공동구매' : '일반';
+    }
+
+    private function allocatedOrderAmount($orderItem, string $field): float
+    {
+        $amount = (float) data_get($orderItem, 'order.' . $field, 0);
+        if ($amount <= 0 || !$orderItem) {
+            return 0;
+        }
+
+        $lineTotal = (float) data_get($orderItem, 'line_total', 0);
+        if ($lineTotal <= 0) {
+            $lineTotal = (float) data_get($orderItem, 'product_price', 0) * max(1, (int) data_get($orderItem, 'product_qty', 1));
+        }
+
+        $orderTotal = (float) \App\Models\OrdersProduct::where('order_id', data_get($orderItem, 'order_id'))
+            ->selectRaw('SUM(CASE WHEN line_total > 0 THEN line_total ELSE product_price * product_qty END) as total')
+            ->value('total');
+
+        if ($orderTotal <= 0) {
+            return 0;
+        }
+
+        return round($amount * ($lineTotal / $orderTotal), 2);
+    }
+
+    private function productTypeLabel(?string $type): string
+    {
+        return [
+            'own' => '자사',
+            'public' => '공유',
+            'partial' => '제휴',
+        ][$type ?: 'own'] ?? '자사';
+    }
+
+    private function settlementRoleTypeLabel(?string $role): string
+    {
+        return in_array($role, ['shared_fixed_reseller', 'shared_free_reseller'], true)
+            ? '위탁판매'
+            : '상품판매';
     }
 
     private function amountDetail($id, string $mode)
