@@ -104,9 +104,9 @@
                         {{-- 페이지네이션 --}}
                         <div class="btm_btn">
                             <div class="page_bx1 text-center">
-                                <a href="#" class="page_prev dimmed">prev</a>
-                                <a href="#" class="num on">1</a>
-                                <a href="#" class="page_next dimmed">next</a>
+                                <a href="javascript:void(0);" class="page_prev dimmed">prev</a>
+                                <a href="javascript:void(0);" class="num on">1</a>
+                                <a href="javascript:void(0);" class="page_next dimmed">next</a>
                             </div>
                         </div>
                     </div>

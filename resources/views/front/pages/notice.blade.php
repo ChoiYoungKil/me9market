@@ -63,7 +63,7 @@
                                 <div class="page_bx">
                                     {{-- 첫 페이지 --}}
                                     @if($notices->onFirstPage())
-                                        <a href="#" class="page_first disabled"
+                                        <a href="javascript:void(0);" class="page_first disabled"
                                             style="pointer-events: none; opacity: 0.5;">first</a>
                                     @else
                                         <a href="{{ $notices->url(1) }}" class="page_first">first</a>
@@ -71,7 +71,7 @@
 
                                     {{-- 이전 페이지 --}}
                                     @if($notices->onFirstPage())
-                                        <a href="#" class="page_prev disabled" style="pointer-events: none; opacity: 0.5;">prev</a>
+                                        <a href="javascript:void(0);" class="page_prev disabled" style="pointer-events: none; opacity: 0.5;">prev</a>
                                     @else
                                         <a href="{{ $notices->previousPageUrl() }}" class="page_prev">prev</a>
                                     @endif
@@ -84,7 +84,7 @@
                                     @endphp
                                     @for($i = $start; $i <= $end; $i++)
                                         @if($i == $notices->currentPage())
-                                            <a href="#" class="num on">{{ $i }}</a>
+                                            <a href="javascript:void(0);" class="num on">{{ $i }}</a>
                                         @else
                                             <a href="{{ $notices->url($i) }}" class="num">{{ $i }}</a>
                                         @endif
@@ -94,12 +94,12 @@
                                     @if($notices->hasMorePages())
                                         <a href="{{ $notices->nextPageUrl() }}" class="page_next">next</a>
                                     @else
-                                        <a href="#" class="page_next disabled" style="pointer-events: none; opacity: 0.5;">next</a>
+                                        <a href="javascript:void(0);" class="page_next disabled" style="pointer-events: none; opacity: 0.5;">next</a>
                                     @endif
 
                                     {{-- 마지막 페이지 --}}
                                     @if($notices->currentPage() == $notices->lastPage())
-                                        <a href="#" class="page_last disabled" style="pointer-events: none; opacity: 0.5;">last</a>
+                                        <a href="javascript:void(0);" class="page_last disabled" style="pointer-events: none; opacity: 0.5;">last</a>
                                     @else
                                         <a href="{{ $notices->url($notices->lastPage()) }}" class="page_last">last</a>
                                     @endif

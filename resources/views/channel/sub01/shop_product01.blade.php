@@ -23,7 +23,7 @@
                     <div class="tab_bx1">
                         <ul>
                             <li><a href="{{ route('channel.shop_info') }}"><span>Shop채널 정보</span></a></li>
-                            <li><a href="#" class="on"><span>판매상품</span></a></li>
+                            <li><a href="javascript:void(0);" class="on"><span>판매상품</span></a></li>
                             <li><a href="{{ route('channel.shop_community') }}"><span>커뮤니티</span></a></li>
                         </ul>
                     </div>
@@ -36,7 +36,7 @@
                                         class="btn01 col2">판매상품</a>
                                     <a href="{{ route('channel.shop_product02', ['shop_id' => $shopId]) }}"
                                         class="btn01 col4">판매중지상품</a>
-                                    <a href="#" class="btn01 col5 pop_btn" data-pop="pop1_1">판매상품 추가</a>
+                                    <a href="javascript:void(0);" class="btn01 col5 pop_btn" data-pop="pop1_1">판매상품 추가</a>
                                 </div>
                             </div>
                             @if(!empty($shop?->use_own_pg))
@@ -127,7 +127,7 @@
                                                 <td class="t_r">{{ number_format($shopProduct->selling_price) }}원</td>
                                                 <td class="t_r">{{ number_format($shopProduct->profit) }}원</td>
                                                 <td>
-                                                    <a href="#" class="btn02 col5" onclick='openProductViewModal({
+                                                    <a href="javascript:void(0);" class="btn02 col5" onclick='openProductViewModal({
                                                         "id": {{ $shopProduct->id }},
                                                         "type_label": "{{ $productTypeLabel }}",
                                                         "code": "{{ $product->product_code }}",
@@ -142,7 +142,7 @@
                                                         "selling_price": "{{ number_format($shopProduct->selling_price) }}"
                                                     }); return false;'>보기</a>
                                                     <a href="{{ route('channel.product.edit', $shopProduct->id) }}" class="btn02 col2">관리</a>
-                                                    <a href="#" class="btn02 col4" onclick='updateProductStatus("{{ route("channel.product.status.update") }}", {{ $shopProduct->id }}, 0, "판매중지"); return false;'>판매중지</a>
+                                                    <a href="javascript:void(0);" class="btn02 col4" onclick='updateProductStatus("{{ route("channel.product.status.update") }}", {{ $shopProduct->id }}, 0, "판매중지"); return false;'>판매중지</a>
                                                 </td>
                                             </tr>
                                         @empty
@@ -202,7 +202,7 @@
                                                     <div class="list01">
                                                         <ul>
                                                             <li>
-                                                                <a href="#">
+                                                                <a href="javascript:void(0);">
                                                                     <div class="img_bx" id="view_product_img"
                                                                         style="background-image:url(../images/sub/thum01.jpg)">
                                                                     </div>
@@ -274,7 +274,7 @@
 
                                             <!-- 하단버튼 -->
                                             <div class="btm_btn mt10">
-                                                <a href="#" class="col5 close_btn">닫기</a>
+                                                <a href="javascript:void(0);" class="col5 close_btn">닫기</a>
                                             </div>
                                         </div>
                                     </div>

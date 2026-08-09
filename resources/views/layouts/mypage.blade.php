@@ -53,8 +53,8 @@
                 <div class="t_menu">
                     <ul>
                         <li><a href="{{ route('channel.index') }}">채널관리자</a></li>
-                        <li><a href="#">{{ Auth::user()->name ?? 'User' }}</a></li>
-                        <li><a href="#">총 포인트 ({{ Auth::user()->point ?? 0 }})</a></li>
+                        <li><a href="javascript:void(0);">{{ Auth::user()->name ?? 'User' }}</a></li>
+                        <li><a href="javascript:void(0);">총 포인트 ({{ Auth::user()->point ?? 0 }})</a></li>
                         <li>
                             <a href="{{ route('logout') }}"
                                 onclick="event.preventDefault(); document.getElementById('logout-form').submit();">로그아웃</a>
@@ -77,17 +77,17 @@
                 <div class="r_menu">
                     <div class="menu_w">
                         <ul class="con1">
-                            <li><a href="#"><span>A채널명채널명</span></a></li>
-                            <li><a href="#"><span>A채널명</span></a></li>
-                            <li><a href="#"><span>A채널명</span></a></li>
+                            <li><a href="javascript:void(0);"><span>A채널명채널명</span></a></li>
+                            <li><a href="javascript:void(0);"><span>A채널명</span></a></li>
+                            <li><a href="javascript:void(0);"><span>A채널명</span></a></li>
                         </ul>
                         <ul class="con2">
-                            <li><a href="#"><span>B채널명채널명</span></a></li>
-                            <li><a href="#"><span>B채널명</span></a></li>
-                            <li><a href="#"><span>B채널명</span></a></li>
-                            <li><a href="#"><span>B채널명채널명</span></a></li>
-                            <li><a href="#"><span>B채널명</span></a></li>
-                            <li><a href="#"><span>B채널명</span></a></li>
+                            <li><a href="javascript:void(0);"><span>B채널명채널명</span></a></li>
+                            <li><a href="javascript:void(0);"><span>B채널명</span></a></li>
+                            <li><a href="javascript:void(0);"><span>B채널명</span></a></li>
+                            <li><a href="javascript:void(0);"><span>B채널명채널명</span></a></li>
+                            <li><a href="javascript:void(0);"><span>B채널명</span></a></li>
+                            <li><a href="javascript:void(0);"><span>B채널명</span></a></li>
                         </ul>
                     </div>
                 </div>
@@ -115,8 +115,8 @@
                     <li><span>E-mail</span>&nbsp;&nbsp;&nbsp;&nbsp;abc1234@email.com</li>
                 </ul>
                 <ul class="link_bx">
-                    <li><a href="#">이용약관</a></li>
-                    <li><a class="bold" href="#">개인정보취급방침</a></li>
+                    <li><a href="javascript:void(0);">이용약관</a></li>
+                    <li><a class="bold" href="javascript:void(0);">개인정보취급방침</a></li>
                 </ul>
                 <div class="btm_txt">ⓒ Skytech Co., Ltd</div>
                 <div class="top_btn">TOP</div>

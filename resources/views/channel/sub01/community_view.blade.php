@@ -68,7 +68,7 @@
                                 style="background: #0066cc; color: white; padding: 12px 40px; text-decoration: none; border-radius: 3px; font-size: 14px;">
                                 수정
                             </a>
-                            <a href="#" class="delete-notice" data-id="{{ $notice->id }}"
+                            <a href="javascript:void(0);" class="delete-notice" data-id="{{ $notice->id }}"
                                 style="background: #ff0000; color: white; padding: 12px 40px; text-decoration: none; border-radius: 3px; font-size: 14px;">
                                 삭제
                             </a>

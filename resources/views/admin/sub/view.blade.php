@@ -33,8 +33,8 @@
                                 <div class="file">
                                     <span class="l_txt">첨부파일</span>
                                     <ul>
-                                        <li><a href="#">첨부파일명.확장자 <span>(00,000 byte)</span></a></li>
-                                        <li><a href="#">첨부파일명.확장자 <span>(00,000 byte)</span></a></li>
+                                        <li><a href="javascript:void(0);">첨부파일명.확장자 <span>(00,000 byte)</span></a></li>
+                                        <li><a href="javascript:void(0);">첨부파일명.확장자 <span>(00,000 byte)</span></a></li>
                                     </ul>
                                 </div>
                                 <div class="con">
@@ -56,10 +56,10 @@
                             </div>
 
                             <div class="btm_btn right mt10">
-                                <a href="#" class="col2 f_l">EXCEL</a>
-                                <a href="#" class="col3">수정</a>
-                                <a href="#" class="col4">삭제</a>
-                                <a href="#" class="col5">목록</a>
+                                <a href="javascript:void(0);" class="col2 f_l">EXCEL</a>
+                                <a href="javascript:void(0);" class="col3">수정</a>
+                                <a href="javascript:void(0);" class="col4">삭제</a>
+                                <a href="javascript:void(0);" class="col5">목록</a>
                             </div>
                         </div>
                         <div class="con_w">
@@ -69,7 +69,7 @@
                                 <div class="f_bx">
                                     <form>
                                         <textarea></textarea>
-                                        <a href="#" class="btn">댓글 입력</a>
+                                        <a href="javascript:void(0);" class="btn">댓글 입력</a>
                                     </form>
                                 </div>
                                 <ul class="c_list">
@@ -79,8 +79,8 @@
                                             <div class="name"><strong>아무개</strong> (abc123@gmail.com)</div>
                                             <div class="r_bx">
                                                 <span>0000-00-00 00:00:00</span>
-                                                <a href="#" class="btn icon1 pop_btn" data-pop="pop1">수정</a>
-                                                <a href="#" class="btn icon2">삭제</a>
+                                                <a href="javascript:void(0);" class="btn icon1 pop_btn" data-pop="pop1">수정</a>
+                                                <a href="javascript:void(0);" class="btn icon2">삭제</a>
                                             </div>
                                         </div>
                                         <div class="btm_bx">
@@ -94,8 +94,8 @@
                                             <div class="name"><strong>아무개</strong> (abc123@gmail.com)</div>
                                             <div class="r_bx">
                                                 <span>0000-00-00 00:00:00</span>
-                                                <a href="#" class="btn icon1 pop_btn" data-pop="pop1">수정</a>
-                                                <a href="#" class="btn icon2">삭제</a>
+                                                <a href="javascript:void(0);" class="btn icon1 pop_btn" data-pop="pop1">수정</a>
+                                                <a href="javascript:void(0);" class="btn icon2">삭제</a>
                                             </div>
                                         </div>
                                         <div class="btm_bx">
@@ -118,7 +118,7 @@
                                                 <div class="f_bx">
                                                     <form>
                                                         <textarea></textarea>
-                                                        <a href="#" class="btn">댓글 수정</a>
+                                                        <a href="javascript:void(0);" class="btn">댓글 수정</a>
                                                     </form>
                                                 </div>
                                             </div>
@@ -129,15 +129,15 @@
                                 <!--<div class="no_data">등록된 댓글이 없습니다.</div>-->
                                 <!-- 페이징 -->
                                 <div class="page_bx1">
-                                    <a href="#" class="page_first">first</a>
-                                    <a href="#" class="page_prev">prev</a>
-                                    <a href="#" class="num on">1</a>
-                                    <a href="#" class="num">2</a>
-                                    <a href="#" class="num">3</a>
-                                    <a href="#" class="num">4</a>
-                                    <a href="#" class="num">5</a>
-                                    <a href="#" class="page_next">next</a>
-                                    <a href="#" class="page_last">last</a>
+                                    <a href="javascript:void(0);" class="page_first">first</a>
+                                    <a href="javascript:void(0);" class="page_prev">prev</a>
+                                    <a href="javascript:void(0);" class="num on">1</a>
+                                    <a href="javascript:void(0);" class="num">2</a>
+                                    <a href="javascript:void(0);" class="num">3</a>
+                                    <a href="javascript:void(0);" class="num">4</a>
+                                    <a href="javascript:void(0);" class="num">5</a>
+                                    <a href="javascript:void(0);" class="page_next">next</a>
+                                    <a href="javascript:void(0);" class="page_last">last</a>
                                 </div>
                             </div>
                         </div>

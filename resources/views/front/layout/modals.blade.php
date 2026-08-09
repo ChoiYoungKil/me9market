@@ -167,27 +167,27 @@
                                         <span>Share:</span>
                                         <ul class="social-media-list">
                                             <li>
-                                                <a href="#">
+                                                <a href="javascript:void(0);">
                                                 <i class="fab fa-facebook-f"></i>
                                                 </a>
                                             </li>
                                             <li>
-                                                <a href="#">
+                                                <a href="javascript:void(0);">
                                                 <i class="fab fa-twitter"></i>
                                                 </a>
                                             </li>
                                             <li>
-                                                <a href="#">
+                                                <a href="javascript:void(0);">
                                                 <i class="fab fa-google-plus-g"></i>
                                                 </a>
                                             </li>
                                             <li>
-                                                <a href="#">
+                                                <a href="javascript:void(0);">
                                                 <i class="fas fa-rss"></i>
                                                 </a>
                                             </li>
                                             <li>
-                                                <a href="#">
+                                                <a href="javascript:void(0);">
                                                 <i class="fab fa-pinterest"></i>
                                                 </a>
                                             </li>

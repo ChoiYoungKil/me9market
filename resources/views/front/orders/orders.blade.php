@@ -17,7 +17,7 @@
                         <a href="index.html">Home</a>
                     </li>
                     <li class="is-marked">
-                        <a href="#">Orders</a>
+                        <a href="javascript:void(0);">Orders</a>
                     </li>
                 </ul>
             </div>

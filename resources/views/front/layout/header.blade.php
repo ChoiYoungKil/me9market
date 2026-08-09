@@ -108,10 +108,10 @@ $sections = \App\Models\Section::sections();
                         </a>
                         <ul class="g-dropdown" style="width:90px">
                             <li>
-                                <a href="#" class="u-c-brand">LE EGP</a>
+                                <a href="javascript:void(0);" class="u-c-brand">LE EGP</a>
                             </li>
                             <li>
-                                <a href="#">($) USD</a>
+                                <a href="javascript:void(0);">($) USD</a>
                             </li>
                         </ul>
                     </li>
@@ -121,10 +121,10 @@ $sections = \App\Models\Section::sections();
                         </a>
                         <ul class="g-dropdown" style="width:70px">
                             <li>
-                                <a href="#" class="u-c-brand">ENG</a>
+                                <a href="javascript:void(0);" class="u-c-brand">ENG</a>
                             </li>
                             <li>
-                                <a href="#">ARB</a>
+                                <a href="javascript:void(0);">ARB</a>
                             </li>
                         </ul>
                 </ul>

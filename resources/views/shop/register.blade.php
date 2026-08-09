@@ -49,11 +49,11 @@
                 <div style="display: flex; flex-direction: column; gap: 10px;">
                     <label style="display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: #94a3b8; cursor: pointer;">
                         <input type="checkbox" class="agree-chk shop-register-checkbox align-top" required>
-                        <span>(필수) 쇼핑몰 이용약관 동의 <a href="#" style="color: #818cf8; margin-left: 5px; text-decoration: underline;">[보기]</a></span>
+                        <span>(필수) 쇼핑몰 이용약관 동의 <a href="javascript:void(0);" style="color: #818cf8; margin-left: 5px; text-decoration: underline;">[보기]</a></span>
                     </label>
                     <label style="display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: #94a3b8; cursor: pointer;">
                         <input type="checkbox" class="agree-chk shop-register-checkbox align-top" required>
-                        <span>(필수) 개인정보 수집 및 이용 동의 <a href="#" style="color: #818cf8; margin-left: 5px; text-decoration: underline;">[보기]</a></span>
+                        <span>(필수) 개인정보 수집 및 이용 동의 <a href="javascript:void(0);" style="color: #818cf8; margin-left: 5px; text-decoration: underline;">[보기]</a></span>
                     </label>
                     <label style="display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: #94a3b8; cursor: pointer;">
                         <input type="checkbox" class="agree-chk shop-register-checkbox align-top">

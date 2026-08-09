@@ -97,7 +97,7 @@
                                                                         <input type="text" name="mobile[]" class="tel2"
                                                                             required="required" value="">
                                                                     </div>
-                                                                    <a href="#" class="btn01 col2">본인인증</a>
+                                                                    <a href="javascript:void(0);" class="btn01 col2">본인인증</a>
                                                                 </div>
                                                             </td>
                                                         </tr>
@@ -133,7 +133,7 @@
                                         <!-- Terms section omitted for brevity, can be added if needed -->
                                     </div>
                                     <div class="btm_btn type2">
-                                        <a href="#" class="col3">취소</a>
+                                        <a href="javascript:void(0);" class="col3">취소</a>
                                         <button type="submit" class="col2">저장</button>
                                     </div>
                                 </div>

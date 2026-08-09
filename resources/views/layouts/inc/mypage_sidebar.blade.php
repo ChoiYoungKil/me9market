@@ -160,7 +160,7 @@
                     <li
                         class="dep1 icon1_1 arrow {{ request()->routeIs('mypage.profile', 'mypage.delivery', 'mypage.withdraw') ? 'on' : '' }}">
                         <!-- on -->
-                        <a href="#">정보관리</a>
+                        <a href="javascript:void(0);">정보관리</a>
                         <ul class="dep2_wrap">
                             <li class="{{ request()->routeIs('mypage.profile') ? 'on' : '' }}"><a
                                     href="{{ route('mypage.profile') }}">회원 정보 수정</a></li> <!-- on -->
@@ -174,7 +174,7 @@
                         <a href="{{ route('mypage.visited_channels') }}">방문한 채널</a>
                     </li>
                     <li class="dep1 icon1_3 arrow {{ request()->routeIs('mypage.point.*') ? 'on' : '' }}">
-                        <a href="#">포인트관리</a>
+                        <a href="javascript:void(0);">포인트관리</a>
                         <ul class="dep2_wrap">
                             <li class="{{ request()->routeIs('mypage.point.status') ? 'on' : '' }}"><a
                                     href="{{ route('mypage.point.status') }}">포인트 현황</a></li>
@@ -194,21 +194,21 @@
                 <div class="c_ttl">Me9 Market</div>
                 <ul class="dep1_wrap">
                     <li class="dep1 icon2_1">
-                        <a href="#">서비스 안내</a>
+                        <a href="javascript:void(0);">서비스 안내</a>
                     </li>
                     <li class="dep1 icon2_2">
-                        <a href="#">주요기능</a>
+                        <a href="javascript:void(0);">주요기능</a>
                     </li>
                     <li class="dep1 icon2_3">
-                        <a href="#">가입안내</a>
+                        <a href="javascript:void(0);">가입안내</a>
                     </li>
                     <li class="dep1 icon2_4 arrow">
-                        <a href="#">고객센터</a>
+                        <a href="javascript:void(0);">고객센터</a>
                         <ul class="dep2_wrap">
                             <li><a href="{{ route('cs.notice') }}">공지사항</a></li>
                             <li><a href="{{ route('cs.faq') }}">자주묻는질문</a></li>
                             <li><a href="{{ route('cs.contact') }}">제휴문의</a></li>
-                            <li><a href="#">주문조회</a></li>
+                            <li><a href="javascript:void(0);">주문조회</a></li>
                         </ul>
                     </li>
                 </ul>

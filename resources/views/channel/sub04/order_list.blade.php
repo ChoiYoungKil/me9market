@@ -232,7 +232,7 @@
                                         @foreach($orders as $order)
                                             <tr>
                                                 <td>{{ $order->created_at }}</td>
-                                                <td><a href="#" onclick='openOrderModal("pop1_1", @json($order)); return false;' class="fcol4 link">{{ $order->order_no }}</a>
+                                                <td><a href="javascript:void(0);" onclick='openOrderModal("pop1_1", @json($order)); return false;' class="fcol4 link">{{ $order->order_no }}</a>
                                                 </td>
                                                 <td>{{ $loop->iteration }}</td>
                                                 <td>{{ $order->shop_name }}</td>
@@ -286,13 +286,13 @@
                                             <tr>
                                                 <td colspan="23" style="text-align: left; padding: 5px 10px; background: #f9f9f9;">
                                                     <strong>[관리]: </strong>
-                                                    <a href="#" onclick='openOrderModal("pop1_2_3", @json($order)); return false;'
+                                                    <a href="javascript:void(0);" onclick='openOrderModal("pop1_2_3", @json($order)); return false;'
                                                         class="btn02">배송관리</a>
-                                                    <a href="#" onclick='openOrderModal("pop1_2_6", @json($order)); return false;'
+                                                    <a href="javascript:void(0);" onclick='openOrderModal("pop1_2_6", @json($order)); return false;'
                                                         class="btn02">취소요청</a>
-                                                    <a href="#" onclick='openOrderModal("pop1_2_4", @json($order)); return false;'
+                                                    <a href="javascript:void(0);" onclick='openOrderModal("pop1_2_4", @json($order)); return false;'
                                                         class="btn02">반품요청</a>
-                                                    <a href="#" onclick='openOrderModal("pop1_2_5", @json($order)); return false;'
+                                                    <a href="javascript:void(0);" onclick='openOrderModal("pop1_2_5", @json($order)); return false;'
                                                         class="btn02">교환요청</a>
                                                 </td>
                                             </tr>

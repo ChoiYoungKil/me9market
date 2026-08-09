@@ -103,7 +103,7 @@
                                                                 <div class="addr_bx">
                                                                     <input type="text" class="addr1 off" placeholder="우편번호"
                                                                         required="required">
-                                                                    <a href="#" class="btn01">우편번호찾기</a>
+                                                                    <a href="javascript:void(0);" class="btn01">우편번호찾기</a>
                                                                     <input type="text" class="addr2 off" placeholder="주소"
                                                                         required="required">
                                                                     <input type="text" class="addr3 off" placeholder="상세주소"
@@ -315,7 +315,7 @@
                                                     </div>
                                                 </div>
                                                 <div class="btm_btn type2 pt0">
-                                                    <a href="#">취소</a>
+                                                    <a href="javascript:void(0);">취소</a>
                                                     <a href="{{ route('shop.order.complete') }}" class="col2">결제하기</a>
                                                 </div>
                                             </div>

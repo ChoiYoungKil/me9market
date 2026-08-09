@@ -10,8 +10,8 @@
                     <div class="title">주문 관리</div>
                     <div class="tab_bx">
                         <ul>
-                            <li class="on"><a href="#">자사상품</a></li>
-                            <li><a href="#">공개상품</a></li>
+                            <li class="on"><a href="javascript:void(0);">자사상품</a></li>
+                            <li><a href="javascript:void(0);">공개상품</a></li>
                         </ul>
                     </div>
                 </div>
@@ -243,8 +243,8 @@
 
                                             <!-- 하단버튼 -->
                                             <div class="btm_btn">
-                                                <a href="#" class="col2">옵션변경</a>
-                                                <a href="#" class="close_btn">닫기</a>
+                                                <a href="javascript:void(0);" class="col2">옵션변경</a>
+                                                <a href="javascript:void(0);" class="close_btn">닫기</a>
                                             </div>
                                         </div>
                                     </div>

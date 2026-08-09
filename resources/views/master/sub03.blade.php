@@ -108,9 +108,9 @@
                         </div>
 
                         <div class="btm_btn right mt10">
-                            <a href="#" class="col2 f_l">EXCEL</a>
-                            <a href="#" class="reset1">초기화</a>
-                            <a href="#">검색</a>
+                            <a href="javascript:void(0);" class="col2 f_l">EXCEL</a>
+                            <a href="javascript:void(0);" class="reset1">초기화</a>
+                            <a href="javascript:void(0);">검색</a>
                         </div>
                     </div>
                 </div>
@@ -170,9 +170,9 @@
                                             <td class="ovH">테스트 내용</td>
                                             <td class="ovH">테스트 내용</td>
                                             <td class="t_c">
-                                                <a href="#" class="btn02 col6">보기</a>
-                                                <a href="#" class="btn02 col3">수정</a>
-                                                <a href="#" class="btn02 col4">삭제</a>
+                                                <a href="javascript:void(0);" class="btn02 col6">보기</a>
+                                                <a href="javascript:void(0);" class="btn02 col3">수정</a>
+                                                <a href="javascript:void(0);" class="btn02 col4">삭제</a>
                                             </td>
                                         </tr>
                                     @endfor
@@ -184,19 +184,19 @@
                         <div class="btm_btn right mt10">
                             <!-- 페이징 -->
                             <div class="page_bx1">
-                                <a href="#" class="page_first">first</a>
-                                <a href="#" class="page_prev">prev</a>
-                                <a href="#" class="num on">1</a>
-                                <a href="#" class="num">2</a>
-                                <a href="#" class="num">3</a>
-                                <a href="#" class="num">4</a>
-                                <a href="#" class="num">5</a>
-                                <a href="#" class="page_next">next</a>
-                                <a href="#" class="page_last">last</a>
+                                <a href="javascript:void(0);" class="page_first">first</a>
+                                <a href="javascript:void(0);" class="page_prev">prev</a>
+                                <a href="javascript:void(0);" class="num on">1</a>
+                                <a href="javascript:void(0);" class="num">2</a>
+                                <a href="javascript:void(0);" class="num">3</a>
+                                <a href="javascript:void(0);" class="num">4</a>
+                                <a href="javascript:void(0);" class="num">5</a>
+                                <a href="javascript:void(0);" class="page_next">next</a>
+                                <a href="javascript:void(0);" class="page_last">last</a>
                             </div>
 
-                            <a href="#" class="col3 f_l type2 mt10">일괄수정</a>
-                            <a href="#">등록</a>
+                            <a href="javascript:void(0);" class="col3 f_l type2 mt10">일괄수정</a>
+                            <a href="javascript:void(0);">등록</a>
                         </div>
                     </div>
                 </div>
@@ -225,9 +225,9 @@
                                             <p>2025-01-01</p>
                                         </div>
                                         <div class="btn_bx">
-                                            <a href="#" class="btn02 col6">보기</a>
-                                            <a href="#" class="btn02 col3">수정</a>
-                                            <a href="#" class="btn02 col4">삭제</a>
+                                            <a href="javascript:void(0);" class="btn02 col6">보기</a>
+                                            <a href="javascript:void(0);" class="btn02 col3">수정</a>
+                                            <a href="javascript:void(0);" class="btn02 col4">삭제</a>
                                         </div>
                                     </li>
                                 @endfor
@@ -237,18 +237,18 @@
                         <div class="btm_btn right mt10">
                             <!-- 페이징 -->
                             <div class="page_bx1">
-                                <a href="#" class="page_first">first</a>
-                                <a href="#" class="page_prev">prev</a>
-                                <a href="#" class="num on">1</a>
-                                <a href="#" class="num">2</a>
-                                <a href="#" class="num">3</a>
-                                <a href="#" class="num">4</a>
-                                <a href="#" class="num">5</a>
-                                <a href="#" class="page_next">next</a>
-                                <a href="#" class="page_last">last</a>
+                                <a href="javascript:void(0);" class="page_first">first</a>
+                                <a href="javascript:void(0);" class="page_prev">prev</a>
+                                <a href="javascript:void(0);" class="num on">1</a>
+                                <a href="javascript:void(0);" class="num">2</a>
+                                <a href="javascript:void(0);" class="num">3</a>
+                                <a href="javascript:void(0);" class="num">4</a>
+                                <a href="javascript:void(0);" class="num">5</a>
+                                <a href="javascript:void(0);" class="page_next">next</a>
+                                <a href="javascript:void(0);" class="page_last">last</a>
                             </div>
 
-                            <a href="#">등록</a>
+                            <a href="javascript:void(0);">등록</a>
                         </div>
                     </div>
                 </div>

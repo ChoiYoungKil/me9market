@@ -56,7 +56,7 @@
                                     </tr>
                                     <tr>
                                         <th class="w160"><span>비밀 번호</span></th>
-                                        <td><a href="#" class="btn01 pop_btn" data-pop="pop1_1"
+                                        <td><a href="javascript:void(0);" class="btn01 pop_btn" data-pop="pop1_1"
                                                 style="background-color:#000; color:#fff; border:none; padding: 5px 15px; border-radius:3px;">비밀번호변경</a>
                                         </td>
                                         <th class="w160"><span>판매 권한</span></th>
@@ -117,7 +117,7 @@
                                         <!-- 하단버튼 -->
                                         <div class="btm_btn mt10">
                                             <a href="javascript:;" id="btnUpdatePassword">변경하기</a>
-                                            <a href="#" class="col5 close_btn">닫기</a>
+                                            <a href="javascript:void(0);" class="col5 close_btn">닫기</a>
                                         </div>
                                     </div>
                                 </div>
@@ -248,7 +248,7 @@
                                                             placeholder="우편번호" required="required"
                                                             value="{{ $details->shop_pincode ?? '' }}"
                                                             style="width: 120px;">
-                                                        <a href="#" class="btn01"
+                                                        <a href="javascript:void(0);" class="btn01"
                                                             style="background-color:#000; color:#fff; border:none; padding: 5px 15px; border-radius:3px; display:inline-block; vertical-align:middle; line-height:30px;">우편번호찾기</a>
                                                     </div>
                                                     <input type="text" name="shop_address" class="addr2 off w100p"
@@ -499,7 +499,7 @@
                                                             {{ $details->bank_account_number ?? '000000000-02-000000' }} /
                                                             {{ $details->bank_account_holder_name ?? '통장주' }}
                                                         </div>
-                                                        <a href="#" class="btn01"
+                                                        <a href="javascript:void(0);" class="btn01"
                                                             style="background-color:#000; color:#fff; border:none; padding:5px 15px; border-radius:3px;">통장사본
                                                             내려받기</a>
                                                     </div>

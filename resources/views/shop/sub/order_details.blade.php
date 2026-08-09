@@ -10,7 +10,7 @@
                     <div class="title">주문 관리</div>
                     <div class="tab_bx">
                         <ul>
-                            <li class="on"><a href="#">주문</a></li>
+                            <li class="on"><a href="javascript:void(0);">주문</a></li>
                             <li><a href="{{ route('shop.cancel.details') }}">취소</a></li>
                             <li><a href="{{ route('shop.return.details') }}">반품</a></li>
                             <li><a href="{{ route('shop.exchange.details') }}">교환</a></li>
@@ -73,7 +73,7 @@
                                                                     <input type="text" placeholder="검색어를 입력해주세요">
                                                                 </div>
                                                             </div>
-                                                            <a href="#" class="s_btn">조회</a>
+                                                            <a href="javascript:void(0);" class="s_btn">조회</a>
                                                         </div>
                                                     </div>
                                                 </form>
@@ -83,7 +83,7 @@
                                             <div class="ttl">
                                                 판매자 <span>( txx2212 )</span>
                                                 <div class="r_bx">
-                                                    2024-10-14 <span>&nbsp;|&nbsp;</span> 주문번호 : Me9-00929423 <a href="#"
+                                                    2024-10-14 <span>&nbsp;|&nbsp;</span> 주문번호 : Me9-00929423 <a href="javascript:void(0);"
                                                         class="btn">주문상세</a>
                                                 </div>
                                             </div>
@@ -149,7 +149,7 @@
                                                 </li>
                                             </ul>
                                             <div class="all">
-                                                <div class="txt2">무료배송 <span class="bar">&nbsp;|&nbsp;</span> <a href="#"
+                                                <div class="txt2">무료배송 <span class="bar">&nbsp;|&nbsp;</span> <a href="javascript:void(0);"
                                                         class="btn pop_btn" data-pop="pop1">판매자 문의하기</a></div>
                                             </div>
                                         </div>
@@ -157,7 +157,7 @@
                                             <div class="ttl">
                                                 판매자 <span>( txx2212 )</span>
                                                 <div class="r_bx">
-                                                    2024-10-14 <span>&nbsp;|&nbsp;</span> 주문번호 : Me9-00929423 <a href="#"
+                                                    2024-10-14 <span>&nbsp;|&nbsp;</span> 주문번호 : Me9-00929423 <a href="javascript:void(0);"
                                                         class="btn">주문상세</a>
                                                 </div>
                                             </div>
@@ -193,7 +193,7 @@
                                             </ul>
                                             <div class="all">
                                                 <div class="txt2">30,000 원 미만 : 2,500 원 <span
-                                                        class="bar">&nbsp;|&nbsp;</span> <a href="#" class="btn pop_btn"
+                                                        class="bar">&nbsp;|&nbsp;</span> <a href="javascript:void(0);" class="btn pop_btn"
                                                         data-pop="pop1">판매자 문의하기</a></div>
                                             </div>
                                         </div>
@@ -201,7 +201,7 @@
                                             <div class="ttl">
                                                 판매자 <span>( txx2212 )</span>
                                                 <div class="r_bx">
-                                                    2024-10-14 <span>&nbsp;|&nbsp;</span> 주문번호 : Me9-00929423 <a href="#"
+                                                    2024-10-14 <span>&nbsp;|&nbsp;</span> 주문번호 : Me9-00929423 <a href="javascript:void(0);"
                                                         class="btn">주문상세</a>
                                                 </div>
                                             </div>
@@ -239,7 +239,7 @@
                                             </ul>
                                             <div class="all">
                                                 <div class="txt2">30,000 원 미만 : 2,500 원 <span
-                                                        class="bar">&nbsp;|&nbsp;</span> <a href="#" class="btn pop_btn"
+                                                        class="bar">&nbsp;|&nbsp;</span> <a href="javascript:void(0);" class="btn pop_btn"
                                                         data-pop="pop1">판매자 문의하기</a></div>
                                             </div>
                                         </div>
@@ -247,7 +247,7 @@
                                             <div class="ttl">
                                                 판매자 <span>( txx2212 )</span>
                                                 <div class="r_bx">
-                                                    2024-10-14 <span>&nbsp;|&nbsp;</span> 주문번호 : Me9-00929423 <a href="#"
+                                                    2024-10-14 <span>&nbsp;|&nbsp;</span> 주문번호 : Me9-00929423 <a href="javascript:void(0);"
                                                         class="btn">주문상세</a>
                                                 </div>
                                             </div>
@@ -283,7 +283,7 @@
                                             </ul>
                                             <div class="all">
                                                 <div class="txt2">30,000 원 미만 : 2,500 원 <span
-                                                        class="bar">&nbsp;|&nbsp;</span> <a href="#" class="btn pop_btn"
+                                                        class="bar">&nbsp;|&nbsp;</span> <a href="javascript:void(0);" class="btn pop_btn"
                                                         data-pop="pop1">판매자 문의하기</a></div>
                                             </div>
                                         </div>
@@ -293,15 +293,15 @@
 
                             <!-- 페이징 -->
                             <div class="page_bx">
-                                <a href="#" class="page_first">first</a>
-                                <a href="#" class="page_prev">prev</a>
-                                <a href="#" class="num on">1</a>
-                                <a href="#" class="num">2</a>
-                                <a href="#" class="num">3</a>
-                                <a href="#" class="num">4</a>
-                                <a href="#" class="num">5</a>
-                                <a href="#" class="page_next">next</a>
-                                <a href="#" class="page_last">last</a>
+                                <a href="javascript:void(0);" class="page_first">first</a>
+                                <a href="javascript:void(0);" class="page_prev">prev</a>
+                                <a href="javascript:void(0);" class="num on">1</a>
+                                <a href="javascript:void(0);" class="num">2</a>
+                                <a href="javascript:void(0);" class="num">3</a>
+                                <a href="javascript:void(0);" class="num">4</a>
+                                <a href="javascript:void(0);" class="num">5</a>
+                                <a href="javascript:void(0);" class="page_next">next</a>
+                                <a href="javascript:void(0);" class="page_last">last</a>
                             </div>
                         </div>
 
@@ -351,8 +351,8 @@
 
                                         <!-- 하단버튼 -->
                                         <div class="btm_btn">
-                                            <a href="#" class="col2">문의하기</a>
-                                            <a href="#" class="close_btn">닫기</a>
+                                            <a href="javascript:void(0);" class="col2">문의하기</a>
+                                            <a href="javascript:void(0);" class="close_btn">닫기</a>
                                         </div>
                                     </div>
                                 </div>
@@ -406,8 +406,8 @@
 
                                         <!-- 하단버튼 -->
                                         <div class="btm_btn">
-                                            <a href="#" class="col5">취소신청</a>
-                                            <a href="#" class="close_btn">닫기</a>
+                                            <a href="javascript:void(0);" class="col5">취소신청</a>
+                                            <a href="javascript:void(0);" class="close_btn">닫기</a>
                                         </div>
                                     </div>
                                 </div>
@@ -498,8 +498,8 @@
 
                                         <!-- 하단버튼 -->
                                         <div class="btm_btn">
-                                            <a href="#" class="col4">반품신청</a>
-                                            <a href="#" class="close_btn">닫기</a>
+                                            <a href="javascript:void(0);" class="col4">반품신청</a>
+                                            <a href="javascript:void(0);" class="close_btn">닫기</a>
                                         </div>
                                     </div>
                                 </div>
@@ -590,8 +590,8 @@
 
                                         <!-- 하단버튼 -->
                                         <div class="btm_btn">
-                                            <a href="#" class="col3">교환신청</a>
-                                            <a href="#" class="close_btn">닫기</a>
+                                            <a href="javascript:void(0);" class="col3">교환신청</a>
+                                            <a href="javascript:void(0);" class="close_btn">닫기</a>
                                         </div>
                                     </div>
                                 </div>
@@ -642,8 +642,8 @@
 
                                         <!-- 하단버튼 -->
                                         <div class="btm_btn">
-                                            <a href="#" class="col2">구매확정하기</a>
-                                            <a href="#" class="close_btn">닫기</a>
+                                            <a href="javascript:void(0);" class="col2">구매확정하기</a>
+                                            <a href="javascript:void(0);" class="close_btn">닫기</a>
                                         </div>
                                     </div>
                                 </div>

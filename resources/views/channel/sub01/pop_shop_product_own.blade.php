@@ -7,9 +7,9 @@
 
                 <div class="tab_bx1">
                     <ul>
-                        <li><a href="#" class="on"><span>지사상품</span></a></li>
-                        <li><a href="#" @if(empty($shop?->use_own_pg)) data-pop="pop1_2" @else class="pg_blocked" @endif><span>공유상품</span></a></li>
-                        <li><a href="#" @if(empty($shop?->use_own_pg)) data-pop="pop1_3" @else class="pg_blocked" @endif><span>부분공유상품</span></a></li>
+                        <li><a href="javascript:void(0);" class="on"><span>지사상품</span></a></li>
+                        <li><a href="javascript:void(0);" @if(empty($shop?->use_own_pg)) data-pop="pop1_2" @else class="pg_blocked" @endif><span>공유상품</span></a></li>
+                        <li><a href="javascript:void(0);" @if(empty($shop?->use_own_pg)) data-pop="pop1_3" @else class="pg_blocked" @endif><span>부분공유상품</span></a></li>
                     </ul>
                 </div>
                 <script type="text/javascript">
@@ -73,7 +73,7 @@
                             </table>
                         </div>
                         <div class="btm_btn right mt10 search-actions">
-                            <a href="#" class="type2">검색</a>
+                            <a href="javascript:void(0);" class="type2">검색</a>
                         </div>
                     </div>
 
@@ -145,7 +145,7 @@
                                             <td>{{ $stockDisplay }}</td>
                                             <td class="t_r">{{ number_format($product->product_price) }}원</td>
                                             <td>
-                                                <a href="#" class="btn02 col5" onclick='openProductRegisterModal("pop1_1_2", {
+                                                <a href="javascript:void(0);" class="btn02 col5" onclick='openProductRegisterModal("pop1_1_2", {
                                                             "id": {{ $product->id }},
                                                             "code": "{{ $product->product_code }}",
                                                             "name": "{{ addslashes($product->product_name) }}",
@@ -219,7 +219,7 @@
                             <div class="list01">
                                 <ul>
                                     <li>
-                                        <a href="#">
+                                        <a href="javascript:void(0);">
                                             <div class="img_bx" id="own_product_img"
                                                 style="background-image:url(../images/sub/thum01.jpg)"></div>
                                             <div class="txt_bx">
@@ -293,9 +293,9 @@
 
                     <!-- 하단버튼 -->
                     <div class="btm_btn mt10">
-                        <a href="#" class="btn_submit"
+                        <a href="javascript:void(0);" class="btn_submit"
                             onclick="submitProductForm('form_product_own_register', '{{ route('channel.product.own.store') }}'); return false;">상품추가하기</a>
-                        <a href="#" class="col5 close_btn">닫기</a>
+                        <a href="javascript:void(0);" class="col5 close_btn">닫기</a>
                     </div>
                 </form>
             </div>

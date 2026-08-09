@@ -79,7 +79,7 @@
                                     <div class="list01">
                                         <ul>
                                             <li>
-                                                <a href="#">
+                                                <a href="javascript:void(0);">
                                                     <div class="img_bx"
                                                         style="background-image:url({{ asset('master/images/sub/thum01.jpg') }})">
                                                     </div>
@@ -182,7 +182,7 @@
                                                     <td colspan="3">
                                                         <div class="r_btn_w w457">
                                                             <input type="text">
-                                                            <a href="#" class="btn01">중복확인</a>
+                                                            <a href="javascript:void(0);" class="btn01">중복확인</a>
                                                         </div>
                                                         <p class="mt10">‘ <span class="fcol2">abcd1234</span> ’ 는 사용할 수
                                                             있는 아이디 입니다.</p>
@@ -225,7 +225,7 @@
                                                         <div class="addr_bx">
                                                             <input type="text" class="addr1 off" placeholder="우편번호"
                                                                 required="required">
-                                                            <a href="#" class="btn01">우편번호찾기</a>
+                                                            <a href="javascript:void(0);" class="btn01">우편번호찾기</a>
                                                             <input type="text" class="addr2 off" placeholder="주소"
                                                                 required="required">
                                                             <input type="text" class="addr3 off" placeholder="상세주소"
@@ -240,7 +240,7 @@
                                                             <div class="f_name">
                                                                 <p>File_name.txt ( 4,33 kb )</p>
                                                             </div>
-                                                            <a href="#" class="down_btn">내려받기</a>
+                                                            <a href="javascript:void(0);" class="down_btn">내려받기</a>
                                                             <a class="del_btn">파일삭제</a>
                                                         </div>
                                                     </td>
@@ -259,8 +259,8 @@
 
                                 <!-- 하단버튼 -->
                                 <div class="btm_btn mt10">
-                                    <a href="#">액션버튼</a>
-                                    <a href="#" class="col5">닫기</a>
+                                    <a href="javascript:void(0);">액션버튼</a>
+                                    <a href="javascript:void(0);" class="col5">닫기</a>
                                 </div>
                             </div>
                         </div>

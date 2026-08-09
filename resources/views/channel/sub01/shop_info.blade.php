@@ -22,7 +22,7 @@
                     </div>
                     <div class="tab_bx1">
                         <ul>
-                            <li><a href="#" class="on"><span>Shop채널 정보</span></a></li>
+                            <li><a href="javascript:void(0);" class="on"><span>Shop채널 정보</span></a></li>
                             <li><a href="{{ route('channel.shop_product01', ['id' => $shop->id]) }}"><span>판매상품</span></a></li>
                             <li><a href="{{ route('channel.shop_community', ['id' => $shop->id]) }}"><span>커뮤니티</span></a></li>
                         </ul>
