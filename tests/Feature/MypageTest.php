@@ -9,6 +9,9 @@ use App\Models\OrderClaim;
 use App\Models\OrdersProduct;
 use App\Models\PointTransaction;
 use App\Models\ShopChannel;
+use App\Models\Vendor;
+use App\Models\VendorsBankDetail;
+use App\Models\VendorsBusinessDetail;
 use App\Support\OrderItemStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -82,6 +85,160 @@ class MypageTest extends TestCase
         $this->assertEquals('54321', $user->pincode);
         $this->assertEquals('Seoul', $user->address);
         $this->assertEquals('Gangnam', $user->city);
+    }
+
+    public function test_user_profile_edit_screen_submits_real_update_form()
+    {
+        $user = User::factory()->create([
+            'email' => 'old@example.com',
+            'mobile' => '010-1111-1111',
+        ]);
+
+        $this->actingAs($user)
+            ->get('/mypage/profile')
+            ->assertOk()
+            ->assertSee('id="profileForm"', false)
+            ->assertSee('action="' . route('mypage.profile.update') . '"', false)
+            ->assertSee('type="submit"', false)
+            ->assertSee('정보수정')
+            ->assertSee('id="companyInfoForm"', false)
+            ->assertSee('action="' . route('front.member.register.step2.update') . '"', false)
+            ->assertSee('회원사 정보 저장')
+            ->assertSee('id="sellerCertificationForm"', false)
+            ->assertSee('action="' . route('front.member.register.step3.update') . '"', false)
+            ->assertSee('인증요청')
+            ->assertDontSee('href="#" class="btn_submit"', false);
+    }
+
+    public function test_mypage_company_info_update_persists_vendor_details()
+    {
+        $user = User::factory()->create([
+            'type' => 'general',
+            'mobile' => '010-1111-1111',
+        ]);
+
+        $this->actingAs($user)
+            ->postJson(route('front.member.register.step2.update'), [
+                'shop_name' => 'Profile Shop',
+                'shop_business_type' => 'business',
+                'business_license_1' => '123',
+                'business_license_2' => '45',
+                'business_license_3' => '67890',
+                'mobile_1' => '010',
+                'mobile_2' => '2222',
+                'mobile_3' => '3333',
+                'email_1' => 'shop',
+                'email_2' => 'example.com',
+                'zipcode' => '12345',
+                'address1' => 'Seoul',
+                'address2' => 'Mapo',
+                'bank_name' => '국민은행',
+                'account_number' => '1234567890',
+                'account_holder_name' => 'Shop Owner',
+                'agree1' => '1',
+            ])
+            ->assertOk()
+            ->assertJson(['status' => 'success']);
+
+        $user = $user->fresh();
+        $this->assertNotNull($user->vendor_id);
+        $this->assertEquals('company', $user->type);
+
+        $this->assertDatabaseHas('vendors_business_details', [
+            'vendor_id' => $user->vendor_id,
+            'shop_name' => 'Profile Shop',
+            'business_license_number' => '123-45-67890',
+            'shop_mobile' => '010-2222-3333',
+            'shop_email' => 'shop@example.com',
+            'bank_name' => '국민은행',
+            'bank_account_number' => '1234567890',
+            'bank_account_holder_name' => 'Shop Owner',
+        ]);
+
+        $this->assertDatabaseHas('vendors_bank_details', [
+            'vendor_id' => $user->vendor_id,
+            'bank_name' => '국민은행',
+            'account_number' => '1234567890',
+            'account_holder_name' => 'Shop Owner',
+        ]);
+    }
+
+    public function test_mypage_seller_certification_request_updates_vendor_user_flow()
+    {
+        $vendor = new Vendor;
+        $vendor->name = 'Profile Vendor';
+        $vendor->mobile = '010-1234-5678';
+        $vendor->email = 'vendor@example.com';
+        $vendor->status = 0;
+        $vendor->commission = 0;
+        $vendor->confirm = 'No';
+        $vendor->save();
+
+        $business = new VendorsBusinessDetail;
+        $business->vendor_id = $vendor->id;
+        $business->shop_name = 'Profile Vendor Shop';
+        $business->shop_address = 'Seoul';
+        $business->shop_mobile = '010-1234-5678';
+        $business->shop_email = 'vendor@example.com';
+        $business->bank_name = '국민은행';
+        $business->bank_account_number = '11112222';
+        $business->bank_account_holder_name = 'Old Owner';
+        $business->save();
+
+        $bank = new VendorsBankDetail;
+        $bank->vendor_id = $vendor->id;
+        $bank->bank_name = '국민은행';
+        $bank->account_number = '11112222';
+        $bank->account_holder_name = 'Old Owner';
+        $bank->bank_ifsc_code = '';
+        $bank->save();
+
+        $user = User::factory()->create([
+            'vendor_id' => $vendor->id,
+            'type' => 'company',
+        ]);
+
+        $this->actingAs($user)
+            ->postJson(route('front.member.register.step3.update'), [
+                'bank_name' => '국민은행',
+                'account_number' => '99990000',
+                'account_holder_name' => 'New Owner',
+                'agree1' => '1',
+            ])
+            ->assertOk()
+            ->assertJson(['status' => 'success']);
+
+        $this->assertEquals('vendor', $user->fresh()->type);
+        $this->assertDatabaseHas('vendors_business_details', [
+            'vendor_id' => $vendor->id,
+            'bank_account_number' => '99990000',
+            'bank_account_holder_name' => 'New Owner',
+        ]);
+        $this->assertDatabaseHas('vendors_bank_details', [
+            'vendor_id' => $vendor->id,
+            'account_number' => '99990000',
+            'account_holder_name' => 'New Owner',
+        ]);
+    }
+
+    public function test_user_password_update_from_profile_ajax()
+    {
+        $user = User::factory()->create([
+            'password' => bcrypt('old-password'),
+        ]);
+
+        $this->actingAs($user)
+            ->postJson(route('user.update.password'), [
+                'current_password' => 'old-password',
+                'new_password' => 'new-password',
+                'confirm_password' => 'new-password',
+            ], ['X-Requested-With' => 'XMLHttpRequest'])
+            ->assertOk()
+            ->assertJson([
+                'type' => 'success',
+            ]);
+
+        $this->assertTrue(Hash::check('new-password', $user->fresh()->password));
     }
 
     public function test_delivery_addresses_management_crud()

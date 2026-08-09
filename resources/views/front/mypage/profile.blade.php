@@ -8,7 +8,7 @@
 @section('content')
     <div id="contents">
         <div id="modify">
-            <form action="{{ url('/mypage/profile') }}" method="post">
+            <form id="profileForm" action="{{ route('mypage.profile.update') }}" method="post">
                 @csrf
                 <div class="box_w">
                     <div class="box box1">
@@ -54,7 +54,7 @@
                                             <div class="ttl brb">비밀번호 변경</div>
                                         </div>
 
-                                        <form id="passwordForm" action="javascript:;" method="post">
+                                        <div id="passwordForm" data-action="{{ route('user.update.password') }}">
                                             @csrf
                                             <div class="conbx">
                                                 <div class="con_w">
@@ -99,12 +99,10 @@
 
                                             <!-- 하단버튼 -->
                                             <div class="btm_btn mt10">
-                                                <button type="submit" style="background:none; border:none; padding:0;"><a
-                                                        href="javascript:;"
-                                                        onclick="$('#passwordForm').submit();">변경하기</a></button>
+                                                <button type="button" id="submitPasswordChange" class="btn_submit" style="border:0; cursor:pointer;">변경하기</button>
                                                 <a href="#" class="col5 close_btn">닫기</a>
                                             </div>
-                                        </form>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -199,7 +197,18 @@
                             </table>
                         </div>
                     </div>
+                </div>
 
+                <div class="btm_btn">
+                    <a href="{{ route('mypage.dashboard') }}" class="btn_cancel">취소</a>
+                    <button type="submit" class="btn_submit" style="border:0; cursor:pointer;">정보수정</button>
+                </div>
+            </form>
+
+            <form id="companyInfoForm" action="{{ route('front.member.register.step2.update') }}" method="post" enctype="multipart/form-data">
+                @csrf
+                <input type="hidden" name="agree1" value="1">
+                <div class="box_w">
                     {{-- 회원사 정보 (Box 3) --}}
                     <div class="box box3">
                         <div class="ttl01">
@@ -346,18 +355,27 @@
                                 </tbody>
                             </table>
                         </div>
+                        <div class="btm_btn t_r pt10" style="display:none;">
+                            <button type="submit" class="btn_submit" style="border:0; cursor:pointer;">회원사 정보 저장</button>
+                        </div>
                     </div>
+                </div>
+            </form>
 
-                    {{-- 판매 권한 정보 (Box 4/5/6) --}}
-                    @php
-                        $vendorStatus = -1;
-                        $hasProof = false;
-                        if($vendor) {
-                            $vendorStatus = $vendor->status;
-                            $hasProof = $business && !empty($business->address_proof_image);
-                        }
-                    @endphp
+            {{-- 판매 권한 정보 (Box 4/5/6) --}}
+            @php
+                $vendorStatus = -1;
+                $hasProof = false;
+                if($vendor) {
+                    $vendorStatus = $vendor->status;
+                    $hasProof = $business && !empty($business->address_proof_image);
+                }
+            @endphp
 
+            <form id="sellerCertificationForm" action="{{ route('front.member.register.step3.update') }}" method="post" enctype="multipart/form-data">
+                @csrf
+                <input type="hidden" name="agree1" value="1">
+                <div class="box_w">
                     @if($vendorStatus == 1)
                         {{-- Box 6: 인증 완료 --}}
                         <div class="box box6">
@@ -451,7 +469,7 @@
                                                 <div class="fileBox">
                                                     <input type="text" class="fileName on" readonly="readonly" value="{{ $business->bank_copy_image ?? '' }}">
                                                     <label for="uploadBtn5" class="btn_file">찾아보기</label>
-                                                    <input type="file" id="uploadBtn5" class="uploadBtn" name="bank_copy_image_2">
+                                                    <input type="file" id="uploadBtn5" class="uploadBtn" name="bank_copy_image">
                                                 </div>
                                             </td>
                                         </tr>
@@ -460,7 +478,7 @@
                             </div>
 
                             <div class="btm_btn t_r pt10" style="display:none;">
-                                <a href="#">재인증요청</a>
+                                <button type="submit" class="btn_submit" style="border:0; cursor:pointer;">재인증요청</button>
                             </div>
                         </div>
 
@@ -508,7 +526,7 @@
                                                 <div class="fileBox">
                                                     <input type="text" class="fileName" readonly="readonly" placeholder="입력한 계좌번호와 동일한 통장첨부">
                                                     <label for="uploadBtn3" class="btn_file">찾아보기</label>
-                                                    <input type="file" id="uploadBtn3" class="uploadBtn" name="bank_copy_image_2">
+                                                    <input type="file" id="uploadBtn3" class="uploadBtn" name="bank_copy_image">
                                                 </div>
                                             </td>
                                         </tr>
@@ -517,11 +535,14 @@
                             </div>
 
                             <div class="btm_btn t_r pt10" style="display:none;">
-                                <a href="#">인증요청</a>
+                                <button type="submit" class="btn_submit" style="border:0; cursor:pointer;">인증요청</button>
                             </div>
                         </div>
                     @endif
+                </div>
+            </form>
 
+            <div class="box_w">
                     <div class="box box7">
                         <div class="ttl01 brb">약관동의</div>
                         <div class="agree01">
@@ -647,11 +668,7 @@
                     </div>
                 </div>
 
-                <div class="btm_btn">
-                    <a href="#" class="btn_cancel">취소</a>
-                    <a href="#" class="btn_submit">정보수정</a>
-                </div>
-            </form>
+            </div>
         </div>
     </div><!-- //contents -->
 
@@ -701,6 +718,81 @@
         /* 약관 */
         $(".agree01 .s_txt .btn").click(function () {
             $(this).parent(".s_txt").siblings(".h_txt").stop().slideToggle(300);
+        });
+
+        function submitProfileAjaxForm($form, successMessage) {
+            var formData = new FormData($form[0]);
+
+            $.ajax({
+                url: $form.attr("action"),
+                type: "POST",
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function (response) {
+                    if (response.status === "success") {
+                        alert(successMessage || response.message || "저장되었습니다.");
+                        window.location.reload();
+                    } else {
+                        alert(response.message || "처리에 실패했습니다.");
+                    }
+                },
+                error: function (xhr) {
+                    var message = "처리에 실패했습니다.";
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        message = xhr.responseJSON.message;
+                    }
+                    alert(message);
+                }
+            });
+        }
+
+        $("#companyInfoForm").on("submit", function (e) {
+            e.preventDefault();
+            submitProfileAjaxForm($(this), "회원사 정보가 저장되었습니다.");
+        });
+
+        $("#sellerCertificationForm").on("submit", function (e) {
+            e.preventDefault();
+            submitProfileAjaxForm($(this), "판매권한 인증 요청이 접수되었습니다.");
+        });
+
+        $("#submitPasswordChange").click(function () {
+            var $form = $("#passwordForm");
+            $("#password-error, #password-success").text("");
+            $("[id^='password-']").not("#password-error, #password-success").text("");
+
+            $.ajax({
+                url: $form.data("action"),
+                type: "POST",
+                data: {
+                    _token: $form.find("input[name='_token']").val(),
+                    current_password: $form.find("input[name='current_password']").val(),
+                    new_password: $form.find("input[name='new_password']").val(),
+                    confirm_password: $form.find("input[name='confirm_password']").val()
+                },
+                success: function (response) {
+                    if (response.type === "success") {
+                        $("#password-success").text(response.message);
+                        $form.find("input[type='password']").val("");
+                    } else if (response.type === "error" && response.errors) {
+                        $.each(response.errors, function (key, messages) {
+                            $("#password-" + key).text(messages[0]);
+                        });
+                    } else {
+                        $("#password-error").text(response.message || "비밀번호 변경에 실패했습니다.");
+                    }
+                },
+                error: function (xhr) {
+                    if (xhr.responseJSON && xhr.responseJSON.errors) {
+                        $.each(xhr.responseJSON.errors, function (key, messages) {
+                            $("#password-" + key).text(messages[0]);
+                        });
+                    } else {
+                        $("#password-error").text("비밀번호 변경에 실패했습니다.");
+                    }
+                }
+            });
         });
     </script>
 @endsection
