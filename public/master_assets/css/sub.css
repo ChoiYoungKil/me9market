@@ -109,6 +109,11 @@
   color: #ffffff;
   letter-spacing: -0.03em;
   box-sizing: border-box;
+  cursor: pointer;
+  font-family: inherit;
+  vertical-align: middle;
+  appearance: none;
+  -webkit-appearance: none;
 }
 
 .btn02.col2 {
@@ -136,6 +141,30 @@
   background-color: #fff;
   border-color: #3470f7;
   color: #3470f7;
+}
+
+.settlement-top-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+}
+
+.settlement-table-actions {
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.settlement-note {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.settlement-execution-form .fileBox {
+  max-width: 100%;
 }
 
 .btm_btn {

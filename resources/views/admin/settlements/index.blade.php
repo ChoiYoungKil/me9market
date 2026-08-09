@@ -61,7 +61,7 @@
                             </table>
                         </form>
 
-                        <form method="POST" action="{{ route('admin.settlements.generate') }}" style="display:flex; justify-content:flex-end; margin-bottom:10px;">
+                        <form method="POST" action="{{ route('admin.settlements.generate') }}" class="settlement-top-actions">
                             @csrf
                             <input type="hidden" name="period" value="{{ $period }}">
                             <button type="submit" class="btn02">정산자료 생성/갱신</button>
@@ -128,7 +128,7 @@
                                             <td class="t_r bold fcol4">
                                                 {{ number_format($row['payout_amount'] ?? $row['settlement_amount']) }}원
                                                 @if(($row['payment_gateway_type'] ?? 'me9_pg') === 'own_pg')
-                                                    <p class="fcol1" style="font-size:12px;">자사PG 결제분 제외</p>
+                                                    <span class="fcol1 settlement-note">자사PG 결제분 제외</span>
                                                 @endif
                                             </td>
                                             <td class="t_r">{{ number_format($row['admin_amount']) }}원</td>
@@ -140,12 +140,14 @@
                                                 @endif
                                             </td>
                                             <td>
+                                                <div class="settlement-table-actions">
                                                 @if($row['run_id'])
                                                     <a href="{{ route('admin.settlements.show', $row['run_id']) }}" class="btn02 col5">보기</a>
                                                     <a href="{{ route('admin.settlements.export', $row['run_id']) }}" class="btn02">엑셀</a>
                                                 @else
                                                     <a href="{{ route('admin.settlements.preview', ['period' => $row['period'], 'vendor_id' => $row['vendor_id'], 'shop_channel_id' => $row['shop_channel_id'] ?: 0]) }}" class="btn02 col5">보기</a>
                                                 @endif
+                                                </div>
                                             </td>
                                         </tr>
                                     @empty
@@ -174,7 +176,7 @@
                         </div>
 
                         <div class="ttl01 mt30">정산 집행 등록</div>
-                        <form method="POST" action="{{ route('admin.settlements.executions.store') }}" enctype="multipart/form-data" class="tb01" style="margin-bottom:15px;">
+                        <form method="POST" action="{{ route('admin.settlements.executions.store') }}" enctype="multipart/form-data" class="tb01 settlement-execution-form" style="margin-bottom:15px;">
                             @csrf
                             <input type="hidden" name="period" value="{{ $period }}">
                             <table>
@@ -208,7 +210,13 @@
                                         <th><span>집행일</span></th>
                                         <td><input type="date" name="executed_at" class="w160" value="{{ now()->format('Y-m-d') }}"></td>
                                         <th><span>첨부자료</span></th>
-                                        <td><input type="file" name="attachment" class="wFull" accept=".xls,.xlsx,.csv,.pdf"></td>
+                                        <td>
+                                            <div class="fileBox">
+                                                <input type="text" class="fileName" placeholder="첨부자료를 선택해 주세요." readonly>
+                                                <label for="settlementAttachment" class="btn_file">찾아보기</label>
+                                                <input type="file" id="settlementAttachment" class="uploadBtn" name="attachment" accept=".xls,.xlsx,.csv,.pdf">
+                                            </div>
+                                        </td>
                                     </tr>
                                     <tr>
                                         <th><span>메모</span></th>
@@ -280,3 +288,14 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        $(function () {
+            $('.settlement-execution-form .uploadBtn').on('change', function () {
+                var filename = $(this).val().split('/').pop().split('\\').pop();
+                $(this).closest('.fileBox').find('.fileName').val(filename).toggleClass('on', filename !== '');
+            });
+        });
+    </script>
+@endpush
