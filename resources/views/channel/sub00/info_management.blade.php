@@ -242,16 +242,13 @@
                                             <th class="w160"><span>회원사 주소지</span></th>
                                             <td colspan="3">
                                                 <div class="addr_bx">
-                                                    <div style="margin-bottom: 5px;">
-                                                        <input type="text" name="shop_pincode" id="shop_pincode" class="addr1 off"
-                                                            placeholder="우편번호" required="required"
-                                                            value="{{ $details->shop_pincode ?? '' }}">
-                                                        <a href="javascript:;" onclick="execDaumPostcode('shop_pincode', 'shop_address', 'shop_address_detail')" class="btn01">우편번호찾기</a>
-                                                    </div>
+                                                    <input type="text" name="shop_pincode" id="shop_pincode" class="addr1 off"
+                                                        placeholder="우편번호" required="required"
+                                                        value="{{ $details->shop_pincode ?? '' }}">
+                                                    <a href="javascript:;" onclick="execDaumPostcode('shop_pincode', 'shop_address', 'shop_address_detail')" class="btn01">우편번호찾기</a>
                                                     <input type="text" name="shop_address" id="shop_address" class="addr2 off w100p"
                                                         placeholder="주소" required="required"
-                                                        value="{{ $details->shop_address ?? '' }}"
-                                                        style="margin-bottom: 5px;">
+                                                        value="{{ $details->shop_address ?? '' }}">
                                                     <input type="text" name="shop_address_detail" id="shop_address_detail" class="addr3 off w100p"
                                                         placeholder="상세주소" required="required"
                                                         value="{{ $details->shop_address_detail ?? '' }}">
