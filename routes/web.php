@@ -22,29 +22,31 @@ Route::redirect('/login', '/member/login');
 
 // 참고: 웹사이트는 두 가지 주요 섹션으로 구분됩니다: 관리자(Admin) 경로 및 사용자(Frontend) 경로!:
 
-Route::get('/test-route', function() { return 'Test Route OK'; });
+if (app()->environment(['local', 'testing'])) {
+    Route::get('/test-route', function() { return 'Test Route OK'; });
 
-Route::get('/session-test', function() {
-    $sessionWritable = is_writable(storage_path('framework/sessions'));
-    $storageWritable = is_writable(storage_path());
-    
-    $sessionVal = session('test_key');
-    session(['test_key' => 'Hello-' . time()]);
-    
-    $info = [
-        'Host (Request)' => request()->getHost(),
-        'URL (Current)' => request()->fullUrl(),
-        'Session Writable' => $sessionWritable ? 'Yes' : 'No',
-        'Storage Writable' => $storageWritable ? 'Yes' : 'No',
-        'Session Value (from last request)' => $sessionVal ?? 'NONE (First visit or session lost)',
-        'Session Driver' => config('session.driver'),
-        'Session Domain' => config('session.domain') ?? 'NULL',
-        'Session Secure' => config('session.secure') ? 'Yes' : 'No',
-        'Cookies Received' => request()->cookies->all(),
-    ];
-    
-    return response()->json($info);
-});
+    Route::get('/session-test', function() {
+        $sessionWritable = is_writable(storage_path('framework/sessions'));
+        $storageWritable = is_writable(storage_path());
+
+        $sessionVal = session('test_key');
+        session(['test_key' => 'Hello-' . time()]);
+
+        $info = [
+            'Host (Request)' => request()->getHost(),
+            'URL (Current)' => request()->fullUrl(),
+            'Session Writable' => $sessionWritable ? 'Yes' : 'No',
+            'Storage Writable' => $storageWritable ? 'Yes' : 'No',
+            'Session Value (from last request)' => $sessionVal ?? 'NONE (First visit or session lost)',
+            'Session Driver' => config('session.driver'),
+            'Session Domain' => config('session.domain') ?? 'NULL',
+            'Session Secure' => config('session.secure') ? 'Yes' : 'No',
+            'Cookies Received' => request()->cookies->all(),
+        ];
+
+        return response()->json($info);
+    });
+}
 
 
 // 첫째: 관리자 패널 라우트:
@@ -271,8 +273,8 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
 
 
 
-// 사용자 주문 PDF 인보이스 다운로드 (사용자가 다운로드할 수 있도록 관리자 패널 외부에 라우트 생성)
-Route::get('orders/invoice/download/{id}', 'App\Http\Controllers\Admin\OrderController@viewPDFInvoice');
+// 사용자 주문 PDF 인보이스 다운로드
+Route::get('orders/invoice/download/{id}', 'App\Http\Controllers\Front\FrontController@downloadOrderInvoice');
 
 
 

@@ -458,16 +458,21 @@ class ShopChannelRuntime
 
     public function cartItems(): array
     {
+        $shop = $this->currentChannel();
         $cart = Session::get(self::CART_KEY, []);
         $ids = array_keys($cart);
         $products = ShopChannelProduct::with(['product.images', 'shopChannel'])
             ->whereIn('id', $ids)
+            ->where('shop_channel_id', $shop->id)
+            ->where('status', 1)
+            ->where('approval_status', 'approved')
             ->get()
             ->keyBy('id');
 
         $items = [];
         foreach ($cart as $id => $row) {
             if (!$products->has($id)) {
+                unset($cart[$id]);
                 continue;
             }
 
@@ -489,6 +494,8 @@ class ShopChannelRuntime
             ];
         }
 
+        Session::put(self::CART_KEY, $cart);
+
         return $items;
     }
 
@@ -506,9 +513,10 @@ class ShopChannelRuntime
 
     public function addToCart(int $shopProductId, int $qty = 1, string $option = '기본옵션'): void
     {
-        $this->currentChannel();
+        $shop = $this->currentChannel();
 
         $shopProduct = ShopChannelProduct::where('id', $shopProductId)
+            ->where('shop_channel_id', $shop->id)
             ->where('status', 1)
             ->where('approval_status', 'approved')
             ->firstOrFail();

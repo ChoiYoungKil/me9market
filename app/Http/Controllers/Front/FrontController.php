@@ -404,6 +404,26 @@ class FrontController extends Controller
         return view('front.pages.nonmember_order_details', compact('order'));
     }
 
+    public function downloadOrderInvoice($id)
+    {
+        $order = \App\Models\Order::findOrFail($id);
+        $user = \Illuminate\Support\Facades\Auth::user();
+        $sessionOrderIds = array_filter([
+            \Illuminate\Support\Facades\Session::get('nonmember_order_id'),
+            \Illuminate\Support\Facades\Session::get('shop_order_id'),
+            \Illuminate\Support\Facades\Session::get('last_shop_order_id'),
+        ]);
+
+        $isOwnedByUser = $user && (int) $order->user_id === (int) $user->id;
+        $isVerifiedSessionOrder = in_array((int) $order->id, array_map('intval', $sessionOrderIds), true);
+
+        if (!$isOwnedByUser && !$isVerifiedSessionOrder) {
+            abort(403);
+        }
+
+        return app(\App\Http\Controllers\Admin\OrderController::class)->viewPDFInvoice($order->id);
+    }
+
     public function nonmemberOrderClaimSubmit(Request $request)
     {
         $request->validate([

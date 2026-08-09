@@ -287,8 +287,9 @@ class OrderController extends Controller
 
     // 주문 인보이스 페이지(HTML) 렌더링
     public function viewOrderInvoice($order_id) { 
-        $orderDetails = Order::with('orders_products')->where('id', $order_id)->first()->toArray(); 
-        $userDetails = User::where('id', $orderDetails['user_id'])->first()->toArray(); // 주문을 한 사용자 정보
+        $orderDetails = Order::with('orders_products')->where('id', $order_id)->firstOrFail()->toArray();
+        $userDetails = User::where('id', $orderDetails['user_id'])->first();
+        $userDetails = $userDetails ? $userDetails->toArray() : [];
 
 
         return view('admin.orders.order_invoice')->with(compact('orderDetails', 'userDetails'));
@@ -296,8 +297,9 @@ class OrderController extends Controller
 
     // Dompdf 패키지를 사용하여 주문 PDF 인보이스 생성
     public function viewPDFInvoice($order_id) { 
-        $orderDetails = Order::with('orders_products')->where('id', $order_id)->first()->toArray(); 
-        $userDetails = User::where('id', $orderDetails['user_id'])->first()->toArray(); 
+        $orderDetails = Order::with('orders_products')->where('id', $order_id)->firstOrFail()->toArray();
+        $userDetails = User::where('id', $orderDetails['user_id'])->first();
+        $userDetails = $userDetails ? $userDetails->toArray() : [];
 
 
         // 모든 오류를 방지하기 위해 작은따옴표를 제거합니다.

@@ -87,7 +87,9 @@ class ShopController extends Controller
         if ($orderId) {
             $order = \App\Models\Order::with(['orders_products' => function ($query) use ($shop) {
                 $query->where('shop_channel_id', $shop->id);
-            }])->find($orderId);
+            }])
+                ->whereHas('orders_products', fn ($query) => $query->where('shop_channel_id', $shop->id))
+                ->find($orderId);
         }
 
         if (!$order) {
