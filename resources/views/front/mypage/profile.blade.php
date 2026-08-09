@@ -99,7 +99,7 @@
 
                                             <!-- 하단버튼 -->
                                             <div class="btm_btn mt10">
-                                                <button type="button" id="submitPasswordChange" class="btn_submit" style="border:0; cursor:pointer;">변경하기</button>
+                                                <button type="button" id="submitPasswordChange" class="btn_submit">변경하기</button>
                                                 <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                                             </div>
                                         </div>
@@ -201,7 +201,7 @@
 
                 <div class="btm_btn">
                     <a href="{{ route('mypage.dashboard') }}" class="btn_cancel">취소</a>
-                    <button type="submit" class="btn_submit" style="border:0; cursor:pointer;">정보수정</button>
+                    <button type="submit" class="btn_submit">정보수정</button>
                 </div>
             </form>
 
@@ -356,7 +356,7 @@
                             </table>
                         </div>
                         <div class="btm_btn t_r pt10" style="display:none;">
-                            <button type="submit" class="btn_submit" style="border:0; cursor:pointer;">회원사 정보 저장</button>
+                            <button type="submit" class="btn_submit">회원사 정보 저장</button>
                         </div>
                     </div>
                 </div>
@@ -478,7 +478,7 @@
                             </div>
 
                             <div class="btm_btn t_r pt10" style="display:none;">
-                                <button type="submit" class="btn_submit" style="border:0; cursor:pointer;">재인증요청</button>
+                                <button type="submit" class="btn_submit">재인증요청</button>
                             </div>
                         </div>
 
@@ -535,7 +535,7 @@
                             </div>
 
                             <div class="btm_btn t_r pt10" style="display:none;">
-                                <button type="submit" class="btn_submit" style="border:0; cursor:pointer;">인증요청</button>
+                                <button type="submit" class="btn_submit">인증요청</button>
                             </div>
                         </div>
                     @endif

@@ -844,7 +844,8 @@ font-family:'Pretendard', sans-serif;
     text-align: right;
 }
 
-.btm_btn a {
+.btm_btn a,
+.btm_btn button {
     max-width: 160px;
     display: inline-block;
     line-height: 48px;
@@ -858,15 +859,21 @@ font-family:'Pretendard', sans-serif;
     letter-spacing: -0.03em;
     width: 100%;
     margin-right: 5px;
+    font-family: inherit;
+    padding: 0;
+    cursor: pointer;
+    box-sizing: border-box;
 }
 
-.btm_btn a.type2 {
+.btm_btn a.type2,
+.btm_btn button.type2 {
     max-width: 90px;
     line-height: 28px;
     font-size: 12px;
 }
 
-.btm_btn a:last-child {
+.btm_btn a:last-child,
+.btm_btn button:last-child {
     margin-right: 0;
 }
 
@@ -878,23 +885,27 @@ font-family:'Pretendard', sans-serif;
     float: right;
 }
 
-.btm_btn a.col2 {
+.btm_btn a.col2,
+.btm_btn button.col2 {
     background-color: #1d6d43;
     border-color: #1d6d43;
 }
 
-.btm_btn a.col3 {
+.btm_btn a.col3,
+.btm_btn button.col3 {
     background-color: #fff;
     border-color: #aaaaaa;
     color: #666666;
 }
 
-.btm_btn a.col4 {
+.btm_btn a.col4,
+.btm_btn button.col4 {
     background-color: #aaaaaa;
     border-color: #aaaaaa;
 }
 
-.btm_btn a.col5 {
+.btm_btn a.col5,
+.btm_btn button.col5 {
     background-color: #111111;
     border-color: #111111;
 }
@@ -1900,7 +1911,8 @@ font-family:'Pretendard', sans-serif;
         margin-top: 30px;
     }
 
-    .btm_btn a {
+    .btm_btn a,
+    .btm_btn button {
         font-size: 11px;
         max-width: 120px;
         line-height: 35px;
@@ -2193,6 +2205,8 @@ display: none;
 }
 
 .btm_btn .btn_submit {
+    appearance: none;
+    -webkit-appearance: none;
     display: inline-block;
     width: 100px;
     height: 40px;
@@ -2203,6 +2217,12 @@ display: none;
     font-size: 14px;
     text-align: center;
     border-radius: 5px;
+    font-family: inherit;
+    font-weight: 400;
+    padding: 0;
+    vertical-align: top;
+    cursor: pointer;
+    box-sizing: border-box;
 }
 
 .btn_file {
