@@ -594,10 +594,7 @@ class FrontController extends Controller
         $runtime = app(ShopChannelRuntime::class);
         $shop = $runtime->currentChannel();
         $products = $runtime->products()->take(4);
-        $jointPurchases = \Illuminate\Support\Facades\DB::table('joint_purchases')
-            ->join('products', 'joint_purchases.product_id', '=', 'products.id')
-            ->select('joint_purchases.*', 'products.product_name', 'products.product_code', 'products.product_price')
-            ->where('joint_purchases.status', 1)
+        $jointPurchases = $this->shopJointPurchaseQuery($shop->id)
             ->orderBy('joint_purchases.end_date')
             ->take(2)
             ->get();
@@ -624,10 +621,7 @@ class FrontController extends Controller
             ->first();
 
         if (!$shopProduct) {
-            $shopProduct = \App\Models\ShopChannelProduct::with(['product.images', 'shopChannel'])
-                ->where('shop_channel_id', $shop->id)
-                ->where('status', 1)
-                ->firstOrFail();
+            abort(404);
         }
 
         return view('shop.product_details', compact('shop', 'shopProduct'));
@@ -637,10 +631,7 @@ class FrontController extends Controller
     {
         $runtime = app(ShopChannelRuntime::class);
         $shop = $runtime->currentChannel();
-        $jointPurchases = \Illuminate\Support\Facades\DB::table('joint_purchases')
-            ->join('products', 'joint_purchases.product_id', '=', 'products.id')
-            ->select('joint_purchases.*', 'products.product_name', 'products.product_code', 'products.product_price')
-            ->where('joint_purchases.status', 1)
+        $jointPurchases = $this->shopJointPurchaseQuery($shop->id)
             ->orderBy('joint_purchases.end_date')
             ->get();
 
@@ -651,20 +642,29 @@ class FrontController extends Controller
     {
         $runtime = app(ShopChannelRuntime::class);
         $shop = $runtime->currentChannel();
-        $jointPurchase = \Illuminate\Support\Facades\DB::table('joint_purchases')
-            ->join('products', 'joint_purchases.product_id', '=', 'products.id')
-            ->select('joint_purchases.*', 'products.product_name', 'products.product_code', 'products.product_price')
+        $jointPurchase = $this->shopJointPurchaseQuery($shop->id)
             ->where('joint_purchases.id', $id)
             ->first();
 
         if (!$jointPurchase) {
-            $jointPurchase = \Illuminate\Support\Facades\DB::table('joint_purchases')
-                ->join('products', 'joint_purchases.product_id', '=', 'products.id')
-                ->select('joint_purchases.*', 'products.product_name', 'products.product_code', 'products.product_price')
-                ->firstOrFail();
+            abort(404);
         }
 
         return view('shop.joint_purchase_details', compact('shop', 'jointPurchase'));
+    }
+
+    private function shopJointPurchaseQuery(int $shopId)
+    {
+        return DB::table('joint_purchases')
+            ->join('products', 'joint_purchases.product_id', '=', 'products.id')
+            ->join('shop_channel_products', function ($join) use ($shopId) {
+                $join->on('shop_channel_products.product_id', '=', 'products.id')
+                    ->where('shop_channel_products.shop_channel_id', '=', $shopId)
+                    ->where('shop_channel_products.status', '=', 1)
+                    ->where('shop_channel_products.approval_status', '=', 'approved');
+            })
+            ->select('joint_purchases.*', 'products.product_name', 'products.product_code', 'products.product_price')
+            ->where('joint_purchases.status', 1);
     }
 
     public function shopNotices()

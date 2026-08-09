@@ -10,6 +10,7 @@ use App\Models\ShopChannel;
 use App\Models\ShopChannelProduct;
 use App\Models\Vendor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class ShopRuntimeTest extends TestCase
@@ -173,6 +174,25 @@ class ShopRuntimeTest extends TestCase
             ->assertDontSee('other-customer@example.com');
     }
 
+    public function test_shop_product_details_do_not_fallback_to_another_product()
+    {
+        list(, , $currentShop, , $currentShopProduct) = $this->createShopProduct('current-shop', 'CUR-PROD', 'Current');
+        list(, , , , $otherShopProduct) = $this->createShopProduct('other-shop', 'OTH-PROD', 'Other');
+
+        $this->withSession(['shop_channel_id' => $currentShop->id])
+            ->get(route('shop.product_details', $currentShopProduct->id))
+            ->assertOk()
+            ->assertSee('Current Product');
+
+        $this->withSession(['shop_channel_id' => $currentShop->id])
+            ->get(route('shop.product_details', $otherShopProduct->id))
+            ->assertNotFound();
+
+        $this->withSession(['shop_channel_id' => $currentShop->id])
+            ->get(route('shop.product_details', 999999))
+            ->assertNotFound();
+    }
+
     public function test_public_invoice_download_requires_order_ownership_or_verified_session()
     {
         list(, , $shop, $product) = $this->createShopProduct('invoice-shop', 'INV-001', 'Invoice');
@@ -180,5 +200,50 @@ class ShopRuntimeTest extends TestCase
 
         $this->get("orders/invoice/download/{$order->id}")
             ->assertForbidden();
+    }
+
+    public function test_shop_joint_purchases_are_scoped_to_current_channel()
+    {
+        list(, , $currentShop, $currentProduct) = $this->createShopProduct('current-shop', 'CUR-JOINT', 'Current');
+        list(, , , $otherProduct) = $this->createShopProduct('other-shop', 'OTH-JOINT', 'Other');
+
+        $currentJointId = DB::table('joint_purchases')->insertGetId([
+            'product_id' => $currentProduct->id,
+            'min_quantity' => 2,
+            'current_quantity' => 0,
+            'discount_price' => 9000,
+            'start_date' => now()->toDateString(),
+            'end_date' => now()->addDays(7)->toDateString(),
+            'status' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $otherJointId = DB::table('joint_purchases')->insertGetId([
+            'product_id' => $otherProduct->id,
+            'min_quantity' => 2,
+            'current_quantity' => 0,
+            'discount_price' => 9000,
+            'start_date' => now()->toDateString(),
+            'end_date' => now()->addDays(7)->toDateString(),
+            'status' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->withSession(['shop_channel_id' => $currentShop->id])
+            ->get(route('shop.joint_purchases_list'))
+            ->assertOk()
+            ->assertSee('Current Product')
+            ->assertDontSee('Other Product');
+
+        $this->withSession(['shop_channel_id' => $currentShop->id])
+            ->get(route('shop.joint_purchase_details', $currentJointId))
+            ->assertOk()
+            ->assertSee('Current Product');
+
+        $this->withSession(['shop_channel_id' => $currentShop->id])
+            ->get(route('shop.joint_purchase_details', $otherJointId))
+            ->assertNotFound();
     }
 }

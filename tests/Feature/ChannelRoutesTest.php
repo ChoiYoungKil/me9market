@@ -11,6 +11,7 @@ use App\Models\ShopCancelRefundPolicy;
 use App\Models\ShopChannelNotice;
 use App\Models\Distributor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class ChannelRoutesTest extends TestCase
@@ -261,5 +262,93 @@ class ChannelRoutesTest extends TestCase
         $this->actingAs($admin, 'admin')->get("/channel/shop/community/update/{$notice->id}")->assertStatus(200);
         $this->actingAs($admin, 'admin')->get("/channel/shop/info-update/{$shop->id}")->assertStatus(200);
         $this->actingAs($admin, 'admin')->get("/channel/shop/product/edit/{$shopProduct->id}")->assertStatus(200);
+    }
+
+    public function test_channel_joint_purchase_management_is_scoped_to_current_vendor()
+    {
+        list($vendor, $admin, $shop, $product) = $this->createSetup();
+
+        $otherVendor = Vendor::create([
+            'name' => 'Other Vendor',
+            'mobile' => '010-9999-0000',
+            'email' => 'other-vendor@example.com',
+            'status' => 1,
+            'commission' => 0,
+            'confirm' => 'Yes',
+        ]);
+
+        $otherAdmin = new Admin;
+        $otherAdmin->name = 'Other Admin';
+        $otherAdmin->type = 'vendor';
+        $otherAdmin->vendor_id = $otherVendor->id;
+        $otherAdmin->mobile = '01099990000';
+        $otherAdmin->email = 'other-admin@example.com';
+        $otherAdmin->password = bcrypt('password');
+        $otherAdmin->status = 1;
+        $otherAdmin->save();
+
+        $otherProduct = Product::create([
+            'section_id' => 1,
+            'category_id' => 1,
+            'brand_id' => 1,
+            'vendor_id' => $otherVendor->id,
+            'admin_id' => $otherAdmin->id,
+            'admin_type' => 'vendor',
+            'product_name' => 'Other Product',
+            'product_code' => 'OTHER-JP',
+            'product_color' => 'Black',
+            'product_price' => 1000,
+            'product_discount' => 0,
+            'product_weight' => 1,
+            'status' => 1,
+        ]);
+
+        $ownJointId = DB::table('joint_purchases')->insertGetId([
+            'product_id' => $product->id,
+            'min_quantity' => 2,
+            'current_quantity' => 0,
+            'discount_price' => 90,
+            'start_date' => now()->toDateString(),
+            'end_date' => now()->addDays(7)->toDateString(),
+            'status' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $otherJointId = DB::table('joint_purchases')->insertGetId([
+            'product_id' => $otherProduct->id,
+            'min_quantity' => 2,
+            'current_quantity' => 0,
+            'discount_price' => 900,
+            'start_date' => now()->toDateString(),
+            'end_date' => now()->addDays(7)->toDateString(),
+            'status' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('channel.joint_purchase.list'))
+            ->assertOk()
+            ->assertSee('P123')
+            ->assertDontSee('OTHER-JP');
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('channel.joint_purchase.edit', $otherJointId))
+            ->assertNotFound();
+
+        $this->actingAs($admin, 'admin')->post(route('channel.joint_purchase.update', $ownJointId), [
+            'product_id' => $otherProduct->id,
+            'min_quantity' => 3,
+            'start_date' => now()->toDateString(),
+            'end_date' => now()->addDays(10)->toDateString(),
+            'tier_min_quantity' => [3],
+            'tier_unit_price' => [800],
+        ])->assertNotFound();
+
+        $this->assertDatabaseHas('joint_purchases', [
+            'id' => $ownJointId,
+            'product_id' => $product->id,
+        ]);
     }
 }

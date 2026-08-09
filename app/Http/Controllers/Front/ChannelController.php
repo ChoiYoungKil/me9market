@@ -2667,10 +2667,10 @@ class ChannelController extends Controller
         $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
         if (!$admin) return redirect()->route('channel.login');
 
-        // Fetch joint purchases
         $jointPurchases = \Illuminate\Support\Facades\DB::table('joint_purchases')
             ->leftJoin('products', 'joint_purchases.product_id', '=', 'products.id')
             ->select('joint_purchases.*', 'products.product_name', 'products.product_code')
+            ->where('products.vendor_id', $admin->vendor_id)
             ->orderBy('joint_purchases.id', 'desc')
             ->paginate(10);
 
@@ -2701,6 +2701,13 @@ class ChannelController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date'
         ]);
+        $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
+        if (!$admin) return redirect()->route('channel.login');
+
+        $product = \App\Models\Product::where('id', $request->product_id)
+            ->where('vendor_id', $admin->vendor_id)
+            ->firstOrFail();
+
         $pricing = app(\App\Services\JointPurchasePricingService::class);
         $tiers = $pricing->normalizeTierInput($request->all());
         if (empty($tiers)) {
@@ -2708,7 +2715,7 @@ class ChannelController extends Controller
         }
 
         $jointPurchaseId = \Illuminate\Support\Facades\DB::table('joint_purchases')->insertGetId([
-            'product_id' => $request->product_id,
+            'product_id' => $product->id,
             'min_quantity' => $request->min_quantity,
             'current_quantity' => 0,
             'discount_price' => $tiers[0]['unit_price'],
@@ -2728,8 +2735,16 @@ class ChannelController extends Controller
         $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
         if (!$admin) return redirect()->route('channel.login');
 
-        $jointPurchase = \Illuminate\Support\Facades\DB::table('joint_purchases')->where('id', $id)->first();
-        if (!$jointPurchase) abort(404);
+        $jointPurchase = \Illuminate\Support\Facades\DB::table('joint_purchases')
+            ->join('products', 'joint_purchases.product_id', '=', 'products.id')
+            ->select('joint_purchases.*')
+            ->where('joint_purchases.id', $id)
+            ->where('products.vendor_id', $admin->vendor_id)
+            ->first();
+
+        if (!$jointPurchase) {
+            abort(404);
+        }
 
         $products = \App\Models\Product::where('vendor_id', $admin->vendor_id)->get();
         $tiers = app(\App\Services\JointPurchasePricingService::class)->tiers((int) $id);
@@ -2750,6 +2765,24 @@ class ChannelController extends Controller
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date'
         ]);
+        $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
+        if (!$admin) return redirect()->route('channel.login');
+
+        $jointPurchase = \Illuminate\Support\Facades\DB::table('joint_purchases')
+            ->join('products', 'joint_purchases.product_id', '=', 'products.id')
+            ->where('joint_purchases.id', $id)
+            ->where('products.vendor_id', $admin->vendor_id)
+            ->select('joint_purchases.id')
+            ->first();
+
+        if (!$jointPurchase) {
+            abort(404);
+        }
+
+        $product = \App\Models\Product::where('id', $request->product_id)
+            ->where('vendor_id', $admin->vendor_id)
+            ->firstOrFail();
+
         $pricing = app(\App\Services\JointPurchasePricingService::class);
         $tiers = $pricing->normalizeTierInput($request->all());
         if (empty($tiers)) {
@@ -2757,7 +2790,7 @@ class ChannelController extends Controller
         }
 
         \Illuminate\Support\Facades\DB::table('joint_purchases')->where('id', $id)->update([
-            'product_id' => $request->product_id,
+            'product_id' => $product->id,
             'min_quantity' => $request->min_quantity,
             'discount_price' => $tiers[0]['unit_price'],
             'start_date' => $request->start_date,
