@@ -293,7 +293,7 @@
                                         </div>
                                     </div>
                                     <div class="btm_btn mt10">
-                                        <a href="#">확인</a>
+                                        <a href="javascript:;" onclick="document.getElementById('addDeliveryForm').submit();">확인</a>
                                         <a href="#" class="col5 close_btn">닫기</a>
                                     </div>
                                 </div>

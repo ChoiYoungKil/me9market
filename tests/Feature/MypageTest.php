@@ -3,15 +3,19 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Models\Cart;
 use App\Models\DeliveryAddress;
 use App\Models\Order;
 use App\Models\OrderClaim;
 use App\Models\OrdersProduct;
 use App\Models\PointTransaction;
+use App\Models\Product;
 use App\Models\ShopChannel;
+use App\Models\ShopChannelProduct;
 use App\Models\Vendor;
 use App\Models\VendorsBankDetail;
 use App\Models\VendorsBusinessDetail;
+use App\Models\Wishlist;
 use App\Support\OrderItemStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -489,6 +493,218 @@ class MypageTest extends TestCase
             ->assertSee('aria-label="반품완료 1건"', false)
             ->assertSee('aria-label="교환신청 1건"', false)
             ->assertSee('aria-label="교환완료 1건"', false);
+    }
+
+    public function test_mypage_search_and_review_actions_are_wired_to_real_routes()
+    {
+        $user = User::factory()->create();
+
+        $order = new Order;
+        $order->user_id = $user->id;
+        $order->name = $user->name;
+        $order->address = 'Seoul';
+        $order->city = 'Gangnam';
+        $order->state = 'Seoul';
+        $order->country = 'Korea';
+        $order->pincode = '12345';
+        $order->mobile = '01012345678';
+        $order->email = $user->email;
+        $order->shipping_charges = 0;
+        $order->order_status = 'New';
+        $order->payment_method = 'Card';
+        $order->payment_gateway = 'Test';
+        $order->grand_total = 10000;
+        $order->save();
+
+        OrdersProduct::create([
+            'order_id' => $order->id,
+            'user_id' => $user->id,
+            'vendor_id' => 1,
+            'admin_id' => 1,
+            'product_id' => 10,
+            'product_code' => 'REVIEW-001',
+            'product_name' => '리뷰 작성 대상 상품',
+            'product_color' => 'Black',
+            'product_size' => 'FREE',
+            'product_price' => 10000,
+            'product_qty' => 1,
+            'line_total' => 10000,
+            'item_status' => '구매확정',
+            'status_code' => OrderItemStatus::CONFIRMED,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('mypage.order.list'))
+            ->assertOk()
+            ->assertSee('class="btn_search"', false)
+            ->assertSee('js-review-popup', false)
+            ->assertSee('action="' . route('front.rating.add') . '"', false)
+            ->assertDontSee('<a href="#" class="btn02 col3">리뷰작성</a>', false);
+
+        $this->actingAs($user)
+            ->get(route('mypage.cart'))
+            ->assertOk()
+            ->assertSee('action="' . route('mypage.cart') . '"', false)
+            ->assertDontSee('<a href="#" class="btn01 btn_black">검색</a>', false);
+
+        $this->actingAs($user)
+            ->get(route('mypage.wishlist'))
+            ->assertOk()
+            ->assertSee('action="' . route('mypage.wishlist') . '"', false)
+            ->assertDontSee('<a href="#" class="btn01 btn_black">검색</a>', false);
+
+        $this->actingAs($user)
+            ->get(route('mypage.point.history'))
+            ->assertOk()
+            ->assertSee('action="' . route('mypage.point.history') . '"', false)
+            ->assertDontSee('href="#" class="btn01" style="background-color: #000; border-color: #000;">검색', false);
+    }
+
+    public function test_mypage_search_filters_and_review_submit_persist_data()
+    {
+        $user = User::factory()->create();
+
+        $matchedShop = ShopChannel::create([
+            'vendor_id' => 1,
+            'channel_code' => 'MATCH-SHOP',
+            'status' => 1,
+            'is_public' => 1,
+            'is_member_only' => 0,
+            'channel_name' => '검색대상 채널',
+            'copyright' => 'Me9',
+            'keywords' => [],
+        ]);
+
+        $otherShop = ShopChannel::create([
+            'vendor_id' => 2,
+            'channel_code' => 'OTHER-SHOP',
+            'status' => 1,
+            'is_public' => 1,
+            'is_member_only' => 0,
+            'channel_name' => '다른 채널',
+            'copyright' => 'Me9',
+            'keywords' => [],
+        ]);
+
+        $matchedProduct = Product::create([
+            'section_id' => 1,
+            'category_id' => 1,
+            'brand_id' => 1,
+            'vendor_id' => 1,
+            'admin_id' => 1,
+            'admin_type' => 'vendor',
+            'product_name' => '검색 노출 상품',
+            'product_code' => 'MATCH-PRODUCT',
+            'product_color' => 'Black',
+            'product_price' => 10000,
+            'product_discount' => 0,
+            'product_weight' => 1,
+            'description' => 'test',
+            'status' => 1,
+        ]);
+
+        $otherProduct = Product::create([
+            'section_id' => 1,
+            'category_id' => 1,
+            'brand_id' => 1,
+            'vendor_id' => 2,
+            'admin_id' => 1,
+            'admin_type' => 'vendor',
+            'product_name' => '검색 제외 상품',
+            'product_code' => 'OTHER-PRODUCT',
+            'product_color' => 'White',
+            'product_price' => 10000,
+            'product_discount' => 0,
+            'product_weight' => 1,
+            'description' => 'test',
+            'status' => 1,
+        ]);
+
+        $matchedShopProduct = ShopChannelProduct::create([
+            'shop_channel_id' => $matchedShop->id,
+            'product_id' => $matchedProduct->id,
+            'product_type' => 'own',
+            'status' => 1,
+            'selling_price' => 10000,
+        ]);
+
+        ShopChannelProduct::create([
+            'shop_channel_id' => $otherShop->id,
+            'product_id' => $otherProduct->id,
+            'product_type' => 'own',
+            'status' => 1,
+            'selling_price' => 10000,
+        ]);
+
+        $cart = new Cart;
+        $cart->session_id = 'test-session';
+        $cart->user_id = $user->id;
+        $cart->product_id = $matchedProduct->id;
+        $cart->size = 'FREE';
+        $cart->quantity = 1;
+        $cart->save();
+
+        $otherCart = new Cart;
+        $otherCart->session_id = 'test-session';
+        $otherCart->user_id = $user->id;
+        $otherCart->product_id = $otherProduct->id;
+        $otherCart->size = 'FREE';
+        $otherCart->quantity = 1;
+        $otherCart->save();
+
+        Wishlist::create([
+            'user_id' => $user->id,
+            'shop_channel_product_id' => $matchedShopProduct->id,
+        ]);
+
+        PointTransaction::create([
+            'user_id' => $user->id,
+            'shop_channel_id' => $matchedShop->id,
+            'type' => 'earn',
+            'points' => 500,
+            'description' => '검색 가능한 적립',
+        ]);
+
+        PointTransaction::create([
+            'user_id' => $user->id,
+            'shop_channel_id' => $otherShop->id,
+            'type' => 'earn',
+            'points' => 100,
+            'description' => '다른 적립',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('mypage.cart', ['channel_name' => '검색대상']))
+            ->assertOk()
+            ->assertSee('검색 노출 상품')
+            ->assertDontSee('검색 제외 상품');
+
+        $this->actingAs($user)
+            ->get(route('mypage.wishlist', ['channel_name' => '검색대상']))
+            ->assertOk()
+            ->assertSee('검색 노출 상품');
+
+        $this->actingAs($user)
+            ->get(route('mypage.point.history', ['shop_channel' => '검색대상', 'point_min' => 400]))
+            ->assertOk()
+            ->assertSee('검색 가능한 적립')
+            ->assertDontSee('다른 적립');
+
+        $this->actingAs($user)
+            ->post(route('front.rating.add'), [
+                'product_id' => $matchedProduct->id,
+                'rating' => 4,
+                'review' => '마이페이지 리뷰 저장 테스트',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('ratings', [
+            'user_id' => $user->id,
+            'product_id' => $matchedProduct->id,
+            'rating' => 4,
+            'review' => '마이페이지 리뷰 저장 테스트',
+            'status' => 0,
+        ]);
     }
 
     public function test_approved_closed_channel_points_can_convert_to_me9_points()

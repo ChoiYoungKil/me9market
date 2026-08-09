@@ -1832,9 +1832,61 @@ class UserController extends Controller
         $user = Auth::user();
         $this->ensureMypageDevDataExists($user->id);
 
-        $pointHistory = \App\Models\PointTransaction::with('shopChannel')
-            ->where('user_id', $user->id)
-            ->orderByDesc('created_at')
+        $filters = $request->only([
+            'start_date',
+            'end_date',
+            'shop_channel',
+            'channel_code',
+            'point_type',
+            'point_min',
+            'point_max',
+            'detail',
+        ]);
+
+        $query = \App\Models\PointTransaction::with('shopChannel')
+            ->where('user_id', $user->id);
+
+        if (!empty($filters['start_date'])) {
+            $query->whereDate('created_at', '>=', $filters['start_date']);
+        }
+
+        if (!empty($filters['end_date'])) {
+            $query->whereDate('created_at', '<=', $filters['end_date']);
+        }
+
+        if (!empty($filters['shop_channel'])) {
+            $query->whereHas('shopChannel', function ($q) use ($filters) {
+                $q->where('channel_name', 'like', '%' . $filters['shop_channel'] . '%');
+            });
+        }
+
+        if (!empty($filters['channel_code'])) {
+            $query->whereHas('shopChannel', function ($q) use ($filters) {
+                $q->where('channel_code', 'like', '%' . $filters['channel_code'] . '%');
+            });
+        }
+
+        if (!empty($filters['point_type'])) {
+            if (str_contains('적립', $filters['point_type']) || str_contains(strtolower($filters['point_type']), 'in')) {
+                $query->where('points', '>=', 0);
+            } elseif (str_contains('소진', $filters['point_type']) || str_contains(strtolower($filters['point_type']), 'out')) {
+                $query->where('points', '<', 0);
+            }
+        }
+
+        if (isset($filters['point_min']) && $filters['point_min'] !== '') {
+            $query->where('points', '>=', (int) $filters['point_min']);
+        }
+
+        if (isset($filters['point_max']) && $filters['point_max'] !== '') {
+            $query->where('points', '<=', (int) $filters['point_max']);
+        }
+
+        if (!empty($filters['detail'])) {
+            $query->where('description', 'like', '%' . $filters['detail'] . '%');
+        }
+
+        $pointHistory = $query->orderByDesc('created_at')
             ->get()
             ->values()
             ->map(function ($transaction, $index) {
@@ -1850,7 +1902,7 @@ class UserController extends Controller
             })
             ->all();
         
-        return view('front.mypage.sub01.point_history', compact('user', 'pointHistory'));
+        return view('front.mypage.sub01.point_history', compact('user', 'pointHistory', 'filters'));
     }
 
     public function cartList(Request $request)
@@ -1858,22 +1910,29 @@ class UserController extends Controller
         $user = Auth::user();
         $this->ensureMypageDevDataExists($user->id);
 
+        $channelName = $request->input('channel_name');
+
         $cartItems = \App\Models\Cart::with('product')
             ->where('user_id', $user->id)
             ->orderByDesc('id')
             ->get()
             ->map(fn ($cart) => $this->mypageProductRow($cart->product, $cart->id, $cart->size, $cart->quantity))
             ->filter()
+            ->when($channelName, function ($items) use ($channelName) {
+                return $items->filter(fn ($item) => str_contains($item['shop_channel'], $channelName));
+            })
             ->values()
             ->all();
 
-        return view('front.mypage.sub01.cart_list', compact('user', 'cartItems'));
+        return view('front.mypage.sub01.cart_list', compact('user', 'cartItems', 'channelName'));
     }
 
     public function wishlist(Request $request)
     {
         $user = Auth::user();
         $this->ensureMypageDevDataExists($user->id);
+
+        $channelName = $request->input('channel_name');
 
         $wishlistItems = \App\Models\Wishlist::with('shopChannelProduct.product')
             ->where('user_id', $user->id)
@@ -1889,10 +1948,13 @@ class UserController extends Controller
                 return $row;
             })
             ->filter()
+            ->when($channelName, function ($items) use ($channelName) {
+                return $items->filter(fn ($item) => str_contains($item['shop_channel'], $channelName));
+            })
             ->values()
             ->all();
 
-        return view('front.mypage.sub01.wishlist', compact('user', 'wishlistItems'));
+        return view('front.mypage.sub01.wishlist', compact('user', 'wishlistItems', 'channelName'));
     }
 
     public function deleteCartItem($id)
@@ -2010,10 +2072,20 @@ class UserController extends Controller
         $status = $request->input('status', 'all');
         $tab = $request->input('tab', 'order');
         $vendorId = $request->input('vendor_id'); // Optional filter by channel
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
 
         // Fetch real orders from database
         $ordersQuery = \App\Models\Order::with(['orders_products.product'])
             ->where('user_id', $user->id);
+
+        if (!empty($startDate)) {
+            $ordersQuery->whereDate('created_at', '>=', $startDate);
+        }
+
+        if (!empty($endDate)) {
+            $ordersQuery->whereDate('created_at', '<=', $endDate);
+        }
 
         // Filter by vendor if requested (for organic visited channel orders link)
         if (!empty($vendorId)) {
@@ -2113,6 +2185,7 @@ class UserController extends Controller
                     'seller_name' => 'Seller',
                     'product_image' => $productImage,
                     'product_name' => $item->product_name,
+                    'product_id' => $item->product_id,
                     'option' => '옵션: ' . $item->product_size . ' / ' . $item->product_qty . '개',
                     'price' => $item->product_price * $item->product_qty,
                     'status' => $itemStatus,
@@ -2138,7 +2211,7 @@ class UserController extends Controller
 
         $orders = $formattedOrders;
 
-        return view('front.mypage.order.list', compact('user', 'orders', 'status', 'tab'));
+        return view('front.mypage.order.list', compact('user', 'orders', 'status', 'tab', 'startDate', 'endDate'));
     }
 
     public function socialJoin()

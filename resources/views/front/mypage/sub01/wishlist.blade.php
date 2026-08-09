@@ -122,27 +122,29 @@
                 <div class="conbx">
                     <div class="con_w">
                         <!-- 검색 -->
-                        <div class="tb01">
-                            <table>
-                                <colgroup>
-                                    <col width="160px">
-                                    <col width="">
-                                    <col width="120px">
-                                </colgroup>
-                                <tbody>
-                                    <tr>
-                                        <th class="w160"><span>채널명</span></th>
-                                        <td>
-                                            <input type="text" name="channel_name" value=""
-                                                style="width: 100%; height: 42px; border: 1px solid #ddd; padding: 0 10px;">
-                                        </td>
-                                        <td class="search_btn_cell">
-                                            <a href="#" class="btn01 btn_black">검색</a>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                        <form action="{{ route('mypage.wishlist') }}" method="get">
+                            <div class="tb01">
+                                <table>
+                                    <colgroup>
+                                        <col width="160px">
+                                        <col width="">
+                                        <col width="120px">
+                                    </colgroup>
+                                    <tbody>
+                                        <tr>
+                                            <th class="w160"><span>채널명</span></th>
+                                            <td>
+                                                <input type="text" name="channel_name" value="{{ $channelName ?? '' }}"
+                                                    style="width: 100%; height: 42px; border: 1px solid #ddd; padding: 0 10px;">
+                                            </td>
+                                            <td class="search_btn_cell">
+                                                <button type="submit" class="btn01 btn_black" style="border:0; cursor:pointer;">검색</button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </form>
 
                         <div class="mt40">
                             <div class="txt_total mb10">총 <span class="fcol1 bold">{{ count($wishlistItems) }}</span>건</div>

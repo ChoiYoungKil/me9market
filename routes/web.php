@@ -298,6 +298,7 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
     Route::get('/register/member', 'UserController@registerMember')->name('front.member.register.member');
     Route::post('/register/member', 'UserController@registerMemberSubmit')->name('front.member.register.submit');
     Route::post('/check-id-availability', 'UserController@checkIdAvailability')->name('front.member.check_id');
+    Route::post('/add-rating', 'RatingController@addRating')->name('front.rating.add');
     Route::get('/register/step1', 'UserController@registerStep1')->name('front.member.register.step1');
     Route::post('/register/step1/update', 'UserController@updateMemberStep1')->name('front.member.register.step1.update'); // 새로운 라우트
     Route::post('/user/update-password', 'UserController@userUpdatePassword')->name('user.update.password'); // AJAX를 위한 별칭

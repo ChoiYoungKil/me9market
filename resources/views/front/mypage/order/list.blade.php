@@ -395,17 +395,17 @@
                                 </div>
                                 <div class="right_bx">
                                     <div class="period_btn_wrap">
-                                        <a href="#" class="btn02 on" data-period="1">1개월</a>
-                                        <a href="#" class="btn02" data-period="3">3개월</a>
-                                        <a href="#" class="btn02" data-period="6">6개월</a>
-                                        <a href="#" class="btn02" data-period="12">1년</a>
+                                        <a href="javascript:void(0);" class="btn02 on" data-period="1">1개월</a>
+                                        <a href="javascript:void(0);" class="btn02" data-period="3">3개월</a>
+                                        <a href="javascript:void(0);" class="btn02" data-period="6">6개월</a>
+                                        <a href="javascript:void(0);" class="btn02" data-period="12">1년</a>
                                     </div>
                                     <div class="date_wrap">
-                                        <input type="text" class="datepicker" id="start_date">
+                                        <input type="text" class="datepicker" id="start_date" value="{{ $startDate ?? '' }}">
                                         <span>~</span>
-                                        <input type="text" class="datepicker" id="end_date">
+                                        <input type="text" class="datepicker" id="end_date" value="{{ $endDate ?? '' }}">
                                     </div>
-                                    <button class="btn_search">조회</button>
+                                    <button type="button" class="btn_search">조회</button>
                                 </div>
                             </div>
                         </div>
@@ -506,7 +506,10 @@
                                                             data-option="{{ $item['option'] }}">구매확정</a>
                                                     @endif
                                                     @if(in_array('review', $item['buttons']))
-                                                        <a href="#" class="btn02 col3">리뷰작성</a>
+                                                        <a href="javascript:void(0);" class="btn02 col3 js-review-popup"
+                                                            data-product-id="{{ $item['product_id'] }}"
+                                                            data-name="{{ $item['product_name'] }}"
+                                                            data-image="{{ $item['product_image'] }}">리뷰작성</a>
                                                     @endif
                                                 </div>
                                             </div>
@@ -989,6 +992,70 @@
             </div>
         </div>
     </div>
+
+    <!-- 리뷰작성 팝업 -->
+    <div id="pop_review" class="popup_bx">
+        <div class="pop_w">
+            <div class="pop_inner">
+                <div class="pop_con" style="max-width: 600px;">
+                    <a href="javascript:void(0);" onclick="closeReviewPopup()" class="close1">닫기</a>
+
+                    <div class="ttl01 brb">
+                        <strong>리뷰작성</strong>
+                    </div>
+
+                    <div class="conbx">
+                        <div class="con" style="margin-bottom: 20px;">
+                            <div class="product01" style="display: flex; align-items: center;">
+                                <div class="img_bx" id="review_prd_img"
+                                    style="width: 80px; height: 80px; background: #f5f5f5; border: 1px solid #eee; background-size: cover; background-position: center; border-radius: 5px; margin-right: 15px;">
+                                </div>
+                                <strong class="txt2" id="review_prd_name" style="font-size: 16px; color: #333;"></strong>
+                            </div>
+                        </div>
+
+                        <form id="review_form" action="{{ route('front.rating.add') }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="product_id" id="review_product_id">
+                            <input type="hidden" name="rating" id="review_rating_value" value="5">
+
+                            <div class="con"
+                                style="padding: 20px 0; border-top: 1px solid #eee; border-bottom: 1px solid #eee;">
+                                <div style="display: flex; align-items: center; justify-content: space-between;">
+                                    <div class="c_ttl" style="font-size: 15px; font-weight: 700;">별점주기</div>
+                                    <div class="review_star_rating_bx" style="display: flex; gap: 5px;">
+                                        <a href="javascript:void(0);" onclick="setReviewRating(1)" class="star on" data-idx="1"
+                                            style="font-size: 24px; color: #ddd; text-decoration: none;">★</a>
+                                        <a href="javascript:void(0);" onclick="setReviewRating(2)" class="star on" data-idx="2"
+                                            style="font-size: 24px; color: #ddd; text-decoration: none;">★</a>
+                                        <a href="javascript:void(0);" onclick="setReviewRating(3)" class="star on" data-idx="3"
+                                            style="font-size: 24px; color: #ddd; text-decoration: none;">★</a>
+                                        <a href="javascript:void(0);" onclick="setReviewRating(4)" class="star on" data-idx="4"
+                                            style="font-size: 24px; color: #ddd; text-decoration: none;">★</a>
+                                        <a href="javascript:void(0);" onclick="setReviewRating(5)" class="star on" data-idx="5"
+                                            style="font-size: 24px; color: #ddd; text-decoration: none;">★</a>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="con" style="margin-top: 20px;">
+                                <textarea name="review" id="review_text" required
+                                    style="width: 100%; min-height: 120px; border: 1px solid #ddd; padding: 10px;"
+                                    placeholder="리뷰 내용을 입력해 주세요."></textarea>
+                            </div>
+
+                            <div class="btm_btn" style="margin-top: 20px; text-align: center;">
+                                <button type="submit" class="col2"
+                                    style="display: inline-block; width: 150px; text-align: center; background-color: #588f3a; color: #fff; border: 1px solid #588f3a; cursor:pointer;">리뷰등록</button>
+                                <a href="javascript:void(0);" onclick="closeReviewPopup()" class="close_btn"
+                                    style="display: inline-block; width: 120px; text-align: center;">창닫기</a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 @endsection
 
 <style>
@@ -998,6 +1065,10 @@
     }
 
     .star_rating_bx .star.on {
+        color: #ffbf00 !important;
+    }
+
+    .review_star_rating_bx .star.on {
         color: #ffbf00 !important;
     }
 </style>
@@ -1027,6 +1098,10 @@
                 var d = $(this).data();
                 console.log('Confirm Popup Data:', d);
                 openConfirmPopup(d.id, d.name, d.image, d.shop, d.option);
+            });
+            $(document).on('click', '.js-review-popup', function () {
+                var d = $(this).data();
+                openReviewPopup(d.productId, d.name, d.image);
             });
 
             // Cancel Submit
@@ -1219,6 +1294,23 @@
                 setDateRange(period);
             });
 
+            $(".btn_search").click(function () {
+                var url = new URL("{{ route('mypage.order.list') }}", window.location.origin);
+                url.searchParams.set("tab", "{{ $tab }}");
+                url.searchParams.set("status", "{{ $status }}");
+
+                var startDate = $("#start_date").val();
+                var endDate = $("#end_date").val();
+                if (startDate) {
+                    url.searchParams.set("start_date", startDate);
+                }
+                if (endDate) {
+                    url.searchParams.set("end_date", endDate);
+                }
+
+                window.location.href = url.toString();
+            });
+
             $(".filter_bx .btn02").not('.period_btn_wrap .btn02').click(function (e) {
                 e.preventDefault();
                 $(this).siblings().removeClass("on");
@@ -1378,6 +1470,30 @@
         function setRating(rating) {
             $("#confirm_rating_value").val(rating);
             $(".star_rating_bx .star").each(function (index) {
+                if (index < rating) {
+                    $(this).addClass("on");
+                } else {
+                    $(this).removeClass("on");
+                }
+            });
+        }
+
+        function openReviewPopup(productId, name, image) {
+            $("#review_product_id").val(productId);
+            $("#review_prd_name").text(name);
+            $("#review_prd_img").css("background-image", "url('" + image + "')");
+            $("#review_text").val("");
+            setReviewRating(5);
+            $("#pop_review").fadeIn();
+        }
+
+        function closeReviewPopup() {
+            $("#pop_review").fadeOut();
+        }
+
+        function setReviewRating(rating) {
+            $("#review_rating_value").val(rating);
+            $(".review_star_rating_bx .star").each(function (index) {
                 if (index < rating) {
                     $(this).addClass("on");
                 } else {

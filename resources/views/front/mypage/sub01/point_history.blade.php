@@ -22,61 +22,63 @@
 
                     <div class="conbx">
                         <div class="con_w">
-                            <div class="tb01">
-                                <table>
-                                    <colgroup>
-                                        <col width="160px">
-                                        <col width="">
-                                        <col width="160px">
-                                        <col width="">
-                                    </colgroup>
-                                    <tbody class="textL">
-                                        <tr>
-                                            <th class="w160"><span>등록 기간</span></th>
-                                            <td colspan="3">
-                                                <div class="date_bx">
-                                                    <input class="datepicker" type="text" name="start_date" required="required" readonly="">
-                                                    <span>~</span>
-                                                    <input class="datepicker" type="text" name="end_date" required="required" readonly="">
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <th class="w160"><span>Shop 채널</span></th>
-                                            <td>
-                                                <input type="text" name="shop_channel" value="" required="required">
-                                            </td>
-                                            <th class="w160"><span>채널 코드</span></th>
-                                            <td>
-                                                <input type="text" name="channel_code" value="" required="required">
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <th class="w160"><span>포인트 구분</span></th>
-                                            <td>
-                                                <input type="text" name="point_type" value="" required="required">
-                                            </td>
-                                            <th class="w160"><span>포인트 범위</span></th>
-                                            <td>
-                                                <div class="scope01">
-                                                    <input type="text" name="point_min" value="" required="required">
-                                                    <span class="mid">~</span>
-                                                    <input type="text" name="point_max" value="" required="required">
-                                                </div>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <th class="w160"><span>상세 내용</span></th>
-                                            <td colspan="3">
-                                                <input type="text" name="detail" value="" required="required">
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="btm_btn right mt10">
-                                <a href="#" class="btn01" style="background-color: #000; border-color: #000;">검색</a>
-                            </div>
+                            <form action="{{ route('mypage.point.history') }}" method="get">
+                                <div class="tb01">
+                                    <table>
+                                        <colgroup>
+                                            <col width="160px">
+                                            <col width="">
+                                            <col width="160px">
+                                            <col width="">
+                                        </colgroup>
+                                        <tbody class="textL">
+                                            <tr>
+                                                <th class="w160"><span>등록 기간</span></th>
+                                                <td colspan="3">
+                                                    <div class="date_bx">
+                                                        <input class="datepicker" type="text" name="start_date" value="{{ $filters['start_date'] ?? '' }}" readonly="">
+                                                        <span>~</span>
+                                                        <input class="datepicker" type="text" name="end_date" value="{{ $filters['end_date'] ?? '' }}" readonly="">
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th class="w160"><span>Shop 채널</span></th>
+                                                <td>
+                                                    <input type="text" name="shop_channel" value="{{ $filters['shop_channel'] ?? '' }}">
+                                                </td>
+                                                <th class="w160"><span>채널 코드</span></th>
+                                                <td>
+                                                    <input type="text" name="channel_code" value="{{ $filters['channel_code'] ?? '' }}">
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th class="w160"><span>포인트 구분</span></th>
+                                                <td>
+                                                    <input type="text" name="point_type" value="{{ $filters['point_type'] ?? '' }}" placeholder="적립 또는 소진">
+                                                </td>
+                                                <th class="w160"><span>포인트 범위</span></th>
+                                                <td>
+                                                    <div class="scope01">
+                                                        <input type="text" name="point_min" value="{{ $filters['point_min'] ?? '' }}">
+                                                        <span class="mid">~</span>
+                                                        <input type="text" name="point_max" value="{{ $filters['point_max'] ?? '' }}">
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th class="w160"><span>상세 내용</span></th>
+                                                <td colspan="3">
+                                                    <input type="text" name="detail" value="{{ $filters['detail'] ?? '' }}">
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="btm_btn right mt10">
+                                    <button type="submit" class="btn01" style="background-color: #000; border-color: #000; color:#fff; border:0; cursor:pointer;">검색</button>
+                                </div>
+                            </form>
                         </div>
 
                         <div class="con_w mt40">
