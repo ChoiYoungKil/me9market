@@ -68,10 +68,10 @@
                                 style="background: #0066cc; color: white; padding: 12px 40px; text-decoration: none; border-radius: 3px; font-size: 14px;">
                                 수정
                             </a>
-                            <a href="{{ url()->current() }}" class="delete-notice" data-id="{{ $notice->id }}"
-                                style="background: #ff0000; color: white; padding: 12px 40px; text-decoration: none; border-radius: 3px; font-size: 14px;">
+                            <button type="button" class="delete-notice" data-id="{{ $notice->id }}"
+                                style="background: #ff0000; color: white; padding: 12px 40px; text-decoration: none; border-radius: 3px; font-size: 14px; border: 0; cursor: pointer;">
                                 삭제
-                            </a>
+                            </button>
                         </div>
 
                         <!-- 이전글/다음글 영역 -->

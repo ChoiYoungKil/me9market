@@ -131,4 +131,26 @@ class OperationalHardeningTest extends TestCase
 
         $this->assertSame([], $violations, "Empty hash links/actions remain:\n" . implode("\n", $violations));
     }
+
+    public function test_core_channel_actions_do_not_use_current_url_fallbacks()
+    {
+        $criticalViews = [
+            resource_path('views/channel/inc/snb01.blade.php'),
+            resource_path('views/channel/inc/snb02.blade.php'),
+            resource_path('views/channel/inc/snb03.blade.php'),
+            resource_path('views/channel/inc/snb04.blade.php'),
+            resource_path('views/channel/sub01/community_view.blade.php'),
+            resource_path('views/channel/sub02/product_request.blade.php'),
+        ];
+
+        $violations = [];
+        foreach ($criticalViews as $view) {
+            $contents = file_get_contents($view);
+            if (str_contains($contents, 'url()->current()')) {
+                $violations[] = str_replace(base_path() . DIRECTORY_SEPARATOR, '', $view);
+            }
+        }
+
+        $this->assertSame([], $violations, 'Core channel action views still contain current URL fallbacks.');
+    }
 }
