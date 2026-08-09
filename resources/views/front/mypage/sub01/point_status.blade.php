@@ -118,11 +118,11 @@
                             <!-- 페이징 -->
                             <div class="page_bx1 text-center mt30">
                                 <a href="javascript:void(0);" class="page_prev dimmed">prev</a>
-                                <a href="javascript:void(0);" class="num on">1</a>
-                                <a href="javascript:void(0);" class="num">2</a>
-                                <a href="javascript:void(0);" class="num">3</a>
-                                <a href="javascript:void(0);" class="num">4</a>
-                                <a href="javascript:void(0);" class="num">5</a>
+                                <a href="#" class="num on">1</a>
+                                <a href="#" class="num">2</a>
+                                <a href="#" class="num">3</a>
+                                <a href="#" class="num">4</a>
+                                <a href="#" class="num">5</a>
                                 <a href="javascript:void(0);" class="page_next dimmed">next</a>
                             </div>
                         </div>
@@ -155,7 +155,7 @@
                         <input type="hidden" name="shop_channel_id" id="convert_shop_channel_id" value="">
                         <div class="btm_btn mt10" style="display: flex; justify-content: center; gap: 10px;">
                             <button type="submit" style="max-width: 120px; background-color: #444; color: #fff; border: 0;">확인</button>
-                            <a href="javascript:void(0);" class="col5 close_btn" style="max-width: 120px; background-color: #aaa;">취소</a>
+                            <a href="#" class="col5 close_btn" style="max-width: 120px; background-color: #aaa;">취소</a>
                         </div>
                     </form>
                 </div>

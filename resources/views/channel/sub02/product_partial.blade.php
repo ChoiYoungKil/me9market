@@ -205,7 +205,7 @@
                                                 -
                                             </td>
                                             <td>
-                                                <a href="javascript:void(0);" class="btn02 col2 pop_btn" data-pop="pop3_1" data-id="{{ $product->id }}">보기</a>
+                                                <a href="#" class="btn02 col2 pop_btn" data-pop="pop3_1" data-id="{{ $product->id }}">보기</a>
                                             </td>
                                         </tr>
                                     @empty

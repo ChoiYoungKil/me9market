@@ -26,7 +26,7 @@
                             <li><a href="{{ route('channel.product_own') }}"><span>자사상품관리</span></a></li>
                             <li><a href="{{ route('channel.product_public') }}"><span>공개상품관리</span></a></li>
                             <li><a href="{{ route('channel.product_partial') }}"><span>부분공개상품관리</span></a></li>
-                            <li><a href="javascript:void(0);" class="on"><span>판매 요청 관리</span></a></li>
+                            <li><a href="#" class="on"><span>판매 요청 관리</span></a></li>
                         </ul>
                     </div>
 
@@ -156,7 +156,7 @@
                                                 <td>{{ $req->created_at->format('Y-m-d') }}</td>
                                                 <td><span class="btn02 {{ $statusColor }}">{{ $statusText }}</span></td>
                                                 <td>
-                                                    <a href="javascript:void(0);" class="btn02 col5 pop_btn" data-pop="pop_detail_{{ $req->id }}">보기</a>
+                                                    <a href="#" class="btn02 col5 pop_btn" data-pop="pop_detail_{{ $req->id }}">보기</a>
                                                 </td>
                                             </tr>
 
@@ -204,10 +204,10 @@
                                                             <!-- 하단버튼 -->
                                                             <div class="btm_btn mt10">
                                                                 @if($req->status == 0)
-                                                                    <a href="javascript:void(0);" class="btn01 col2" onclick='updateRequestStatus("{{ $req->id }}", 1); return false;'>허용</a>
-                                                                    <a href="javascript:void(0);" class="btn01 col4" onclick='updateRequestStatus("{{ $req->id }}", 2); return false;'>거부</a>
+                                                                    <a href="#" class="btn01 col2" onclick='updateRequestStatus("{{ $req->id }}", 1); return false;'>허용</a>
+                                                                    <a href="#" class="btn01 col4" onclick='updateRequestStatus("{{ $req->id }}", 2); return false;'>거부</a>
                                                                 @endif
-                                                                <a href="javascript:void(0);" class="col5 close_btn">닫기</a>
+                                                                <a href="#" class="col5 close_btn">닫기</a>
                                                             </div>
                                                         </div>
                                                     </div>

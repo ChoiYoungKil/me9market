@@ -144,7 +144,7 @@
                         <!-- 하단버튼 -->
                         <div class="btm_btn right mt10">
                             <div class="page_bx1"></div>
-                            <a href="javascript:void(0);" class="pop_btn" data-pop="pop1_1">회원 탈퇴 신청하기</a>
+                            <a href="#" class="pop_btn" data-pop="pop1_1">회원 탈퇴 신청하기</a>
                         </div>
                     </div>
                 </form>
@@ -168,7 +168,7 @@
                                 <div class="btm_btn mt10">
                                     <a href="javascript:;"
                                         onclick="document.getElementById('withdrawForm').submit();">확인</a>
-                                    <a href="javascript:void(0);" class="col5 close_btn">닫기</a>
+                                    <a href="#" class="col5 close_btn">닫기</a>
                                 </div>
                             </div>
                         </div>

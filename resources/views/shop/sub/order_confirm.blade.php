@@ -21,7 +21,7 @@
                                     <span>-</span>
                                     <input type="text" class="">
                                 </div>
-                                <a href="javascript:void(0);" class="btn">주문조회</a>
+                                <a href="#" class="btn">주문조회</a>
                             </div>
                         </form>
                     </div>

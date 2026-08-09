@@ -180,14 +180,14 @@
                                                 · 상품 금액 &nbsp;&nbsp;<input class="w160" type="text" value=""
                                                     required="required"> 원 이상 ~ <input class="w160" type="text" value=""
                                                     required="required"> 원 미만, 배송비 <input class="w160" type="text"
-                                                    value="" required="required"> 원 부과 &nbsp;&nbsp;<a href="javascript:void(0);"
+                                                    value="" required="required"> 원 부과 &nbsp;&nbsp;<a href="#"
                                                     class="btn02 col2">추가</a>
                                             </p>
                                             <p class="mt5">
                                                 · 상품 금액 &nbsp;&nbsp;<input class="w160" type="text" value=""
                                                     required="required"> 원 이상 ~ <input class="w160" type="text" value=""
                                                     required="required"> 원 미만, 배송비 <input class="w160" type="text"
-                                                    value="" required="required"> 원 부과 &nbsp;&nbsp;<a href="javascript:void(0);"
+                                                    value="" required="required"> 원 부과 &nbsp;&nbsp;<a href="#"
                                                     class="btn02 col7">삭제</a>
                                             </p>
                                             <p class="mt5">
@@ -202,14 +202,14 @@
                                                 · 상품 금액 &nbsp;&nbsp;<input class="w160" type="text" value=""
                                                     required="required"> 개 이상 ~ <input class="w160" type="text" value=""
                                                     required="required"> 개 미만, 배송비 <input class="w160" type="text"
-                                                    value="" required="required"> 원 부과 &nbsp;&nbsp;<a href="javascript:void(0);"
+                                                    value="" required="required"> 원 부과 &nbsp;&nbsp;<a href="#"
                                                     class="btn02 col2">추가</a>
                                             </p>
                                             <p class="mt5">
                                                 · 상품 금액 &nbsp;&nbsp;<input class="w160" type="text" value=""
                                                     required="required"> 개 이상 ~ <input class="w160" type="text" value=""
                                                     required="required"> 개 미만, 배송비 <input class="w160" type="text"
-                                                    value="" required="required"> 원 부과 &nbsp;&nbsp;<a href="javascript:void(0);"
+                                                    value="" required="required"> 원 부과 &nbsp;&nbsp;<a href="#"
                                                     class="btn02 col7">삭제</a>
                                             </p>
                                             <p class="mt5">
@@ -340,8 +340,8 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="javascript:void(0);">배송비 수정</a>
-                    <a href="javascript:void(0);" class="col5 close_btn">닫기</a>
+                    <a href="#">배송비 수정</a>
+                    <a href="#" class="col5 close_btn">닫기</a>
                 </div>
             </div>
         </div>

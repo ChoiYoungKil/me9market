@@ -12,7 +12,7 @@
                         <a href="/">Home</a>
                     </li>
                     <li class="is-marked">
-                        <a href="javascript:void(0);">Seller Registration</a>
+                        <a href="#">Seller Registration</a>
                     </li>
                 </ul>
             </div>
@@ -102,7 +102,7 @@
                             <div class="u-s-m-b-30">
                                 <input type="checkbox" class="check-box" id="accept" name="accept">
                                 <label class="label-text no-color" for="accept">I’ve read and accept the
-                                    <a href="javascript:void(0);" class="u-c-brand">terms & conditions</a>
+                                    <a href="#" class="u-c-brand">terms & conditions</a>
                                 </label>
                                 <p id="register-accept"></p>
                             </div>

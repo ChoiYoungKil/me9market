@@ -3,11 +3,11 @@
 
     <div class="t_menu">
         <ul>
-            <li><a href="javascript:void(0);" class="on">환경설정</a></li>
-            <li><a href="javascript:void(0);">회원관리</a></li>
-            <li><a href="javascript:void(0);">판매사이트관리</a></li>
-            <li><a href="javascript:void(0);">대분류</a></li>
-            <li><a href="javascript:void(0);">대분류</a></li>
+            <li><a href="#" class="on">환경설정</a></li>
+            <li><a href="#">회원관리</a></li>
+            <li><a href="#">판매사이트관리</a></li>
+            <li><a href="#">대분류</a></li>
+            <li><a href="#">대분류</a></li>
         </ul>
     </div>
 
@@ -16,7 +16,7 @@
         <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
             @csrf
         </form>
-        <a href="javascript:void(0);" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
+        <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
             class="btn icon1">logout</a>
     </div>
 </header><!-- //header -->

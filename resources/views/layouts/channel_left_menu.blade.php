@@ -4,7 +4,7 @@
             <div class="ttl">주문관리</div>
             <ul>
                 <li>
-                    <a href="javascript:void(0);">
+                    <a href="#">
                         <div class="icon icon1">
                             <span class="num">99+</span>
                         </div>
@@ -12,7 +12,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="javascript:void(0);">
+                    <a href="#">
                         <div class="icon icon2">
                             <span class="num">20</span>
                         </div>
@@ -20,7 +20,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="javascript:void(0);">
+                    <a href="#">
                         <div class="icon icon3">
                             <!--<span class="num">99+</span>-->
                         </div>
@@ -28,7 +28,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="javascript:void(0);">
+                    <a href="#">
                         <div class="icon icon4">
                             <!--<span class="num">99+</span>-->
                         </div>
@@ -36,7 +36,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="javascript:void(0);">
+                    <a href="#">
                         <div class="icon icon5">
                             <!--<span class="num">99+</span>-->
                         </div>
@@ -48,7 +48,7 @@
 
         <!-- 상품등록 버튼만 -->
         <!--<div class="con2_btn">
-            <a href="javascript:void(0);" class="btn"><span>상품등록</span></a>
+            <a href="#" class="btn"><span>상품등록</span></a>
         </div>-->
 
         <!-- 상품등록 -->
@@ -57,12 +57,12 @@
             <div class="list_bx">
                 <div class="list_w">
                     <ul>
-                        <li><a href="javascript:void(0);">- 자사상품 수<span>(5)</span></a></li>
-                        <li><a href="javascript:void(0);">- 공유상품 수<span>(5)</span></a></li>
-                        <li><a href="javascript:void(0);">- 판매 상품 수<span>(1)</span></a></li>
-                        <li><a href="javascript:void(0);">- 판매채널 수<span>(2)</span></a></li>
+                        <li><a href="#">- 자사상품 수<span>(5)</span></a></li>
+                        <li><a href="#">- 공유상품 수<span>(5)</span></a></li>
+                        <li><a href="#">- 판매 상품 수<span>(1)</span></a></li>
+                        <li><a href="#">- 판매채널 수<span>(2)</span></a></li>
                     </ul>
-                    <a href="javascript:void(0);" class="add_btn"><span>상품등록</span></a>
+                    <a href="#" class="add_btn"><span>상품등록</span></a>
                 </div>
             </div>
         </div>

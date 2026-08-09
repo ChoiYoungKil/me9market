@@ -12,7 +12,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="javascript:void(0);">
+                    <a href="#">
                         <div class="icon icon2">
                             <span class="num">20</span>
                         </div>
@@ -20,7 +20,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="javascript:void(0);">
+                    <a href="#">
                         <div class="icon icon3">
                             <!--<span class="num">99+</span>-->
                         </div>
@@ -28,7 +28,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="javascript:void(0);">
+                    <a href="#">
                         <div class="icon icon4">
                             <!--<span class="num">99+</span>-->
                         </div>
@@ -36,7 +36,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="javascript:void(0);">
+                    <a href="#">
                         <div class="icon icon5">
                             <!--<span class="num">99+</span>-->
                         </div>
@@ -44,7 +44,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="javascript:void(0);">
+                    <a href="#">
                         <div class="icon icon6">
                             <!--<span class="num">99+</span>-->
                         </div>
@@ -59,7 +59,7 @@
                 <ul class="dep1_wrap">
                     <li class="dep1 icon1_1 arrow">
                         <!-- on -->
-                        <a href="javascript:void(0);">정보관리</a>
+                        <a href="#">정보관리</a>
                         <ul class="dep2_wrap">
                             <li><a href="{{ url('/mypage/profile/edit') }}">회원 정보 수정</a></li> <!-- on -->
                             <li><a href="{{ url('/mypage/delivery') }}">배송지 설정</a></li>
@@ -67,16 +67,16 @@
                         </ul>
                     </li>
                     <li class="dep1 icon1_2">
-                        <a href="javascript:void(0);">방문한 채널</a>
+                        <a href="#">방문한 채널</a>
                     </li>
                     <li class="dep1 icon1_3">
-                        <a href="javascript:void(0);">포인트관리</a>
+                        <a href="#">포인트관리</a>
                     </li>
                     <li class="dep1 icon1_4">
-                        <a href="javascript:void(0);">장바구니 목록</a>
+                        <a href="#">장바구니 목록</a>
                     </li>
                     <li class="dep1 icon1_5">
-                        <a href="javascript:void(0);">찜한 상품 목록</a>
+                        <a href="#">찜한 상품 목록</a>
                     </li>
                 </ul>
             </div>
@@ -84,21 +84,21 @@
                 <div class="c_ttl">Me9 Market</div>
                 <ul class="dep1_wrap">
                     <li class="dep1 icon2_1">
-                        <a href="javascript:void(0);">서비스 안내</a>
+                        <a href="#">서비스 안내</a>
                     </li>
                     <li class="dep1 icon2_2">
-                        <a href="javascript:void(0);">주요기능</a>
+                        <a href="#">주요기능</a>
                     </li>
                     <li class="dep1 icon2_3">
-                        <a href="javascript:void(0);">가입안내</a>
+                        <a href="#">가입안내</a>
                     </li>
                     <li class="dep1 icon2_4 arrow">
-                        <a href="javascript:void(0);">고객센터</a>
+                        <a href="#">고객센터</a>
                         <ul class="dep2_wrap">
-                            <li><a href="javascript:void(0);">공지사항</a></li>
-                            <li><a href="javascript:void(0);">자주묻는질문</a></li>
-                            <li><a href="javascript:void(0);">제휴문의</a></li>
-                            <li><a href="javascript:void(0);">주문조회</a></li>
+                            <li><a href="#">공지사항</a></li>
+                            <li><a href="#">자주묻는질문</a></li>
+                            <li><a href="#">제휴문의</a></li>
+                            <li><a href="#">주문조회</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -106,9 +106,9 @@
             <div class="con_w m_show">
                 <div class="c_ttl">회원명</div>
                 <ul>
-                    <li class="icon1"><a href="javascript:void(0);">채널관리자</a></li>
-                    <li class="icon2"><a href="javascript:void(0);">마이페이지</a></li>
-                    <li class="icon3"><a href="javascript:void(0);">로그아웃</a></li>
+                    <li class="icon1"><a href="#">채널관리자</a></li>
+                    <li class="icon2"><a href="#">마이페이지</a></li>
+                    <li class="icon3"><a href="#">로그아웃</a></li>
                 </ul>
             </div>
         </div>

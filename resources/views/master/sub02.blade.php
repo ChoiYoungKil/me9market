@@ -140,7 +140,7 @@
                         <div class="list01">
                             <ul>
                                 <li>
-                                    <a href="javascript:void(0);">
+                                    <a href="#">
                                         <div class="img_bx"
                                             style="background-image:url({{ asset('master_assets/images/sub/thum01.jpg') }})">
                                         </div>
@@ -238,7 +238,7 @@
                                         <td colspan="3">
                                             <div class="r_btn_w w457">
                                                 <input type="text">
-                                                <a href="javascript:void(0);" class="btn01">중복확인</a>
+                                                <a href="#" class="btn01">중복확인</a>
                                             </div>
                                             <p class="mt10">‘ <span class="fcol2">abcd1234</span> ’ 는 사용할 수 있는 아이디 입니다.</p>
                                         </td>
@@ -263,7 +263,7 @@
                                         <td colspan="3">
                                             <div class="addr_bx">
                                                 <input type="text" class="addr1 off" placeholder="우편번호" required="required">
-                                                <a href="javascript:void(0);" class="btn01">우편번호찾기</a>
+                                                <a href="#" class="btn01">우편번호찾기</a>
                                                 <input type="text" class="addr2 off" placeholder="주소" required="required">
                                                 <input type="text" class="addr3 off" placeholder="상세주소" required="required">
                                             </div>
@@ -279,9 +279,9 @@
                             </table>
                         </div>
                         <br>
-                        <a href="javascript:void(0);" class="btn01">버튼1</a>
-                        <a href="javascript:void(0);" class="btn01 col2">버튼2</a>
-                        <a href="javascript:void(0);" class="btn01 col3">버튼3</a>
+                        <a href="#" class="btn01">버튼1</a>
+                        <a href="#" class="btn01 col2">버튼2</a>
+                        <a href="#" class="btn01 col3">버튼3</a>
                     </div>
                     <div class="con_w">
                         <div class="ttl01 brb">새창/팝업</div>
@@ -337,8 +337,8 @@
 
                                         <!-- 하단버튼 -->
                                         <div class="btm_btn mt10">
-                                            <a href="javascript:void(0);">액션버튼</a>
-                                            <a href="javascript:void(0);" class="col5 close_btn">닫기</a>
+                                            <a href="#">액션버튼</a>
+                                            <a href="#" class="col5 close_btn">닫기</a>
                                         </div>
                                     </div>
                                 </div>
@@ -383,8 +383,8 @@
 
                                         <!-- 하단버튼 -->
                                         <div class="btm_btn mt10">
-                                            <a href="javascript:void(0);">상품추가하기</a>
-                                            <a href="javascript:void(0);" class="col5 close_btn">닫기</a>
+                                            <a href="#">상품추가하기</a>
+                                            <a href="#" class="col5 close_btn">닫기</a>
                                         </div>
                                     </div>
                                 </div>

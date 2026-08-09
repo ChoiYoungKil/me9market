@@ -136,7 +136,7 @@
                         </div>
 
                         <div class="btm_btn right mt10 search-actions">
-                            <a href="javascript:void(0);" class="type2">검색</a>
+                            <a href="#" class="type2">검색</a>
                         </div>
                     </div>
                 </div>
@@ -255,15 +255,15 @@
                         <!--<div class="no_data">등록된 데이터가 없습니다.</div>-->
 
                         <div class="page_bx1">
-                            <a href="javascript:void(0);" class="page_first">first</a>
-                            <a href="javascript:void(0);" class="page_prev">prev</a>
-                            <a href="javascript:void(0);" class="num on">1</a>
-                            <a href="javascript:void(0);" class="num">2</a>
-                            <a href="javascript:void(0);" class="num">3</a>
-                            <a href="javascript:void(0);" class="num">4</a>
-                            <a href="javascript:void(0);" class="num">5</a>
-                            <a href="javascript:void(0);" class="page_next">next</a>
-                            <a href="javascript:void(0);" class="page_last">last</a>
+                            <a href="#" class="page_first">first</a>
+                            <a href="#" class="page_prev">prev</a>
+                            <a href="#" class="num on">1</a>
+                            <a href="#" class="num">2</a>
+                            <a href="#" class="num">3</a>
+                            <a href="#" class="num">4</a>
+                            <a href="#" class="num">5</a>
+                            <a href="#" class="page_next">next</a>
+                            <a href="#" class="page_last">last</a>
                         </div>
 
                         <!-- 팝업 -->

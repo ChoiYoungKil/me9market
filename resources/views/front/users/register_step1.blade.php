@@ -56,7 +56,7 @@
                                                             <th class="w160"><span>아이디</span></th>
                                                             <td>abcde1234</td>
                                                             <th class="w160"><span>비밀번호</span></th>
-                                                            <td><a href="javascript:void(0);" class="btn01">비밀번호 변경</a></td>
+                                                            <td><a href="#" class="btn01">비밀번호 변경</a></td>
                                                         </tr>
                                                     </tbody>
                                                 </table>
@@ -101,7 +101,7 @@
                                                                         <input type="text" class="tel2" required="required"
                                                                             value="0000">
                                                                     </div>
-                                                                    <a href="javascript:void(0);" class="btn01 col2">본인인증</a>
+                                                                    <a href="#" class="btn01 col2">본인인증</a>
                                                                 </div>
                                                             </td>
                                                         </tr>
@@ -127,7 +127,7 @@
                                                                 <div class="addr_bx">
                                                                     <input type="text" class="addr1 off" placeholder="우편번호"
                                                                         required="required">
-                                                                    <a href="javascript:void(0);" class="btn01">우편번호찾기</a>
+                                                                    <a href="#" class="btn01">우편번호찾기</a>
                                                                     <input type="text" class="addr2 off" placeholder="주소"
                                                                         required="required">
                                                                     <input type="text" class="addr3 off" placeholder="상세주소"
@@ -233,8 +233,8 @@
 
                                 </div>
                                 <div class="btm_btn type2">
-                                    <a href="javascript:void(0);" class="col3">취소</a>
-                                    <a href="javascript:void(0);" class="col2">저장</a>
+                                    <a href="#" class="col3">취소</a>
+                                    <a href="#" class="col2">저장</a>
                                     <a href="{{ route('register.step2') }}" class="col4">Step2 회원사 등록</a>
                                 </div>
                             </div>

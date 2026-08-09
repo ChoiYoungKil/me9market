@@ -8,11 +8,11 @@
                 </div>
                 <div class="tab_bx1">
                     <ul>
-                        <li><a href="javascript:void(0);" data-pop="pop1_1"><span>주문 정보</span></a></li>
-                        <li><a href="javascript:void(0);" class="on"><span>정상 주문</span></a></li>
-                        <li><a href="javascript:void(0);" data-pop="pop1_3"><span>취소 주문</span></a></li>
-                        <li><a href="javascript:void(0);" data-pop="pop1_4"><span>반품 주문</span></a></li>
-                        <li><a href="javascript:void(0);" data-pop="pop1_5"><span>교환 주문</span></a></li>
+                        <li><a href="#" data-pop="pop1_1"><span>주문 정보</span></a></li>
+                        <li><a href="#" class="on"><span>정상 주문</span></a></li>
+                        <li><a href="#" data-pop="pop1_3"><span>취소 주문</span></a></li>
+                        <li><a href="#" data-pop="pop1_4"><span>반품 주문</span></a></li>
+                        <li><a href="#" data-pop="pop1_5"><span>교환 주문</span></a></li>
                     </ul>
                 </div>
                 <div class="conbx">
@@ -105,19 +105,19 @@
                         <!--<div class="no_data">등록된 데이터가 없습니다.</div>-->
 
                         <div class="mt10">
-                            <a href="javascript:void(0);" class="btn01 col3 pop_btn" data-pop="pop1_2_2">결제완료</a>
-                            <a href="javascript:void(0);" class="btn01 col3 pop_btn" data-pop="pop1_2_3">배송대기</a>
-                            <a href="javascript:void(0);" class="btn01 col3 pop_btn" data-pop="pop1_2_3">배송중</a>
-                            <a href="javascript:void(0);" class="btn01 pop_btn" data-pop="pop1_2_4">반품 요청</a>
-                            <a href="javascript:void(0);" class="btn01 pop_btn" data-pop="pop1_2_5">교환 요청</a>
-                            <a href="javascript:void(0);" class="btn01 pop_btn" data-pop="pop1_2_6">취소 요청</a>
+                            <a href="#" class="btn01 col3 pop_btn" data-pop="pop1_2_2">결제완료</a>
+                            <a href="#" class="btn01 col3 pop_btn" data-pop="pop1_2_3">배송대기</a>
+                            <a href="#" class="btn01 col3 pop_btn" data-pop="pop1_2_3">배송중</a>
+                            <a href="#" class="btn01 pop_btn" data-pop="pop1_2_4">반품 요청</a>
+                            <a href="#" class="btn01 pop_btn" data-pop="pop1_2_5">교환 요청</a>
+                            <a href="#" class="btn01 pop_btn" data-pop="pop1_2_6">취소 요청</a>
                         </div>
                     </div>
                 </div>
 
 
                 <div class="btm_btn mt20">
-                    <a href="javascript:void(0);" class="col5 close_btn">닫기</a>
+                    <a href="#" class="col5 close_btn">닫기</a>
                 </div>
             </div>
         </div>
@@ -141,8 +141,8 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="javascript:void(0);">확인</a>
-                    <a href="javascript:void(0);" class="col5 close_btn">닫기</a>
+                    <a href="#">확인</a>
+                    <a href="#" class="col5 close_btn">닫기</a>
                 </div>
             </div>
         </div>
@@ -237,9 +237,9 @@
 
                     <!-- 하단버튼 -->
                     <div class="btm_btn mt10">
-                        <a href="javascript:void(0);" class="btn_submit"
+                        <a href="#" class="btn_submit"
                             onclick="submitOrderForm('form_shipping_update', '{{ route('channel.order.status.update') }}'); return false;">변경하기</a>
-                        <a href="javascript:void(0);" class="col5 close_btn">닫기</a>
+                        <a href="#" class="col5 close_btn">닫기</a>
                     </div>
                 </form>
             </div>
@@ -383,9 +383,9 @@
 
                     <!-- 하단버튼 -->
                     <div class="btm_btn mt10">
-                        <a href="javascript:void(0);" class="btn_submit"
+                        <a href="#" class="btn_submit"
                             onclick="submitOrderForm('form_return_request', '{{ route('channel.order.return.request') }}'); return false;">반품요청하기</a>
-                        <a href="javascript:void(0);" class="col5 close_btn">닫기</a>
+                        <a href="#" class="col5 close_btn">닫기</a>
                     </div>
                 </form>
             </div>
@@ -531,9 +531,9 @@
 
                     <!-- 하단버튼 -->
                     <div class="btm_btn mt10">
-                        <a href="javascript:void(0);" class="btn_submit"
+                        <a href="#" class="btn_submit"
                             onclick="submitOrderForm('form_exchange_request', '{{ route('channel.order.exchange.request') }}'); return false;">교환요청하기</a>
-                        <a href="javascript:void(0);" class="col5 close_btn">닫기</a>
+                        <a href="#" class="col5 close_btn">닫기</a>
                     </div>
                 </form>
             </div>
@@ -651,10 +651,10 @@
 
                     <!-- 하단버튼 -->
                     <div class="btm_btn mt10">
-                        <a href="javascript:void(0);" class="btn_submit"
+                        <a href="#" class="btn_submit"
                             onclick="submitOrderForm('form_cancel_request', '{{ route('channel.order.cancel.request') }}'); return false;">주문취소
                             요청하기</a>
-                        <a href="javascript:void(0);" class="col5 close_btn">닫기</a>
+                        <a href="#" class="col5 close_btn">닫기</a>
                     </div>
                 </form>
             </div>

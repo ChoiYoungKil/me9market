@@ -14,7 +14,7 @@
                         <a href="index.html">Home</a>
                     </li>
                     <li class="is-marked">
-                        <a href="javascript:void(0);">Payment Failed!</a>
+                        <a href="#">Payment Failed!</a>
                     </li>
                 </ul>
             </div>

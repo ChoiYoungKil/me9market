@@ -56,7 +56,7 @@
                                                             <th class="w160"><span>아이디</span></th>
                                                             <td>abcde1234</td>
                                                             <th class="w160"><span>비밀번호</span></th>
-                                                            <td><a href="javascript:void(0);" class="btn01">비밀번호 변경</a></td>
+                                                            <td><a href="#" class="btn01">비밀번호 변경</a></td>
                                                         </tr>
                                                     </tbody>
                                                 </table>
@@ -116,7 +116,7 @@
                                                     </tbody>
                                                 </table>
                                                 <div class="btm_btn t_r pt10 type2">
-                                                    <a href="javascript:void(0);" class="col2">인증요청</a>
+                                                    <a href="#" class="col2">인증요청</a>
                                                 </div>
                                             </div>
                                         </div>
@@ -151,7 +151,7 @@
                                 <div class="btm_btn type2">
                                     <a href="{{ route('register.step1') }}" class="col3">Step1 기본정보 신청</a>
                                     <a href="{{ route('register.step2') }}" class="col3">Step2 회원사권한 신청</a>
-                                    <a href="javascript:void(0);" class="col2">저장</a>
+                                    <a href="#" class="col2">저장</a>
                                 </div>
                             </div>
                         </form>

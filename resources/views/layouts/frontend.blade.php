@@ -56,9 +56,9 @@
 
                 <div class="menu_bx">
                     <ul class="dep1_wrap">
-                        <li class="dep1 dep01"><a href="javascript:void(0);">서비스안내</a></li>
-                        <li class="dep1 dep02"><a href="javascript:void(0);">주요기능</a></li>
-                        <li class="dep1 dep03"><a href="javascript:void(0);">가입안내</a></li>
+                        <li class="dep1 dep01"><a href="#">서비스안내</a></li>
+                        <li class="dep1 dep02"><a href="#">주요기능</a></li>
+                        <li class="dep1 dep03"><a href="#">가입안내</a></li>
                         <li class="dep1 dep04"><a href="{{ route('cs.notice') }}">고객센터</a></li>
                     </ul>
 
@@ -102,8 +102,8 @@
                     <li><span>E-mail</span>&nbsp;&nbsp;&nbsp;&nbsp;abc1234@email.com</li>
                 </ul>
                 <ul class="link_bx">
-                    <li><a href="javascript:void(0);">이용약관</a></li>
-                    <li><a class="bold" href="javascript:void(0);">개인정보취급방침</a></li>
+                    <li><a href="#">이용약관</a></li>
+                    <li><a class="bold" href="#">개인정보취급방침</a></li>
                 </ul>
                 <div class="btm_txt">ⓒ Skytech Co., Ltd</div>
                 <div class="top_btn">TOP</div>

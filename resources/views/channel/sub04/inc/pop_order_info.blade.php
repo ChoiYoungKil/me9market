@@ -8,11 +8,11 @@
                 </div>
                 <div class="tab_bx1">
                     <ul>
-                        <li><a href="javascript:void(0);" class="on"><span>주문 정보</span></a></li>
-                        <li><a href="javascript:void(0);" data-pop="pop1_2"><span>정상 주문</span></a></li>
-                        <li><a href="javascript:void(0);" data-pop="pop1_3"><span>취소 주문</span></a></li>
-                        <li><a href="javascript:void(0);" data-pop="pop1_4"><span>반품 주문</span></a></li>
-                        <li><a href="javascript:void(0);" data-pop="pop1_5"><span>교환 주문</span></a></li>
+                        <li><a href="#" class="on"><span>주문 정보</span></a></li>
+                        <li><a href="#" data-pop="pop1_2"><span>정상 주문</span></a></li>
+                        <li><a href="#" data-pop="pop1_3"><span>취소 주문</span></a></li>
+                        <li><a href="#" data-pop="pop1_4"><span>반품 주문</span></a></li>
+                        <li><a href="#" data-pop="pop1_5"><span>교환 주문</span></a></li>
                     </ul>
                 </div>
                 <div class="conbx">
@@ -236,7 +236,7 @@
 
 
                 <div class="btm_btn mt10">
-                    <a href="javascript:void(0);" class="col5 close_btn">닫기</a>
+                    <a href="#" class="col5 close_btn">닫기</a>
                 </div>
             </div>
         </div>
@@ -307,7 +307,7 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="javascript:void(0);" class="col5 close_btn">닫기</a>
+                    <a href="#" class="col5 close_btn">닫기</a>
                 </div>
             </div>
         </div>

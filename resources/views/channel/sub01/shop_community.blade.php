@@ -101,7 +101,7 @@
                     <ul>
                         <li><a href="{{ route('channel.shop_info') }}"><span>Shop채널 정보</span></a></li>
                         <li><a href="{{ route('channel.product_own') }}"><span>판매상품</span></a></li>
-                        <li><a href="javascript:void(0);" class="on"><span>커뮤니티</span></a></li>
+                        <li><a href="#" class="on"><span>커뮤니티</span></a></li>
                     </ul>
                 </div>
 
@@ -214,14 +214,14 @@
                             <div class="page_bx">
                                 {{-- 첫 페이지 --}}
                                 @if($notices->onFirstPage())
-                                    <a href="javascript:void(0);" class="page_first disabled">first</a>
+                                    <a href="#" class="page_first disabled">first</a>
                                 @else
                                     <a href="{{ $notices->appends(request()->query())->url(1) }}" class="page_first">first</a>
                                 @endif
 
                                 {{-- 이전 페이지 --}}
                                 @if($notices->onFirstPage())
-                                    <a href="javascript:void(0);" class="page_prev disabled">prev</a>
+                                    <a href="#" class="page_prev disabled">prev</a>
                                 @else
                                     <a href="{{ $notices->appends(request()->query())->previousPageUrl() }}"
                                         class="page_prev">prev</a>
@@ -236,7 +236,7 @@
                                 @endphp
                                 @for($i = $start; $i <= $end; $i++)
                                     @if($i == $notices->currentPage())
-                                        <a href="javascript:void(0);" class="num on">{{ $i }}</a>
+                                        <a href="#" class="num on">{{ $i }}</a>
                                     @else
                                         <a href="{{ $notices->appends(request()->query())->url($i) }}" class="num">{{ $i }}</a>
                                     @endif
@@ -246,12 +246,12 @@
                                 @if($notices->hasMorePages())
                                     <a href="{{ $notices->appends(request()->query())->nextPageUrl() }}" class="page_next">next</a>
                                 @else
-                                    <a href="javascript:void(0);" class="page_next disabled">next</a>
+                                    <a href="#" class="page_next disabled">next</a>
                                 @endif
 
                                 {{-- 마지막 페이지 --}}
                                 @if($notices->currentPage() == $notices->lastPage())
-                                    <a href="javascript:void(0);" class="page_last disabled">last</a>
+                                    <a href="#" class="page_last disabled">last</a>
                                 @else
                                     <a href="{{ $notices->appends(request()->query())->url($notices->lastPage()) }}"
                                         class="page_last">last</a>

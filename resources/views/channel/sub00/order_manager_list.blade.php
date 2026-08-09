@@ -79,7 +79,7 @@
                                 <div class="list_top1 btn">
                                     <div class="count">총 <strong>{{ $managers->count() }}</strong> 건</div>
                                     <div class="btn_bx">
-                                        <a href="javascript:void(0);" class="btn01 col5 pop_btn" data-pop="pop_create">발주담당 등록</a>
+                                        <a href="#" class="btn01 col5 pop_btn" data-pop="pop_create">발주담당 등록</a>
                                     </div>
                                 </div>
                                 <div class="tb01 ovS">
@@ -115,8 +115,8 @@
                                                     <td>{{ number_format($manager->products_count) }}</td>
                                                     <td>
                                                         <div class="order-manager-actions">
-                                                            <a href="javascript:void(0);" class="btn02 col5 pop_btn" data-pop="pop_view_{{ $manager->id }}">보기</a>
-                                                            <a href="javascript:void(0);" class="btn02 col7 pop_btn" data-pop="pop_edit_{{ $manager->id }}">수정</a>
+                                                            <a href="#" class="btn02 col5 pop_btn" data-pop="pop_view_{{ $manager->id }}">보기</a>
+                                                            <a href="#" class="btn02 col7 pop_btn" data-pop="pop_edit_{{ $manager->id }}">수정</a>
                                                             <form method="POST" action="{{ route('channel.order.manager.portal', $manager->id) }}">
                                                                 @csrf
                                                                 <button type="submit" class="btn02">발주확인</button>
@@ -134,11 +134,11 @@
                                 </div>
 
                                 <div class="page_bx1">
-                                    <a href="javascript:void(0);" class="page_first">first</a>
-                                    <a href="javascript:void(0);" class="page_prev">prev</a>
-                                    <a href="javascript:void(0);" class="num on">1</a>
-                                    <a href="javascript:void(0);" class="page_next">next</a>
-                                    <a href="javascript:void(0);" class="page_last">last</a>
+                                    <a href="#" class="page_first">first</a>
+                                    <a href="#" class="page_prev">prev</a>
+                                    <a href="#" class="num on">1</a>
+                                    <a href="#" class="page_next">next</a>
+                                    <a href="#" class="page_last">last</a>
                                 </div>
 
                                 <div class="popup_bx" data-id="pop_create">
@@ -209,7 +209,7 @@
 
                                                     <div class="btm_btn mt10">
                                                         <button type="submit">발주담당 등록</button>
-                                                        <a href="javascript:void(0);" class="col5 close_btn">닫기</a>
+                                                        <a href="#" class="col5 close_btn">닫기</a>
                                                     </div>
                                                 </form>
                                             </div>
@@ -280,7 +280,7 @@
                                                     </div>
 
                                                     <div class="btm_btn mt10">
-                                                        <a href="javascript:void(0);" class="col5 close_btn">닫기</a>
+                                                        <a href="#" class="col5 close_btn">닫기</a>
                                                     </div>
                                                 </div>
                                             </div>
@@ -355,7 +355,7 @@
 
                                                         <div class="btm_btn mt10">
                                                             <button type="submit">발주담당 수정</button>
-                                                            <a href="javascript:void(0);" class="col5 close_btn">닫기</a>
+                                                            <a href="#" class="col5 close_btn">닫기</a>
                                                         </div>
                                                     </form>
                                                 </div>

@@ -8,11 +8,11 @@
                 </div>
                 <div class="tab_bx1">
                     <ul>
-                        <li><a href="javascript:void(0);" data-pop="pop1_1"><span>주문 정보</span></a></li>
-                        <li><a href="javascript:void(0);" data-pop="pop1_2"><span>정상 주문</span></a></li>
-                        <li><a href="javascript:void(0);" data-pop="pop1_3"><span>취소 주문</span></a></li>
-                        <li><a href="javascript:void(0);" class="on"><span>반품 주문</span></a></li>
-                        <li><a href="javascript:void(0);" data-pop="pop1_5"><span>교환 주문</span></a></li>
+                        <li><a href="#" data-pop="pop1_1"><span>주문 정보</span></a></li>
+                        <li><a href="#" data-pop="pop1_2"><span>정상 주문</span></a></li>
+                        <li><a href="#" data-pop="pop1_3"><span>취소 주문</span></a></li>
+                        <li><a href="#" class="on"><span>반품 주문</span></a></li>
+                        <li><a href="#" data-pop="pop1_5"><span>교환 주문</span></a></li>
                     </ul>
                 </div>
                 <div class="conbx">
@@ -105,7 +105,7 @@
                                     <tr>
                                         <td><input type="checkbox"></td>
                                         <td>
-                                            한진택배 &nbsp;<span class="fcol3">22332323</span>&nbsp; <a href="javascript:void(0);"
+                                            한진택배 &nbsp;<span class="fcol3">22332323</span>&nbsp; <a href="#"
                                                 class="btn02">삭제</a>
                                         </td>
                                         <td>배송대기</td>
@@ -126,18 +126,18 @@
                         <!--<div class="no_data">등록된 데이터가 없습니다.</div>-->
 
                         <div class="mt10">
-                            <a href="javascript:void(0);" class="btn01 col3 pop_btn" data-pop="pop1_4_2">반품회수완료</a>
-                            <a href="javascript:void(0);" class="btn01 col3 pop_btn" data-pop="pop1_4_3">반품확정</a>
-                            <a href="javascript:void(0);" class="btn01 pop_btn" data-pop="pop1_4_4">반품보류</a>
-                            <a href="javascript:void(0);" class="btn01 pop_btn" data-pop="pop1_4_5">반품철회</a>
-                            <a href="javascript:void(0);" class="btn01 col3 pop_btn" data-pop="pop1_4_6">송장수정</a>
+                            <a href="#" class="btn01 col3 pop_btn" data-pop="pop1_4_2">반품회수완료</a>
+                            <a href="#" class="btn01 col3 pop_btn" data-pop="pop1_4_3">반품확정</a>
+                            <a href="#" class="btn01 pop_btn" data-pop="pop1_4_4">반품보류</a>
+                            <a href="#" class="btn01 pop_btn" data-pop="pop1_4_5">반품철회</a>
+                            <a href="#" class="btn01 col3 pop_btn" data-pop="pop1_4_6">송장수정</a>
                         </div>
                     </div>
                 </div>
 
 
                 <div class="btm_btn mt20">
-                    <a href="javascript:void(0);" class="col5 close_btn">닫기</a>
+                    <a href="#" class="col5 close_btn">닫기</a>
                 </div>
             </div>
         </div>
@@ -161,8 +161,8 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="javascript:void(0);" id="btn_return_received_confirm">확인</a>
-                    <a href="javascript:void(0);" class="col5 close_btn">닫기</a>
+                    <a href="#" id="btn_return_received_confirm">확인</a>
+                    <a href="#" class="col5 close_btn">닫기</a>
                 </div>
             </div>
         </div>
@@ -186,8 +186,8 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="javascript:void(0);" id="btn_return_approve_confirm">확인</a>
-                    <a href="javascript:void(0);" class="col5 close_btn">닫기</a>
+                    <a href="#" id="btn_return_approve_confirm">확인</a>
+                    <a href="#" class="col5 close_btn">닫기</a>
                 </div>
             </div>
         </div>
@@ -280,8 +280,8 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="javascript:void(0);">반품보류</a>
-                    <a href="javascript:void(0);" class="col5 close_btn">닫기</a>
+                    <a href="#">반품보류</a>
+                    <a href="#" class="col5 close_btn">닫기</a>
                 </div>
             </div>
         </div>
@@ -305,8 +305,8 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="javascript:void(0);" id="btn_return_reject_confirm">확인</a>
-                    <a href="javascript:void(0);" class="col5 close_btn">닫기</a>
+                    <a href="#" id="btn_return_reject_confirm">확인</a>
+                    <a href="#" class="col5 close_btn">닫기</a>
                 </div>
             </div>
         </div>
@@ -379,8 +379,8 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="javascript:void(0);">변경하기</a>
-                    <a href="javascript:void(0);" class="col5 close_btn">닫기</a>
+                    <a href="#">변경하기</a>
+                    <a href="#" class="col5 close_btn">닫기</a>
                 </div>
             </div>
         </div>

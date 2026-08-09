@@ -184,7 +184,7 @@
                                             </td>
                                             <td class="t_c">/{{ $shop->channel_code }}</td> {{-- 단축주소 추후 연동 --}}
                                             <td class="t_c">
-                                                <a href="javascript:void(0);" class="btn02 col2">복사</a>
+                                                <a href="#" class="btn02 col2">복사</a>
                                                 <a href="{{ route('channel.shop_info', ['id' => $shop->id]) }}"
                                                     class="btn02 col7">관리</a>
                                                 <a href="{{ route('channel.shop_info', ['id' => $shop->id]) }}"
@@ -220,7 +220,7 @@
 
                                             <!-- 하단버튼 -->
                                             <div class="btm_btn mt20">
-                                                <a href="javascript:void(0);" class="col5 close_btn">닫기</a>
+                                                <a href="#" class="col5 close_btn">닫기</a>
                                             </div>
                                         </div>
                                     </div>

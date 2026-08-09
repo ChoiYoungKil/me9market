@@ -202,18 +202,18 @@
 
                             <!-- 페이징 -->
                             <div class="page_bx1 text-center mt30">
-                                <a href="javascript:void(0);" class="page_prev dimmed">prev</a>
-                                <a href="javascript:void(0);" class="num on">1</a>
-                                <a href="javascript:void(0);" class="num">2</a>
-                                <a href="javascript:void(0);" class="num">3</a>
-                                <a href="javascript:void(0);" class="num">4</a>
-                                <a href="javascript:void(0);" class="num">5</a>
-                                <a href="javascript:void(0);" class="num">6</a>
-                                <a href="javascript:void(0);" class="num">7</a>
-                                <a href="javascript:void(0);" class="num">8</a>
-                                <a href="javascript:void(0);" class="num">9</a>
-                                <a href="javascript:void(0);" class="num">10</a>
-                                <a href="javascript:void(0);" class="page_next dimmed">next</a>
+                                <a href="#" class="page_prev dimmed">prev</a>
+                                <a href="#" class="num on">1</a>
+                                <a href="#" class="num">2</a>
+                                <a href="#" class="num">3</a>
+                                <a href="#" class="num">4</a>
+                                <a href="#" class="num">5</a>
+                                <a href="#" class="num">6</a>
+                                <a href="#" class="num">7</a>
+                                <a href="#" class="num">8</a>
+                                <a href="#" class="num">9</a>
+                                <a href="#" class="num">10</a>
+                                <a href="#" class="page_next dimmed">next</a>
                             </div>
                         </div>
                     </div>

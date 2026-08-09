@@ -46,7 +46,7 @@
                                                             <td colspan="3">
                                                                 <div class="r_btn_w w430">
                                                                     <input type="text" required="required">
-                                                                    <a href="javascript:void(0);" class="btn01 col2">본인인증</a>
+                                                                    <a href="#" class="btn01 col2">본인인증</a>
                                                                 </div>
                                                                 <span class="imp_txt">해당 아이디는 사용가능 합니다.</span>
                                                                 <!--<span class="imp_txt fcol2">해당 아이디는 사용중 입니다.</span>-->
@@ -178,7 +178,7 @@
 
                                 </div>
                                 <div class="btm_btn type2">
-                                    <a href="javascript:void(0);" class="col2">가입완료</a>
+                                    <a href="#" class="col2">가입완료</a>
                                 </div>
                             </div>
                         </form>

@@ -21,7 +21,7 @@
                     <ul>
                         <li><a href="{{ route('channel.shop_info') }}"><span>Shop채널 정보</span></a></li>
                         <li><a href="{{ route('channel.product_own') }}"><span>판매상품</span></a></li>
-                        <li><a href="javascript:void(0);" class="on"><span>커뮤니티</span></a></li>
+                        <li><a href="#" class="on"><span>커뮤니티</span></a></li>
                     </ul>
                 </div>
 
@@ -117,7 +117,7 @@
                             <div class="btm_btn mt10">
                                 <a href="{{ route('channel.shop_community', ['shop_id' => request('shop_id')]) }}"
                                     class="col5">목록</a>
-                                <a href="javascript:void(0);" id="submitCommunityForm">등록하기</a>
+                                <a href="#" id="submitCommunityForm">등록하기</a>
                             </div>
                         </form>
                     </div>
