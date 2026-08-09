@@ -129,7 +129,7 @@
                             <div class="btm_btn mt10">
                                 <a href="{{ route('channel.shop_community', ['shop_id' => $shopId]) }}"
                                     class="col5">목록</a>
-                                <a href="#" id="submitCommunityForm">수정하기</a>
+                                <button type="button" id="submitCommunityForm">수정하기</button>
                             </div>
                         </form>
                     </div>

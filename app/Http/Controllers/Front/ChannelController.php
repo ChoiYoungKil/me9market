@@ -485,6 +485,8 @@ class ChannelController extends Controller
             return redirect()->route('channel.shop_list')->with('error_message', 'Shop 채널을 먼저 등록해 주세요.');
         }
 
+        $popupFilters = $this->shopProductPopupFilters($request);
+
         // Fetch products for this shop channel with status = 1 (판매중)
         $products = \App\Models\ShopChannelProduct::where('shop_channel_id', $shopId)
             ->where('status', 1)
@@ -499,18 +501,39 @@ class ChannelController extends Controller
             ->pluck('product_id')
             ->toArray();
 
-        $ownProducts = \App\Models\Product::where('vendor_id', $admin->vendor_id)
+        $ownQuery = \App\Models\Product::where('vendor_id', $admin->vendor_id)
             ->where('status', 1)
             ->whereNotIn('id', $alreadyAddedProductIds)
-            ->with(['category', 'images'])
-            ->paginate(10, ['*'], 'own_page');
+            ->with(['category', 'images']);
+        $this->applyPopupProductSearch($ownQuery, $popupFilters['own_q']);
+        $ownProducts = $ownQuery->orderByDesc('id')
+            ->paginate(10, ['*'], 'own_page')
+            ->appends($request->query());
+
+        $publicProducts = $this->shopPopupProducts(
+            $admin,
+            $shopId,
+            'public',
+            $popupFilters,
+            $request
+        );
+        $partialProducts = $this->shopPopupProducts(
+            $admin,
+            $shopId,
+            'partial',
+            $popupFilters,
+            $request
+        );
 
         return view('channel.sub01.shop_product01', [
             'dep1_id' => '01',
             'products' => $products,
             'shopId' => $shopId,
             'shop' => $shop,
-            'ownProducts' => $ownProducts
+            'ownProducts' => $ownProducts,
+            'publicProducts' => $publicProducts,
+            'partialProducts' => $partialProducts,
+            'popupFilters' => $popupFilters,
         ]);
     }
 
@@ -532,6 +555,8 @@ class ChannelController extends Controller
             return redirect()->route('channel.shop_list')->with('error_message', 'Shop 채널을 먼저 등록해 주세요.');
         }
 
+        $popupFilters = $this->shopProductPopupFilters($request);
+
         // Fetch products for this shop channel with status = 0 (판매중지)
         $products = \App\Models\ShopChannelProduct::where('shop_channel_id', $shopId)
             ->where('status', 0)
@@ -546,19 +571,179 @@ class ChannelController extends Controller
             ->pluck('product_id')
             ->toArray();
 
-        $ownProducts = \App\Models\Product::where('vendor_id', $admin->vendor_id)
+        $ownQuery = \App\Models\Product::where('vendor_id', $admin->vendor_id)
             ->where('status', 1)
             ->whereNotIn('id', $alreadyAddedProductIds)
-            ->with(['category', 'images'])
-            ->paginate(10, ['*'], 'own_page');
+            ->with(['category', 'images']);
+        $this->applyPopupProductSearch($ownQuery, $popupFilters['own_q']);
+        $ownProducts = $ownQuery->orderByDesc('id')
+            ->paginate(10, ['*'], 'own_page')
+            ->appends($request->query());
+
+        $publicProducts = $this->shopPopupProducts(
+            $admin,
+            $shopId,
+            'public',
+            $popupFilters,
+            $request
+        );
+        $partialProducts = $this->shopPopupProducts(
+            $admin,
+            $shopId,
+            'partial',
+            $popupFilters,
+            $request
+        );
 
         return view('channel.sub01.shop_product02', [
             'dep1_id' => '01',
             'products' => $products,
             'shopId' => $shopId,
             'shop' => $shop,
-            'ownProducts' => $ownProducts
+            'ownProducts' => $ownProducts,
+            'publicProducts' => $publicProducts,
+            'partialProducts' => $partialProducts,
+            'popupFilters' => $popupFilters,
         ]);
+    }
+
+    private function shopProductPopupFilters(Request $request): array
+    {
+        return [
+            'own_q' => trim((string) $request->input('popup_own_q', '')),
+            'public_q' => trim((string) $request->input('popup_public_q', '')),
+            'partial_q' => trim((string) $request->input('popup_partial_q', '')),
+        ];
+    }
+
+    private function applyPopupProductSearch($query, string $keyword): void
+    {
+        if ($keyword === '') {
+            return;
+        }
+
+        $query->where(function ($search) use ($keyword) {
+            $search->where('product_name', 'like', '%' . $keyword . '%')
+                ->orWhere('product_code', 'like', '%' . $keyword . '%');
+        });
+    }
+
+    private function shopPopupProducts($admin, int $shopId, string $type, array $filters, Request $request)
+    {
+        $alreadyAddedProductIds = \App\Models\ShopChannelProduct::where('shop_channel_id', $shopId)
+            ->when($type === 'public', fn ($query) => $query->where('product_type', 'public'))
+            ->when($type === 'partial', fn ($query) => $query->where('product_type', 'partial')->whereIn('approval_status', ['pending', 'approved']))
+            ->pluck('product_id')
+            ->toArray();
+
+        $query = \App\Models\Product::with(['category', 'images', 'vendor.vendorbusinessdetails'])
+            ->where('status', 1)
+            ->where('vendor_id', '!=', $admin->vendor_id)
+            ->whereNotIn('id', $alreadyAddedProductIds);
+
+        if ($type === 'public') {
+            $query->where('is_public', 'Yes');
+            $this->applyPopupProductSearch($query, $filters['public_q']);
+            $pageName = 'public_page';
+        } else {
+            $query->where('is_partial', 'Yes');
+            $this->applyPopupProductSearch($query, $filters['partial_q']);
+            $pageName = 'partial_page';
+        }
+
+        $products = $query->orderByDesc('id')
+            ->paginate(10, ['*'], $pageName)
+            ->appends($request->query());
+
+        $products->getCollection()->transform(fn ($product) => $this->shopPopupProductRow($product, $shopId, $type));
+
+        return $products;
+    }
+
+    private function shopPopupProductRow($product, int $shopId, string $type): array
+    {
+        $mainImage = $product->images->first();
+        $imageUrl = $mainImage
+            ? asset('front/images/product_images/small/' . $mainImage->image)
+            : asset('channel_assets/images/sub/thum01.jpg');
+        $seller = $product->vendor?->vendorbusinessdetails?->shop_name
+            ?? $product->vendor?->name
+            ?? $product->vendor?->email
+            ?? '-';
+
+        $stockText = ($product->stock_usage === 'used' || $product->stock)
+            ? number_format((int) ($product->stock ?? 0)) . '개'
+            : '수량제한없음';
+
+        $priceConstraint = '제약 없음';
+        $priceRange = number_format((float) $product->product_price) . '원';
+        if ($product->price_constraint_enabled) {
+            if ($product->price_constraint_type === 'fixed') {
+                $priceConstraint = number_format((float) ($product->price_fixed ?: $product->product_price)) . ' 원';
+                $priceRange = $priceConstraint;
+            } elseif ($product->price_constraint_type === 'range') {
+                $priceConstraint = number_format((float) ($product->price_min ?? 0)) . ' 원 ~ ' . number_format((float) ($product->price_max ?? 0)) . ' 원';
+                $priceRange = number_format((float) ($product->price_min ?? $product->product_price)) . '원 ~ ' . number_format((float) ($product->price_max ?? $product->product_price)) . '원';
+            }
+        }
+
+        $profitConstraint = '제약 없음';
+        if ($product->profit_share_type === 'fixed') {
+            $profitConstraint = '판매 개당 ' . number_format((float) $product->profit_share_value) . ' 원';
+        } elseif ($product->profit_share_type === 'percent') {
+            $profitConstraint = '판매가의 ' . rtrim(rtrim(number_format((float) $product->profit_share_value, 2), '0'), '.') . ' %';
+        }
+
+        $purchaseLimit = '제한 없음';
+        if ($product->purchase_limit_enabled) {
+            $parts = [];
+            if ($product->purchase_min_qty) {
+                $parts[] = number_format((int) $product->purchase_min_qty) . '개 이상';
+            }
+            if ($product->purchase_max_qty) {
+                $parts[] = number_format((int) $product->purchase_max_qty) . '개 이하';
+            }
+            $purchaseLimit = implode(' / ', $parts) ?: '제한 없음';
+        }
+
+        $row = [
+            'id' => $product->id,
+            'code' => $product->product_code,
+            'name' => $product->product_name,
+            'category' => $product->category_path,
+            'img' => $imageUrl,
+            'seller' => $seller,
+            'stock_text' => $stockText,
+            'stock' => (string) ($product->stock ?? 99999),
+            'price_range' => $priceRange,
+            'price_constraint' => $priceConstraint,
+            'profit_constraint' => $profitConstraint,
+            'purchase_limit' => $purchaseLimit,
+            'sales_period' => '무기한',
+        ];
+
+        if ($type === 'partial') {
+            $requestRow = \App\Models\ShopChannelProduct::where('shop_channel_id', $shopId)
+                ->where('product_id', $product->id)
+                ->where('product_type', 'partial')
+                ->first();
+            $status = $requestRow?->approval_status ?: 'new';
+            $row['request_status'] = $status;
+            $row['request_status_text'] = match ($status) {
+                'pending' => '판매요청중',
+                'approved' => '판매허용',
+                'rejected' => '요청거부',
+                default => '판매요청',
+            };
+            $row['request_btn_class'] = match ($status) {
+                'pending' => 'btn02',
+                'approved' => 'btn02 col2',
+                'rejected' => 'btn02 col4',
+                default => 'btn02 col5',
+            };
+        }
+
+        return $row;
     }
 
     public function shopCommunity(Request $request)

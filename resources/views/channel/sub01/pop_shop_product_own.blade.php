@@ -31,8 +31,9 @@
 
                 <div class="conbx">
                     <div class="con_w">
-                        <div class="tb01">
-                            <table>
+                        <form method="GET" action="{{ route(Route::currentRouteName(), ['shop_id' => $shopId]) }}">
+                            <div class="tb01">
+                                <table>
                                 <colgroup>
                                     <col width="160px">
                                     <col width="">
@@ -41,7 +42,7 @@
                                     <tr>
                                         <th class="w160"><span>상품명</span></th>
                                         <td>
-                                            <input type="text" value="" required="required">
+                                            <input type="text" name="popup_own_q" value="{{ $popupFilters['own_q'] ?? '' }}" placeholder="상품명 또는 상품코드">
                                         </td>
                                     </tr>
                                     <tr>
@@ -70,11 +71,13 @@
                                         </td>
                                     </tr>
                                 </tbody>
-                            </table>
-                        </div>
-                        <div class="btm_btn right mt10 search-actions">
-                            <a href="#" class="type2">검색</a>
-                        </div>
+                                </table>
+                            </div>
+                            <div class="btm_btn right mt10 search-actions">
+                                <button type="submit" class="type2">검색</button>
+                                <a href="{{ route(Route::currentRouteName(), ['shop_id' => $shopId]) }}" class="col5">초기화</a>
+                            </div>
+                        </form>
                     </div>
 
                     <div class="con_w">

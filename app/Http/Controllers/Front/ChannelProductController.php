@@ -200,34 +200,45 @@ class ChannelProductController extends Controller
                     return response()->json(['status' => false, 'message' => '상품을 찾을 수 없습니다.']);
                 }
 
-                $exists = \App\Models\ShopChannelProduct::where('shop_channel_id', $shop->id)
+                $existingShopProduct = \App\Models\ShopChannelProduct::where('shop_channel_id', $shop->id)
                     ->where('product_id', $product->id)
-                    ->exists();
+                    ->where('product_type', 'partial')
+                    ->first();
 
-                if ($exists) {
-                    return response()->json(['status' => false, 'message' => '이미 추가되었거나 권한 요청이 접수된 상품입니다.']);
+                if ($existingShopProduct && $existingShopProduct->approval_status === 'pending') {
+                    return response()->json(['status' => false, 'message' => '이미 판매 권한 요청이 접수된 상품입니다. 승인 후 판매할 수 있습니다.']);
+                }
+
+                if ($existingShopProduct && $existingShopProduct->approval_status === 'rejected') {
+                    return response()->json(['status' => false, 'message' => '판매 요청이 거부된 상품입니다. 재요청하기로 다시 신청해 주세요.']);
                 }
 
                 $pricing = $this->resolveShopProductPricing($product, $shop, (float) $data['selling_price'], 'partial');
 
-                // 부분 공유 상품은 승인 대기로 등록 (status = 0, partial_approved 처리 등)
-                \App\Models\ShopChannelProduct::create(array_merge([
+                $shopProduct = $existingShopProduct ?: new \App\Models\ShopChannelProduct([
                     'shop_channel_id' => $shop->id,
                     'product_id' => $product->id,
-                    'distributor_id' => $product->distributor_id,
                     'product_type' => 'partial',
-                    'approval_status' => 'pending',
+                ]);
+
+                $shopProduct->fill(array_merge([
+                    'distributor_id' => $product->distributor_id,
+                    'approval_status' => $existingShopProduct ? 'approved' : 'pending',
                     'request_reason' => $data['request_reason'] ?? null,
-                    'requested_at' => now(),
-                    'status' => 0, // 판매 승인 대기
+                    'requested_at' => $existingShopProduct?->requested_at ?? now(),
+                    'status' => $existingShopProduct ? 1 : 0,
                     'constraint_type' => 'none',
                     'stock' => $product->stock,
                     'product_price' => $pricing['product_price'],
                     'selling_price' => $pricing['selling_price'],
                     'profit' => $pricing['profit'],
                 ], $this->settlementSnapshot($shop, $pricing, $pricing['price_decider'] ?? 'reseller')));
+                $shopProduct->save();
 
-                return response()->json(['status' => true, 'message' => '판매 권한 요청이 성공적으로 접수되었습니다. (승인 대기)']);
+                $message = $existingShopProduct
+                    ? '승인된 부분공유상품이 판매상품으로 추가되었습니다.'
+                    : '판매 권한 요청이 성공적으로 접수되었습니다. (승인 대기)';
+                return response()->json(['status' => true, 'message' => $message]);
 
             } catch (ValidationException $e) {
                 return response()->json(['status' => false, 'message' => collect($e->errors())->flatten()->first() ?: $e->getMessage()]);

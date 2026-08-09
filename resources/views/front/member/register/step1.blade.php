@@ -64,7 +64,7 @@
                                                             <th class="w160"><span>아이디</span></th>
                                                             <td>{{ $user->username ?? $user->email }}</td>
                                                             <th class="w160"><span>비밀번호</span></th>
-                                                            <td><a href="#" class="btn01" id="btnChangePassword">비밀번호 변경</a>
+                                                            <td><button type="button" class="btn01" id="btnChangePassword">비밀번호 변경</button>
                                                             </td>
                                                         </tr>
                                                     </tbody>

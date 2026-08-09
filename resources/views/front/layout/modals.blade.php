@@ -162,7 +162,7 @@
                                 </div>
                             </div>
                             <div class="section-6-social-media-quantity-actions u-s-p-y-14">
-                                <form action="#" class="post-form">
+                                <div class="post-form">
                                     <div class="quick-social-media-wrapper u-s-m-b-22">
                                         <span>Share:</span>
                                         <ul class="social-media-list">
@@ -202,11 +202,11 @@
                                         </div>
                                     </div>
                                     <div>
-                                        <button class="button button-outline-secondary" type="submit">Add to cart</button>
-                                        <button class="button button-outline-secondary far fa-heart u-s-m-l-6"></button>
-                                        <button class="button button-outline-secondary far fa-envelope u-s-m-l-6"></button>
+                                        <button class="button button-outline-secondary" type="button" disabled>Add to cart</button>
+                                        <button class="button button-outline-secondary far fa-heart u-s-m-l-6" type="button" disabled></button>
+                                        <button class="button button-outline-secondary far fa-envelope u-s-m-l-6" type="button" disabled></button>
                                     </div>
-                                </form>
+                                </div>
                             </div>
                         </div>
                         <!-- Product-details /- -->

@@ -74,7 +74,7 @@
 
         <div class="facet-filter-associates">
             <h3 class="title-name">Size</h3>
-            <form class="facet-form" action="#" method="post">
+            <form class="facet-form" action="{{ url()->current() }}" method="get">
                 <div class="associate-wrapper">
 
 
@@ -116,7 +116,7 @@
         @endphp
         <div class="facet-filter-associates">
             <h3 class="title-name">Color</h3>
-            <form class="facet-form" action="#" method="post">
+            <form class="facet-form" action="{{ url()->current() }}" method="get">
                 <div class="associate-wrapper">
 
 
@@ -153,7 +153,7 @@
         @endphp
         <div class="facet-filter-associates">
             <h3 class="title-name">Brand</h3>
-            <form class="facet-form" action="#" method="post">
+            <form class="facet-form" action="{{ url()->current() }}" method="get">
                 <div class="associate-wrapper">
 
 
@@ -184,7 +184,7 @@
         {{-- 셋째: 'price' 필터 (products 데이터베이스 테이블에서). URL에 따라 관련 제품 'price' 필터 값을 올바르게 표시합니다. --}}
         <div class="facet-filter-associates">
             <h3 class="title-name">Price</h3>
-            <form class="facet-form" action="#" method="post">
+            <form class="facet-form" action="{{ url()->current() }}" method="get">
                 <div class="associate-wrapper">
 
 
@@ -226,7 +226,7 @@
                         <h3 class="title-name">{{ $filter['filter_name'] }}</h3> {{-- 예: 'Screen Size' --}}
                         {{-- 참고: 백엔드로 <form>을 제출하는 데는 두 가지 방법이 있습니다. 첫째, <button type="submit">을 사용하는 일반적인 방법, 둘째, <input> 필드의 "value"
                                 속성을 전송하여 AJAX를 사용하는 방법 --}}
-                                <form class="facet-form" action="#" method="post"> {{-- "action" 속성이 없으면 <form> 데이터를 동일한 페이지로 제출하고,
+                                <form class="facet-form" action="{{ url()->current() }}" method="get"> {{-- "action" 속성이 없으면 <form> 데이터를 동일한 페이지로 제출하고,
                                         "method" 속성이 없으면 기본 "method"인 "GET"을 사용합니다 --}}
                                         <div class="associate-wrapper">
                                             @foreach ($filter['filter_values'] as $value) {{-- $value는 'filter value'를 의미함 --}}

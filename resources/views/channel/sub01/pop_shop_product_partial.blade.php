@@ -27,8 +27,9 @@
 
                 <div class="conbx">
                     <div class="con_w">
-                        <div class="tb01">
-                            <table>
+                        <form method="GET" action="{{ route(Route::currentRouteName(), ['shop_id' => $shopId]) }}">
+                            <div class="tb01">
+                                <table>
                                 <colgroup>
                                     <col width="160px">
                                     <col width="">
@@ -40,14 +41,14 @@
                                         <th class="w160"><span>상품명</span></th>
                                         <td colspan="3">
                                             <div class="r_btn_w">
-                                                <input type="text" value="" required="required">
+                                                <input type="text" name="popup_partial_q" value="{{ $popupFilters['partial_q'] ?? '' }}" placeholder="상품명 또는 상품코드">
                                                 <a id="arrow1" class="btn01 arrow"><span>상세</span></a>
                                             </div>
                                         </td>
                                     </tr>
                                 </tbody>
-                            </table>
-                        </div>
+                                </table>
+                            </div>
                         <div class="tb01 bN arrowbx" data-arrowbx="arrow1">
                             <table>
                                 <colgroup>
@@ -123,8 +124,10 @@
                             </table>
                         </div>
                         <div class="btm_btn right mt10 search-actions">
-                            <a href="#" class="type2">검색</a>
+                            <button type="submit" class="type2">검색</button>
+                            <a href="{{ route(Route::currentRouteName(), ['shop_id' => $shopId]) }}" class="col5">초기화</a>
                         </div>
+                        </form>
 
                         <script type="text/javascript">
                             $(".btn01.arrow").click(function () {
@@ -137,7 +140,7 @@
 
                     <div class="con_w">
                         <div class="list_top1">
-                            <div class="count">총 <strong>00</strong> 건</div>
+                            <div class="count">총 <strong>{{ $partialProducts->total() }}</strong> 건</div>
                         </div>
 
                         <div class="tb01 ovS">
@@ -166,86 +169,10 @@
                                         <th>상품추가</th>
                                     </tr>
                                 </thead>
-                                @php
-                                    $partialProducts = [
-                                        [
-                                            'id' => 401,
-                                            'code' => 'a20112',
-                                            'name' => 'Partial Product 111111',
-                                            'category' => '대분류 > 중분류 > 소분류',
-                                            'img' => '../images/sub/thum01.jpg',
-                                            'seller' => 'Test123',
-                                            'stock_text' => '수량제한없음',
-                                            'stock' => '99999',
-                                            'price_range' => '2,000원 ~ 5,000원',
-                                            'price_constraint' => '1,500 원 ~ 5,000 원',
-                                            'profit_constraint' => '판매 개당 500 원',
-                                            'purchase_limit' => '제한 없음',
-                                            'sales_period' => '무기한',
-                                            'request_status' => 'approved',
-                                            'request_status_text' => '판매허용',
-                                            'request_btn_class' => 'btn02 col2'
-                                        ],
-                                        [
-                                            'id' => 402,
-                                            'code' => 'a20393',
-                                            'name' => 'Partial Product 222222',
-                                            'category' => '대분류 > 중분류 > 소분류',
-                                            'img' => '../images/sub/thum01.jpg',
-                                            'seller' => 'Abc111',
-                                            'stock_text' => '10,000개',
-                                            'stock' => '10000',
-                                            'price_range' => '5,000원',
-                                            'price_constraint' => '4,000 원 ~ 8,000 원',
-                                            'profit_constraint' => '판매 개당 1,000 원',
-                                            'purchase_limit' => '1회 100개',
-                                            'sales_period' => '2024-12-31 까지',
-                                            'request_status' => 'pending',
-                                            'request_status_text' => '판매요청중',
-                                            'request_btn_class' => 'btn02'
-                                        ],
-                                        [
-                                            'id' => 403,
-                                            'code' => 'a22333',
-                                            'name' => 'Partial Product 333333',
-                                            'category' => '대분류 > 중분류 > 소분류',
-                                            'img' => '../images/sub/thum01.jpg',
-                                            'seller' => 'nttes0922',
-                                            'stock_text' => '500,000개 <br>(1회 100개 제한)',
-                                            'stock' => '500000',
-                                            'price_range' => '4,000원',
-                                            'price_constraint' => '3,500 원 ~ 4,500 원',
-                                            'profit_constraint' => '판매 개당 300 원',
-                                            'purchase_limit' => '1회 100개',
-                                            'sales_period' => '무기한',
-                                            'request_status' => 'new',
-                                            'request_status_text' => '판매요청',
-                                            'request_btn_class' => 'btn02 col5'
-                                        ],
-                                        [
-                                            'id' => 404,
-                                            'code' => 'a22334',
-                                            'name' => 'Partial Product 444444',
-                                            'category' => '대분류 > 중분류 > 소분류',
-                                            'img' => '../images/sub/thum01.jpg',
-                                            'seller' => 'nttes0922',
-                                            'stock_text' => '500,000개',
-                                            'stock' => '500000',
-                                            'price_range' => '4,000원',
-                                            'price_constraint' => '3,500 원 ~ 4,500 원',
-                                            'profit_constraint' => '판매 개당 300 원',
-                                            'purchase_limit' => '1회 100개',
-                                            'sales_period' => '무기한',
-                                            'request_status' => 'rejected',
-                                            'request_status_text' => '요청거부',
-                                            'request_btn_class' => 'btn02 col4'
-                                        ]
-                                    ];
-                                @endphp
                                 <tbody>
-                                    @foreach($partialProducts as $product)
+                                    @forelse($partialProducts as $index => $product)
                                         <tr>
-                                            <td>00</td>
+                                            <td>{{ $partialProducts->total() - ($partialProducts->currentPage() - 1) * $partialProducts->perPage() - $index }}</td>
                                             <td>{{ $product['code'] }}</td>
                                             <td class="t_l">
                                                 <div class="thum01">
@@ -272,7 +199,13 @@
                                                     onclick='openProductRegisterModal("pop1_3_2", @json($product)); return false;'>추가하기</a>
                                             </td>
                                         </tr>
-                                    @endforeach
+                                    @empty
+                                        <tr>
+                                            <td colspan="9" class="t_c" style="padding: 50px 0;">
+                                                추가 가능한 부분공유상품이 없습니다.
+                                            </td>
+                                        </tr>
+                                    @endforelse
                                 </tbody>
                             </table>
                         </div>
@@ -280,15 +213,7 @@
                         <!--<div class="no_data">등록된 데이터가 없습니다.</div>-->
 
                         <div class="page_bx1">
-                            <a href="#" class="page_first">first</a>
-                            <a href="#" class="page_prev">prev</a>
-                            <a href="#" class="num on">1</a>
-                            <a href="#" class="num">2</a>
-                            <a href="#" class="num">3</a>
-                            <a href="#" class="num">4</a>
-                            <a href="#" class="num">5</a>
-                            <a href="#" class="page_next">next</a>
-                            <a href="#" class="page_last">last</a>
+                            {{ $partialProducts->links() }}
                         </div>
                     </div>
                 </div>

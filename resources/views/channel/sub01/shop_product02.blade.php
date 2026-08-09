@@ -23,7 +23,7 @@
                     <div class="tab_bx1">
                         <ul>
                             <li><a href="{{ route('channel.shop_info') }}"><span>Shop채널 정보</span></a></li>
-                            <li><a href="#" class="on"><span>판매상품</span></a></li>
+                            <li><a href="{{ route('channel.shop_product01', ['shop_id' => $shopId]) }}" class="on"><span>판매상품</span></a></li>
                             <li><a href="{{ route('channel.shop_community') }}"><span>커뮤니티</span></a></li>
                         </ul>
                     </div>
@@ -36,7 +36,7 @@
                                         class="btn01 col2">판매상품</a>
                                     <a href="{{ route('channel.shop_product02', ['shop_id' => $shopId]) }}"
                                         class="btn01 col4">판매중지상품</a>
-                                    <a href="#" class="btn01 col5 pop_btn" data-pop="pop1_1">판매상품 추가</a>
+                                    <button type="button" class="btn01 col5 pop_btn" data-pop="pop1_1">판매상품 추가</button>
                                 </div>
                             </div>
                             @if(!empty($shop?->use_own_pg))
@@ -141,7 +141,7 @@
                                                         "sales_period": "무기한",
                                                         "selling_price": "{{ number_format($shopProduct->selling_price) }}"
                                                     }); return false;'>보기</a>
-                                                    <a href="#" class="btn02 col1" onclick='updateProductStatus("{{ route("channel.product.status.update") }}", {{ $shopProduct->id }}, 1, "판매재개"); return false;'>판매재개</a>
+                                                    <button type="button" class="btn02 col1" onclick='updateProductStatus("{{ route("channel.product.status.update") }}", {{ $shopProduct->id }}, 1, "판매재개");'>판매재개</button>
                                                 </td>
                                             </tr>
                                         @empty

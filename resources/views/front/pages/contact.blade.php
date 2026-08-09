@@ -127,7 +127,7 @@
                                     </ul>
                                 </div>
                                 <div class="btm_btn">
-                                    <a href="#" onclick="submitContactForm(event)">문의하기</a>
+                                    <button type="button" onclick="submitContactForm(event)">문의하기</button>
                                 </div>
                             </div>
                         </form>
