@@ -9,6 +9,7 @@ use Database\Seeders\AdminsTableSeeder;
 use Database\Seeders\DefaultAccountsSeeder;
 use App\Services\ShopChannelRuntime;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Symfony\Component\Process\Process;
 use Tests\TestCase;
 
 class OperationalHardeningTest extends TestCase
@@ -58,6 +59,17 @@ class OperationalHardeningTest extends TestCase
             ->assertStatus(200)
             ->assertDontSee('Me9-Shop-0032022')
             ->assertDontSee('010-1234-5678');
+    }
+
+    public function test_storyboard_testbed_can_be_disabled_for_production()
+    {
+        $process = new Process(['php', 'artisan', 'route:list', '--path=storyboard-test'], base_path(), [
+            'APP_ENV' => 'production',
+        ]);
+        $process->run();
+
+        $this->assertTrue($process->isSuccessful(), $process->getErrorOutput());
+        $this->assertStringContainsString("doesn't have any routes matching", $process->getOutput());
     }
 
     public function test_default_account_seeders_are_idempotent_and_keep_vendor_link()

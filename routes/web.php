@@ -350,7 +350,9 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
     });
 
     // 통합 테스트베드 (Index)
-    Route::get('/storyboard-test', 'FrontController@storyboardTestbed')->name('front.storyboard_testbed');
+    if (config('shop_channel.storyboard_test_enabled')) {
+        Route::get('/storyboard-test', 'FrontController@storyboardTestbed')->name('front.storyboard_testbed');
+    }
 
     // Shop 라우트
     Route::prefix('shop')->name('front.shop.')->group(function () {
