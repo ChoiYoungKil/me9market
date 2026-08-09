@@ -200,7 +200,7 @@
                 </div>
 
                 <div class="btm_btn">
-                    <a href="{{ route('mypage.dashboard') }}" class="btn_cancel">취소</a>
+                    <a href="{{ route('mypage.dashboard') }}" class="col5">취소</a>
                     <button type="submit" class="btn_submit">정보수정</button>
                 </div>
             </form>

@@ -47,15 +47,22 @@ font-family:'Pretendard', sans-serif;
 .btm_btn {text-align: center; font-size: 0; margin-top: 40px; position: relative; z-index: 1; min-height: 30px;}
 .btm_btn.left {text-align: left;}
 .btm_btn.right {text-align: right;}
-.btm_btn a {max-width: 160px; display: inline-block; line-height: 48px; background-color: #3470f7; border: 1px solid #3470f7; text-align: center; border-radius: 5px; font-size: 14px; color: #ffffff; font-weight: 700; letter-spacing: -0.03em; width: 100%; margin-right: 5px;}
-.btm_btn a.type2 {max-width: 90px; line-height: 28px; font-size: 12px;}
-.btm_btn a:last-child {margin-right: 0;}
+.btm_btn a,
+.btm_btn button {max-width: 160px; display: inline-block; line-height: 48px; background-color: #3470f7; border: 1px solid #3470f7; text-align: center; border-radius: 5px; font-size: 14px; color: #ffffff; font-weight: 700; letter-spacing: -0.03em; width: 100%; margin-right: 5px; font-family: inherit; padding: 0; cursor: pointer; box-sizing: border-box; vertical-align: top;}
+.btm_btn a.type2,
+.btm_btn button.type2 {max-width: 90px; line-height: 28px; font-size: 12px;}
+.btm_btn a:last-child,
+.btm_btn button:last-child {margin-right: 0;}
 .btm_btn a.f_l {float: left;}
 .btm_btn a.f_r {float: right;}
-.btm_btn a.col2 {background-color: #1d6d43; border-color: #1d6d43;}
-.btm_btn a.col3 {background-color: #fff; border-color: #aaaaaa; color: #666666;}
-.btm_btn a.col4 {background-color: #aaaaaa; border-color: #aaaaaa;}
-.btm_btn a.col5 {background-color: #111111; border-color: #111111;}
+.btm_btn a.col2,
+.btm_btn button.col2 {background-color: #1d6d43; border-color: #1d6d43;}
+.btm_btn a.col3,
+.btm_btn button.col3 {background-color: #fff; border-color: #aaaaaa; color: #666666;}
+.btm_btn a.col4,
+.btm_btn button.col4 {background-color: #aaaaaa; border-color: #aaaaaa;}
+.btm_btn a.col5,
+.btm_btn button.col5 {background-color: #111111; border-color: #111111;}
 .btm_btn a.reset1 {max-width: auto; width: auto; padding-right: 41px; padding-left: 17px; background-color: transparent; border-color: transparent; color: #aaaaaa; background: url(../images/icon/reset1.png) no-repeat right 17px center;}
 .btm_btn .page_bx1 {position: absolute; width: 100%; left: 0; top: 50%; transform:translate(0%, -50%); -webkit-transform:translate(0%, -50%); padding-top: 0; z-index: -1;}
 .btm_btn .page_bx1 a {max-width: none; width: auto; background-color: transparent; border: none;}
@@ -248,7 +255,8 @@ font-family:'Pretendard', sans-serif;
     .btn02 {font-size: 11px; line-height: 23px; padding: 0 8px; border-image: 3px;}
     
     .btm_btn {margin-top: 30px;}
-    .btm_btn a {font-size: 11px; max-width: 120px; line-height: 35px; border-radius: 3px;}
+    .btm_btn a,
+    .btm_btn button {font-size: 11px; max-width: 120px; line-height: 35px; border-radius: 3px;}
     .btm_btn .page_bx1 {position: relative; left: auto; top: auto; transform: none; -webkit-transform: none; margin-bottom: 5px;}
     .btm_btn .page_bx1:last-child {margin-bottom: 0;}
     
