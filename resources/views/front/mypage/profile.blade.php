@@ -183,12 +183,12 @@
                                         <th class="w160"><span>주소<br class="pc_show">(배송지)</span></th>
                                         <td colspan="3">
                                             <div class="addr_bx">
-                                                <input type="text" class="addr1 off" name="zipcode" placeholder="우편번호"
+                                                <input type="text" id="profile_zipcode" class="addr1 off" name="zipcode" placeholder="우편번호"
                                                     required="required" value="{{ Auth::user()->pincode }}">
-                                                <a href="#" class="btn01">우편번호찾기</a>
-                                                <input type="text" class="addr2 off" name="address1" placeholder="주소"
+                                                <a href="javascript:;" onclick="execDaumPostcode('profile_zipcode', 'profile_address1', 'profile_address2')" class="btn01">우편번호찾기</a>
+                                                <input type="text" id="profile_address1" class="addr2 off" name="address1" placeholder="주소"
                                                     required="required" value="{{ Auth::user()->address }}">
-                                                <input type="text" class="addr3 off" name="address2" placeholder="상세주소"
+                                                <input type="text" id="profile_address2" class="addr3 off" name="address2" placeholder="상세주소"
                                                     required="required" value="{{ Auth::user()->city }}">
                                             </div>
                                         </td>
@@ -312,12 +312,12 @@
                                         <th class="w160"><span>회원사 주소지</span></th>
                                         <td colspan="3">
                                             <div class="addr_bx">
-                                                <input type="text" class="addr1 off" name="zipcode" placeholder="우편번호"
+                                                <input type="text" id="company_zipcode" class="addr1 off" name="zipcode" placeholder="우편번호"
                                                     value="{{ $business->shop_pincode ?? '' }}" required="required">
-                                                <a href="#" class="btn01">우편번호찾기</a>
-                                                <input type="text" class="addr2 off" name="address1" placeholder="주소"
+                                                <a href="javascript:;" onclick="execDaumPostcode('company_zipcode', 'company_address1', 'company_address2')" class="btn01">우편번호찾기</a>
+                                                <input type="text" id="company_address1" class="addr2 off" name="address1" placeholder="주소"
                                                     value="{{ $business->shop_address ?? '' }}" required="required">
-                                                <input type="text" class="addr3 off" name="address2" placeholder="상세주소"
+                                                <input type="text" id="company_address2" class="addr3 off" name="address2" placeholder="상세주소"
                                                     value="{{ $business->shop_address_detail ?? '' }}" required="required">
                                             </div>
                                         </td>
@@ -673,7 +673,60 @@
     </div><!-- //contents -->
 
 
+    <div id="daumPostcodeLayer"
+        style="display:none;position:fixed;overflow:hidden;z-index:10000;-webkit-overflow-scrolling:touch;">
+        <img src="//t1.daumcdn.net/postcode/resource/images/close.png" id="btnCloseLayer"
+            style="cursor:pointer;position:absolute;right:-3px;top:-3px;z-index:1" onclick="closeDaumPostcode()"
+            alt="닫기 버튼">
+    </div>
+
+    <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
     <script type="text/javascript">
+        var element_layer = document.getElementById('daumPostcodeLayer');
+
+        function closeDaumPostcode() {
+            element_layer.style.display = 'none';
+        }
+
+        function execDaumPostcode(zipcodeId, addr1Id, addr2Id) {
+            new daum.Postcode({
+                oncomplete: function (data) {
+                    var addr = '';
+
+                    if (data.userSelectedType === 'R') {
+                        addr = data.roadAddress;
+                    } else {
+                        addr = data.jibunAddress;
+                    }
+
+                    document.getElementById(zipcodeId).value = data.zonecode;
+                    document.getElementById(addr1Id).value = addr;
+                    document.getElementById(addr2Id).focus();
+
+                    element_layer.style.display = 'none';
+                },
+                width: '100%',
+                height: '100%',
+                maxSuggestItems: 5
+            }).embed(element_layer);
+
+            element_layer.style.display = 'block';
+            initLayerPosition();
+        }
+
+        function initLayerPosition() {
+            var width = 400;
+            var height = 500;
+            var borderWidth = 1;
+
+            element_layer.style.width = width + 'px';
+            element_layer.style.height = height + 'px';
+            element_layer.style.border = borderWidth + 'px solid #333';
+            element_layer.style.backgroundColor = '#fff';
+            element_layer.style.left = (((window.innerWidth || document.documentElement.clientWidth) - width) / 2) + 'px';
+            element_layer.style.top = (((window.innerHeight || document.documentElement.clientHeight) - height) / 2) + 'px';
+        }
+
         /* 파일 */
         var uploadFile = $('.fileBox .uploadBtn');
         uploadFile.on('change', function () {
