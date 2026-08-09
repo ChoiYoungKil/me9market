@@ -971,6 +971,9 @@ class ChannelController extends Controller
         if ($request->hasFile('attachment')) {
             $file = $request->file('attachment');
             $filename = time() . '_' . $file->getClientOriginalName();
+            if (!is_dir(public_path('uploads/notices'))) {
+                mkdir(public_path('uploads/notices'), 0755, true);
+            }
             $file->move(public_path('uploads/notices'), $filename);
             $data['attachment'] = $filename;
         }
@@ -1012,22 +1015,21 @@ class ChannelController extends Controller
 
         // Handle file deletion
         if ($request->has('delete_attachment') && $request->delete_attachment == '1') {
-            if ($notice->attachment && file_exists(public_path('uploads/notices/' . $notice->attachment))) {
-                unlink(public_path('uploads/notices/' . $notice->attachment));
-            }
+            $this->deleteCommunityNoticeAttachment($notice->attachment);
             $notice->attachment = null;
         }
 
         // Handle file upload
         if ($request->hasFile('attachment')) {
             // Delete old file
-            if ($notice->attachment && file_exists(public_path('uploads/channel/notices/' . $notice->attachment))) {
-                unlink(public_path('uploads/channel/notices/' . $notice->attachment));
-            }
+            $this->deleteCommunityNoticeAttachment($notice->attachment);
             
             $file = $request->file('attachment');
             $filename = time() . '_' . $file->getClientOriginalName();
-            $file->move(public_path('uploads/channel/notices'), $filename);
+            if (!is_dir(public_path('uploads/notices'))) {
+                mkdir(public_path('uploads/notices'), 0755, true);
+            }
+            $file->move(public_path('uploads/notices'), $filename);
             $notice->attachment = $filename;
         }
 
@@ -1050,14 +1052,26 @@ class ChannelController extends Controller
             ->firstOrFail();
 
         // Delete attachment file if exists
-        if ($notice->attachment && file_exists(public_path('uploads/shop_notices/' . $notice->attachment))) {
-            unlink(public_path('uploads/shop_notices/' . $notice->attachment));
-        }
+        $this->deleteCommunityNoticeAttachment($notice->attachment);
 
         $notice->delete();
 
         return redirect()->route('channel.shop_community', ['shop_id' => $shop->id])
             ->with('success_message', '공지사항이 삭제되었습니다.');
+    }
+
+    private function deleteCommunityNoticeAttachment(?string $filename): void
+    {
+        if (!$filename) {
+            return;
+        }
+
+        foreach (['uploads/notices', 'uploads/channel/notices', 'uploads/shop_notices'] as $directory) {
+            $path = public_path($directory . '/' . $filename);
+            if (file_exists($path)) {
+                unlink($path);
+            }
+        }
     }
 
 
@@ -1977,7 +1991,10 @@ class ChannelController extends Controller
 
         $keyword = trim((string) $request->query('keyword', ''));
 
-        $managers = \App\Models\Distributor::withCount('products')
+        $admin = Auth::guard('admin')->user();
+
+        $managers = $this->orderManagersForVendor((int) ($admin->vendor_id ?? 0))
+            ->withCount('products')
             ->when($keyword !== '', function ($query) use ($keyword) {
                 $query->where(function ($inner) use ($keyword) {
                     $inner->where('email', 'like', '%' . $keyword . '%')
@@ -2008,13 +2025,21 @@ class ChannelController extends Controller
             'password' => 'nullable|string|min:6|max:100',
         ]);
 
-        \App\Models\Distributor::create([
+        $admin = Auth::guard('admin')->user();
+
+        $payload = [
             'status' => (int) $data['status'],
             'email' => $data['email'],
             'name' => $data['name'],
             'phone' => $data['phone'] ?? null,
             'password' => \Illuminate\Support\Facades\Hash::make($data['password'] ?? '123456'),
-        ]);
+        ];
+
+        if (\Illuminate\Support\Facades\Schema::hasColumn('distributors', 'vendor_id')) {
+            $payload['vendor_id'] = (int) ($admin->vendor_id ?? 0);
+        }
+
+        \App\Models\Distributor::create($payload);
 
         return back()->with('flash_message_success', '발주담당자가 등록되었습니다. 비밀번호 미입력 시 기본 비밀번호는 123456입니다.');
     }
@@ -2025,7 +2050,8 @@ class ChannelController extends Controller
             return redirect()->route('channel.login');
         }
 
-        $manager = \App\Models\Distributor::findOrFail($id);
+        $admin = Auth::guard('admin')->user();
+        $manager = $this->orderManagersForVendor((int) ($admin->vendor_id ?? 0))->findOrFail($id);
 
         $data = $request->validate([
             'status' => 'required|in:0,1',
@@ -2057,7 +2083,8 @@ class ChannelController extends Controller
             return redirect()->route('channel.login');
         }
 
-        $manager = \App\Models\Distributor::findOrFail($id);
+        $admin = Auth::guard('admin')->user();
+        $manager = $this->orderManagersForVendor((int) ($admin->vendor_id ?? 0))->findOrFail($id);
 
         \Illuminate\Support\Facades\Session::put('distributor_id', $manager->id);
         \Illuminate\Support\Facades\Session::put('distributor_name', $manager->name);
@@ -2065,6 +2092,17 @@ class ChannelController extends Controller
 
         return redirect()->route('distributor.orders.pending')
             ->with('flash_message_success', $manager->name . ' 발주사 페이지로 연결되었습니다.');
+    }
+
+    private function orderManagersForVendor(int $vendorId)
+    {
+        $query = \App\Models\Distributor::query();
+
+        if (\Illuminate\Support\Facades\Schema::hasColumn('distributors', 'vendor_id')) {
+            $query->where('vendor_id', $vendorId);
+        }
+
+        return $query;
     }
 
     public function pointList(Request $request)

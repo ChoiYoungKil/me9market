@@ -160,6 +160,7 @@ class ChannelRoutesTest extends TestCase
         ])->assertRedirect();
 
         $this->assertDatabaseHas('distributors', [
+            'vendor_id' => $vendor->id,
             'email' => 'orders-manager@example.com',
             'name' => 'Orders Manager',
             'status' => 1,
@@ -173,6 +174,76 @@ class ChannelRoutesTest extends TestCase
 
         $this->assertSame($manager->id, session('distributor_id'));
         $this->assertSame($manager->email, session('distributor_email'));
+    }
+
+    public function test_channel_order_manager_crud_is_scoped_to_current_vendor()
+    {
+        list($vendor, $admin) = $this->createSetup();
+
+        $otherVendor = Vendor::create([
+            'name' => 'Other Vendor',
+            'mobile' => '010-9999-0000',
+            'email' => 'other-vendor@example.com',
+            'status' => 1,
+            'commission' => 0,
+            'confirm' => 'Yes',
+        ]);
+
+        $otherManager = Distributor::create([
+            'vendor_id' => $otherVendor->id,
+            'email' => 'other-manager@example.com',
+            'name' => 'Other Manager',
+            'phone' => '01099990000',
+            'password' => bcrypt('secret123'),
+            'status' => 1,
+        ]);
+
+        $ownManager = Distributor::create([
+            'vendor_id' => $vendor->id,
+            'email' => 'own-manager@example.com',
+            'name' => 'Own Manager',
+            'phone' => '01011110000',
+            'password' => bcrypt('secret123'),
+            'status' => 1,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get('/channel/settings/order-manager')
+            ->assertOk()
+            ->assertSee('own-manager@example.com')
+            ->assertDontSee('other-manager@example.com');
+
+        $this->actingAs($admin, 'admin')->post("/channel/settings/order-manager/{$otherManager->id}/update", [
+            'status' => 0,
+            'email' => 'changed-other-manager@example.com',
+            'name' => 'Changed Other Manager',
+            'phone' => '01099990001',
+        ])->assertNotFound();
+
+        $this->assertDatabaseHas('distributors', [
+            'id' => $otherManager->id,
+            'email' => 'other-manager@example.com',
+            'name' => 'Other Manager',
+            'status' => 1,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->post("/channel/settings/order-manager/{$otherManager->id}/portal")
+            ->assertNotFound();
+
+        $this->actingAs($admin, 'admin')->post("/channel/settings/order-manager/{$ownManager->id}/update", [
+            'status' => 0,
+            'email' => 'updated-own-manager@example.com',
+            'name' => 'Updated Own Manager',
+            'phone' => '01011110001',
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('distributors', [
+            'id' => $ownManager->id,
+            'email' => 'updated-own-manager@example.com',
+            'name' => 'Updated Own Manager',
+            'status' => 0,
+        ]);
     }
 
     public function test_authenticated_shop_routes()

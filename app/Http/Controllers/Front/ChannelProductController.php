@@ -15,6 +15,7 @@ use Illuminate\Http\UploadedFile;
 use Intervention\Image\Facades\Image;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Schema;
 
 class ChannelProductController extends Controller
@@ -969,6 +970,11 @@ class ChannelProductController extends Controller
         if (!$isCreate && $productId) {
             $uniqueRule .= ',' . $productId;
         }
+        $admin = Auth::guard('admin')->user();
+        $vendorId = (int) ($admin->vendor_id ?? 0);
+        $distributorRule = Schema::hasColumn('distributors', 'vendor_id')
+            ? Rule::exists('distributors', 'id')->where(fn ($query) => $query->where('vendor_id', $vendorId))
+            : 'exists:distributors,id';
 
         $data = $request->validate([
             'product_code' => [$isCreate ? 'required' : 'nullable', 'string', 'max:80', $uniqueRule],
@@ -1003,7 +1009,7 @@ class ChannelProductController extends Controller
             'detail_pc_image' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif|max:10240',
             'detail_mobile_image' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif|max:10240',
             'order_manager_enabled' => 'required|in:0,1',
-            'distributor_id' => 'nullable|required_if:order_manager_enabled,1|exists:distributors,id',
+            'distributor_id' => ['nullable', 'required_if:order_manager_enabled,1', $distributorRule],
             'shipping_policy_type' => 'required|in:free,free_conditional,paid',
             'shipping_policy_name' => 'nullable|string|max:120',
             'shipping_payment_type' => 'required|in:prepaid,collect',
@@ -1685,7 +1691,14 @@ class ChannelProductController extends Controller
 
     private function orderManagersForView()
     {
-        return \App\Models\Distributor::where('status', 1)
+        $admin = Auth::guard('admin')->user();
+        $query = \App\Models\Distributor::where('status', 1);
+
+        if (Schema::hasColumn('distributors', 'vendor_id')) {
+            $query->where('vendor_id', (int) ($admin->vendor_id ?? 0));
+        }
+
+        return $query
             ->orderBy('name')
             ->get();
     }

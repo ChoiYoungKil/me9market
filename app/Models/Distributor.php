@@ -10,6 +10,7 @@ class Distributor extends Authenticatable
     use HasFactory;
 
     protected $fillable = [
+        'vendor_id',
         'name',
         'email',
         'password',
