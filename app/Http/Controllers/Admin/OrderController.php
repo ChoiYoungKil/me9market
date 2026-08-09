@@ -61,10 +61,9 @@ class OrderController extends Controller
         // 사이드바 활성 페이지 설정을 위해 세션 사용
         Session::put('page', 'orders');
 
-        
-        // 로그인한 사용자가 판매자인 경우 해당 판매자의 상품 상세 내역만, 관리자인 경우 전체 상세 내역을 표시
-        $adminType = Auth::guard('admin')->user()->type;      
-        $vendor_id = Auth::guard('admin')->user()->vendor_id; 
+        $admin = Auth::guard('admin')->user();
+        $adminType = $admin->type;
+        $vendor_id = $admin->vendor_id;
         
         if ($adminType == 'vendor') { 
             $vendorStatus = Auth::guard('admin')->user()->status; 
@@ -75,20 +74,26 @@ class OrderController extends Controller
         }
 
 
-        
-        if ($adminType == 'vendor') { // 판매자인 경우 해당 판매자의 상품 주문 내역만 표시
-            $orderDetails = Order::with([ 
-                'orders_products' => function($query) use ($vendor_id) { 
-                    $query->where('vendor_id', $vendor_id); 
+        if ($adminType == 'vendor') {
+            $order = Order::with([
+                'orders_products' => function($query) use ($vendor_id) {
+                    $query->where('vendor_id', $vendor_id);
                 }
-            ])->where('id', $id)->first()->toArray(); 
+            ])
+                ->where('id', $id)
+                ->whereHas('orders_products', function ($query) use ($vendor_id) {
+                    $query->where('vendor_id', $vendor_id);
+                })
+                ->firstOrFail();
 
-        } else { // 관리자인 경우 모든 주문 상세 내역 표시
-            $orderDetails = Order::with('orders_products')->where('id', $id)->first()->toArray(); 
+        } else {
+            $order = Order::with('orders_products')->where('id', $id)->firstOrFail();
         }
 
+        $orderDetails = $order->toArray();
 
-        $userDetails = User::where('id', $orderDetails['user_id'])->first()->toArray();
+        $user = User::where('id', $orderDetails['user_id'])->first();
+        $userDetails = $user ? $user->toArray() : [];
 
         // `order_statuses` 테이블에서 활성화된 주문 상태 가져오기 (관리자만 변경 가능)
         $orderStatuses = OrderStatus::where('status', 1)->get()->toArray();
@@ -109,7 +114,7 @@ class OrderController extends Controller
         }
 
         // 품목 할인액 계산 (쿠폰 사용 시)
-        if ($orderDetails['coupon_amount'] > 0) { 
+        if ($total_items > 0 && $orderDetails['coupon_amount'] > 0) {
             $item_discount = round($orderDetails['coupon_amount'] / $total_items, 2); 
         } else {
             $item_discount = 0;
@@ -124,6 +129,12 @@ class OrderController extends Controller
         if ($request->isMethod('post')) {
             $data = $request->all();
             // dd($data);
+            $admin = Auth::guard('admin')->user();
+            if ($admin && $admin->type === 'vendor') {
+                abort(403);
+            }
+
+            $order = Order::where('id', $data['order_id'] ?? null)->firstOrFail();
 
             // 자동 배송 처리 (관리자가 택배사 및 운송장 번호를 입력하지 않고 "배송 중"을 선택한 경우):
             // Shiprocket API 등을 통한 자동 배송 프로세스 실행
@@ -138,12 +149,12 @@ class OrderController extends Controller
 
 
             // `orders` 테이블의 주문 상태 업데이트
-            Order::where('id', $data['order_id'])->update(['order_status' => $data['order_status']]);
+            $order->update(['order_status' => $data['order_status']]);
 
 
             // 수동 배송 처리 (관리자가 택배사 및 운송장 번호를 직접 입력한 경우)
             if (!empty($data['courier_name']) && !empty($data['tracking_number'])) { 
-                Order::where('id', $data['order_id'])->update([
+                $order->update([
                     'courier_name'    => $data['courier_name'],
                     'tracking_number' => $data['tracking_number']
                 ]);
@@ -158,8 +169,8 @@ class OrderController extends Controller
 
 
             // 주문 상태 업데이트 알림 이메일 발송
-            $deliveryDetails = Order::select('mobile', 'email', 'name')->where('id', $data['order_id'])->first()->toArray();
-            $orderDetails    = Order::with('orders_products')->where('id', $data['order_id'])->first()->toArray(); 
+            $deliveryDetails = Order::select('mobile', 'email', 'name')->where('id', $data['order_id'])->firstOrFail()->toArray();
+            $orderDetails    = Order::with('orders_products')->where('id', $data['order_id'])->firstOrFail()->toArray();
 
             
             if (!empty($data['courier_name']) && !empty($data['tracking_number'])) { // 택배사 및 운송장 번호가 있는 경우 이메일에 포함
@@ -207,14 +218,20 @@ class OrderController extends Controller
         if ($request->isMethod('post')) {
             $data = $request->all();
             // dd($data);
+            $admin = Auth::guard('admin')->user();
+            $itemQuery = OrdersProduct::where('id', $data['order_item_id'] ?? null);
+            if ($admin && $admin->type === 'vendor') {
+                $itemQuery->where('vendor_id', $admin->vendor_id);
+            }
+            $orderItem = $itemQuery->firstOrFail();
 
             // `orders_products` 테이블의 품목 상태 업데이트
-            OrdersProduct::where('id', $data['order_item_id'])->update(['item_status' => $data['order_item_status']]);
+            $orderItem->update(['item_status' => $data['order_item_status']]);
 
 
             // 수동 배송 처리 (판매자 또는 관리자가 품목별 택배사 및 운송장 번호를 직접 입력한 경우)
             if (!empty($data['item_courier_name']) && !empty($data['item_tracking_number'])) { 
-                OrdersProduct::where('id', $data['order_item_id'])->update([
+                $orderItem->update([
                     'courier_name'    => $data['item_courier_name'],
                     'tracking_number' => $data['item_tracking_number']
                 ]);
@@ -222,7 +239,7 @@ class OrderController extends Controller
 
 
             // `orders_products` 테이블에서 `order_id` 컬럼(`orders` 테이블의 `id` 컬럼에 대한 외래 키) 값을 가져옵니다.
-            $getOrderId = OrdersProduct::select('order_id')->where('id', $data['order_item_id'])->first()->toArray();
+            $getOrderId = ['order_id' => $orderItem->order_id];
 
 
             // 품목 상태 변경 이력을 `orders_logs` 테이블에 기록
@@ -234,7 +251,7 @@ class OrderController extends Controller
 
 
             // 품목 상태 업데이트 알림 이메일 발송
-            $deliveryDetails = Order::select('mobile', 'email', 'name')->where('id', $getOrderId['order_id'])->first()->toArray();
+            $deliveryDetails = Order::select('mobile', 'email', 'name')->where('id', $getOrderId['order_id'])->firstOrFail()->toArray();
 
             // 상태가 업데이트된 특정 품목만 이메일에 포함되도록 설정
             $order_item_id = $data['order_item_id'];
@@ -242,7 +259,7 @@ class OrderController extends Controller
                 'orders_products' => function($query) use ($order_item_id) { 
                     $query->where('id', $order_item_id); 
                 }
-            ])->where('id', $getOrderId['order_id'])->first()->toArray(); 
+            ])->where('id', $getOrderId['order_id'])->firstOrFail()->toArray();
 
 
             if (!empty($data['item_courier_name']) && !empty($data['item_tracking_number'])) { // 택배사 정보가 있는 경우

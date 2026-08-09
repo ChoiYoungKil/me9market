@@ -18,6 +18,7 @@ use App\Models\Distributor;
 use App\Support\OrderItemStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class AdminRoutesTest extends TestCase
@@ -288,6 +289,113 @@ class AdminRoutesTest extends TestCase
             ->assertRedirect(route('admin.order_managers.index'));
 
         $this->assertDatabaseMissing('distributors', ['id' => $manager->id]);
+    }
+
+    public function test_vendor_admin_order_access_is_scoped_to_own_order_items()
+    {
+        list($admin, $vendor, $section, $category, $brand, $product, $banner, $coupon, $user, $order, $subscriber, $vendorAdmin) = $this->createSetup();
+
+        $ownItem = OrdersProduct::create([
+            'order_id' => $order->id,
+            'user_id' => $user->id,
+            'vendor_id' => $vendor->id,
+            'admin_id' => $vendorAdmin->id,
+            'product_id' => $product->id,
+            'product_code' => $product->product_code,
+            'product_name' => 'Own Vendor Product',
+            'product_color' => 'Silver',
+            'product_size' => '기본옵션',
+            'product_price' => 1200,
+            'product_qty' => 1,
+            'line_total' => 1200,
+            'item_status' => 'Payment Captured',
+            'status_code' => OrderItemStatus::PAID,
+        ]);
+
+        $otherVendor = Vendor::create([
+            'name' => 'Other Vendor',
+            'mobile' => '01099990000',
+            'email' => 'other-vendor@example.com',
+            'status' => 1,
+            'commission' => 10,
+            'confirm' => 'Yes',
+        ]);
+
+        $otherOrder = new Order;
+        $otherOrder->user_id = $user->id;
+        $otherOrder->name = 'Other Order Customer';
+        $otherOrder->address = 'Other Address';
+        $otherOrder->city = 'Seoul';
+        $otherOrder->state = 'Seoul';
+        $otherOrder->country = 'Korea';
+        $otherOrder->pincode = '12345';
+        $otherOrder->mobile = '01099998888';
+        $otherOrder->email = 'other-order@example.com';
+        $otherOrder->shipping_charges = 0;
+        $otherOrder->order_status = 'New';
+        $otherOrder->payment_method = 'COD';
+        $otherOrder->payment_gateway = 'COD';
+        $otherOrder->grand_total = 500;
+        $otherOrder->save();
+
+        $otherItem = OrdersProduct::create([
+            'order_id' => $otherOrder->id,
+            'user_id' => $user->id,
+            'vendor_id' => $otherVendor->id,
+            'admin_id' => $admin->id,
+            'product_id' => $product->id,
+            'product_code' => 'OTHER-PRODUCT',
+            'product_name' => 'Other Vendor Product',
+            'product_color' => 'Black',
+            'product_size' => '기본옵션',
+            'product_price' => 500,
+            'product_qty' => 1,
+            'line_total' => 500,
+            'item_status' => 'Payment Captured',
+            'status_code' => OrderItemStatus::PAID,
+        ]);
+
+        $this->actingAs($vendorAdmin, 'admin')
+            ->get("/admin/orders/{$otherOrder->id}")
+            ->assertNotFound();
+
+        $this->actingAs($vendorAdmin, 'admin')
+            ->get("/admin/orders/{$order->id}")
+            ->assertOk()
+            ->assertSee('Own Vendor Product')
+            ->assertDontSee('Other Vendor Product');
+
+        Mail::fake();
+
+        $this->actingAs($vendorAdmin, 'admin')->post('/admin/update-order-status', [
+            'order_id' => $order->id,
+            'order_status' => 'Shipped',
+        ])->assertForbidden();
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'order_status' => 'New',
+        ]);
+
+        $this->actingAs($vendorAdmin, 'admin')->post('/admin/update-order-item-status', [
+            'order_item_id' => $otherItem->id,
+            'order_item_status' => 'Shipped',
+        ])->assertNotFound();
+
+        $this->assertDatabaseHas('orders_products', [
+            'id' => $otherItem->id,
+            'item_status' => 'Payment Captured',
+        ]);
+
+        $this->actingAs($vendorAdmin, 'admin')->post('/admin/update-order-item-status', [
+            'order_item_id' => $ownItem->id,
+            'order_item_status' => 'Shipped',
+        ])->assertRedirect();
+
+        $this->assertDatabaseHas('orders_products', [
+            'id' => $ownItem->id,
+            'item_status' => 'Shipped',
+        ]);
     }
 
     public function test_admin_delete_routes_require_post_requests()

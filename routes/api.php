@@ -19,6 +19,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) { //
 });
 
 
+if (config('legacy_api.enabled')) {
 Route::namespace('App\Http\Controllers\API')->group(function() { // Route Groups: https://laravel.com/docs/9.x/routing#route-groups
     // Shiprocket API Integration
     // Shiprocket API Documentation: https://apidocs.shiprocket.in/
@@ -78,3 +79,4 @@ Route::namespace('App\Http\Controllers\API')->group(function() { // Route Groups
     // Webhook: Update the stock by giving this API endpoint to a third-party inventory/stock management system (like Uniware Cloud Inventory Control, ...) to access to update our stock (POST)    // Here, the third-party stock/inventory management system (Webhook) accesses our API endpoint only when there's a stock update on their end (the stock/inventory management system's end) to update our stock on our end in our database    // API Endpoint:    POST http://127.0.0.1:8000/api/update-stock-with-webhook    // The user must send this 'Authorization' HTTP Header value i.e. Bearer Access Token with their HTTP Request: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkFtaXQgR3VwdGEiLCJpYXQiOjE1MTYyMzkwMjJ9.cNrgi6Sso9wvs4GlJmFnA4IqJY4o2QEcKXgshJTjfNg'    
     Route::post('update-stock-with-webhook', 'APIController@updateStockWithWebhook');
 });
+}
