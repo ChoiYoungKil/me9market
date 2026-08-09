@@ -62,16 +62,16 @@
                     </tr>
                     <tr>
                         <th class="w160"><span>기본 배송비</span></th>
-                        <td><input class="w160" type="number" min="0" name="base_fee" value="{{ old('base_fee', $charge->base_fee ?? 0) }}"> 원</td>
+                        <td><input class="w160" type="text" inputmode="numeric" pattern="[0-9]*" name="base_fee" value="{{ old('base_fee', $charge->base_fee ?? 0) }}"> 원</td>
                         <th class="w160"><span>고정 배송비</span></th>
-                        <td><input class="w160" type="number" min="0" name="fixed_fee" value="{{ old('fixed_fee', $charge->fixed_fee ?? '') }}"> 원</td>
+                        <td><input class="w160" type="text" inputmode="numeric" pattern="[0-9]*" name="fixed_fee" value="{{ old('fixed_fee', $charge->fixed_fee ?? '') }}"> 원</td>
                     </tr>
                     <tr>
                         <th class="w160"><span>무료배송 조건</span></th>
                         <td colspan="3">
-                            <input class="w160" type="number" min="0" name="free_order_amount" value="{{ old('free_order_amount', $charge->free_order_amount ?? '') }}"> 원 이상
+                            <input class="w160" type="text" inputmode="numeric" pattern="[0-9]*" name="free_order_amount" value="{{ old('free_order_amount', $charge->free_order_amount ?? '') }}"> 원 이상
                             &nbsp;&nbsp;
-                            <input class="w160" type="number" min="0" name="free_order_quantity" value="{{ old('free_order_quantity', $charge->free_order_quantity ?? '') }}"> 개 이상
+                            <input class="w160" type="text" inputmode="numeric" pattern="[0-9]*" name="free_order_quantity" value="{{ old('free_order_quantity', $charge->free_order_quantity ?? '') }}"> 개 이상
                         </td>
                     </tr>
                     <tr>
