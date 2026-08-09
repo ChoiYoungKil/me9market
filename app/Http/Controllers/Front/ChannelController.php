@@ -436,6 +436,37 @@ class ChannelController extends Controller
         ]);
     }
 
+    public function deleteShop($id)
+    {
+        $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
+        if (!$admin) return redirect()->route('channel.login');
+
+        $shop = \App\Models\ShopChannel::where('vendor_id', $admin->vendor_id)
+            ->where('id', $id)
+            ->firstOrFail();
+
+        $hasOrderItems = \App\Models\OrdersProduct::where('shop_channel_id', $shop->id)
+            ->orWhereIn('shop_channel_product_id', function ($query) use ($shop) {
+                $query->select('id')
+                    ->from('shop_channel_products')
+                    ->where('shop_channel_id', $shop->id);
+            })
+            ->exists();
+
+        if ($hasOrderItems) {
+            return redirect()->route('channel.shop_list')
+                ->with('error_message', '주문 이력이 있는 Shop 채널은 삭제할 수 없습니다. 운영중지로 전환해 주세요.');
+        }
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($shop) {
+            \App\Models\ShopChannelNotice::where('shop_channel_id', $shop->id)->delete();
+            \App\Models\ShopChannelProduct::where('shop_channel_id', $shop->id)->delete();
+            $shop->delete();
+        });
+
+        return redirect()->route('channel.shop_list')->with('success_message', 'Shop 채널이 삭제되었습니다.');
+    }
+
     public function shopProduct01(Request $request)
     {
         $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();

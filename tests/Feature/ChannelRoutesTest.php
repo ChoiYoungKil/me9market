@@ -12,6 +12,8 @@ use App\Models\ShopChannelNotice;
 use App\Models\Distributor;
 use App\Models\ChannelDeliveryCharge;
 use App\Models\ChannelSubAccount;
+use App\Models\Order;
+use App\Models\OrdersProduct;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -425,6 +427,89 @@ class ChannelRoutesTest extends TestCase
         $this->actingAs($admin, 'admin')->get("/channel/shop/community/update/{$notice->id}")->assertStatus(200);
         $this->actingAs($admin, 'admin')->get("/channel/shop/info-update/{$shop->id}")->assertStatus(200);
         $this->actingAs($admin, 'admin')->get("/channel/shop/product/edit/{$shopProduct->id}")->assertStatus(200);
+    }
+
+    public function test_channel_shop_delete_action_is_wired_and_scoped()
+    {
+        list($vendor, $admin, $shop, $product, $shopProduct) = $this->createSetup();
+
+        $otherVendor = Vendor::create([
+            'name' => 'Other Shop Vendor',
+            'mobile' => '010-6666-0000',
+            'email' => 'other-shop-vendor@example.com',
+            'status' => 1,
+            'commission' => 0,
+            'confirm' => 'Yes',
+        ]);
+        $otherShop = ShopChannel::create([
+            'vendor_id' => $otherVendor->id,
+            'channel_code' => 'othershop',
+            'channel_name' => 'Other Shop',
+            'copyright' => 'Other',
+            'keywords' => ['other'],
+            'settlement_type' => 1,
+            'settlement_rate' => 10,
+            'status' => 1,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->post("/channel/shop/delete/{$otherShop->id}")
+            ->assertNotFound();
+        $this->assertDatabaseHas('shop_channels', ['id' => $otherShop->id]);
+
+        $this->actingAs($admin, 'admin')
+            ->post("/channel/shop/delete/{$shop->id}")
+            ->assertRedirect(route('channel.shop_list'));
+
+        $this->assertDatabaseMissing('shop_channels', ['id' => $shop->id]);
+        $this->assertDatabaseMissing('shop_channel_products', ['id' => $shopProduct->id]);
+    }
+
+    public function test_channel_shop_delete_is_blocked_when_order_history_exists()
+    {
+        list($vendor, $admin, $shop, $product, $shopProduct) = $this->createSetup();
+
+        $order = new Order;
+        $order->user_id = 0;
+        $order->name = 'Buyer';
+        $order->address = 'Address';
+        $order->city = 'City';
+        $order->state = 'State';
+        $order->country = 'KR';
+        $order->pincode = '12345';
+        $order->mobile = '01012345678';
+        $order->email = 'buyer@example.com';
+        $order->shipping_charges = 0;
+        $order->coupon_code = '';
+        $order->coupon_amount = 0;
+        $order->order_status = 'New';
+        $order->payment_method = 'COD';
+        $order->payment_gateway = 'common_pg';
+        $order->grand_total = 120;
+        $order->save();
+
+        OrdersProduct::create([
+            'order_id' => $order->id,
+            'user_id' => 0,
+            'vendor_id' => $vendor->id,
+            'admin_id' => $admin->id,
+            'shop_channel_id' => $shop->id,
+            'shop_channel_product_id' => $shopProduct->id,
+            'product_id' => $product->id,
+            'product_code' => 'P123',
+            'product_name' => 'Test Product',
+            'product_color' => 'Blue',
+            'product_size' => 'Default',
+            'product_price' => 120,
+            'product_qty' => 1,
+            'item_status' => 'New',
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->post("/channel/shop/delete/{$shop->id}")
+            ->assertRedirect(route('channel.shop_list'));
+
+        $this->assertDatabaseHas('shop_channels', ['id' => $shop->id]);
     }
 
     public function test_channel_joint_purchase_management_is_scoped_to_current_vendor()

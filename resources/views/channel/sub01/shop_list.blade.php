@@ -184,14 +184,13 @@
                                             </td>
                                             <td class="t_c">/{{ $shop->channel_code }}</td> {{-- 단축주소 추후 연동 --}}
                                             <td class="t_c">
-                                                <a href="#" class="btn02 col2">복사</a>
+                                                <button type="button" class="btn02 col2 copy-channel-url" data-copy-url="{{ route('shop.enter', $shop->channel_code) }}" style="border: none; cursor: pointer; padding: 0 10px;">복사</button>
                                                 <a href="{{ route('channel.shop_info', ['id' => $shop->id]) }}"
                                                     class="btn02 col7">관리</a>
                                                 <a href="{{ route('channel.shop_info', ['id' => $shop->id]) }}"
                                                     class="btn02 col5">보기</a>
-                                                <form action="#" method="POST" style="display: inline;">
+                                                <form action="{{ route('channel.shop.delete', $shop->id) }}" method="POST" style="display: inline;">
                                                     @csrf
-                                                    @method('DELETE')
                                                     <button type="submit" class="btn02" onclick="return confirm('정말 삭제하시겠습니까?')"
                                                         style="border: none; cursor: pointer; padding: 0 10px;">삭제</button>
                                                 </form>
@@ -263,6 +262,23 @@
             $(this).parents(".popup_bx").stop().fadeOut(300);
 
             return false;
+        });
+
+        $(".copy-channel-url").click(function () {
+            var url = $(this).data("copy-url");
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(url).then(function () {
+                    alert("Shop 채널 주소가 복사되었습니다.");
+                });
+                return;
+            }
+
+            var tempInput = $("<input>");
+            $("body").append(tempInput);
+            tempInput.val(url).select();
+            document.execCommand("copy");
+            tempInput.remove();
+            alert("Shop 채널 주소가 복사되었습니다.");
         });
     </script>
 @endpush
