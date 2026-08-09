@@ -57,7 +57,7 @@
                         <li class="icon3"><a href="#">gmail</a></li>
                     </ul>
                 </div>
-                <a href="#" class="btn2">비회원 구매조회</a>
+                <a href="{{ route('front.nonmember.order_check') }}" class="btn2">비회원 구매조회</a>
             </div>
         </div>
     </div>

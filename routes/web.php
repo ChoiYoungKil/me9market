@@ -482,6 +482,9 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
             // Settings / Additional Info (Sub00)
             Route::prefix('settings')->group(function () {
                 Route::get('/delivery', 'ChannelController@deliveryChargeList')->name('channel.delivery.list');
+                Route::post('/delivery/store', 'ChannelController@storeDeliveryCharge')->name('channel.delivery.store');
+                Route::post('/delivery/{id}/update', 'ChannelController@updateDeliveryCharge')->name('channel.delivery.update');
+                Route::post('/delivery/{id}/delete', 'ChannelController@deleteDeliveryCharge')->name('channel.delivery.delete');
                 Route::get('/refund', 'ChannelController@cancelRefundList')->name('channel.refund.list');
 
                 // 취소/환불 정책 CRUD
@@ -503,6 +506,9 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
                 Route::post('/points/purchase', 'ChannelController@requestPointPurchase')->name('channel.point.purchase');
                 Route::post('/points/refund', 'ChannelController@requestPointRefund')->name('channel.point.refund');
                 Route::get('/sub-accounts', 'ChannelController@subList')->name('channel.sub_accounts.list');
+                Route::post('/sub-accounts/store', 'ChannelController@storeSubAccount')->name('channel.sub_accounts.store');
+                Route::post('/sub-accounts/{id}/update', 'ChannelController@updateSubAccount')->name('channel.sub_accounts.update');
+                Route::post('/sub-accounts/{id}/delete', 'ChannelController@deleteSubAccount')->name('channel.sub_accounts.delete');
             });
         });
     });

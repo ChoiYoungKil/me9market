@@ -1795,7 +1795,111 @@ class ChannelController extends Controller
             return redirect()->route('channel.login');
         }
 
-        return view('channel.sub00.delivery_charge_list', ['dep1_id' => '00']);
+        $admin = Auth::guard('admin')->user();
+        $charges = \App\Models\ChannelDeliveryCharge::where('vendor_id', (int) $admin->vendor_id)
+            ->orderByDesc('id')
+            ->paginate(20)
+            ->withQueryString();
+
+        return view('channel.sub00.delivery_charge_list', [
+            'dep1_id' => '00',
+            'charges' => $charges,
+            'shippingTypes' => $this->channelDeliveryShippingTypes(),
+            'paymentTypes' => $this->channelDeliveryPaymentTypes(),
+        ]);
+    }
+
+    public function storeDeliveryCharge(Request $request)
+    {
+        if (!Auth::guard('admin')->check()) {
+            return redirect()->route('channel.login');
+        }
+
+        $admin = Auth::guard('admin')->user();
+
+        \App\Models\ChannelDeliveryCharge::create($this->deliveryChargePayload($request, (int) $admin->vendor_id));
+
+        return redirect()->route('channel.delivery.list')->with('flash_message_success', '배송비가 등록되었습니다.');
+    }
+
+    public function updateDeliveryCharge(Request $request, $id)
+    {
+        if (!Auth::guard('admin')->check()) {
+            return redirect()->route('channel.login');
+        }
+
+        $admin = Auth::guard('admin')->user();
+        $charge = \App\Models\ChannelDeliveryCharge::where('vendor_id', (int) $admin->vendor_id)->findOrFail($id);
+        $charge->update($this->deliveryChargePayload($request, (int) $admin->vendor_id));
+
+        return redirect()->route('channel.delivery.list')->with('flash_message_success', '배송비가 수정되었습니다.');
+    }
+
+    public function deleteDeliveryCharge($id)
+    {
+        if (!Auth::guard('admin')->check()) {
+            return redirect()->route('channel.login');
+        }
+
+        $admin = Auth::guard('admin')->user();
+        \App\Models\ChannelDeliveryCharge::where('vendor_id', (int) $admin->vendor_id)->findOrFail($id)->delete();
+
+        return redirect()->route('channel.delivery.list')->with('flash_message_success', '배송비가 삭제되었습니다.');
+    }
+
+    private function deliveryChargePayload(Request $request, int $vendorId): array
+    {
+        $data = $request->validate([
+            'status' => 'required|in:0,1',
+            'name' => 'required|string|max:100',
+            'courier' => 'nullable|string|max:100',
+            'shipping_type' => 'required|in:free,conditional,fixed',
+            'payment_type' => 'required|in:prepaid,cod',
+            'base_fee' => 'nullable|integer|min:0|max:99999999',
+            'free_order_amount' => 'nullable|integer|min:0|max:99999999',
+            'free_order_quantity' => 'nullable|integer|min:0|max:999999',
+            'fixed_fee' => 'nullable|integer|min:0|max:99999999',
+            'memo' => 'nullable|string|max:1000',
+        ]);
+
+        $data['vendor_id'] = $vendorId;
+        $data['base_fee'] = (int) ($data['base_fee'] ?? 0);
+        $data['free_order_amount'] = $data['free_order_amount'] ?? null;
+        $data['free_order_quantity'] = $data['free_order_quantity'] ?? null;
+        $data['fixed_fee'] = $data['fixed_fee'] ?? null;
+
+        if ($data['shipping_type'] === 'free') {
+            $data['base_fee'] = 0;
+            $data['free_order_amount'] = null;
+            $data['free_order_quantity'] = null;
+            $data['fixed_fee'] = null;
+        }
+
+        if ($data['shipping_type'] === 'fixed') {
+            $data['fixed_fee'] = (int) ($data['fixed_fee'] ?? $data['base_fee']);
+            $data['base_fee'] = $data['fixed_fee'];
+            $data['free_order_amount'] = null;
+            $data['free_order_quantity'] = null;
+        }
+
+        return $data;
+    }
+
+    private function channelDeliveryShippingTypes(): array
+    {
+        return [
+            'free' => '무료배송',
+            'conditional' => '무료배송(조건부)',
+            'fixed' => '고정 배송비',
+        ];
+    }
+
+    private function channelDeliveryPaymentTypes(): array
+    {
+        return [
+            'prepaid' => '선결제',
+            'cod' => '착불',
+        ];
     }
 
     public function cancelRefundList()
@@ -2239,13 +2343,151 @@ class ChannelController extends Controller
         return redirect()->route('channel.point.list')->with('success_message', '포인트 환급 요청이 접수되었습니다. 최고관리자 승인 후 환급 처리됩니다.');
     }
     
-    public function subList()
+    public function subList(Request $request)
     {
         if (!Auth::guard('admin')->check()) {
             return redirect()->route('channel.login');
         }
 
-        return view('channel.sub00.sub_accounts_list', ['dep1_id' => '00']);
+        $admin = Auth::guard('admin')->user();
+        $keyword = trim((string) $request->query('keyword', ''));
+
+        $accounts = \App\Models\ChannelSubAccount::with('admin')
+            ->where('vendor_id', (int) $admin->vendor_id)
+            ->when($keyword !== '', function ($query) use ($keyword) {
+                $query->where(function ($inner) use ($keyword) {
+                    $inner->where('member_no', 'like', '%' . $keyword . '%')
+                        ->orWhereHas('admin', function ($adminQuery) use ($keyword) {
+                            $adminQuery->where('email', 'like', '%' . $keyword . '%')
+                                ->orWhere('name', 'like', '%' . $keyword . '%')
+                                ->orWhere('mobile', 'like', '%' . $keyword . '%');
+                        });
+                });
+            })
+            ->orderByDesc('id')
+            ->paginate(20)
+            ->withQueryString();
+
+        return view('channel.sub00.sub_accounts_list', [
+            'dep1_id' => '00',
+            'accounts' => $accounts,
+            'keyword' => $keyword,
+            'permissionLabels' => $this->subAccountPermissionLabels(),
+        ]);
+    }
+
+    public function storeSubAccount(Request $request)
+    {
+        if (!Auth::guard('admin')->check()) {
+            return redirect()->route('channel.login');
+        }
+
+        $owner = Auth::guard('admin')->user();
+        $data = $this->subAccountValidatedData($request, null);
+
+        $admin = new \App\Models\Admin;
+        $admin->name = $data['name'];
+        $admin->type = 'subadmin';
+        $admin->vendor_id = (int) $owner->vendor_id;
+        $admin->mobile = $data['mobile'] ?? '';
+        $admin->email = $data['email'];
+        $admin->password = \Illuminate\Support\Facades\Hash::make($data['password'] ?? '123456');
+        $admin->confirm = 'Yes';
+        $admin->status = (int) $data['status'];
+        $admin->save();
+
+        \App\Models\ChannelSubAccount::create([
+            'vendor_id' => (int) $owner->vendor_id,
+            'admin_id' => $admin->id,
+            'member_no' => $data['member_no'] ?? null,
+            'started_at' => $data['started_at'] ?? null,
+            'ended_at' => $data['ended_at'] ?? null,
+            'permissions' => $data['permissions'] ?? [],
+        ]);
+
+        return redirect()->route('channel.sub_accounts.list')->with('flash_message_success', '서브관리자가 등록되었습니다.');
+    }
+
+    public function updateSubAccount(Request $request, $id)
+    {
+        if (!Auth::guard('admin')->check()) {
+            return redirect()->route('channel.login');
+        }
+
+        $owner = Auth::guard('admin')->user();
+        $account = \App\Models\ChannelSubAccount::with('admin')
+            ->where('vendor_id', (int) $owner->vendor_id)
+            ->findOrFail($id);
+
+        $data = $this->subAccountValidatedData($request, $account->admin_id);
+
+        $account->admin->forceFill([
+            'name' => $data['name'],
+            'mobile' => $data['mobile'] ?? '',
+            'email' => $data['email'],
+            'status' => (int) $data['status'],
+        ]);
+
+        if (!empty($data['password'])) {
+            $account->admin->password = \Illuminate\Support\Facades\Hash::make($data['password']);
+        }
+
+        $account->admin->save();
+        $account->update([
+            'member_no' => $data['member_no'] ?? null,
+            'started_at' => $data['started_at'] ?? null,
+            'ended_at' => $data['ended_at'] ?? null,
+            'permissions' => $data['permissions'] ?? [],
+        ]);
+
+        return redirect()->route('channel.sub_accounts.list')->with('flash_message_success', '서브관리자가 수정되었습니다.');
+    }
+
+    public function deleteSubAccount($id)
+    {
+        if (!Auth::guard('admin')->check()) {
+            return redirect()->route('channel.login');
+        }
+
+        $owner = Auth::guard('admin')->user();
+        $account = \App\Models\ChannelSubAccount::with('admin')
+            ->where('vendor_id', (int) $owner->vendor_id)
+            ->findOrFail($id);
+        $admin = $account->admin;
+        $account->delete();
+
+        if ($admin && $admin->type === 'subadmin') {
+            $admin->delete();
+        }
+
+        return redirect()->route('channel.sub_accounts.list')->with('flash_message_success', '서브관리자가 삭제되었습니다.');
+    }
+
+    private function subAccountValidatedData(Request $request, ?int $adminId): array
+    {
+        return $request->validate([
+            'status' => 'required|in:0,1',
+            'member_no' => 'nullable|string|max:50',
+            'email' => 'required|email|max:255|unique:admins,email' . ($adminId ? ',' . $adminId : ''),
+            'name' => 'required|string|max:100',
+            'mobile' => 'nullable|string|max:50',
+            'password' => ($adminId ? 'nullable' : 'required') . '|string|min:6|max:100',
+            'started_at' => 'nullable|date',
+            'ended_at' => 'nullable|date|after_or_equal:started_at',
+            'permissions' => 'nullable|array',
+            'permissions.*' => 'in:shop,product,joint_purchase,order,settings',
+        ]);
+    }
+
+    private function subAccountPermissionLabels(): array
+    {
+        return [
+            'shop' => 'Shop 채널',
+            'product' => '상품관리',
+            'joint_purchase' => '공동상품관리',
+            'order' => '주문관리',
+            'settings' => '설정관리',
+        ];
     }
 
     // 채널 등록 (판매자)

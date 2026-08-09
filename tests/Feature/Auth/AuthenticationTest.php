@@ -16,6 +16,7 @@ class AuthenticationTest extends TestCase
         $response = $this->get('/member/login');
 
         $response->assertStatus(200);
+        $response->assertSee(route('front.nonmember.order_check'), false);
     }
 
     public function test_users_can_authenticate_using_the_login_screen()

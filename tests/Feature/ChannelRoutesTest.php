@@ -10,6 +10,8 @@ use App\Models\ShopChannelProduct;
 use App\Models\ShopCancelRefundPolicy;
 use App\Models\ShopChannelNotice;
 use App\Models\Distributor;
+use App\Models\ChannelDeliveryCharge;
+use App\Models\ChannelSubAccount;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -245,6 +247,167 @@ class ChannelRoutesTest extends TestCase
             'name' => 'Updated Own Manager',
             'status' => 0,
         ]);
+    }
+
+    public function test_channel_delivery_charge_crud_is_scoped_to_current_vendor()
+    {
+        list($vendor, $admin) = $this->createSetup();
+
+        $this->actingAs($admin, 'admin')->post('/channel/settings/delivery/store', [
+            'status' => 1,
+            'name' => '기본 배송비',
+            'courier' => '자체배송',
+            'shipping_type' => 'conditional',
+            'payment_type' => 'prepaid',
+            'base_fee' => 3000,
+            'free_order_amount' => 30000,
+            'free_order_quantity' => 3,
+        ])->assertRedirect(route('channel.delivery.list'));
+
+        $this->assertDatabaseHas('channel_delivery_charges', [
+            'vendor_id' => $vendor->id,
+            'name' => '기본 배송비',
+            'base_fee' => 3000,
+            'free_order_amount' => 30000,
+        ]);
+
+        $charge = ChannelDeliveryCharge::where('vendor_id', $vendor->id)->firstOrFail();
+
+        $this->actingAs($admin, 'admin')->post("/channel/settings/delivery/{$charge->id}/update", [
+            'status' => 0,
+            'name' => '수정 배송비',
+            'courier' => 'CJ대한통운',
+            'shipping_type' => 'fixed',
+            'payment_type' => 'cod',
+            'fixed_fee' => 5000,
+        ])->assertRedirect(route('channel.delivery.list'));
+
+        $this->assertDatabaseHas('channel_delivery_charges', [
+            'id' => $charge->id,
+            'name' => '수정 배송비',
+            'status' => 0,
+            'base_fee' => 5000,
+            'payment_type' => 'cod',
+        ]);
+
+        $otherVendor = Vendor::create([
+            'name' => 'Other Delivery Vendor',
+            'mobile' => '010-8888-0000',
+            'email' => 'other-delivery-vendor@example.com',
+            'status' => 1,
+            'commission' => 0,
+            'confirm' => 'Yes',
+        ]);
+        $otherCharge = ChannelDeliveryCharge::create([
+            'vendor_id' => $otherVendor->id,
+            'status' => 1,
+            'name' => '타 채널 배송비',
+            'shipping_type' => 'free',
+            'payment_type' => 'prepaid',
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->post("/channel/settings/delivery/{$otherCharge->id}/delete")
+            ->assertNotFound();
+
+        $this->assertDatabaseHas('channel_delivery_charges', ['id' => $otherCharge->id]);
+
+        $this->actingAs($admin, 'admin')
+            ->post("/channel/settings/delivery/{$charge->id}/delete")
+            ->assertRedirect(route('channel.delivery.list'));
+
+        $this->assertDatabaseMissing('channel_delivery_charges', ['id' => $charge->id]);
+    }
+
+    public function test_channel_sub_account_crud_is_scoped_to_current_vendor()
+    {
+        list($vendor, $admin) = $this->createSetup();
+
+        $this->actingAs($admin, 'admin')->post('/channel/settings/sub-accounts/store', [
+            'status' => 1,
+            'member_no' => 'M1001',
+            'email' => 'sub-manager@example.com',
+            'name' => 'Sub Manager',
+            'mobile' => '01012341234',
+            'password' => 'secret123',
+            'started_at' => '2026-08-01',
+            'ended_at' => '2026-09-01',
+            'permissions' => ['shop', 'order'],
+        ])->assertRedirect(route('channel.sub_accounts.list'));
+
+        $this->assertDatabaseHas('admins', [
+            'vendor_id' => $vendor->id,
+            'type' => 'subadmin',
+            'email' => 'sub-manager@example.com',
+            'name' => 'Sub Manager',
+            'status' => 1,
+        ]);
+        $this->assertDatabaseHas('channel_sub_accounts', [
+            'vendor_id' => $vendor->id,
+            'member_no' => 'M1001',
+        ]);
+
+        $account = ChannelSubAccount::where('vendor_id', $vendor->id)->firstOrFail();
+
+        $this->actingAs($admin, 'admin')->post("/channel/settings/sub-accounts/{$account->id}/update", [
+            'status' => 0,
+            'member_no' => 'M1002',
+            'email' => 'updated-sub-manager@example.com',
+            'name' => 'Updated Sub',
+            'mobile' => '01099998888',
+            'started_at' => '2026-08-02',
+            'ended_at' => '2026-09-02',
+            'permissions' => ['product', 'settings'],
+        ])->assertRedirect(route('channel.sub_accounts.list'));
+
+        $this->assertDatabaseHas('admins', [
+            'id' => $account->admin_id,
+            'email' => 'updated-sub-manager@example.com',
+            'name' => 'Updated Sub',
+            'status' => 0,
+        ]);
+        $this->assertDatabaseHas('channel_sub_accounts', [
+            'id' => $account->id,
+            'member_no' => 'M1002',
+        ]);
+
+        $otherVendor = Vendor::create([
+            'name' => 'Other Sub Vendor',
+            'mobile' => '010-7777-0000',
+            'email' => 'other-sub-vendor@example.com',
+            'status' => 1,
+            'commission' => 0,
+            'confirm' => 'Yes',
+        ]);
+        $otherAdmin = new Admin;
+        $otherAdmin->name = 'Other Sub';
+        $otherAdmin->type = 'subadmin';
+        $otherAdmin->vendor_id = $otherVendor->id;
+        $otherAdmin->mobile = '01000000000';
+        $otherAdmin->email = 'other-sub@example.com';
+        $otherAdmin->password = bcrypt('secret123');
+        $otherAdmin->confirm = 'Yes';
+        $otherAdmin->status = 1;
+        $otherAdmin->save();
+        $otherAccount = ChannelSubAccount::create([
+            'vendor_id' => $otherVendor->id,
+            'admin_id' => $otherAdmin->id,
+            'member_no' => 'OTHER',
+            'permissions' => ['shop'],
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->post("/channel/settings/sub-accounts/{$otherAccount->id}/delete")
+            ->assertNotFound();
+
+        $this->assertDatabaseHas('channel_sub_accounts', ['id' => $otherAccount->id]);
+
+        $this->actingAs($admin, 'admin')
+            ->post("/channel/settings/sub-accounts/{$account->id}/delete")
+            ->assertRedirect(route('channel.sub_accounts.list'));
+
+        $this->assertDatabaseMissing('channel_sub_accounts', ['id' => $account->id]);
+        $this->assertDatabaseMissing('admins', ['id' => $account->admin_id]);
     }
 
     public function test_authenticated_shop_routes()
