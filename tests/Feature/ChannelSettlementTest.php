@@ -528,7 +528,8 @@ class ChannelSettlementTest extends TestCase
         $response = $this->actingAs($admin, 'admin')->get(route('admin.settlements.payout.export', $run->id));
         $response->assertOk();
         $csv = $response->streamedContent();
-        $this->assertStringContainsString('"자사PG 결제액","공용PG 결제액",자사포인트,Me9포인트,상품가,배송비,할인금액,매출액,"채널 지급액"', $csv);
+        $this->assertStringContainsString('"자사PG 결제액","공용PG 결제액",자사포인트(별도기록없음),Me9포인트(통합사용액),상품가,배송비,할인금액,매출액,"채널 지급액"', $csv);
+        $this->assertStringContainsString('testcode,Me9-', $csv);
         $this->assertStringContainsString('자사PG,200,0,0,0,200,0,0,200,0', $csv);
     }
 
@@ -597,7 +598,9 @@ class ChannelSettlementTest extends TestCase
 
         $response = $this->actingAs($admin, 'admin')->get(route('admin.settlements.payout.export', $run->id));
         $response->assertOk();
-        $this->assertStringContainsString('자사PG,9500,0,0,3000,10000,2500,0,12500,2900', $response->streamedContent());
+        $csv = $response->streamedContent();
+        $this->assertStringContainsString('testcode,Me9-', $csv);
+        $this->assertStringContainsString('자사PG,9500,0,0,3000,10000,2500,0,12500,2900', $csv);
 
         $response = $this->actingAs($admin, 'admin')->get(route('admin.settlements.billing.export', $run->id));
         $response->assertOk();

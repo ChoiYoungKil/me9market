@@ -58,8 +58,8 @@
                                             <th>PG구분</th>
                                             <th>자사PG 결제액</th>
                                             <th>공용PG 결제액</th>
-                                            <th>자사포인트</th>
-                                            <th>Me9 포인트</th>
+                                            <th>자사포인트<br><small>(별도기록없음)</small></th>
+                                            <th>Me9 포인트<br><small>(통합사용액)</small></th>
                                             <th>상품가</th>
                                             <th>배송비</th>
                                             <th>할인금액</th>

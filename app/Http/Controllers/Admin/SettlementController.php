@@ -226,18 +226,18 @@ class SettlementController extends Controller
 
     public function payoutExport($id)
     {
-        $settlement = SettlementRun::with('items.orderItem')->findOrFail($id);
+        $settlement = SettlementRun::with('items.orderItem.shopChannel')->findOrFail($id);
 
         return $this->downloadCsv(
             'settlement_payout_' . $settlement->period . '_' . $settlement->id . '.csv',
-            ['등록일', '채널아이디', '주문번호', 'PG구분', '자사PG 결제액', '공용PG 결제액', '자사포인트', 'Me9포인트', '상품가', '배송비', '할인금액', '매출액', '채널 지급액', '지급사유'],
+            ['등록일', '채널아이디', '주문번호', 'PG구분', '자사PG 결제액', '공용PG 결제액', '자사포인트(별도기록없음)', 'Me9포인트(통합사용액)', '상품가', '배송비', '할인금액', '매출액', '채널 지급액', '지급사유'],
             $this->payoutRows($settlement)
         );
     }
 
     public function billingExport($id)
     {
-        $settlement = SettlementRun::with('items.orderItem')->findOrFail($id);
+        $settlement = SettlementRun::with('items.orderItem.shopChannel')->findOrFail($id);
 
         return $this->downloadCsv(
             'settlement_billing_' . $settlement->period . '_' . $settlement->id . '.csv',
@@ -487,7 +487,7 @@ class SettlementController extends Controller
 
     private function amountDetail($id, string $mode)
     {
-        $settlement = SettlementRun::with('items.orderItem')->findOrFail($id);
+        $settlement = SettlementRun::with('items.orderItem.shopChannel')->findOrFail($id);
         $rows = $mode === 'billing' ? $this->billingRows($settlement) : $this->payoutRows($settlement);
         $title = $mode === 'billing' ? '채널 청구액 상세 목록' : '채널 지급액 상세 목록';
         $exportRoute = $mode === 'billing'
@@ -511,7 +511,7 @@ class SettlementController extends Controller
 
             return [
                 optional($item->confirmed_at)->format('Y-m-d H:i'),
-                $item->shop_channel_id ?: '-',
+                $this->channelIdentifier($item),
                 $item->order_no,
                 $this->paymentGatewayLabel($usesOwnPg ? 'own_pg' : 'me9_pg'),
                 $usesOwnPg ? $pgPayment : 0,
@@ -542,7 +542,7 @@ class SettlementController extends Controller
 
             return [
                 optional($item->confirmed_at)->format('Y-m-d H:i'),
-                $item->shop_channel_id ?: '-',
+                $this->channelIdentifier($item),
                 $item->order_no,
                 $this->paymentGatewayLabel($usesOwnPg ? 'own_pg' : 'me9_pg'),
                 (float) $item->invoice_purchase_amount,
@@ -558,6 +558,16 @@ class SettlementController extends Controller
     private function paymentGatewayLabel(?string $type): string
     {
         return $type === 'own_pg' ? '자사PG' : '공용PG';
+    }
+
+    private function channelIdentifier($item): string
+    {
+        return (string) (
+            data_get($item, 'orderItem.shopChannel.channel_code')
+            ?: data_get($item, 'settlementRun.shopChannel.channel_code')
+            ?: data_get($item, 'shop_channel_id')
+            ?: '-'
+        );
     }
 
     private function downloadCsv(string $filename, array $headers, $rows)

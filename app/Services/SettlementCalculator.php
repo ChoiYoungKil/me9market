@@ -32,7 +32,7 @@ class SettlementCalculator
 
     public function normalizePeriod(?string $period): string
     {
-        if ($period && preg_match('/^\d{4}-\d{2}$/', $period)) {
+        if ($period && preg_match('/^\d{4}-\d{2}$/', $period) && array_key_exists($period, $this->periodOptions())) {
             return $period;
         }
 
