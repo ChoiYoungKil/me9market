@@ -56,8 +56,7 @@
                                     </tr>
                                     <tr>
                                         <th class="w160"><span>비밀 번호</span></th>
-                                        <td><a href="{{ url()->current() }}" class="btn01 pop_btn" data-pop="pop1_1"
-                                                style="background-color:#000; color:#fff; border:none; padding: 5px 15px; border-radius:3px;">비밀번호변경</a>
+                                        <td><a href="{{ url()->current() }}" class="btn01 pop_btn" data-pop="pop1_1">비밀번호변경</a>
                                         </td>
                                         <th class="w160"><span>판매 권한</span></th>
                                         <td>획득 (
@@ -244,18 +243,16 @@
                                             <td colspan="3">
                                                 <div class="addr_bx">
                                                     <div style="margin-bottom: 5px;">
-                                                        <input type="text" name="shop_pincode" class="addr1 off"
+                                                        <input type="text" name="shop_pincode" id="shop_pincode" class="addr1 off"
                                                             placeholder="우편번호" required="required"
-                                                            value="{{ $details->shop_pincode ?? '' }}"
-                                                            style="width: 120px;">
-                                                        <a href="{{ url()->current() }}" class="btn01"
-                                                            style="background-color:#000; color:#fff; border:none; padding: 5px 15px; border-radius:3px; display:inline-block; vertical-align:middle; line-height:30px;">우편번호찾기</a>
+                                                            value="{{ $details->shop_pincode ?? '' }}">
+                                                        <a href="javascript:;" onclick="execDaumPostcode('shop_pincode', 'shop_address', 'shop_address_detail')" class="btn01">우편번호찾기</a>
                                                     </div>
-                                                    <input type="text" name="shop_address" class="addr2 off w100p"
+                                                    <input type="text" name="shop_address" id="shop_address" class="addr2 off w100p"
                                                         placeholder="주소" required="required"
                                                         value="{{ $details->shop_address ?? '' }}"
                                                         style="margin-bottom: 5px;">
-                                                    <input type="text" name="shop_address_detail" class="addr3 off w100p"
+                                                    <input type="text" name="shop_address_detail" id="shop_address_detail" class="addr3 off w100p"
                                                         placeholder="상세주소" required="required"
                                                         value="{{ $details->shop_address_detail ?? '' }}">
                                                 </div>
@@ -499,9 +496,11 @@
                                                             {{ $details->bank_account_number ?? '000000000-02-000000' }} /
                                                             {{ $details->bank_account_holder_name ?? '통장주' }}
                                                         </div>
-                                                        <a href="{{ url()->current() }}" class="btn01"
-                                                            style="background-color:#000; color:#fff; border:none; padding:5px 15px; border-radius:3px;">통장사본
-                                                            내려받기</a>
+                                                        @if(!empty($details->bank_copy_image))
+                                                            <a href="{{ asset('front/images/bank_copies/' . $details->bank_copy_image) }}" class="btn01" download>통장사본 내려받기</a>
+                                                        @else
+                                                            <span class="btn01 col3">파일없음</span>
+                                                        @endif
                                                     </div>
                                                 </td>
                                             </tr>
@@ -601,7 +600,7 @@
                                 </table>
                             </div>
                             <div class="btm_btn mt10">
-                                <button type="submit" class="btn01 col5" style="border:0;" formaction="{{ route('channel.operation_stop.request') }}" formmethod="post">운영중지 요청</button>
+                                <button type="submit" class="col5" formaction="{{ route('channel.operation_stop.request') }}" formmethod="post">운영중지 요청</button>
                             </div>
                         </div>
                         <div class="con_w">
@@ -652,9 +651,7 @@
                             </div>
 
                             <div class="btm_btn mt10" style="text-align:center;">
-                                <button type="submit"
-                                    style="background-color:#000; color:#fff; padding:15px 60px; font-size:16px; font-weight:bold; display:inline-block; border-radius:5px; border:none; cursor:pointer;">정보
-                                    수정</button>
+                                <button type="submit">정보 수정</button>
                             </div>
                     </form>
                 </div>
@@ -664,7 +661,24 @@
 @endsection
 
 @push('scripts')
+    <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
     <script type="text/javascript">
+        function execDaumPostcode(zipcodeId, addressId, detailAddressId) {
+            if (!window.daum || !window.daum.Postcode) {
+                alert('우편번호 검색 서비스를 불러오지 못했습니다.');
+                return;
+            }
+
+            new daum.Postcode({
+                oncomplete: function (data) {
+                    var address = data.userSelectedType === 'R' ? data.roadAddress : data.jibunAddress;
+                    $('#' + zipcodeId).val(data.zonecode);
+                    $('#' + addressId).val(address);
+                    $('#' + detailAddressId).focus();
+                }
+            }).open();
+        }
+
         /* 팝업 */
         $(".pop_btn").click(function () {
             var popId = $(this).attr("data-pop");
