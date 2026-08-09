@@ -219,7 +219,7 @@
 
                                             <!-- 하단버튼 -->
                                             <div class="btm_btn mt20">
-                                                <a href="#" class="col5 close_btn">닫기</a>
+                                                <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                                             </div>
                                         </div>
                                     </div>

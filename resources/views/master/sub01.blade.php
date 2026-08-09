@@ -40,7 +40,7 @@
                                             </tr>
                                             <tr>
                                                 <td>이메일 주소</td>
-                                                <td><a class="fcol2" href="#">text1234@naver.com</a></td>
+                                                <td><a class="fcol2" href="{{ url()->current() }}">text1234@naver.com</a></td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -66,7 +66,7 @@
                                             </tr>
                                             <tr>
                                                 <td>이메일 주소</td>
-                                                <td><a class="fcol2" href="#">text1234@naver.com</a></td>
+                                                <td><a class="fcol2" href="{{ url()->current() }}">text1234@naver.com</a></td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -140,10 +140,10 @@
                             <div class="row">
                                 <div class="tab_bx1">
                                     <ul>
-                                        <li><a href="#" class="on"><span>탭메뉴 #1</span></a></li>
-                                        <li><a href="#"><span>탭메뉴 #2</span></a></li>
-                                        <li><a href="#"><span>탭메뉴 #3</span></a></li>
-                                        <li><a href="#"><span>탭메뉴 #4</span></a></li>
+                                        <li><a href="{{ url()->current() }}" class="on"><span>탭메뉴 #1</span></a></li>
+                                        <li><a href="{{ url()->current() }}"><span>탭메뉴 #2</span></a></li>
+                                        <li><a href="{{ url()->current() }}"><span>탭메뉴 #3</span></a></li>
+                                        <li><a href="{{ url()->current() }}"><span>탭메뉴 #4</span></a></li>
                                     </ul>
                                 </div>
                                 <div class="tb01">
@@ -164,7 +164,7 @@
                                             <tr>
                                                 <td class="t_c">00</td>
                                                 <td class="ovH">
-                                                    <a href="#" class="subject on fcol1">공지사항 입니다. 공지사항 입니다. 공지사항 입니다. 공지사항
+                                                    <a href="{{ url()->current() }}" class="subject on fcol1">공지사항 입니다. 공지사항 입니다. 공지사항 입니다. 공지사항
                                                         입니다. 공지사항 입니다. 공지사항 입니다.</a>
                                                 </td>
                                                 <td class="t_c">2025-10-01</td>
@@ -172,7 +172,7 @@
                                             <tr>
                                                 <td class="t_c">00</td>
                                                 <td class="ovH">
-                                                    <a href="#" class="subject fcol1">일반 게시판 제목입니다. 일반 게시판 제목입니다. 일반 게시판
+                                                    <a href="{{ url()->current() }}" class="subject fcol1">일반 게시판 제목입니다. 일반 게시판 제목입니다. 일반 게시판
                                                         제목입니다. 일반 게시판 제목입니다. 일반 게시판 제목입니다. 일반 게시판 제목입니다. 일반 게시판 제목입니다. 일반
                                                         게시판 제목입니다. 일반 게시판 제목입니다. 일반 게시판 제목입니다. 일반 게시판 제목입니다. 일반 게시판
                                                         제목입니다.</a>
@@ -182,7 +182,7 @@
                                             <tr>
                                                 <td class="t_c">00</td>
                                                 <td class="ovH">
-                                                    <a href="#" class="subject fcol1">일반 게시판 제목입니다. 일반 게시판 제목입니다. 일반 게시판
+                                                    <a href="{{ url()->current() }}" class="subject fcol1">일반 게시판 제목입니다. 일반 게시판 제목입니다. 일반 게시판
                                                         제목입니다. 일반 게시판 제목입니다. 일반 게시판 제목입니다. 일반 게시판 제목입니다.</a>
                                                 </td>
                                                 <td class="t_c">2025-10-01</td>
@@ -194,15 +194,15 @@
 
                                 <!-- 페이징 -->
                                 <div class="page_bx1">
-                                    <a href="#" class="page_first">first</a>
-                                    <a href="#" class="page_prev">prev</a>
-                                    <a href="#" class="num on">1</a>
-                                    <a href="#" class="num">2</a>
-                                    <a href="#" class="num">3</a>
-                                    <a href="#" class="num">4</a>
-                                    <a href="#" class="num">5</a>
-                                    <a href="#" class="page_next">next</a>
-                                    <a href="#" class="page_last">last</a>
+                                    <a href="{{ url()->current() }}" class="page_first">first</a>
+                                    <a href="{{ url()->current() }}" class="page_prev">prev</a>
+                                    <a href="{{ url()->current() }}" class="num on">1</a>
+                                    <a href="{{ url()->current() }}" class="num">2</a>
+                                    <a href="{{ url()->current() }}" class="num">3</a>
+                                    <a href="{{ url()->current() }}" class="num">4</a>
+                                    <a href="{{ url()->current() }}" class="num">5</a>
+                                    <a href="{{ url()->current() }}" class="page_next">next</a>
+                                    <a href="{{ url()->current() }}" class="page_last">last</a>
                                 </div>
                             </div>
                         </div>

@@ -100,7 +100,7 @@
                                 </div>
                                 
                                 <div class="btm_btn right mt10">
-                                    <a href="#">검색</a>
+                                    <a href="./">검색</a>
                                 </div>
                             </div>
                         </div>
@@ -158,9 +158,9 @@
                                                 </td>
                                                 <td class="t_c">//qcc112ko</td>
                                                 <td class="t_c">
-                                                    <a href="#" class="btn02 col6">복사</a>
+                                                    <a href="./" class="btn02 col6">복사</a>
                                                     <a href="../sub01/shop_info.php" class="btn02 col3">관리</a>
-                                                    <a href="#" class="btn02 col4">삭제</a>
+                                                    <a href="./" class="btn02 col4">삭제</a>
                                                 </td>
                                             </tr>
                                             <tr>
@@ -181,9 +181,9 @@
                                                 </td>
                                                 <td class="t_c">//qcc112ko</td>
                                                 <td class="t_c">
-                                                    <a href="#" class="btn02 col6">복사</a>
+                                                    <a href="./" class="btn02 col6">복사</a>
                                                     <a href="../sub01/shop_info.php" class="btn02 col3">관리</a>
-                                                    <a href="#" class="btn02 col4">삭제</a>
+                                                    <a href="./" class="btn02 col4">삭제</a>
                                                 </td>
                                             </tr>
                                             <tr>
@@ -205,9 +205,9 @@
                                                 </td>
                                                 <td class="t_c">//qcc112ko</td>
                                                 <td class="t_c">
-                                                    <a href="#" class="btn02 col6">복사</a>
+                                                    <a href="./" class="btn02 col6">복사</a>
                                                     <a href="../sub01/shop_info.php" class="btn02 col3">관리</a>
-                                                    <a href="#" class="btn02 col4">삭제</a>
+                                                    <a href="./" class="btn02 col4">삭제</a>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -230,7 +230,7 @@
 
                                                     <!-- 하단버튼 -->
                                                     <div class="btm_btn mt20">
-                                                        <a href="#" class="col5 close_btn">닫기</a>
+                                                        <a href="./" class="col5 close_btn">닫기</a>
                                                     </div>
                                                 </div>
                                             </div>
@@ -241,15 +241,15 @@
                                 <div class="btm_btn right mt10">
                                     <!-- 페이징 -->
                                     <div class="page_bx1">
-                                        <a href="#" class="page_first">first</a>
-                                        <a href="#" class="page_prev">prev</a>
-                                        <a href="#" class="num on">1</a>
-                                        <a href="#" class="num">2</a>
-                                        <a href="#" class="num">3</a>
-                                        <a href="#" class="num">4</a>
-                                        <a href="#" class="num">5</a>
-                                        <a href="#" class="page_next">next</a>
-                                        <a href="#" class="page_last">last</a>
+                                        <a href="./" class="page_first">first</a>
+                                        <a href="./" class="page_prev">prev</a>
+                                        <a href="./" class="num on">1</a>
+                                        <a href="./" class="num">2</a>
+                                        <a href="./" class="num">3</a>
+                                        <a href="./" class="num">4</a>
+                                        <a href="./" class="num">5</a>
+                                        <a href="./" class="page_next">next</a>
+                                        <a href="./" class="page_last">last</a>
                                     </div>
                                     
                                     <a href="../sub01/shop_register.php">Shop 채널등록</a>

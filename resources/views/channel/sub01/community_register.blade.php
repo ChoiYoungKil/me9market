@@ -21,7 +21,7 @@
                     <ul>
                         <li><a href="{{ route('channel.shop_info') }}"><span>Shop채널 정보</span></a></li>
                         <li><a href="{{ route('channel.product_own') }}"><span>판매상품</span></a></li>
-                        <li><a href="#" class="on"><span>커뮤니티</span></a></li>
+                        <li><a href="{{ url()->current() }}" class="on"><span>커뮤니티</span></a></li>
                     </ul>
                 </div>
 

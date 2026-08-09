@@ -14,7 +14,7 @@
                         <a href="index.html">Home</a>
                     </li>
                     <li class="is-marked">
-                        <a href="#">Proceed to Payment</a>
+                        <a href="{{ url()->current() }}">Proceed to Payment</a>
                     </li>
                 </ul>
             </div>

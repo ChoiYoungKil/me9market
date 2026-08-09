@@ -8,11 +8,11 @@
                 </div>
                 <div class="tab_bx1">
                     <ul>
-                        <li><a href="#" data-pop="pop1_1"><span>주문 정보</span></a></li>
-                        <li><a href="#" data-pop="pop1_2"><span>정상 주문</span></a></li>
-                        <li><a href="#" class="on"><span>취소 주문</span></a></li>
-                        <li><a href="#" data-pop="pop1_4"><span>반품 주문</span></a></li>
-                        <li><a href="#" data-pop="pop1_5"><span>교환 주문</span></a></li>
+                        <li><a href="./" data-pop="pop1_1"><span>주문 정보</span></a></li>
+                        <li><a href="./" data-pop="pop1_2"><span>정상 주문</span></a></li>
+                        <li><a href="./" class="on"><span>취소 주문</span></a></li>
+                        <li><a href="./" data-pop="pop1_4"><span>반품 주문</span></a></li>
+                        <li><a href="./" data-pop="pop1_5"><span>교환 주문</span></a></li>
                     </ul>
                 </div>
                 <script type="text/javascript">
@@ -128,15 +128,15 @@
                         <!--<div class="no_data">등록된 데이터가 없습니다.</div>-->
                         
                         <div class="mt10">
-                            <a href="#" class="btn01 col3 pop_btn" data-pop="pop1_3_2">취소 거부</a>
-                            <a href="#" class="btn01 pop_btn" data-pop="pop1_3_3">취소 완료</a>
+                            <a href="./" class="btn01 col3 pop_btn" data-pop="pop1_3_2">취소 거부</a>
+                            <a href="./" class="btn01 pop_btn" data-pop="pop1_3_3">취소 완료</a>
                         </div>
                     </div>
                 </div>
                 
 
                 <div class="btm_btn mt20">
-                    <a href="#" class="col5 close_btn">닫기</a>
+                    <a href="./" class="col5 close_btn">닫기</a>
                 </div>
             </div>
         </div>
@@ -160,8 +160,8 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="#">확인</a>
-                    <a href="#" class="col5 close_btn">닫기</a>
+                    <a href="./">확인</a>
+                    <a href="./" class="col5 close_btn">닫기</a>
                 </div>
             </div>
         </div>
@@ -185,8 +185,8 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="#">확인</a>
-                    <a href="#" class="col5 close_btn">닫기</a>
+                    <a href="./">확인</a>
+                    <a href="./" class="col5 close_btn">닫기</a>
                 </div>
             </div>
         </div>

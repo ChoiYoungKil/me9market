@@ -7,9 +7,9 @@
                 
                 <div class="tab_bx1">
                     <ul>
-                        <li><a href="#" data-pop="pop1_1"><span>지사상품</span></a></li>
-                        <li><a href="#" data-pop="pop1_2"><span>공유상품</span></a></li>
-                        <li><a href="#" class="on"><span>부분공유상품</span></a></li>
+                        <li><a href="./" data-pop="pop1_1"><span>지사상품</span></a></li>
+                        <li><a href="./" data-pop="pop1_2"><span>공유상품</span></a></li>
+                        <li><a href="./" class="on"><span>부분공유상품</span></a></li>
                     </ul>
                 </div>
                 <script type="text/javascript">
@@ -123,7 +123,7 @@
                             </table>
                         </div>
                         <div class="btm_btn right mt10">
-                            <a href="#">검색</a>
+                            <a href="./">검색</a>
                         </div>
                         
                         <script type="text/javascript">
@@ -183,13 +183,13 @@
                                         <td>수량제한없음</td>
                                         <td class="t_r">2,000원 ~ 5,000원</td>
                                         <td>
-                                            <a href="#" class="btn02 col2 pop_btn" data-pop="pop1_3_3">보기</a>
+                                            <a href="./" class="btn02 col2 pop_btn" data-pop="pop1_3_3">보기</a>
                                         </td>
                                         <td>
-                                            <a href="#" class="btn02 col2 pop_btn" data-pop="pop1_3_4">판매허용</a>
+                                            <a href="./" class="btn02 col2 pop_btn" data-pop="pop1_3_4">판매허용</a>
                                         </td>
                                         <td>
-                                            <a href="#" class="btn02 col5 pop_btn" data-pop="pop1_3_2">추가하기</a>
+                                            <a href="./" class="btn02 col5 pop_btn" data-pop="pop1_3_2">추가하기</a>
                                         </td>
                                     </tr>
                                     <tr>
@@ -208,13 +208,13 @@
                                         <td>10,000개</td>
                                         <td class="t_r">5,000원</td>
                                         <td>
-                                            <a href="#" class="btn02 col2 pop_btn" data-pop="pop1_3_3">보기</a>
+                                            <a href="./" class="btn02 col2 pop_btn" data-pop="pop1_3_3">보기</a>
                                         </td>
                                         <td>
-                                            <a href="#" class="btn02 pop_btn" data-pop="pop1_3_4">판매요청중</a>
+                                            <a href="./" class="btn02 pop_btn" data-pop="pop1_3_4">판매요청중</a>
                                         </td>
                                         <td>
-                                            <a href="#" class="btn02 col5 pop_btn" data-pop="pop1_3_2">추가하기</a>
+                                            <a href="./" class="btn02 col5 pop_btn" data-pop="pop1_3_2">추가하기</a>
                                         </td>
                                     </tr>
                                     <tr>
@@ -233,13 +233,13 @@
                                         <td>500,000개<br>(1회 100개 제한)</td>
                                         <td class="t_r">4,000원</td>
                                         <td>
-                                            <a href="#" class="btn02 col2 pop_btn" data-pop="pop1_3_3">보기</a>
+                                            <a href="./" class="btn02 col2 pop_btn" data-pop="pop1_3_3">보기</a>
                                         </td>
                                         <td>
-                                            <a href="#" class="btn02 col5 pop_btn" data-pop="pop1_3_4">판매요청</a>
+                                            <a href="./" class="btn02 col5 pop_btn" data-pop="pop1_3_4">판매요청</a>
                                         </td>
                                         <td>
-                                            <a href="#" class="btn02 col5 pop_btn" data-pop="pop1_3_2">추가하기</a>
+                                            <a href="./" class="btn02 col5 pop_btn" data-pop="pop1_3_2">추가하기</a>
                                         </td>
                                     </tr>
                                     <tr>
@@ -258,13 +258,13 @@
                                         <td>500,000개<br>(1회 100개 제한)</td>
                                         <td class="t_r">4,000원</td>
                                         <td>
-                                            <a href="#" class="btn02 col2 pop_btn" data-pop="pop1_3_3">보기</a>
+                                            <a href="./" class="btn02 col2 pop_btn" data-pop="pop1_3_3">보기</a>
                                         </td>
                                         <td>
-                                            <a href="#" class="btn02 col4 pop_btn" data-pop="pop1_3_4">요청거부</a>
+                                            <a href="./" class="btn02 col4 pop_btn" data-pop="pop1_3_4">요청거부</a>
                                         </td>
                                         <td>
-                                            <a href="#" class="btn02 col5 pop_btn" data-pop="pop1_3_2">추가하기</a>
+                                            <a href="./" class="btn02 col5 pop_btn" data-pop="pop1_3_2">추가하기</a>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -274,15 +274,15 @@
                         <!--<div class="no_data">등록된 데이터가 없습니다.</div>-->
 
                         <div class="page_bx1">
-                            <a href="#" class="page_first">first</a>
-                            <a href="#" class="page_prev">prev</a>
-                            <a href="#" class="num on">1</a>
-                            <a href="#" class="num">2</a>
-                            <a href="#" class="num">3</a>
-                            <a href="#" class="num">4</a>
-                            <a href="#" class="num">5</a>
-                            <a href="#" class="page_next">next</a>
-                            <a href="#" class="page_last">last</a>
+                            <a href="./" class="page_first">first</a>
+                            <a href="./" class="page_prev">prev</a>
+                            <a href="./" class="num on">1</a>
+                            <a href="./" class="num">2</a>
+                            <a href="./" class="num">3</a>
+                            <a href="./" class="num">4</a>
+                            <a href="./" class="num">5</a>
+                            <a href="./" class="page_next">next</a>
+                            <a href="./" class="page_last">last</a>
                         </div>
                     </div>
                 </div>
@@ -323,7 +323,7 @@
                         <div class="list01">
                             <ul>
                                 <li>
-                                    <a href="#">
+                                    <a href="./">
                                         <div class="img_bx" style="background-image:url(../images/sub/thum01.jpg)"></div>
                                         <div class="txt_bx">
                                             <p>대분류 &gt; 중분류 &gt; 소분류</p>
@@ -395,8 +395,8 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="#">상품추가하기</a>
-                    <a href="#" class="col5 close_btn">닫기</a>
+                    <a href="./">상품추가하기</a>
+                    <a href="./" class="col5 close_btn">닫기</a>
                 </div>
             </div>
         </div>
@@ -631,7 +631,7 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="#" class="col5 close_btn">닫기</a>
+                    <a href="./" class="col5 close_btn">닫기</a>
                 </div>
             </div>
         </div>
@@ -689,7 +689,7 @@
                         <div class="list01">
                             <ul>
                                 <li>
-                                    <a href="#">
+                                    <a href="./">
                                         <div class="img_bx" style="background-image:url(../images/sub/thum01.jpg)"></div>
                                         <div class="txt_bx">
                                             <p>대분류 &gt; 중분류 &gt; 소분류</p>
@@ -782,8 +782,8 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="#">재요청하기</a><!-- 판매요청하기 -->
-                    <a href="#" class="col5 close_btn">닫기</a>
+                    <a href="./">재요청하기</a><!-- 판매요청하기 -->
+                    <a href="./" class="col5 close_btn">닫기</a>
                 </div>
             </div>
         </div>

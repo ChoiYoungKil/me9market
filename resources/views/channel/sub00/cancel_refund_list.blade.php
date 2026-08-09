@@ -20,7 +20,7 @@
                         <div class="list_top1 btn">
                             <div class="count">총 <strong>{{ $policies->count() }}</strong> 건</div>
                             <div class="btn_bx">
-                                <a href="#" class="btn01 col5 pop_btn" data-pop="pop1_1">취소/환불안내 등록</a>
+                                <a href="{{ url()->current() }}" class="btn01 col5 pop_btn" data-pop="pop1_1">취소/환불안내 등록</a>
                             </div>
                         </div>
                         <div class="tb01 ovS">
@@ -49,12 +49,12 @@
                                             <td class="t_l">{{ $policy->name }}</td>
                                             <td>{{ $policy->product_count }}</td>
                                             <td>
-                                                <a href="#" class="btn02 col5 pop_btn view-policy" data-pop="pop2_1"
+                                                <a href="{{ url()->current() }}" class="btn02 col5 pop_btn view-policy" data-pop="pop2_1"
                                                     data-id="{{ $policy->id }}">보기</a>
-                                                <a href="#" class="btn02 col2 copy-policy" data-id="{{ $policy->id }}">복사</a>
-                                                <a href="#" class="btn02 col7 mt5 pop_btn edit-policy" data-pop="pop3_1"
+                                                <a href="{{ url()->current() }}" class="btn02 col2 copy-policy" data-id="{{ $policy->id }}">복사</a>
+                                                <a href="{{ url()->current() }}" class="btn02 col7 mt5 pop_btn edit-policy" data-pop="pop3_1"
                                                     data-id="{{ $policy->id }}">수정</a>
-                                                <a href="#" class="btn02 mt5 delete-policy" data-id="{{ $policy->id }}">삭제</a>
+                                                <a href="{{ url()->current() }}" class="btn02 mt5 delete-policy" data-id="{{ $policy->id }}">삭제</a>
                                             </td>
                                         </tr>
                                     @empty
@@ -74,15 +74,15 @@
                             <!-- 페이지네이션은 나중에 구현 -->
                             <!--
                                                         <div class="page_bx1">
-                                                            <a href="#" class="page_first">first</a>
-                                                            <a href="#" class="page_prev">prev</a>
-                                                            <a href="#" class="num on">1</a>
-                                                            <a href="#" class="num">2</a>
-                                                            <a href="#" class="num">3</a>
-                                                            <a href="#" class="num">4</a>
-                                                            <a href="#" class="num">5</a>
-                                                            <a href="#" class="page_next">next</a>
-                                                            <a href="#" class="page_last">last</a>
+                                                            <a href="{{ url()->current() }}" class="page_first">first</a>
+                                                            <a href="{{ url()->current() }}" class="page_prev">prev</a>
+                                                            <a href="{{ url()->current() }}" class="num on">1</a>
+                                                            <a href="{{ url()->current() }}" class="num">2</a>
+                                                            <a href="{{ url()->current() }}" class="num">3</a>
+                                                            <a href="{{ url()->current() }}" class="num">4</a>
+                                                            <a href="{{ url()->current() }}" class="num">5</a>
+                                                            <a href="{{ url()->current() }}" class="page_next">next</a>
+                                                            <a href="{{ url()->current() }}" class="page_last">last</a>
                                                         </div>
                                                         -->
                         @endif
@@ -170,8 +170,8 @@
 
                                         <!-- 하단버튼 -->
                                         <div class="btm_btn mt10">
-                                            <a href="#" id="submitCreatePolicy">취소/환불안내 등록</a>
-                                            <a href="#" class="col5 close_btn">닫기</a>
+                                            <a href="{{ url()->current() }}" id="submitCreatePolicy">취소/환불안내 등록</a>
+                                            <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                                         </div>
                                     </div>
                                 </div>
@@ -223,7 +223,7 @@
 
                                         <!-- 하단버튼 -->
                                         <div class="btm_btn mt10">
-                                            <a href="#" class="col5 close_btn">닫기</a>
+                                            <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                                         </div>
                                     </div>
                                 </div>
@@ -314,8 +314,8 @@
 
                                         <!-- 하단버튼 -->
                                         <div class="btm_btn mt10">
-                                            <a href="#" id="submitUpdatePolicy">취소/환불안내 수정</a>
-                                            <a href="#" class="col5 close_btn">닫기</a>
+                                            <a href="{{ url()->current() }}" id="submitUpdatePolicy">취소/환불안내 수정</a>
+                                            <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                                         </div>
                                     </div>
                                 </div>

@@ -21,7 +21,7 @@
                                 <div class="list_top1 btn">
                                     <div class="count">총 <strong>00</strong> 건</div>
                                     <div class="btn_bx">
-                                        <a href="#" class="btn01 col5 pop_btn" data-pop="pop1_1">취소/환불안내 등록</a>
+                                        <a href="./" class="btn01 col5 pop_btn" data-pop="pop1_1">취소/환불안내 등록</a>
                                     </div>
                                 </div>
                                 <div class="tb01 ovS">
@@ -49,10 +49,10 @@
                                                 <td class="t_l">기본 취소/환불안내 명칭</td>
                                                 <td>12</td>
                                                 <td>
-                                                    <a href="#" class="btn02 col5 pop_btn" data-pop="pop2_1">보기</a>
-                                                    <a href="#" class="btn02 col2">복사</a>
-                                                    <a href="#" class="btn02 col7 mt5 pop_btn" data-pop="pop3_1">수정</a>
-                                                    <a href="#" class="btn02 mt5">삭제</a>
+                                                    <a href="./" class="btn02 col5 pop_btn" data-pop="pop2_1">보기</a>
+                                                    <a href="./" class="btn02 col2">복사</a>
+                                                    <a href="./" class="btn02 col7 mt5 pop_btn" data-pop="pop3_1">수정</a>
+                                                    <a href="./" class="btn02 mt5">삭제</a>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -62,15 +62,15 @@
                                 <!--<div class="no_data">등록된 데이터가 없습니다.</div>-->
                                 
                                 <div class="page_bx1">
-                                    <a href="#" class="page_first">first</a>
-                                    <a href="#" class="page_prev">prev</a>
-                                    <a href="#" class="num on">1</a>
-                                    <a href="#" class="num">2</a>
-                                    <a href="#" class="num">3</a>
-                                    <a href="#" class="num">4</a>
-                                    <a href="#" class="num">5</a>
-                                    <a href="#" class="page_next">next</a>
-                                    <a href="#" class="page_last">last</a>
+                                    <a href="./" class="page_first">first</a>
+                                    <a href="./" class="page_prev">prev</a>
+                                    <a href="./" class="num on">1</a>
+                                    <a href="./" class="num">2</a>
+                                    <a href="./" class="num">3</a>
+                                    <a href="./" class="num">4</a>
+                                    <a href="./" class="num">5</a>
+                                    <a href="./" class="page_next">next</a>
+                                    <a href="./" class="page_last">last</a>
                                 </div>
                                 
                                 <!-- 팝업 -->
@@ -144,8 +144,8 @@
 
                                                 <!-- 하단버튼 -->
                                                 <div class="btm_btn mt10">
-                                                    <a href="#">취소/환불안내 등록</a>
-                                                    <a href="#" class="col5 close_btn">닫기</a>
+                                                    <a href="./">취소/환불안내 등록</a>
+                                                    <a href="./" class="col5 close_btn">닫기</a>
                                                 </div>
                                             </div>
                                         </div>
@@ -196,7 +196,7 @@
 
                                                 <!-- 하단버튼 -->
                                                 <div class="btm_btn mt10">
-                                                    <a href="#" class="col5 close_btn">닫기</a>
+                                                    <a href="./" class="col5 close_btn">닫기</a>
                                                 </div>
                                             </div>
                                         </div>
@@ -273,8 +273,8 @@
 
                                                 <!-- 하단버튼 -->
                                                 <div class="btm_btn mt10">
-                                                    <a href="#">취소/환불안내 수정</a>
-                                                    <a href="#" class="col5 close_btn">닫기</a>
+                                                    <a href="./">취소/환불안내 수정</a>
+                                                    <a href="./" class="col5 close_btn">닫기</a>
                                                 </div>
                                             </div>
                                         </div>

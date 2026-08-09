@@ -16,7 +16,7 @@
                             <div class="f_bx">
                                 <input class="mt0" type="text" placeholder="회원번호">
                                 <input type="text" placeholder="대표이메일">
-                                <a href="#" class="btn col2">아이디 찾기</a>
+                                <a href="{{ url()->current() }}" class="btn col2">아이디 찾기</a>
                                 <div class="ans">
                                     <!--<div class="txt"><p>찾으시는 아이디는  <span class="col2">id1234</span> 입니다.</p></div>-->
                                     <!--<div class="txt"><p>일치하는 정보가 없습니다.</p></div>-->

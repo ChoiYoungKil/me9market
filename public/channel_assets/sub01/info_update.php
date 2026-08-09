@@ -89,7 +89,7 @@
                                                 <td colspan="3">
                                                     <div class="r_btn_w w457">
                                                         <input type="text" value="" required="required" placeholder="Keyword 입력">
-                                                        <a href="#" class="btn01">등록</a>
+                                                        <a href="./" class="btn01">등록</a>
                                                     </div>
                                                     <ul class="tag_list mt5">
                                                         <li>그룹명 #2<button class="del">삭제</button></li>
@@ -258,7 +258,7 @@
                                                             <input type="file" id="uploadBtn2_2" class="uploadBtn" name="bbs_file1">
                                                             <div class="del_btn">삭제</div>
                                                         </div>-->
-                                                        <a href="#" class="btn01 col5">추가하기</a>
+                                                        <a href="./" class="btn01 col5">추가하기</a>
                                                     </div>
                                                     <p class="mt10">최적사이즈 000px * 000px</p>
                                                 </td>
@@ -412,7 +412,7 @@
                     </div>
                                 
                     <div class="btm_btn">
-                        <a href="#">수정</a>
+                        <a href="./">수정</a>
                         <a href="../sub01/shop_list.php" class="col5">목록</a>
                     </div>
                 </div>

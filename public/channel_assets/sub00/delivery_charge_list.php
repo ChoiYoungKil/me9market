@@ -21,7 +21,7 @@
                                 <div class="list_top1 btn">
                                     <div class="count">총 <strong>00</strong> 건</div>
                                     <div class="btn_bx">
-                                        <a href="#" class="btn01 col5 pop_btn" data-pop="pop1_1">배송비 등록</a>
+                                        <a href="./" class="btn01 col5 pop_btn" data-pop="pop1_1">배송비 등록</a>
                                     </div>
                                 </div>
                                 <div class="tb01 ovS">
@@ -58,10 +58,10 @@
                                                 <td>선결제</td>
                                                 <td>12</td>
                                                 <td>
-                                                    <a href="#" class="btn02 col5 pop_btn" data-pop="pop2_1">보기</a>
-                                                    <a href="#" class="btn02 col2">복사</a>
-                                                    <a href="#" class="btn02 col7 mt5 pop_btn" data-pop="pop3_1">수정</a>
-                                                    <a href="#" class="btn02 mt5">삭제</a>
+                                                    <a href="./" class="btn02 col5 pop_btn" data-pop="pop2_1">보기</a>
+                                                    <a href="./" class="btn02 col2">복사</a>
+                                                    <a href="./" class="btn02 col7 mt5 pop_btn" data-pop="pop3_1">수정</a>
+                                                    <a href="./" class="btn02 mt5">삭제</a>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -71,15 +71,15 @@
                                 <!--<div class="no_data">등록된 데이터가 없습니다.</div>-->
                                 
                                 <div class="page_bx1">
-                                    <a href="#" class="page_first">first</a>
-                                    <a href="#" class="page_prev">prev</a>
-                                    <a href="#" class="num on">1</a>
-                                    <a href="#" class="num">2</a>
-                                    <a href="#" class="num">3</a>
-                                    <a href="#" class="num">4</a>
-                                    <a href="#" class="num">5</a>
-                                    <a href="#" class="page_next">next</a>
-                                    <a href="#" class="page_last">last</a>
+                                    <a href="./" class="page_first">first</a>
+                                    <a href="./" class="page_prev">prev</a>
+                                    <a href="./" class="num on">1</a>
+                                    <a href="./" class="num">2</a>
+                                    <a href="./" class="num">3</a>
+                                    <a href="./" class="num">4</a>
+                                    <a href="./" class="num">5</a>
+                                    <a href="./" class="page_next">next</a>
+                                    <a href="./" class="page_last">last</a>
                                 </div>
                                 
                                 <!-- 팝업 -->
@@ -246,10 +246,10 @@
                                                                             
                                                                             <!-- 금액별 -->
                                                                             <p class="mt5">
-                                                                                · 상품 금액 &nbsp;&nbsp;<input class="w160" type="text" value="" required="required"> 원 이상 ~ <input class="w160" type="text" value="" required="required"> 원 미만, 배송비 <input class="w160" type="text" value="" required="required"> 원 부과 &nbsp;&nbsp;<a href="#" class="btn02 col2">추가</a>
+                                                                                · 상품 금액 &nbsp;&nbsp;<input class="w160" type="text" value="" required="required"> 원 이상 ~ <input class="w160" type="text" value="" required="required"> 원 미만, 배송비 <input class="w160" type="text" value="" required="required"> 원 부과 &nbsp;&nbsp;<a href="./" class="btn02 col2">추가</a>
                                                                             </p>
                                                                             <p class="mt5">
-                                                                                · 상품 금액 &nbsp;&nbsp;<input class="w160" type="text" value="" required="required"> 원 이상 ~ <input class="w160" type="text" value="" required="required"> 원 미만, 배송비 <input class="w160" type="text" value="" required="required"> 원 부과 &nbsp;&nbsp;<a href="#" class="btn02 col7">삭제</a>
+                                                                                · 상품 금액 &nbsp;&nbsp;<input class="w160" type="text" value="" required="required"> 원 이상 ~ <input class="w160" type="text" value="" required="required"> 원 미만, 배송비 <input class="w160" type="text" value="" required="required"> 원 부과 &nbsp;&nbsp;<a href="./" class="btn02 col7">삭제</a>
                                                                             </p>
                                                                             <p class="mt5">
                                                                                 · 상품 금액 &nbsp;&nbsp;<input class="w160" type="text" value="" required="required"> 원 이상, 배송비 <input class="w160" type="text" value="" required="required"> 원 부과 &nbsp;&nbsp;&nbsp;<span class="fcol6 fs">ⓘ 마지막 금액, 자동 입력</span>
@@ -257,10 +257,10 @@
                                                                             
                                                                             <!-- 수량별 -->
                                                                             <p class="mt5">
-                                                                                · 상품 금액 &nbsp;&nbsp;<input class="w160" type="text" value="" required="required"> 개 이상 ~ <input class="w160" type="text" value="" required="required"> 개 미만, 배송비 <input class="w160" type="text" value="" required="required"> 원 부과 &nbsp;&nbsp;<a href="#" class="btn02 col2">추가</a>
+                                                                                · 상품 금액 &nbsp;&nbsp;<input class="w160" type="text" value="" required="required"> 개 이상 ~ <input class="w160" type="text" value="" required="required"> 개 미만, 배송비 <input class="w160" type="text" value="" required="required"> 원 부과 &nbsp;&nbsp;<a href="./" class="btn02 col2">추가</a>
                                                                             </p>
                                                                             <p class="mt5">
-                                                                                · 상품 금액 &nbsp;&nbsp;<input class="w160" type="text" value="" required="required"> 개 이상 ~ <input class="w160" type="text" value="" required="required"> 개 미만, 배송비 <input class="w160" type="text" value="" required="required"> 원 부과 &nbsp;&nbsp;<a href="#" class="btn02 col7">삭제</a>
+                                                                                · 상품 금액 &nbsp;&nbsp;<input class="w160" type="text" value="" required="required"> 개 이상 ~ <input class="w160" type="text" value="" required="required"> 개 미만, 배송비 <input class="w160" type="text" value="" required="required"> 원 부과 &nbsp;&nbsp;<a href="./" class="btn02 col7">삭제</a>
                                                                             </p>
                                                                             <p class="mt5">
                                                                                 · 상품 금액 &nbsp;&nbsp;<input class="w160" type="text" value="" required="required"> 개 이상, 배송비 <input class="w160" type="text" value="" required="required"> 개 부과 &nbsp;&nbsp;&nbsp;<span class="fcol6 fs">ⓘ 마지막 금액, 자동 입력</span>
@@ -375,8 +375,8 @@
 
                                                 <!-- 하단버튼 -->
                                                 <div class="btm_btn mt10">
-                                                    <a href="#">배송비 등록</a>
-                                                    <a href="#" class="col5 close_btn">닫기</a>
+                                                    <a href="./">배송비 등록</a>
+                                                    <a href="./" class="col5 close_btn">닫기</a>
                                                 </div>
                                             </div>
                                         </div>
@@ -461,7 +461,7 @@
 
                                                 <!-- 하단버튼 -->
                                                 <div class="btm_btn mt10">
-                                                    <a href="#" class="col5 close_btn">닫기</a>
+                                                    <a href="./" class="col5 close_btn">닫기</a>
                                                 </div>
                                             </div>
                                         </div>
@@ -631,10 +631,10 @@
                                                                             
                                                                             <!-- 금액별 -->
                                                                             <p class="mt5">
-                                                                                · 상품 금액 &nbsp;&nbsp;<input class="w160" type="text" value="" required="required"> 원 이상 ~ <input class="w160" type="text" value="" required="required"> 원 미만, 배송비 <input class="w160" type="text" value="" required="required"> 원 부과 &nbsp;&nbsp;<a href="#" class="btn02 col2">추가</a>
+                                                                                · 상품 금액 &nbsp;&nbsp;<input class="w160" type="text" value="" required="required"> 원 이상 ~ <input class="w160" type="text" value="" required="required"> 원 미만, 배송비 <input class="w160" type="text" value="" required="required"> 원 부과 &nbsp;&nbsp;<a href="./" class="btn02 col2">추가</a>
                                                                             </p>
                                                                             <p class="mt5">
-                                                                                · 상품 금액 &nbsp;&nbsp;<input class="w160" type="text" value="" required="required"> 원 이상 ~ <input class="w160" type="text" value="" required="required"> 원 미만, 배송비 <input class="w160" type="text" value="" required="required"> 원 부과 &nbsp;&nbsp;<a href="#" class="btn02 col7">삭제</a>
+                                                                                · 상품 금액 &nbsp;&nbsp;<input class="w160" type="text" value="" required="required"> 원 이상 ~ <input class="w160" type="text" value="" required="required"> 원 미만, 배송비 <input class="w160" type="text" value="" required="required"> 원 부과 &nbsp;&nbsp;<a href="./" class="btn02 col7">삭제</a>
                                                                             </p>
                                                                             <p class="mt5">
                                                                                 · 상품 금액 &nbsp;&nbsp;<input class="w160" type="text" value="" required="required"> 원 이상, 배송비 <input class="w160" type="text" value="" required="required"> 원 부과 &nbsp;&nbsp;&nbsp;<span class="fcol6 fs">ⓘ 마지막 금액, 자동 입력</span>
@@ -642,10 +642,10 @@
                                                                             
                                                                             <!-- 수량별 -->
                                                                             <p class="mt5">
-                                                                                · 상품 금액 &nbsp;&nbsp;<input class="w160" type="text" value="" required="required"> 개 이상 ~ <input class="w160" type="text" value="" required="required"> 개 미만, 배송비 <input class="w160" type="text" value="" required="required"> 원 부과 &nbsp;&nbsp;<a href="#" class="btn02 col2">추가</a>
+                                                                                · 상품 금액 &nbsp;&nbsp;<input class="w160" type="text" value="" required="required"> 개 이상 ~ <input class="w160" type="text" value="" required="required"> 개 미만, 배송비 <input class="w160" type="text" value="" required="required"> 원 부과 &nbsp;&nbsp;<a href="./" class="btn02 col2">추가</a>
                                                                             </p>
                                                                             <p class="mt5">
-                                                                                · 상품 금액 &nbsp;&nbsp;<input class="w160" type="text" value="" required="required"> 개 이상 ~ <input class="w160" type="text" value="" required="required"> 개 미만, 배송비 <input class="w160" type="text" value="" required="required"> 원 부과 &nbsp;&nbsp;<a href="#" class="btn02 col7">삭제</a>
+                                                                                · 상품 금액 &nbsp;&nbsp;<input class="w160" type="text" value="" required="required"> 개 이상 ~ <input class="w160" type="text" value="" required="required"> 개 미만, 배송비 <input class="w160" type="text" value="" required="required"> 원 부과 &nbsp;&nbsp;<a href="./" class="btn02 col7">삭제</a>
                                                                             </p>
                                                                             <p class="mt5">
                                                                                 · 상품 금액 &nbsp;&nbsp;<input class="w160" type="text" value="" required="required"> 개 이상, 배송비 <input class="w160" type="text" value="" required="required"> 개 부과 &nbsp;&nbsp;&nbsp;<span class="fcol6 fs">ⓘ 마지막 금액, 자동 입력</span>
@@ -760,8 +760,8 @@
 
                                                 <!-- 하단버튼 -->
                                                 <div class="btm_btn mt10">
-                                                    <a href="#">배송비 수정</a>
-                                                    <a href="#" class="col5 close_btn">닫기</a>
+                                                    <a href="./">배송비 수정</a>
+                                                    <a href="./" class="col5 close_btn">닫기</a>
                                                 </div>
                                             </div>
                                         </div>

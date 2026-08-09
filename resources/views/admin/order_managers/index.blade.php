@@ -81,7 +81,7 @@
                             <div class="count">총 <strong>{{ number_format($managers->total()) }}</strong> 건</div>
                             <div class="right_bx list-top-actions">
                                 <div class="r_btn_w">
-                                    <a href="#" class="btn02 col5 pop_btn" data-pop="pop_create">발주사 등록</a>
+                                    <a href="{{ url()->current() }}" class="btn02 col5 pop_btn" data-pop="pop_create">발주사 등록</a>
                                 </div>
                             </div>
                         </div>
@@ -129,7 +129,7 @@
                                             <td>{{ optional($manager->created_at)->format('Y-m-d H:i') }}</td>
                                             <td class="t_c">
                                                 <div class="order-manager-actions">
-                                                    <a href="#" class="btn02 col5 pop_btn" data-pop="pop_edit_{{ $manager->id }}">수정</a>
+                                                    <a href="{{ url()->current() }}" class="btn02 col5 pop_btn" data-pop="pop_edit_{{ $manager->id }}">수정</a>
                                                     <form method="POST" action="{{ route('admin.order_managers.reset_password', $manager->id) }}" onsubmit="return confirm('비밀번호를 123456으로 초기화하시겠습니까?');">
                                                         @csrf
                                                         <button type="submit" class="btn02 col5">PW초기화</button>
@@ -225,7 +225,7 @@
                                             </div>
                                             <div class="btm_btn mt10">
                                                 <button type="submit">발주사 등록</button>
-                                                <a href="#" class="col5 close_btn">닫기</a>
+                                                <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                                             </div>
                                         </form>
                                     </div>
@@ -303,7 +303,7 @@
                                                 </div>
                                                 <div class="btm_btn mt10">
                                                     <button type="submit">발주사 수정</button>
-                                                    <a href="#" class="col5 close_btn">닫기</a>
+                                                    <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                                                 </div>
                                             </form>
                                         </div>

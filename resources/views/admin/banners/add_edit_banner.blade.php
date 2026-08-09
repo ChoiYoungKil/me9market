@@ -17,10 +17,10 @@
                                     <i class="mdi mdi-calendar"></i> Today (10 Jan 2021)
                                     </button>
                                     <div class="dropdown-menu dropdown-menu-right" aria-labelledby="dropdownMenuDate2">
-                                        <a class="dropdown-item" href="#">January - March</a>
-                                        <a class="dropdown-item" href="#">March - June</a>
-                                        <a class="dropdown-item" href="#">June - August</a>
-                                        <a class="dropdown-item" href="#">August - November</a>
+                                        <a class="dropdown-item" href="{{ url()->current() }}">January - March</a>
+                                        <a class="dropdown-item" href="{{ url()->current() }}">March - June</a>
+                                        <a class="dropdown-item" href="{{ url()->current() }}">June - August</a>
+                                        <a class="dropdown-item" href="{{ url()->current() }}">August - November</a>
                                     </div>
                                 </div>
                             </div>

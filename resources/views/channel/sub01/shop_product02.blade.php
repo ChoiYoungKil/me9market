@@ -127,7 +127,7 @@
                                                 <td class="t_r">{{ number_format($shopProduct->selling_price) }}원</td>
                                                 <td class="t_r">{{ number_format($shopProduct->profit) }}원</td>
                                                 <td>
-                                                    <a href="#" class="btn02 col5" onclick='openProductViewModal({
+                                                    <a href="{{ url()->current() }}" class="btn02 col5" onclick='openProductViewModal({
                                                         "id": {{ $shopProduct->id }},
                                                         "type_label": "{{ $productTypeLabel }}",
                                                         "code": "{{ $product->product_code }}",
@@ -191,7 +191,7 @@
                                                     <div class="list01">
                                                         <ul>
                                                             <li>
-                                                                <a href="#">
+                                                                <a href="{{ url()->current() }}">
                                                                     <div class="img_bx"
                                                                         style="background-image:url(../images/sub/thum01.jpg)">
                                                                     </div>
@@ -263,7 +263,7 @@
 
                                             <!-- 하단버튼 -->
                                             <div class="btm_btn mt10">
-                                                <a href="#" class="col5 close_btn">닫기</a>
+                                                <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                                             </div>
                                         </div>
                                     </div>

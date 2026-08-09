@@ -49,14 +49,16 @@
                     <li><a href="{{ route('front.member.find_pw') }}">비밀번호 찾기</a></li>
                     <li><a href="{{ route('front.member.register.member') }}">회원가입</a></li>
                 </ul>
-                <div class="sns_bx">
-                    <div class="txt"><span>간편회원 로그인</span></div>
-                    <ul>
-                        <li class="icon1"><a href="#">kakaotalk</a></li>
-                        <li class="icon2"><a href="#">naver</a></li>
-                        <li class="icon3"><a href="#">gmail</a></li>
-                    </ul>
-                </div>
+                @if(config('services.social_login.enabled', false))
+                    <div class="sns_bx">
+                        <div class="txt"><span>간편회원 로그인</span></div>
+                        <ul>
+                            <li class="icon1"><button type="button" disabled>kakaotalk</button></li>
+                            <li class="icon2"><button type="button" disabled>naver</button></li>
+                            <li class="icon3"><button type="button" disabled>gmail</button></li>
+                        </ul>
+                    </div>
+                @endif
                 <a href="{{ route('front.nonmember.order_check') }}" class="btn2">비회원 구매조회</a>
             </div>
         </div>

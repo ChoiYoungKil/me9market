@@ -21,7 +21,7 @@
                             <ul>
                                 <li><a href="../sub01/shop_info.php"><span>Shop채널 정보</span></a></li>
                                 <li><a href="../sub01/shop_product01.php"><span>판매상품</span></a></li>
-                                <li><a href="#" class="on"><span>커뮤니티</span></a></li>
+                                <li><a href="./" class="on"><span>커뮤니티</span></a></li>
                             </ul>
                         </div>
                         <div class="conbx">
@@ -30,7 +30,7 @@
                                     <div class="count">총 <strong>00</strong> 건</div>
                                     <div class="searh_bx">
                                         <input type="text" placeholder="제목, 내용검색">
-                                        <a href="#" class="btn">검색</a>
+                                        <a href="./" class="btn">검색</a>
                                     </div>
                                 </div>
                                 
@@ -79,15 +79,15 @@
                                 <div class="btm_btn right mt10">
                                     <!-- 페이징 -->
                                     <div class="page_bx1">
-                                        <a href="#" class="page_first">first</a>
-                                        <a href="#" class="page_prev">prev</a>
-                                        <a href="#" class="num on">1</a>
-                                        <a href="#" class="num">2</a>
-                                        <a href="#" class="num">3</a>
-                                        <a href="#" class="num">4</a>
-                                        <a href="#" class="num">5</a>
-                                        <a href="#" class="page_next">next</a>
-                                        <a href="#" class="page_last">last</a>
+                                        <a href="./" class="page_first">first</a>
+                                        <a href="./" class="page_prev">prev</a>
+                                        <a href="./" class="num on">1</a>
+                                        <a href="./" class="num">2</a>
+                                        <a href="./" class="num">3</a>
+                                        <a href="./" class="num">4</a>
+                                        <a href="./" class="num">5</a>
+                                        <a href="./" class="page_next">next</a>
+                                        <a href="./" class="page_last">last</a>
                                     </div>
                                     
                                     <a href="../sub01/community_register.php">글쓰기</a>

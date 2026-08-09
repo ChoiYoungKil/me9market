@@ -8,11 +8,11 @@
                 </div>
                 <div class="tab_bx1">
                     <ul>
-                        <li><a href="#" data-pop="pop1_1"><span>주문 정보</span></a></li>
-                        <li><a href="#" class="on"><span>정상 주문</span></a></li>
-                        <li><a href="#" data-pop="pop1_3"><span>취소 주문</span></a></li>
-                        <li><a href="#" data-pop="pop1_4"><span>반품 주문</span></a></li>
-                        <li><a href="#" data-pop="pop1_5"><span>교환 주문</span></a></li>
+                        <li><a href="./" data-pop="pop1_1"><span>주문 정보</span></a></li>
+                        <li><a href="./" class="on"><span>정상 주문</span></a></li>
+                        <li><a href="./" data-pop="pop1_3"><span>취소 주문</span></a></li>
+                        <li><a href="./" data-pop="pop1_4"><span>반품 주문</span></a></li>
+                        <li><a href="./" data-pop="pop1_5"><span>교환 주문</span></a></li>
                     </ul>
                 </div>
                 <script type="text/javascript">
@@ -118,19 +118,19 @@
                         <!--<div class="no_data">등록된 데이터가 없습니다.</div>-->
                         
                         <div class="mt10">
-                            <a href="#" class="btn01 col3 pop_btn" data-pop="pop1_2_2">결제완료</a>
-                            <a href="#" class="btn01 col3 pop_btn" data-pop="pop1_2_3">배송대기</a>
-                            <a href="#" class="btn01 col3 pop_btn" data-pop="pop1_2_3">배송중</a>
-                            <a href="#" class="btn01 pop_btn" data-pop="pop1_2_4">반품 요청</a>
-                            <a href="#" class="btn01 pop_btn" data-pop="pop1_2_5">교환 요청</a>
-                            <a href="#" class="btn01 pop_btn" data-pop="pop1_2_6">취소 요청</a>
+                            <a href="./" class="btn01 col3 pop_btn" data-pop="pop1_2_2">결제완료</a>
+                            <a href="./" class="btn01 col3 pop_btn" data-pop="pop1_2_3">배송대기</a>
+                            <a href="./" class="btn01 col3 pop_btn" data-pop="pop1_2_3">배송중</a>
+                            <a href="./" class="btn01 pop_btn" data-pop="pop1_2_4">반품 요청</a>
+                            <a href="./" class="btn01 pop_btn" data-pop="pop1_2_5">교환 요청</a>
+                            <a href="./" class="btn01 pop_btn" data-pop="pop1_2_6">취소 요청</a>
                         </div>
                     </div>
                 </div>
                 
 
                 <div class="btm_btn mt20">
-                    <a href="#" class="col5 close_btn">닫기</a>
+                    <a href="./" class="col5 close_btn">닫기</a>
                 </div>
             </div>
         </div>
@@ -154,8 +154,8 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="#">확인</a>
-                    <a href="#" class="col5 close_btn">닫기</a>
+                    <a href="./">확인</a>
+                    <a href="./" class="col5 close_btn">닫기</a>
                 </div>
             </div>
         </div>
@@ -249,8 +249,8 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="#">변경하기</a>
-                    <a href="#" class="col5 close_btn">닫기</a>
+                    <a href="./">변경하기</a>
+                    <a href="./" class="col5 close_btn">닫기</a>
                 </div>
             </div>
         </div>
@@ -406,7 +406,7 @@
                                         <td colspan="2">
                                             <div class="addr_bx">
                                                 <input type="text" class="addr1 off" placeholder="우편번호" required="required">
-                                                <a href="#" class="btn01">우편번호찾기</a>
+                                                <a href="./" class="btn01">우편번호찾기</a>
                                                 <input type="text" class="addr2 off" placeholder="주소" required="required">
                                                 <input type="text" class="addr3 off" placeholder="상세주소" required="required">
                                             </div>
@@ -421,7 +421,7 @@
                                         <th class="w160"><span>차감 내역</span></th>
                                         <td colspan="3">
                                             0 원<br>
-                                            반품 배송비 <input class="w160" type="text" value="" required="required"> 원 &nbsp;&nbsp;<a href="#" class="btn02 col7">적용</a>
+                                            반품 배송비 <input class="w160" type="text" value="" required="required"> 원 &nbsp;&nbsp;<a href="./" class="btn02 col7">적용</a>
                                         </td>
                                     </tr>
                                     <tr>
@@ -436,8 +436,8 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="#">반품요청하기</a>
-                    <a href="#" class="col5 close_btn">닫기</a>
+                    <a href="./">반품요청하기</a>
+                    <a href="./" class="col5 close_btn">닫기</a>
                 </div>
             </div>
         </div>
@@ -601,7 +601,7 @@
                                         <td colspan="2">
                                             <div class="addr_bx">
                                                 <input type="text" class="addr1 off" placeholder="우편번호" required="required">
-                                                <a href="#" class="btn01">우편번호찾기</a>
+                                                <a href="./" class="btn01">우편번호찾기</a>
                                                 <input type="text" class="addr2 off" placeholder="주소" required="required">
                                                 <input type="text" class="addr3 off" placeholder="상세주소" required="required">
                                             </div>
@@ -612,7 +612,7 @@
                                         <th class="w160"><span>추가 결제 금액</span></th>
                                         <td colspan="3">
                                             0 원<br>
-                                            추가 결제비용 <input class="w160" type="text" value="" required="required"> 원 &nbsp;&nbsp;<a href="#" class="btn02 col7">적용</a>
+                                            추가 결제비용 <input class="w160" type="text" value="" required="required"> 원 &nbsp;&nbsp;<a href="./" class="btn02 col7">적용</a>
                                         </td>
                                     </tr>
                                     <tr>
@@ -633,7 +633,7 @@
                                         <td colspan="2">
                                             <div class="addr_bx">
                                                 <input type="text" class="addr1 off" placeholder="우편번호" required="required">
-                                                <a href="#" class="btn01">우편번호찾기</a>
+                                                <a href="./" class="btn01">우편번호찾기</a>
                                                 <input type="text" class="addr2 off" placeholder="주소" required="required">
                                                 <input type="text" class="addr3 off" placeholder="상세주소" required="required">
                                             </div>
@@ -647,8 +647,8 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="#">교환요청하기</a>
-                    <a href="#" class="col5 close_btn">닫기</a>
+                    <a href="./">교환요청하기</a>
+                    <a href="./" class="col5 close_btn">닫기</a>
                 </div>
             </div>
         </div>
@@ -769,8 +769,8 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="#">주문취소 요청하기</a>
-                    <a href="#" class="col5 close_btn">닫기</a>
+                    <a href="./">주문취소 요청하기</a>
+                    <a href="./" class="col5 close_btn">닫기</a>
                 </div>
             </div>
         </div>

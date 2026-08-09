@@ -47,23 +47,23 @@
 			    <ul>
 			        <li><a href="../sub01/shop_list.php">Shop채널관리</a></li>
 			        <li><a href="../sub02/product_own.php">상품관리</a></li>
-			        <li><a href="#">공동구매관리</a></li>
+			        <li><a href="./">공동구매관리</a></li>
 			        <li><a href="../sub04/order_list.php">주문관리</a></li>
-			        <li><a href="#">정산관리</a></li>
+			        <li><a href="./">정산관리</a></li>
 			    </ul>
 			</div>
 			
 			<div class="r_bx">
 			    <div class="name">[상호명] 회원명</div>
-			    <a href="#" class="btn icon1"></a>
-			    <a href="#" class="btn icon2"></a>
+			    <a href="./" class="btn icon1"></a>
+			    <a href="./" class="btn icon2"></a>
 			    <div class="r_menu">
 			        <div class="r_menu_btn"><span>채널목록</span></div>
 			        <div class="menu_w">
 			            <ul>
-			                <li><a href="#"><span>내채널목록 내채널목록</span></a></li>
-			                <li><a href="#"><span>내채널목록</span></a></li>
-			                <li><a href="#"><span>내채널목록</span></a></li>
+			                <li><a href="./"><span>내채널목록 내채널목록</span></a></li>
+			                <li><a href="./"><span>내채널목록</span></a></li>
+			                <li><a href="./"><span>내채널목록</span></a></li>
 			            </ul>
 			        </div>
 			    </div>

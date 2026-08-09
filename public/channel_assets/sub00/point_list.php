@@ -21,7 +21,7 @@
                                 <div class="list_top1 btn">
                                     <div class="count">총 포인트 통화량 <strong>7,000,492</strong> P</div>
                                     <div class="btn_bx">
-                                        <a href="#" class="btn01 col5 pop_btn" data-pop="pop2_1">포인트 구매</a>
+                                        <a href="./" class="btn01 col5 pop_btn" data-pop="pop2_1">포인트 구매</a>
                                     </div>
                                 </div>
                                 <div class="tb01">
@@ -109,7 +109,7 @@
                                 </div>
                                 
                                 <div class="btm_btn right mt10">
-                                    <a href="#">검색</a>
+                                    <a href="./">검색</a>
                                 </div>
                             </div>
                         </div>
@@ -160,15 +160,15 @@
                                 <!--<div class="no_data">등록된 데이터가 없습니다.</div>-->
                                 
                                 <div class="page_bx1">
-                                    <a href="#" class="page_first">first</a>
-                                    <a href="#" class="page_prev">prev</a>
-                                    <a href="#" class="num on">1</a>
-                                    <a href="#" class="num">2</a>
-                                    <a href="#" class="num">3</a>
-                                    <a href="#" class="num">4</a>
-                                    <a href="#" class="num">5</a>
-                                    <a href="#" class="page_next">next</a>
-                                    <a href="#" class="page_last">last</a>
+                                    <a href="./" class="page_first">first</a>
+                                    <a href="./" class="page_prev">prev</a>
+                                    <a href="./" class="num on">1</a>
+                                    <a href="./" class="num">2</a>
+                                    <a href="./" class="num">3</a>
+                                    <a href="./" class="num">4</a>
+                                    <a href="./" class="num">5</a>
+                                    <a href="./" class="page_next">next</a>
+                                    <a href="./" class="page_last">last</a>
                                 </div>
                                 
                                 <!-- 팝업 -->
@@ -221,8 +221,8 @@
 
                                                 <!-- 하단버튼 -->
                                                 <div class="btm_btn mt10">
-                                                    <a href="#">환급 요청</a>
-                                                    <a href="#" class="col5 close_btn">닫기</a>
+                                                    <a href="./">환급 요청</a>
+                                                    <a href="./" class="col5 close_btn">닫기</a>
                                                 </div>
                                             </div>
                                         </div>
@@ -318,8 +318,8 @@
 
                                                 <!-- 하단버튼 -->
                                                 <div class="btm_btn mt10">
-                                                    <a href="#">결제 하기</a>
-                                                    <a href="#" class="col5 close_btn">닫기</a>
+                                                    <a href="./">결제 하기</a>
+                                                    <a href="./" class="col5 close_btn">닫기</a>
                                                 </div>
                                             </div>
                                         </div>

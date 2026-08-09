@@ -16,7 +16,7 @@
                             <div class="f_bx">
                                 <input class="mt0" type="text" placeholder="아이디">
                                 <input type="text" placeholder="대표이메일">
-                                <a href="#" class="btn col2">비밀번호 찾기</a>
+                                <a href="{{ url()->current() }}" class="btn col2">비밀번호 찾기</a>
                                 <div class="ans"></div>
                             </div>
                         </form>

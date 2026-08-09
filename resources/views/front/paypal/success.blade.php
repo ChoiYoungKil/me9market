@@ -14,7 +14,7 @@
                         <a href="index.html">Home</a>
                     </li>
                     <li class="is-marked">
-                        <a href="#">Thanks</a>
+                        <a href="{{ url()->current() }}">Thanks</a>
                     </li>
                 </ul>
             </div>

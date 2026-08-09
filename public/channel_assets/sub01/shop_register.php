@@ -88,7 +88,7 @@
                                                 <td colspan="3">
                                                     <div class="r_btn_w w457">
                                                         <input type="text" value="" required="required" placeholder="Keyword 입력">
-                                                        <a href="#" class="btn01">등록</a>
+                                                        <a href="./" class="btn01">등록</a>
                                                     </div>
                                                     <ul class="tag_list mt5">
                                                         <li>그룹명 #2<button class="del">삭제</button></li>
@@ -245,7 +245,7 @@
                                                 <th class="w160"><span>배너 이미지 (Max 5)</span></th>
                                                 <td>
                                                     <div class="r_btn_w w560">
-                                                        <a href="#" class="btn01 col5 bold">추가하기</a>
+                                                        <a href="./" class="btn01 col5 bold">추가하기</a>
                                                         <div class="fileBox">
                                                             <input type="text" class="fileName" readonly="readonly">
                                                             <label for="uploadBtn2_1" class="btn_file">찾아보기</label>
@@ -411,7 +411,7 @@
                     </div>
                                 
                     <div class="btm_btn">
-                        <a href="#">등록</a>
+                        <a href="./">등록</a>
                         <a href="../sub01/shop_list.php" class="col5">목록</a>
                     </div>
                 </div>

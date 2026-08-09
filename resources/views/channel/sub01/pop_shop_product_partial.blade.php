@@ -7,9 +7,9 @@
 
                 <div class="tab_bx1">
                     <ul>
-                        <li><a href="#" data-pop="pop1_1"><span>지사상품</span></a></li>
-                        <li><a href="#" data-pop="pop1_2"><span>공유상품</span></a></li>
-                        <li><a href="#" class="on"><span>부분공유상품</span></a></li>
+                        <li><a href="{{ url()->current() }}" data-pop="pop1_1"><span>지사상품</span></a></li>
+                        <li><a href="{{ url()->current() }}" data-pop="pop1_2"><span>공유상품</span></a></li>
+                        <li><a href="{{ url()->current() }}" class="on"><span>부분공유상품</span></a></li>
                     </ul>
                 </div>
                 <script type="text/javascript">
@@ -188,14 +188,14 @@
                                             <td>{!! nl2br($product['stock_text']) !!}</td>
                                             <td class="t_r">{{ $product['price_range'] }}</td>
                                             <td>
-                                                <a href="#" class="btn02 col2 pop_btn" data-pop="pop1_3_3">보기</a>
+                                                <a href="{{ url()->current() }}" class="btn02 col2 pop_btn" data-pop="pop1_3_3">보기</a>
                                             </td>
                                             <td>
-                                                <a href="#" class="{{ $product['request_btn_class'] }}"
+                                                <a href="{{ url()->current() }}" class="{{ $product['request_btn_class'] }}"
                                                     onclick='openProductRegisterModal("pop1_3_4", @json($product)); return false;'>{{ $product['request_status_text'] }}</a>
                                             </td>
                                             <td>
-                                                <a href="#" class="btn02 col5"
+                                                <a href="{{ url()->current() }}" class="btn02 col5"
                                                     onclick='openProductRegisterModal("pop1_3_2", @json($product)); return false;'>추가하기</a>
                                             </td>
                                         </tr>
@@ -257,7 +257,7 @@
                             <div class="list01">
                                 <ul>
                                     <li>
-                                        <a href="#">
+                                        <a href="{{ url()->current() }}">
                                             <div class="img_bx" id="partial_product_img"
                                                 style="background-image:url(../images/sub/thum01.jpg)"></div>
                                             <div class="txt_bx">
@@ -331,9 +331,9 @@
 
                     <!-- 하단버튼 -->
                     <div class="btm_btn mt10">
-                        <a href="#" class="btn_submit"
+                        <a href="{{ url()->current() }}" class="btn_submit"
                             onclick="submitProductForm('form_product_partial_register', '{{ route('channel.product.partial.store') }}'); return false;">상품추가하기</a>
-                        <a href="#" class="col5 close_btn">닫기</a>
+                        <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                     </div>
                 </form>
             </div>
@@ -569,7 +569,7 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="#" class="col5 close_btn">닫기</a>
+                    <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                 </div>
             </div>
         </div>
@@ -631,7 +631,7 @@
                             <div class="list01">
                                 <ul>
                                     <li>
-                                        <a href="#">
+                                        <a href="{{ url()->current() }}">
                                             <div class="img_bx" id="partial_req_product_img"
                                                 style="background-image:url(../images/sub/thum01.jpg)"></div>
                                             <div class="txt_bx">
@@ -725,9 +725,9 @@
 
                     <!-- 하단버튼 -->
                     <div class="btm_btn mt10">
-                        <a href="#" class="btn_submit"
+                        <a href="{{ url()->current() }}" class="btn_submit"
                             onclick="submitProductForm('form_product_partial_request', '{{ route('channel.product.partial.request') }}'); return false;">재요청하기</a>
-                        <a href="#" class="col5 close_btn">닫기</a>
+                        <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                     </div>
                 </form>
             </div>

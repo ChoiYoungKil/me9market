@@ -19,7 +19,7 @@
                         </div>
                         <div class="tab_bx1">
                             <ul>
-                                <li><a href="#" class="on"><span>Shop채널 정보</span></a></li>
+                                <li><a href="./" class="on"><span>Shop채널 정보</span></a></li>
                                 <li><a href="../sub01/shop_product01.php"><span>판매상품</span></a></li>
                                 <li><a href="../sub01/shop_community.php"><span>커뮤니티</span></a></li>
                             </ul>
@@ -186,7 +186,7 @@
                                 
                     <div class="btm_btn">
                         <a href="../sub01/info_update.php" class="col2">정보수정</a>
-                        <a href="#">Shop채널보기</a>
+                        <a href="./">Shop채널보기</a>
                         <a href="../sub01/shop_list.php" class="col5">목록</a>
                     </div>
                 </div>

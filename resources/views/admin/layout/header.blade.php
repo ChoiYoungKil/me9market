@@ -56,9 +56,9 @@
                 </div>
             </li>
             <li class="nav-item nav-settings d-none d-lg-flex">
-                <a class="nav-link" href="#">
+                <button class="nav-link border-0 bg-transparent" type="button" aria-label="Admin settings">
                     <i class="icon-ellipsis"></i>
-                </a>
+                </button>
             </li>
         </ul>
         <button class="navbar-toggler navbar-toggler-right d-lg-none align-self-center" type="button"

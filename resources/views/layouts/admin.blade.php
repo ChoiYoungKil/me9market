@@ -61,7 +61,7 @@
             @endphp
             <div class="t_menu">
                 <ul>
-                    <li><a href="#" class="{{ $isSettings ? 'on' : '' }}">환경설정</a></li>
+                    <li><a href="{{ url()->current() }}" class="{{ $isSettings ? 'on' : '' }}">환경설정</a></li>
                     <li><a href="{{ url('admin/users') }}" class="{{ $isUserManagement ? 'on' : '' }}">회원관리</a></li>
                 <li><a href="{{ url('admin/products') }}" class="{{ $isProductManagement ? 'on' : '' }}">상품관리</a>
                     </li>

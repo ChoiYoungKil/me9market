@@ -115,7 +115,7 @@
                                 </div>
                                 
                                 <div class="btm_btn right mt10">
-                                    <a href="#">검색</a>
+                                    <a href="./">검색</a>
                                 </div>
                             </div>
                         </div>
@@ -128,7 +128,7 @@
                                 <div class="list_top1 btn">
                                     <div class="count">총 <strong>00</strong> 건</div>
                                     <div class="btn_bx">
-                                        <a href="#" class="btn01 col2">EXCEL</a>
+                                        <a href="./" class="btn01 col2">EXCEL</a>
                                         <a href="../sub02/product_request.php" class="btn01 col5">상품등록</a>
                                     </div>
                                 </div>
@@ -174,14 +174,14 @@
                                                 </td>
                                                 <td class="t_c">₩ 5,000</td>
                                                 <td class="t_c">공개, 회원용</td>
-                                                <td class="t_c"><a href="#" class="btn02 col3 pop_btn" data-pop="pop4_1">03</a></td>
-                                                <td class="t_c"><a href="#" class="btn02 col5 pop_btn" data-pop="pop1_1">판매요청목록</a></td>
-                                                <td class="t_c"><a href="#" class="btn02 col7 pop_btn" data-pop="pop2_1">판매중지 예고신청</a></td>
+                                                <td class="t_c"><a href="./" class="btn02 col3 pop_btn" data-pop="pop4_1">03</a></td>
+                                                <td class="t_c"><a href="./" class="btn02 col5 pop_btn" data-pop="pop1_1">판매요청목록</a></td>
+                                                <td class="t_c"><a href="./" class="btn02 col7 pop_btn" data-pop="pop2_1">판매중지 예고신청</a></td>
                                                 <td class="t_c">
-                                                    <a href="#" class="btn02 col5 pop_btn" data-pop="pop3_1">보기</a>
-                                                    <a href="#" class="btn02 col2">복사</a>
-                                                    <a href="#" class="btn02 col4 mt5">수정</a>
-                                                    <a href="#" class="btn02 mt5">삭제</a>
+                                                    <a href="./" class="btn02 col5 pop_btn" data-pop="pop3_1">보기</a>
+                                                    <a href="./" class="btn02 col2">복사</a>
+                                                    <a href="./" class="btn02 col4 mt5">수정</a>
+                                                    <a href="./" class="btn02 mt5">삭제</a>
                                                 </td>
                                             </tr>
                                             <tr>
@@ -198,14 +198,14 @@
                                                 </td>
                                                 <td class="t_c">₩ 1,000</td>
                                                 <td class="t_c">비공개, 회원용</td>
-                                                <td class="t_c"><a href="#" class="btn02 col3 pop_btn" data-pop="pop4_1">--</a></td>
-                                                <td class="t_c"><a href="#" class="btn02 col4 pop_btn" data-pop="pop1_1">판매요청목록</a></td>
-                                                <td class="t_c"><a href="#" class="btn02 col7 pop_btn" data-pop="pop2_1">판매중지 예고신청</a></td>
+                                                <td class="t_c"><a href="./" class="btn02 col3 pop_btn" data-pop="pop4_1">--</a></td>
+                                                <td class="t_c"><a href="./" class="btn02 col4 pop_btn" data-pop="pop1_1">판매요청목록</a></td>
+                                                <td class="t_c"><a href="./" class="btn02 col7 pop_btn" data-pop="pop2_1">판매중지 예고신청</a></td>
                                                 <td class="t_c">
-                                                    <a href="#" class="btn02 col5 pop_btn" data-pop="pop3_1">보기</a>
-                                                    <a href="#" class="btn02 col2">복사</a>
-                                                    <a href="#" class="btn02 col7 mt5">수정</a>
-                                                    <a href="#" class="btn02 mt5">삭제</a>
+                                                    <a href="./" class="btn02 col5 pop_btn" data-pop="pop3_1">보기</a>
+                                                    <a href="./" class="btn02 col2">복사</a>
+                                                    <a href="./" class="btn02 col7 mt5">수정</a>
+                                                    <a href="./" class="btn02 mt5">삭제</a>
                                                 </td>
                                             </tr>
                                             <tr>
@@ -223,14 +223,14 @@
                                                 </td>
                                                 <td class="t_c">₩ 1,000</td>
                                                 <td class="t_c">공개, 일반용</td>
-                                                <td class="t_c"><a href="#" class="btn02 col3 pop_btn" data-pop="pop4_1">13</a></td>
-                                                <td class="t_c"><a href="#" class="btn02 col5 pop_btn" data-pop="pop1_1">판매요청목록</a></td>
-                                                <td class="t_c"><a href="#" class="btn02 col4 pop_btn" data-pop="pop2_1">판매중지 예고신청</a></td>
+                                                <td class="t_c"><a href="./" class="btn02 col3 pop_btn" data-pop="pop4_1">13</a></td>
+                                                <td class="t_c"><a href="./" class="btn02 col5 pop_btn" data-pop="pop1_1">판매요청목록</a></td>
+                                                <td class="t_c"><a href="./" class="btn02 col4 pop_btn" data-pop="pop2_1">판매중지 예고신청</a></td>
                                                 <td class="t_c">
-                                                    <a href="#" class="btn02 col5 pop_btn" data-pop="pop3_1">보기</a>
-                                                    <a href="#" class="btn02 col2">복사</a>
-                                                    <a href="#" class="btn02 col4 mt5">수정</a>
-                                                    <a href="#" class="btn02 mt5">삭제</a>
+                                                    <a href="./" class="btn02 col5 pop_btn" data-pop="pop3_1">보기</a>
+                                                    <a href="./" class="btn02 col2">복사</a>
+                                                    <a href="./" class="btn02 col4 mt5">수정</a>
+                                                    <a href="./" class="btn02 mt5">삭제</a>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -241,15 +241,15 @@
                                 
                                 <!-- 페이징 -->
                                 <div class="page_bx1">
-                                    <a href="#" class="page_first">first</a>
-                                    <a href="#" class="page_prev">prev</a>
-                                    <a href="#" class="num on">1</a>
-                                    <a href="#" class="num">2</a>
-                                    <a href="#" class="num">3</a>
-                                    <a href="#" class="num">4</a>
-                                    <a href="#" class="num">5</a>
-                                    <a href="#" class="page_next">next</a>
-                                    <a href="#" class="page_last">last</a>
+                                    <a href="./" class="page_first">first</a>
+                                    <a href="./" class="page_prev">prev</a>
+                                    <a href="./" class="num on">1</a>
+                                    <a href="./" class="num">2</a>
+                                    <a href="./" class="num">3</a>
+                                    <a href="./" class="num">4</a>
+                                    <a href="./" class="num">5</a>
+                                    <a href="./" class="page_next">next</a>
+                                    <a href="./" class="page_last">last</a>
                                 </div>
                                 
                                 
@@ -365,15 +365,15 @@
                                                             
                                                             <!-- 페이징 -->
                                                             <div class="page_bx1">
-                                                                <a href="#" class="page_first">first</a>
-                                                                <a href="#" class="page_prev">prev</a>
-                                                                <a href="#" class="num on">1</a>
-                                                                <a href="#" class="num">2</a>
-                                                                <a href="#" class="num">3</a>
-                                                                <a href="#" class="num">4</a>
-                                                                <a href="#" class="num">5</a>
-                                                                <a href="#" class="page_next">next</a>
-                                                                <a href="#" class="page_last">last</a>
+                                                                <a href="./" class="page_first">first</a>
+                                                                <a href="./" class="page_prev">prev</a>
+                                                                <a href="./" class="num on">1</a>
+                                                                <a href="./" class="num">2</a>
+                                                                <a href="./" class="num">3</a>
+                                                                <a href="./" class="num">4</a>
+                                                                <a href="./" class="num">5</a>
+                                                                <a href="./" class="page_next">next</a>
+                                                                <a href="./" class="page_last">last</a>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -397,7 +397,7 @@
 
                                                 <!-- 하단버튼 -->
                                                 <div class="btm_btn mt20">
-                                                    <a href="#" class="col5 close_btn">닫기</a>
+                                                    <a href="./" class="col5 close_btn">닫기</a>
                                                 </div>
                                             </div>
                                         </div>
@@ -476,7 +476,7 @@
                                                             </table>
                                                         </div>
                                                         <div class="btm_btn right mt10">
-                                                            <a href="#">검색</a>
+                                                            <a href="./">검색</a>
                                                         </div>
                                                     </div>
 
@@ -544,19 +544,19 @@
                                                         <div class="btm_btn right mt10">
                                                             <!-- 페이징 -->
                                                             <div class="page_bx1">
-                                                                <a href="#" class="page_first">first</a>
-                                                                <a href="#" class="page_prev">prev</a>
-                                                                <a href="#" class="num on">1</a>
-                                                                <a href="#" class="num">2</a>
-                                                                <a href="#" class="num">3</a>
-                                                                <a href="#" class="num">4</a>
-                                                                <a href="#" class="num">5</a>
-                                                                <a href="#" class="page_next">next</a>
-                                                                <a href="#" class="page_last">last</a>
+                                                                <a href="./" class="page_first">first</a>
+                                                                <a href="./" class="page_prev">prev</a>
+                                                                <a href="./" class="num on">1</a>
+                                                                <a href="./" class="num">2</a>
+                                                                <a href="./" class="num">3</a>
+                                                                <a href="./" class="num">4</a>
+                                                                <a href="./" class="num">5</a>
+                                                                <a href="./" class="page_next">next</a>
+                                                                <a href="./" class="page_last">last</a>
                                                             </div>
 
-                                                            <a href="#" class="col5 close_btn">승인거절</a>
-                                                            <a href="#">판매승인</a>
+                                                            <a href="./" class="col5 close_btn">승인거절</a>
+                                                            <a href="./">판매승인</a>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -605,8 +605,8 @@
 
                                                 <!-- 하단버튼 -->
                                                 <div class="btm_btn mt10">
-                                                    <a href="#" class="col5 close_btn">취소</a>
-                                                    <a href="#">확인</a>
+                                                    <a href="./" class="col5 close_btn">취소</a>
+                                                    <a href="./">확인</a>
                                                 </div>
                                             </div>
                                         </div>

@@ -236,21 +236,21 @@
                                 <tr>
                                     <td class="t_c">00</td>
                                     <td class="ovH">
-                                        <a href="#" class="subject on fcol1">문의 공지 입니다. 문의 공지 입니다. 문의 공지 입니다. 문의 공지 입니다. 문의 공지 입니다.</a>
+                                        <a href="./" class="subject on fcol1">문의 공지 입니다. 문의 공지 입니다. 문의 공지 입니다. 문의 공지 입니다. 문의 공지 입니다.</a>
                                     </td>
                                     <td class="t_c">0000-00-00</td>
                                 </tr>
                                 <tr>
                                     <td class="t_c">00</td>
                                     <td class="ovH">
-                                        <a href="#" class="subject fcol1">문의 제목입니다. 문의 제목입니다. 문의 제목입니다. 문의 제목입니다. 문의 제목입니다.</a>
+                                        <a href="./" class="subject fcol1">문의 제목입니다. 문의 제목입니다. 문의 제목입니다. 문의 제목입니다. 문의 제목입니다.</a>
                                     </td>
                                     <td class="t_c">0000-00-00</td>
                                 </tr>
                                 <tr>
                                     <td class="t_c">00</td>
                                     <td class="ovH">
-                                        <a href="#" class="subject fcol1">문의 제목입니다. 문의 제목입니다. 문의 제목입니다. 문의 제목입니다. 문의 제목입니다.</a>
+                                        <a href="./" class="subject fcol1">문의 제목입니다. 문의 제목입니다. 문의 제목입니다. 문의 제목입니다. 문의 제목입니다.</a>
                                     </td>
                                     <td class="t_c">0000-00-00</td>
                                 </tr>

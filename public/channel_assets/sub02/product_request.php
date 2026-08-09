@@ -198,7 +198,7 @@
                                                 <th class="w160"><span>목록 이미지 (Max 5)</span></th>
                                                 <td colspan="3">
                                                     <div class="r_btn_w w560">
-                                                        <a href="#" class="btn01 col5 bold">추가하기</a>
+                                                        <a href="./" class="btn01 col5 bold">추가하기</a>
                                                         <div class="fileBox">
                                                             <input type="text" class="fileName" readonly="readonly">
                                                             <label for="uploadBtn1_1" class="btn_file">찾아보기</label>
@@ -732,7 +732,7 @@
                                                 <td colspan="3">
                                                     <div class="r_btn_w w457">
                                                         <input type="text" value="" required="required">
-                                                        <a href="#" class="btn01 bold pop_btn" data-pop="pop1">담당찾기</a>
+                                                        <a href="./" class="btn01 bold pop_btn" data-pop="pop1">담당찾기</a>
                                                     </div>
                                                     
                                                     <div class="popup_bx" data-id="pop1">
@@ -753,7 +753,7 @@
                                                                                             <td class="pt0 pr0 pl0">
                                                                                                 <div class="r_btn_w">
                                                                                                     <input type="text" value="" required="required">
-                                                                                                    <a href="#" class="btn01 bold pop_btn" data-pop="pop1">검색</a>
+                                                                                                    <a href="./" class="btn01 bold pop_btn" data-pop="pop1">검색</a>
                                                                                                 </div>
                                                                                             </td>
                                                                                         </tr>
@@ -783,7 +783,7 @@
 
                                                                     <!-- 하단버튼 -->
                                                                     <div class="btm_btn mt10">
-                                                                        <a href="#" class="col5 close_btn">닫기</a>
+                                                                        <a href="./" class="col5 close_btn">닫기</a>
                                                                     </div>
                                                                 </div>
                                                             </div>
@@ -797,7 +797,7 @@
                                 
                                 <div class="btm_btn mt10">
                                     <a href="../sub02/product_own.php" class="col5">목록</a>
-                                    <a href="#">등록</a>
+                                    <a href="./">등록</a>
                                 </div>
                                 
                                 <!-- 팝업 -->
@@ -840,8 +840,8 @@
 
                                                 <!-- 하단버튼 -->
                                                 <div class="btm_btn mt10">
-                                                    <a href="#" class="col5 close_btn">취소</a>
-                                                    <a href="#">확인</a>
+                                                    <a href="./" class="col5 close_btn">취소</a>
+                                                    <a href="./">확인</a>
                                                 </div>
                                             </div>
                                         </div>

@@ -139,7 +139,7 @@
                                 </div>
                                 
                                 <div class="btm_btn right mt10">
-                                    <a href="#">검색</a>
+                                    <a href="./">검색</a>
                                 </div>
                             </div>
                         </div>
@@ -151,7 +151,7 @@
                                     <ul>
                                         <li><a href="../sub04/order_list.php"><span>주문목록</span></a></li>
                                         <li><a href="../sub04/order_cancel_list.php"><span>취소목록</span></a></li>
-                                        <li><a class="on" href="#"><span>반품목록</span></a></li>
+                                        <li><a class="on" href="./"><span>반품목록</span></a></li>
                                         <li><a href="../sub04/order_exchange_request_list.php"><span>교환목록</span></a></li>
                                     </ul>
                                 </div>
@@ -257,15 +257,15 @@
                                 <!--<div class="no_data">등록된 데이터가 없습니다.</div>-->
                                 
                                 <div class="page_bx1">
-                                    <a href="#" class="page_first">first</a>
-                                    <a href="#" class="page_prev">prev</a>
-                                    <a href="#" class="num on">1</a>
-                                    <a href="#" class="num">2</a>
-                                    <a href="#" class="num">3</a>
-                                    <a href="#" class="num">4</a>
-                                    <a href="#" class="num">5</a>
-                                    <a href="#" class="page_next">next</a>
-                                    <a href="#" class="page_last">last</a>
+                                    <a href="./" class="page_first">first</a>
+                                    <a href="./" class="page_prev">prev</a>
+                                    <a href="./" class="num on">1</a>
+                                    <a href="./" class="num">2</a>
+                                    <a href="./" class="num">3</a>
+                                    <a href="./" class="num">4</a>
+                                    <a href="./" class="num">5</a>
+                                    <a href="./" class="page_next">next</a>
+                                    <a href="./" class="page_last">last</a>
                                 </div>
                             </div>
                         </div>

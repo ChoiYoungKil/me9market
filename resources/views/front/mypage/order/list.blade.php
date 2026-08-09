@@ -537,13 +537,13 @@
                         <!-- 페이지네이션 (common footer style) -->
                         <div class="btm_btn">
                             <div class="page_bx1 text-center">
-                                <a href="#" class="page_prev dimmed">prev</a>
-                                <a href="#" class="num on">1</a>
-                                <a href="#" class="num">2</a>
-                                <a href="#" class="num">3</a>
-                                <a href="#" class="num">4</a>
-                                <a href="#" class="num">5</a>
-                                <a href="#" class="page_next dimmed">next</a>
+                                <a href="{{ url()->current() }}" class="page_prev dimmed">prev</a>
+                                <a href="{{ url()->current() }}" class="num on">1</a>
+                                <a href="{{ url()->current() }}" class="num">2</a>
+                                <a href="{{ url()->current() }}" class="num">3</a>
+                                <a href="{{ url()->current() }}" class="num">4</a>
+                                <a href="{{ url()->current() }}" class="num">5</a>
+                                <a href="{{ url()->current() }}" class="page_next dimmed">next</a>
                             </div>
                         </div>
 

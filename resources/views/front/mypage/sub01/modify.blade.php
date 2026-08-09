@@ -33,7 +33,7 @@
                                         <th class="w160"><span>아이디</span></th>
                                         <td>abcde1234</td>
                                         <th class="w160"><span>비밀번호</span></th>
-                                        <td><a class="btn01 pop_btn" href="#" data-pop="pop1_1">비밀번호변경</a></td>
+                                        <td><a class="btn01 pop_btn" href="{{ url()->current() }}" data-pop="pop1_1">비밀번호변경</a></td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -80,8 +80,8 @@
 
                                         <!-- 하단버튼 -->
                                         <div class="btm_btn mt10">
-                                            <a href="#">변경하기</a>
-                                            <a href="#" class="col5 close_btn">닫기</a>
+                                            <a href="{{ url()->current() }}">변경하기</a>
+                                            <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                                         </div>
                                     </div>
                                 </div>
@@ -126,7 +126,7 @@
                                                     <span>-</span>
                                                     <input type="text" class="tel2" required="required" value="0000">
                                                 </div>
-                                                <a href="#" class="btn01 col5">본인인증</a>
+                                                <a href="{{ url()->current() }}" class="btn01 col5">본인인증</a>
                                             </div>
                                             <span class="fcol2 r_txt">( 2024년 01월 01일 인증완료 )</span>
                                         </td>
@@ -150,7 +150,7 @@
                                         <td colspan="3">
                                             <div class="addr_bx">
                                                 <input type="text" class="addr1 off" placeholder="우편번호" required="required">
-                                                <a href="#" class="btn01">우편번호찾기</a>
+                                                <a href="{{ url()->current() }}" class="btn01">우편번호찾기</a>
                                                 <input type="text" class="addr2 off" placeholder="주소" required="required">
                                                 <input type="text" class="addr3 off" placeholder="상세주소" required="required">
                                             </div>
@@ -243,7 +243,7 @@
                                         <td colspan="3">
                                             <div class="addr_bx">
                                                 <input type="text" class="addr1 off" placeholder="우편번호" required="required">
-                                                <a href="#" class="btn01">우편번호찾기</a>
+                                                <a href="{{ url()->current() }}" class="btn01">우편번호찾기</a>
                                                 <input type="text" class="addr2 off" placeholder="주소" required="required">
                                                 <input type="text" class="addr3 off" placeholder="상세주소" required="required">
                                             </div>
@@ -303,7 +303,7 @@
                 </div>
 
                 <div class="btm_btn">
-                    <a href="#">정보 수정</a>
+                    <a href="{{ url()->current() }}">정보 수정</a>
                 </div>
             </form>
         </div>

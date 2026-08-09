@@ -38,7 +38,7 @@
                                 </div>
                                 
                                 <div class="btm_btn right mt10">
-                                    <a href="#">검색</a>
+                                    <a href="./">검색</a>
                                 </div>
                             </div>
                         </div>
@@ -49,7 +49,7 @@
                                 <div class="list_top1 btn">
                                     <div class="count">총 <strong>00</strong> 건</div>
                                     <div class="btn_bx">
-                                        <a href="#" class="btn01 col5 pop_btn" data-pop="pop1_1">발주담당 등록</a>
+                                        <a href="./" class="btn01 col5 pop_btn" data-pop="pop1_1">발주담당 등록</a>
                                     </div>
                                 </div>
                                 <div class="tb01 ovS">
@@ -83,9 +83,9 @@
                                                 <td>2024.10.01 01시 ~ 2024.11.01 23시</td>
                                                 <td>12</td>
                                                 <td>
-                                                    <a href="#" class="btn02 col5 pop_btn" data-pop="pop2_1">보기</a>
-                                                    <a href="#" class="btn02 col7 pop_btn" data-pop="pop3_1">수정</a>
-                                                    <a href="#" class="btn02">삭제</a>
+                                                    <a href="./" class="btn02 col5 pop_btn" data-pop="pop2_1">보기</a>
+                                                    <a href="./" class="btn02 col7 pop_btn" data-pop="pop3_1">수정</a>
+                                                    <a href="./" class="btn02">삭제</a>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -95,15 +95,15 @@
                                 <!--<div class="no_data">등록된 데이터가 없습니다.</div>-->
                                 
                                 <div class="page_bx1">
-                                    <a href="#" class="page_first">first</a>
-                                    <a href="#" class="page_prev">prev</a>
-                                    <a href="#" class="num on">1</a>
-                                    <a href="#" class="num">2</a>
-                                    <a href="#" class="num">3</a>
-                                    <a href="#" class="num">4</a>
-                                    <a href="#" class="num">5</a>
-                                    <a href="#" class="page_next">next</a>
-                                    <a href="#" class="page_last">last</a>
+                                    <a href="./" class="page_first">first</a>
+                                    <a href="./" class="page_prev">prev</a>
+                                    <a href="./" class="num on">1</a>
+                                    <a href="./" class="num">2</a>
+                                    <a href="./" class="num">3</a>
+                                    <a href="./" class="num">4</a>
+                                    <a href="./" class="num">5</a>
+                                    <a href="./" class="page_next">next</a>
+                                    <a href="./" class="page_last">last</a>
                                 </div>
                                 
                                 <!-- 팝업 -->
@@ -155,7 +155,7 @@
                                                                                         <option value="1">naver.com</option>
                                                                                     </select>
                                                                                 </div>
-                                                                                <a href="#" class="btn01 pop_btn" data-pop="pop4_1">중복확인</a>
+                                                                                <a href="./" class="btn01 pop_btn" data-pop="pop4_1">중복확인</a>
                                                                             </div>
                                                                         </td>
                                                                     </tr>
@@ -197,8 +197,8 @@
 
                                                 <!-- 하단버튼 -->
                                                 <div class="btm_btn mt10">
-                                                    <a href="#">발주담당 등록</a>
-                                                    <a href="#" class="col5 close_btn">닫기</a>
+                                                    <a href="./">발주담당 등록</a>
+                                                    <a href="./" class="col5 close_btn">닫기</a>
                                                 </div>
                                             </div>
                                         </div>
@@ -276,7 +276,7 @@
                                                                            <div class="list01 over_S s1">
                                                                                 <ul>
                                                                                     <li>
-                                                                                        <a href="#">
+                                                                                        <a href="./">
                                                                                             <div class="img_bx" style="background-image:url(../images/sub/thum01.jpg)"></div>
                                                                                             <div class="txt_bx">
                                                                                                 <p>대분류 &gt; 중분류 &gt; 소분류</p>
@@ -285,7 +285,7 @@
                                                                                         </a>
                                                                                     </li>
                                                                                     <li>
-                                                                                        <a href="#">
+                                                                                        <a href="./">
                                                                                             <div class="img_bx" style="background-image:url(../images/sub/thum01.jpg)"></div>
                                                                                             <div class="txt_bx">
                                                                                                 <p>대분류 &gt; 중분류 &gt; 소분류</p>
@@ -294,7 +294,7 @@
                                                                                         </a>
                                                                                     </li>
                                                                                     <li>
-                                                                                        <a href="#">
+                                                                                        <a href="./">
                                                                                             <div class="img_bx" style="background-image:url(../images/sub/thum01.jpg)"></div>
                                                                                             <div class="txt_bx">
                                                                                                 <p>대분류 &gt; 중분류 &gt; 소분류</p>
@@ -331,7 +331,7 @@
 
                                                 <!-- 하단버튼 -->
                                                 <div class="btm_btn mt10">
-                                                    <a href="#" class="col5 close_btn">닫기</a>
+                                                    <a href="./" class="col5 close_btn">닫기</a>
                                                 </div>
                                             </div>
                                         </div>
@@ -386,7 +386,7 @@
                                                                                         <option value="1">naver.com</option>
                                                                                     </select>
                                                                                 </div>
-                                                                                <a href="#" class="btn01 pop_btn" data-pop="pop4_1">중복확인</a>
+                                                                                <a href="./" class="btn01 pop_btn" data-pop="pop4_1">중복확인</a>
                                                                             </div>
                                                                         </td>
                                                                     </tr>
@@ -428,8 +428,8 @@
 
                                                 <!-- 하단버튼 -->
                                                 <div class="btm_btn mt10">
-                                                    <a href="#">발주담당 수정</a>
-                                                    <a href="#" class="col5 close_btn">닫기</a>
+                                                    <a href="./">발주담당 수정</a>
+                                                    <a href="./" class="col5 close_btn">닫기</a>
                                                 </div>
                                             </div>
                                         </div>
@@ -452,7 +452,7 @@
 
                                                 <!-- 하단버튼 -->
                                                 <div class="btm_btn mt10">
-                                                    <a href="#" class="col5 close_btn">확인</a>
+                                                    <a href="./" class="col5 close_btn">확인</a>
                                                 </div>
                                             </div>
                                         </div>

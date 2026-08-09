@@ -8,11 +8,11 @@
                 </div>
                 <div class="tab_bx1">
                     <ul>
-                        <li><a href="#" data-pop="pop1_1"><span>주문 정보</span></a></li>
-                        <li><a href="#" data-pop="pop1_2"><span>정상 주문</span></a></li>
-                        <li><a href="#" data-pop="pop1_3"><span>취소 주문</span></a></li>
-                        <li><a href="#" data-pop="pop1_4"><span>반품 주문</span></a></li>
-                        <li><a href="#" class="on"><span>교환 주문</span></a></li>
+                        <li><a href="{{ url()->current() }}" data-pop="pop1_1"><span>주문 정보</span></a></li>
+                        <li><a href="{{ url()->current() }}" data-pop="pop1_2"><span>정상 주문</span></a></li>
+                        <li><a href="{{ url()->current() }}" data-pop="pop1_3"><span>취소 주문</span></a></li>
+                        <li><a href="{{ url()->current() }}" data-pop="pop1_4"><span>반품 주문</span></a></li>
+                        <li><a href="{{ url()->current() }}" class="on"><span>교환 주문</span></a></li>
                     </ul>
                 </div>
                 <div class="conbx">
@@ -107,7 +107,7 @@
                                     <tr>
                                         <td><input type="checkbox"></td>
                                         <td>
-                                            한진택배 &nbsp;<span class="fcol3">22332323</span>&nbsp; <a href="#"
+                                            한진택배 &nbsp;<span class="fcol3">22332323</span>&nbsp; <a href="{{ url()->current() }}"
                                                 class="btn02">삭제</a>
                                         </td>
                                         <td>배송대기</td>
@@ -126,15 +126,15 @@
                         <!--<div class="no_data">등록된 데이터가 없습니다.</div>-->
 
                         <div class="mt10">
-                            <a href="#" class="btn01 col3 pop_btn" data-pop="pop1_5_2">교환 승인</a>
-                            <a href="#" class="btn01 pop_btn" data-pop="pop1_5_3">교환 회수 전 보류</a>
-                            <a href="#" class="btn01 pop_btn" data-pop="pop1_5_4">교환 철회</a>
-                            <a href="#" class="btn01 col3 pop_btn" data-pop="pop1_5_5">교환 회수 완료</a>
-                            <a href="#" class="btn01 col3 pop_btn" data-pop="pop1_5_6">교환 확정</a>
-                            <a href="#" class="btn01 pop_btn" data-pop="pop1_5_7">교환 회수 후 보류</a>
-                            <a href="#" class="btn01 pop_btn" data-pop="pop1_5_8">반품 전환</a>
-                            <a href="#" class="btn01 col6 pop_btn" data-pop="pop1_5_9">옵션 변경</a>
-                            <a href="#" class="btn01 col3 pop_btn" data-pop="pop1_5_10">송장수정</a>
+                            <a href="{{ url()->current() }}" class="btn01 col3 pop_btn" data-pop="pop1_5_2">교환 승인</a>
+                            <a href="{{ url()->current() }}" class="btn01 pop_btn" data-pop="pop1_5_3">교환 회수 전 보류</a>
+                            <a href="{{ url()->current() }}" class="btn01 pop_btn" data-pop="pop1_5_4">교환 철회</a>
+                            <a href="{{ url()->current() }}" class="btn01 col3 pop_btn" data-pop="pop1_5_5">교환 회수 완료</a>
+                            <a href="{{ url()->current() }}" class="btn01 col3 pop_btn" data-pop="pop1_5_6">교환 확정</a>
+                            <a href="{{ url()->current() }}" class="btn01 pop_btn" data-pop="pop1_5_7">교환 회수 후 보류</a>
+                            <a href="{{ url()->current() }}" class="btn01 pop_btn" data-pop="pop1_5_8">반품 전환</a>
+                            <a href="{{ url()->current() }}" class="btn01 col6 pop_btn" data-pop="pop1_5_9">옵션 변경</a>
+                            <a href="{{ url()->current() }}" class="btn01 col3 pop_btn" data-pop="pop1_5_10">송장수정</a>
                         </div>
 
                         <div class="imp_bx01 mt10">
@@ -149,7 +149,7 @@
 
 
                 <div class="btm_btn mt20">
-                    <a href="#" class="col5 close_btn">닫기</a>
+                    <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                 </div>
             </div>
         </div>
@@ -173,8 +173,8 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="#" id="btn_exchange_approve_confirm">확인</a>
-                    <a href="#" class="col5 close_btn">닫기</a>
+                    <a href="{{ url()->current() }}" id="btn_exchange_approve_confirm">확인</a>
+                    <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                 </div>
             </div>
         </div>
@@ -270,8 +270,8 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="#">교환보류</a>
-                    <a href="#" class="col5 close_btn">닫기</a>
+                    <a href="{{ url()->current() }}">교환보류</a>
+                    <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                 </div>
             </div>
         </div>
@@ -295,8 +295,8 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="#" id="btn_exchange_reject_confirm">확인</a>
-                    <a href="#" class="col5 close_btn">닫기</a>
+                    <a href="{{ url()->current() }}" id="btn_exchange_reject_confirm">확인</a>
+                    <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                 </div>
             </div>
         </div>
@@ -320,8 +320,8 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="#" id="btn_exchange_received_confirm">확인</a>
-                    <a href="#" class="col5 close_btn">닫기</a>
+                    <a href="{{ url()->current() }}" id="btn_exchange_received_confirm">확인</a>
+                    <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                 </div>
             </div>
         </div>
@@ -345,8 +345,8 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="#" id="btn_exchange_complete_confirm">확인</a>
-                    <a href="#" class="col5 close_btn">닫기</a>
+                    <a href="{{ url()->current() }}" id="btn_exchange_complete_confirm">확인</a>
+                    <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                 </div>
             </div>
         </div>
@@ -442,8 +442,8 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="#">교환보류</a>
-                    <a href="#" class="col5 close_btn">닫기</a>
+                    <a href="{{ url()->current() }}">교환보류</a>
+                    <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                 </div>
             </div>
         </div>
@@ -467,8 +467,8 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="#" id="btn_exchange_to_return_confirm">확인</a>
-                    <a href="#" class="col5 close_btn">닫기</a>
+                    <a href="{{ url()->current() }}" id="btn_exchange_to_return_confirm">확인</a>
+                    <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                 </div>
             </div>
         </div>
@@ -556,8 +556,8 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="#">변경하기</a>
-                    <a href="#" class="col5 close_btn">닫기</a>
+                    <a href="{{ url()->current() }}">변경하기</a>
+                    <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                 </div>
             </div>
         </div>
@@ -630,8 +630,8 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="#">변경하기</a>
-                    <a href="#" class="col5 close_btn">닫기</a>
+                    <a href="{{ url()->current() }}">변경하기</a>
+                    <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                 </div>
             </div>
         </div>

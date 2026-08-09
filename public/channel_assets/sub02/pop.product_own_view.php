@@ -225,7 +225,7 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="#" class="col5 close_btn">닫기</a>
+                    <a href="./" class="col5 close_btn">닫기</a>
                 </div>
             </div>
         </div>

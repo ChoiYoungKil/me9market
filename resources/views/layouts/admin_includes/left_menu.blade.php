@@ -10,7 +10,7 @@
 
                     <!-- Settings -->
                     <li class="dep1 icon1_2 arrow {{ Request::is('admin/update-admin-*') ? 'on' : '' }}">
-                        <a href="#">설정 (Settings)</a>
+                        <a href="{{ url()->current() }}">설정 (Settings)</a>
                         <ul class="dep2_wrap">
                             <li class="{{ Request::is('admin/update-admin-password') ? 'on' : '' }}">
                                 <a href="{{ url('admin/update-admin-password') }}">비밀번호 변경</a>
@@ -23,7 +23,7 @@
 
                     <!-- Catalogue Management -->
                     <li class="dep1 icon1_3 arrow {{ (Request::is('admin/sections') || Request::is('admin/categories*') || Request::is('admin/products*') || Request::is('admin/brands*') || Request::is('admin/coupons*')) ? 'on' : '' }}">
-                        <a href="#">상품 관리 (Catalogue)</a>
+                        <a href="{{ url()->current() }}">상품 관리 (Catalogue)</a>
                         <ul class="dep2_wrap">
                             <li class="{{ Request::is('admin/sections') ? 'on' : '' }}">
                                 <a href="{{ url('admin/sections') }}">섹션 (Sections)</a>
@@ -54,7 +54,7 @@
 
                     <!-- User Management -->
                     <li class="dep1 icon1_5 arrow {{ (Request::is('admin/users') || Request::is('admin/subscribers') || Request::is('admin/admins*')) ? 'on' : '' }}">
-                        <a href="#">회원 관리 (Users)</a>
+                        <a href="{{ url()->current() }}">회원 관리 (Users)</a>
                        <ul class="dep2_wrap">
                             <li class="{{ Request::is('admin/users') ? 'on' : '' }}">
                                 <a href="{{ url('admin/users') }}">회원 (Users)</a>

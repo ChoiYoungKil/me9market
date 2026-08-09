@@ -37,7 +37,7 @@
                                             </tr>
                                             <tr>
                                                 <th class="w160"><span>비밀 번호</span></th>
-                                                <td><a href="#" class="btn01 pop_btn" data-pop="pop1_1">비밀번호변경</a></td>
+                                                <td><a href="./" class="btn01 pop_btn" data-pop="pop1_1">비밀번호변경</a></td>
                                                 <th class="w160"><span>판매 권한</span></th>
                                                 <td>획득 ( 2025. 10. 10 )$$</td>
                                             </tr>
@@ -89,8 +89,8 @@
 
                                                 <!-- 하단버튼 -->
                                                 <div class="btm_btn mt10">
-                                                    <a href="#">변경하기</a>
-                                                    <a href="#" class="col5 close_btn">닫기</a>
+                                                    <a href="./">변경하기</a>
+                                                    <a href="./" class="col5 close_btn">닫기</a>
                                                 </div>
                                             </div>
                                         </div>
@@ -178,7 +178,7 @@
                                                 <td colspan="3">
                                                     <div class="addr_bx">
                                                         <input type="text" class="addr1 off" placeholder="우편번호" required="required">
-                                                        <a href="#" class="btn01">우편번호찾기</a>
+                                                        <a href="./" class="btn01">우편번호찾기</a>
                                                         <input type="text" class="addr2 off" placeholder="주소" required="required">
                                                         <input type="text" class="addr3 off" placeholder="상세주소" required="required">
                                                     </div>
@@ -350,7 +350,7 @@
                                                 <td colspan="3">
                                                     <div class="f_down">
                                                         <div class="f_name">국민은행 / 000000000-02-000000 / 통장주  </div>
-                                                        <a href="#" class="btn01">통장사본 내려받기</a>
+                                                        <a href="./" class="btn01">통장사본 내려받기</a>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -409,7 +409,7 @@
                                 </div>
                                 
                                 <div class="btm_btn mt10">
-                                    <a href="#">정보 수정</a>
+                                    <a href="./">정보 수정</a>
                                 </div>
                             </div>
                         </div>

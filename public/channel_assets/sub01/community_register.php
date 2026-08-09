@@ -21,7 +21,7 @@
                             <ul>
                                 <li><a href="../sub01/shop_info.php"><span>Shop채널 정보</span></a></li>
                                 <li><a href="../sub01/shop_product01.php"><span>판매상품</span></a></li>
-                                <li><a href="#" class="on"><span>커뮤니티</span></a></li>
+                                <li><a href="./" class="on"><span>커뮤니티</span></a></li>
                             </ul>
                         </div>
                         <div class="conbx">
@@ -87,7 +87,7 @@
                             
                                 <div class="btm_btn mt10">
                                     <a href="../sub01/shop_community.php" class="col5">목록</a>
-                                    <a href="#">등록하기</a>
+                                    <a href="./">등록하기</a>
                                 </div>
                             </div>
                         </div>

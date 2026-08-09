@@ -24,7 +24,7 @@
                     <div class="list_top1 btn">
                         <div class="count">총 <strong>{{ $charges->total() }}</strong> 건</div>
                         <div class="btn_bx">
-                            <a href="#" class="btn01 col5 pop_btn" data-pop="pop_delivery_create">배송비 등록</a>
+                            <a href="{{ url()->current() }}" class="btn01 col5 pop_btn" data-pop="pop_delivery_create">배송비 등록</a>
                         </div>
                     </div>
                     <div class="tb01 ovS">
@@ -62,8 +62,8 @@
                                         <td>{{ $paymentTypes[$charge->payment_type] ?? $charge->payment_type }}</td>
                                         <td>{{ number_format($charge->product_count) }}</td>
                                         <td>
-                                            <a href="#" class="btn02 col5 pop_btn" data-pop="pop_delivery_view_{{ $charge->id }}">보기</a>
-                                            <a href="#" class="btn02 col7 mt5 pop_btn" data-pop="pop_delivery_edit_{{ $charge->id }}">수정</a>
+                                            <a href="{{ url()->current() }}" class="btn02 col5 pop_btn" data-pop="pop_delivery_view_{{ $charge->id }}">보기</a>
+                                            <a href="{{ url()->current() }}" class="btn02 col7 mt5 pop_btn" data-pop="pop_delivery_edit_{{ $charge->id }}">수정</a>
                                             <form method="POST" action="{{ route('channel.delivery.delete', $charge->id) }}" style="display:inline;" onsubmit="return confirm('배송비 설정을 삭제하시겠습니까?');">
                                                 @csrf
                                                 <button type="submit" class="btn02 mt5">삭제</button>
@@ -96,7 +96,7 @@
                                         @include('channel.sub00.inc.delivery_charge_form', ['charge' => null])
                                         <div class="btm_btn mt10">
                                             <button type="submit">배송비 등록</button>
-                                            <a href="#" class="col5 close_btn">닫기</a>
+                                            <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                                         </div>
                                     </form>
                                 </div>
@@ -132,7 +132,7 @@
                                             </div>
                                         </div>
                                         <div class="btm_btn mt10">
-                                            <a href="#" class="col5 close_btn">닫기</a>
+                                            <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                                         </div>
                                     </div>
                                 </div>
@@ -152,7 +152,7 @@
                                             @include('channel.sub00.inc.delivery_charge_form', ['charge' => $charge])
                                             <div class="btm_btn mt10">
                                                 <button type="submit">배송비 수정</button>
-                                                <a href="#" class="col5 close_btn">닫기</a>
+                                                <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                                             </div>
                                         </form>
                                     </div>

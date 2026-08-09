@@ -239,12 +239,12 @@
                                                 {{ in_array($product->is_partial, ['Yes', 1, '1'], true) ? '부분공개' : '전체공개' }}
                                             </td>
                                             <td class="t_c">
-                                                <a href="#" class="btn02 col3 pop_btn" data-pop="pop4_1">
+                                                <a href="{{ url()->current() }}" class="btn02 col3 pop_btn" data-pop="pop4_1">
                                                     {{ $product->shop_channels_count ?? '0' }}
                                                 </a>
                                             </td>
                                             <td class="t_c">
-                                                <a href="#" class="btn02 col5 pop_btn" data-pop="pop_request_{{ $product->id }}">
+                                                <a href="{{ url()->current() }}" class="btn02 col5 pop_btn" data-pop="pop_request_{{ $product->id }}">
                                                     판매요청목록
                                                     @if(($product->sales_request_count ?? 0) > 0)
                                                         ({{ $product->sales_request_count }})
@@ -252,14 +252,14 @@
                                                 </a>
                                             </td>
                                             <td class="t_c">
-                                                <a href="#" class="btn02 col7"
+                                                <a href="{{ url()->current() }}" class="btn02 col7"
                                                     onclick='openStopNoticeModal(@json($stopNoticePayload)); return false;'>판매중지 예고신청</a>
                                             </td>
                                             <td class="t_c">
-                                                <a href="#" class="btn02 col5 pop_btn" data-pop="pop3_1" data-id="{{ $product->id }}">보기</a>
-                                                <a href="#" class="btn02 col2" onclick="copyProduct('{{ $product->id }}'); return false;">복사</a>
+                                                <a href="{{ url()->current() }}" class="btn02 col5 pop_btn" data-pop="pop3_1" data-id="{{ $product->id }}">보기</a>
+                                                <a href="{{ url()->current() }}" class="btn02 col2" onclick="copyProduct('{{ $product->id }}'); return false;">복사</a>
                                                 <a href="{{ route('channel.product.base.edit', $product->id) }}" class="btn02 col4 mt5">수정</a>
-                                                <a href="#" class="btn02 mt5" onclick="deleteProduct('{{ $product->id }}'); return false;">삭제</a>
+                                                <a href="{{ url()->current() }}" class="btn02 mt5" onclick="deleteProduct('{{ $product->id }}'); return false;">삭제</a>
                                             </td>
                                         </tr>
                                     @empty
@@ -398,15 +398,15 @@
 
                                                     <!-- 페이징 -->
                                                     <div class="page_bx1">
-                                                        <a href="#" class="page_first">first</a>
-                                                        <a href="#" class="page_prev">prev</a>
-                                                        <a href="#" class="num on">1</a>
-                                                        <a href="#" class="num">2</a>
-                                                        <a href="#" class="num">3</a>
-                                                        <a href="#" class="num">4</a>
-                                                        <a href="#" class="num">5</a>
-                                                        <a href="#" class="page_next">next</a>
-                                                        <a href="#" class="page_last">last</a>
+                                                        <a href="{{ url()->current() }}" class="page_first">first</a>
+                                                        <a href="{{ url()->current() }}" class="page_prev">prev</a>
+                                                        <a href="{{ url()->current() }}" class="num on">1</a>
+                                                        <a href="{{ url()->current() }}" class="num">2</a>
+                                                        <a href="{{ url()->current() }}" class="num">3</a>
+                                                        <a href="{{ url()->current() }}" class="num">4</a>
+                                                        <a href="{{ url()->current() }}" class="num">5</a>
+                                                        <a href="{{ url()->current() }}" class="page_next">next</a>
+                                                        <a href="{{ url()->current() }}" class="page_last">last</a>
                                                     </div>
                                                 </div>
                                             </div>
@@ -430,7 +430,7 @@
 
                                         <!-- 하단버튼 -->
                                         <div class="btm_btn mt20">
-                                            <a href="#" class="col5 close_btn">닫기</a>
+                                            <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                                         </div>
                                     </div>
                                 </div>
@@ -555,8 +555,8 @@
                                                     </div>
 
                                                     <div class="btm_btn right mt10">
-                                                        <a href="#" class="col5" onclick="handleSalesRequests({{ $requestProduct->id }}, 2); return false;">승인거절</a>
-                                                        <a href="#" onclick="handleSalesRequests({{ $requestProduct->id }}, 1); return false;">판매승인</a>
+                                                        <a href="{{ url()->current() }}" class="col5" onclick="handleSalesRequests({{ $requestProduct->id }}, 2); return false;">승인거절</a>
+                                                        <a href="{{ url()->current() }}" onclick="handleSalesRequests({{ $requestProduct->id }}, 1); return false;">판매승인</a>
                                                     </div>
                                                 </div>
                                             </div>
@@ -623,8 +623,8 @@
 
                                         <!-- 하단버튼 -->
                                         <div class="btm_btn mt10">
-                                            <a href="#" class="col5 close_btn">취소</a>
-                                            <a href="#" onclick="submitStopNotice(); return false;">확인</a>
+                                            <a href="{{ url()->current() }}" class="col5 close_btn">취소</a>
+                                            <a href="{{ url()->current() }}" onclick="submitStopNotice(); return false;">확인</a>
                                         </div>
                                     </div>
                                 </div>

@@ -93,7 +93,7 @@
                                 </div>
                                 
                                 <div class="btm_btn right mt10">
-                                    <a href="#">검색</a>
+                                    <a href="./">검색</a>
                                 </div>
                             </div>
                             <div class="con_w">
@@ -143,7 +143,7 @@
                                                 <td class="t_r">2,000원 ~ 5,000원</td>
                                                 <td class="t_l">채널 명<br>채널 코드</td>
                                                 <td>
-                                                    <a href="#" class="btn02 col2 pop_btn" data-pop="pop3_1">보기</a>
+                                                    <a href="./" class="btn02 col2 pop_btn" data-pop="pop3_1">보기</a>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -153,15 +153,15 @@
                                 <!--<div class="no_data">등록된 데이터가 없습니다.</div>-->
                                 
                                 <div class="page_bx1">
-                                    <a href="#" class="page_first">first</a>
-                                    <a href="#" class="page_prev">prev</a>
-                                    <a href="#" class="num on">1</a>
-                                    <a href="#" class="num">2</a>
-                                    <a href="#" class="num">3</a>
-                                    <a href="#" class="num">4</a>
-                                    <a href="#" class="num">5</a>
-                                    <a href="#" class="page_next">next</a>
-                                    <a href="#" class="page_last">last</a>
+                                    <a href="./" class="page_first">first</a>
+                                    <a href="./" class="page_prev">prev</a>
+                                    <a href="./" class="num on">1</a>
+                                    <a href="./" class="num">2</a>
+                                    <a href="./" class="num">3</a>
+                                    <a href="./" class="num">4</a>
+                                    <a href="./" class="num">5</a>
+                                    <a href="./" class="page_next">next</a>
+                                    <a href="./" class="page_last">last</a>
                                 </div>
                                 
                                 <!-- 보기 팝업 -->

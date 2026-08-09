@@ -44,7 +44,7 @@
                                 </div>
                                 
                                 <div class="btm_btn right mt10">
-                                    <a href="#">검색</a>
+                                    <a href="./">검색</a>
                                 </div>
                             </div>
                         </div>
@@ -55,7 +55,7 @@
                                 <div class="list_top1 btn">
                                     <div class="count">총 <strong>00</strong> 건</div>
                                     <div class="btn_bx">
-                                        <a href="#" class="btn01 col5 pop_btn" data-pop="pop1_1">서브관리자 등록</a>
+                                        <a href="./" class="btn01 col5 pop_btn" data-pop="pop1_1">서브관리자 등록</a>
                                     </div>
                                 </div>
                                 <div class="tb01 ovS">
@@ -97,9 +97,9 @@
                                                     주문관리
                                                 </td>
                                                 <td>
-                                                    <a href="#" class="btn02 col5 pop_btn" data-pop="pop2_1">보기</a>
-                                                    <a href="#" class="btn02 col7 pop_btn" data-pop="pop3_1">수정</a>
-                                                    <a href="#" class="btn02">삭제</a>
+                                                    <a href="./" class="btn02 col5 pop_btn" data-pop="pop2_1">보기</a>
+                                                    <a href="./" class="btn02 col7 pop_btn" data-pop="pop3_1">수정</a>
+                                                    <a href="./" class="btn02">삭제</a>
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -109,15 +109,15 @@
                                 <!--<div class="no_data">등록된 데이터가 없습니다.</div>-->
                                 
                                 <div class="page_bx1">
-                                    <a href="#" class="page_first">first</a>
-                                    <a href="#" class="page_prev">prev</a>
-                                    <a href="#" class="num on">1</a>
-                                    <a href="#" class="num">2</a>
-                                    <a href="#" class="num">3</a>
-                                    <a href="#" class="num">4</a>
-                                    <a href="#" class="num">5</a>
-                                    <a href="#" class="page_next">next</a>
-                                    <a href="#" class="page_last">last</a>
+                                    <a href="./" class="page_first">first</a>
+                                    <a href="./" class="page_prev">prev</a>
+                                    <a href="./" class="num on">1</a>
+                                    <a href="./" class="num">2</a>
+                                    <a href="./" class="num">3</a>
+                                    <a href="./" class="num">4</a>
+                                    <a href="./" class="num">5</a>
+                                    <a href="./" class="page_next">next</a>
+                                    <a href="./" class="page_last">last</a>
                                 </div>
                                 
                                 <!-- 팝업 -->
@@ -150,7 +150,7 @@
                                                                         <td>
                                                                             <div class="r_btn_w">
                                                                                 <input type="text" required="required">
-                                                                                <a href="#" class="btn01">회원찾기</a>
+                                                                                <a href="./" class="btn01">회원찾기</a>
                                                                             </div>
                                                                         </td>
                                                                     </tr>
@@ -240,8 +240,8 @@
 
                                                 <!-- 하단버튼 -->
                                                 <div class="btm_btn mt10">
-                                                    <a href="#">서브관리자 등록</a>
-                                                    <a href="#" class="col5 close_btn">닫기</a>
+                                                    <a href="./">서브관리자 등록</a>
+                                                    <a href="./" class="col5 close_btn">닫기</a>
                                                 </div>
                                             </div>
                                         </div>
@@ -318,7 +318,7 @@
 
                                                 <!-- 하단버튼 -->
                                                 <div class="btm_btn mt10">
-                                                    <a href="#" class="col5 close_btn">닫기</a>
+                                                    <a href="./" class="col5 close_btn">닫기</a>
                                                 </div>
                                             </div>
                                         </div>
@@ -354,7 +354,7 @@
                                                                         <td>
                                                                             <div class="r_btn_w">
                                                                                 <input type="text" required="required">
-                                                                                <a href="#" class="btn01">회원찾기</a>
+                                                                                <a href="./" class="btn01">회원찾기</a>
                                                                             </div>
                                                                         </td>
                                                                     </tr>
@@ -444,8 +444,8 @@
 
                                                 <!-- 하단버튼 -->
                                                 <div class="btm_btn mt10">
-                                                    <a href="#">서브관리자 수정</a>
-                                                    <a href="#" class="col5 close_btn">닫기</a>
+                                                    <a href="./">서브관리자 수정</a>
+                                                    <a href="./" class="col5 close_btn">닫기</a>
                                                 </div>
                                             </div>
                                         </div>

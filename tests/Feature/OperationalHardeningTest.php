@@ -96,4 +96,39 @@ class OperationalHardeningTest extends TestCase
         $this->assertEquals(1, Vendor::where('email', 'john@admin.com')->count());
         $this->assertEquals(1, Admin::where('email', 'john@admin.com')->count());
     }
+
+    public function test_blade_views_do_not_contain_empty_hash_links_or_actions()
+    {
+        $paths = [
+            resource_path('views'),
+            public_path('channel_assets'),
+            public_path('master_assets'),
+        ];
+        $violations = [];
+
+        foreach ($paths as $path) {
+            if (!is_dir($path)) {
+                continue;
+            }
+
+            $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($path));
+
+            foreach ($files as $file) {
+                if (!$file->isFile() || !preg_match('/\.(blade\.php|php|html)$/', $file->getFilename())) {
+                    continue;
+                }
+
+                $contents = file_get_contents($file->getPathname());
+                preg_match_all('/\b(?:href|action)\s*=\s*([\'"])#\1/i', $contents, $matches, PREG_OFFSET_CAPTURE);
+
+                foreach ($matches[0] as $match) {
+                    $line = substr_count(substr($contents, 0, $match[1]), "\n") + 1;
+                    $relativePath = str_replace(base_path() . DIRECTORY_SEPARATOR, '', $file->getPathname());
+                    $violations[] = "{$relativePath}:{$line} {$match[0]}";
+                }
+            }
+        }
+
+        $this->assertSame([], $violations, "Empty hash links/actions remain:\n" . implode("\n", $violations));
+    }
 }

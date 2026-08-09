@@ -86,7 +86,7 @@
                                         <td>{{ $item->name }}</td>
                                         <td>({{ $item->pincode }}) {{ $item->address }} {{ $item->city }}</td>
                                         <td>
-                                            <a href="#" class="btn02 col2 pop_btn" data-pop="pop2_1" data-id="{{ $item->id }}"
+                                            <a href="{{ url()->current() }}" class="btn02 col2 pop_btn" data-pop="pop2_1" data-id="{{ $item->id }}"
                                                 data-name="{{ $item->name }}" data-zipcode="{{ $item->pincode }}"
                                                 data-addr1="{{ $item->address }}" data-addr2="{{ $item->city }}"
                                                 data-default="{{ $item->is_default }}">수정</a>
@@ -125,7 +125,7 @@
                         </div>
 
                         <!-- 하단버튼 -->
-                        <a href="#" class="pop_btn" data-pop="pop1_1">배송지 추가하기</a>
+                        <a href="{{ url()->current() }}" class="pop_btn" data-pop="pop1_1">배송지 추가하기</a>
                     </div>
 
                     <!-- 배송지 추가하기 팝업 -->
@@ -196,7 +196,7 @@
                                         <!-- 하단버튼 -->
                                         <div class="btm_btn mt10">
                                             <a href="javascript:;" onclick="submitAddDelivery()">배송지 추가하기</a>
-                                            <a href="#" class="col5 close_btn">닫기</a>
+                                            <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                                         </div>
                                     </form>
                                 </div>
@@ -270,7 +270,7 @@
                                         <div class="btm_btn mt10">
                                             <a href="javascript:;"
                                                 onclick="document.getElementById('editDeliveryForm').submit();">배송지 수정하기</a>
-                                            <a href="#" class="col5 close_btn">닫기</a>
+                                            <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                                         </div>
                                     </div>
                                 </form>
@@ -294,7 +294,7 @@
                                     </div>
                                     <div class="btm_btn mt10">
                                         <a href="javascript:;" onclick="document.getElementById('addDeliveryForm').submit();">확인</a>
-                                        <a href="#" class="col5 close_btn">닫기</a>
+                                        <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                                     </div>
                                 </div>
                             </div>

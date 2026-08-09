@@ -41,12 +41,12 @@
                         <div class="sns_bx">
                             <div class="txt"><span>간편회원 로그인</span></div>
                             <ul>
-                                <li class="icon1"><a href="#">kakaotalk</a></li>
-                                <li class="icon2"><a href="#">naver</a></li>
-                                <li class="icon3"><a href="#">gmail</a></li>
+                                <li class="icon1"><a href="{{ url()->current() }}">kakaotalk</a></li>
+                                <li class="icon2"><a href="{{ url()->current() }}">naver</a></li>
+                                <li class="icon3"><a href="{{ url()->current() }}">gmail</a></li>
                             </ul>
                         </div>
-                        <a href="#" class="btn2">비회원 구매조회</a>
+                        <a href="{{ url()->current() }}" class="btn2">비회원 구매조회</a>
                     </div>
                 </div>
             </div>

@@ -37,7 +37,7 @@
                                         <th class="w160"><span>아이디</span></th>
                                         <td>{{ Auth::user()->username }}</td>
                                         <th class="w160"><span>비밀번호</span></th>
-                                        <td><a class="btn01 pop_btn" href="#" data-pop="pop1_1">비밀번호변경</a></td>
+                                        <td><a class="btn01 pop_btn" href="{{ url()->current() }}" data-pop="pop1_1">비밀번호변경</a></td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -100,7 +100,7 @@
                                             <!-- 하단버튼 -->
                                             <div class="btm_btn mt10">
                                                 <button type="button" id="submitPasswordChange" class="btn_submit" style="border:0; cursor:pointer;">변경하기</button>
-                                                <a href="#" class="col5 close_btn">닫기</a>
+                                                <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                                             </div>
                                         </div>
                                     </div>
@@ -155,7 +155,7 @@
                                                     <input type="text" class="tel2" name="mobile_3" required="required"
                                                         value="{{ $userMobile[2] ?? '' }}">
                                                 </div>
-                                                <a href="#" class="btn01 col5">본인인증</a>
+                                                <a href="{{ url()->current() }}" class="btn01 col5">본인인증</a>
                                             </div>
                                             <span class="fcol2 r_txt">( 현재 개발중 )</span>
                                         </td>

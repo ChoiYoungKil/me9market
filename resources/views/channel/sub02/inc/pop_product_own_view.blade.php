@@ -157,7 +157,7 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt20" style="text-align: center;">
-                    <a href="#" class="close_btn"
+                    <a href="{{ url()->current() }}" class="close_btn"
                         style="display: inline-block; width: 120px; height: 40px; line-height: 40px; background: #000; color: #fff; text-align: center; font-size: 14px; font-weight: bold;">창닫기</a>
                 </div>
             </div>

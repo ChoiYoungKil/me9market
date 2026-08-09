@@ -56,7 +56,7 @@
                     <div class="list_top1 btn">
                         <div class="count">총 <strong>{{ $accounts->total() }}</strong> 건</div>
                         <div class="btn_bx">
-                            <a href="#" class="btn01 col5 pop_btn" data-pop="pop_sub_create">서브관리자 등록</a>
+                            <a href="{{ url()->current() }}" class="btn01 col5 pop_btn" data-pop="pop_sub_create">서브관리자 등록</a>
                         </div>
                     </div>
                     <div class="tb01 ovS">
@@ -101,8 +101,8 @@
                                         </td>
                                         <td>{!! $permissions ?: '-' !!}</td>
                                         <td>
-                                            <a href="#" class="btn02 col5 pop_btn" data-pop="pop_sub_view_{{ $account->id }}">보기</a>
-                                            <a href="#" class="btn02 col7 pop_btn" data-pop="pop_sub_edit_{{ $account->id }}">수정</a>
+                                            <a href="{{ url()->current() }}" class="btn02 col5 pop_btn" data-pop="pop_sub_view_{{ $account->id }}">보기</a>
+                                            <a href="{{ url()->current() }}" class="btn02 col7 pop_btn" data-pop="pop_sub_edit_{{ $account->id }}">수정</a>
                                             <form method="POST" action="{{ route('channel.sub_accounts.delete', $account->id) }}" style="display:inline;" onsubmit="return confirm('서브관리자를 삭제하시겠습니까?');">
                                                 @csrf
                                                 <button type="submit" class="btn02">삭제</button>
@@ -135,7 +135,7 @@
                                         @include('channel.sub00.inc.sub_account_form', ['account' => null])
                                         <div class="btm_btn mt10">
                                             <button type="submit">서브관리자 등록</button>
-                                            <a href="#" class="col5 close_btn">닫기</a>
+                                            <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                                         </div>
                                     </form>
                                 </div>
@@ -173,7 +173,7 @@
                                             </div>
                                         </div>
                                         <div class="btm_btn mt10">
-                                            <a href="#" class="col5 close_btn">닫기</a>
+                                            <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                                         </div>
                                     </div>
                                 </div>
@@ -193,7 +193,7 @@
                                             @include('channel.sub00.inc.sub_account_form', ['account' => $account])
                                             <div class="btm_btn mt10">
                                                 <button type="submit">서브관리자 수정</button>
-                                                <a href="#" class="col5 close_btn">닫기</a>
+                                                <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                                             </div>
                                         </form>
                                     </div>
