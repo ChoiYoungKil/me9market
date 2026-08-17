@@ -12,8 +12,8 @@ class Sms extends Model
 
 
     // Sending an offline SMS using an SMS API
-    public static function sendSms($message, $mobile, ?int $vendorId = null, ?int $shopChannelId = null, int $pointPerMessage = 20) {
-        if ($vendorId) {
+    public static function sendSms($message, $mobile, ?int $vendorId = null, ?int $shopChannelId = null, int $pointPerMessage = 20, bool $debitPoints = true) {
+        if ($vendorId && $debitPoints) {
             $debited = app(\App\Services\ChannelPointService::class)->recordSmsDebit(
                 $vendorId,
                 1,

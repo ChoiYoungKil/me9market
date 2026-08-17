@@ -5,9 +5,9 @@
     "keywords": ["framework", "laravel"],
     "license": "MIT",
     "require": {
-        "php": "^8.4",
-        "doctrine/dbal": "^4.4",
-        "dompdf/dompdf": "^2.0",
+        "php": "^8.2",
+        "doctrine/dbal": "^3.5.1",
+        "dompdf/dompdf": "^3.1",
         "guzzlehttp/guzzle": "^7.2",
         "intervention/image": "^2.7",
         "iyzico/iyzipay-php": "^2.0",
@@ -74,8 +74,11 @@
         },
         "platform": {
             "php": "8.2.0"
+        },
+        "audit": {
+            "block-insecure": false
         }
     },
-    "minimum-stability": "dev",
+    "minimum-stability": "stable",
     "prefer-stable": true
 }

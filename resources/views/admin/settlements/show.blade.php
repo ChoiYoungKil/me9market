@@ -81,8 +81,8 @@
                                     <tr>
                                         <th>포인트 예수금 / 사용</th>
                                         <td>{{ number_format($settlement->point_deposit_amount ?? 0) }}P / {{ number_format($settlement->point_used_amount ?? 0) }}P</td>
-                                        <th>Me9 수수료</th>
-                                        <td>{{ number_format($settlement->admin_amount) }}원</td>
+                                        <th>SMS 후불 / Me9 수수료</th>
+                                        <td>{{ number_format($settlement->sms_postpaid_amount ?? 0) }}원 / {{ number_format($settlement->admin_amount) }}원</td>
                                     </tr>
                                     <tr>
                                         <th>주문 / 품목</th>
@@ -128,6 +128,7 @@
                                     <col width="130px">
                                     <col width="130px">
                                     <col width="130px">
+                                    <col width="130px">
                                 </colgroup>
                                 <thead>
                                     <tr>
@@ -141,6 +142,7 @@
                                         <th>매출</th>
                                         <th>매입</th>
                                         <th>포인트</th>
+                                        <th>SMS 후불</th>
                                         <th>지급액</th>
                                         <th>Me9 수수료</th>
                                     </tr>
@@ -158,6 +160,7 @@
                                             <td class="t_r">{{ number_format($item->invoice_sales_amount ?? $item->gross_sales_amount) }}원</td>
                                             <td class="t_r">{{ number_format($item->invoice_purchase_amount ?? 0) }}원</td>
                                             <td class="t_r">{{ number_format($item->point_deposit_amount ?? 0) }} / {{ number_format($item->point_used_amount ?? 0) }}P</td>
+                                            <td class="t_r">{{ number_format($item->sms_postpaid_amount ?? 0) }}원</td>
                                             <td class="t_r bold fcol4">
                                                 {{ number_format($item->payout_amount ?? $item->settlement_amount) }}원
                                                 @if(($item->payment_gateway_type ?? 'me9_pg') === 'own_pg')
@@ -168,7 +171,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="12" class="no_data">정산 상세 품목이 없습니다.</td>
+                                            <td colspan="13" class="no_data">정산 상세 품목이 없습니다.</td>
                                         </tr>
                                     @endforelse
                                 </tbody>
@@ -181,6 +184,7 @@
                                             <th class="t_r">{{ number_format($detailTotals['invoice_sales_amount'] ?? $detailTotals['gross_sales_amount']) }}원</th>
                                             <th class="t_r">{{ number_format($detailTotals['invoice_purchase_amount'] ?? 0) }}원</th>
                                             <th class="t_r">{{ number_format($detailTotals['point_deposit_amount'] ?? 0) }} / {{ number_format($detailTotals['point_used_amount'] ?? 0) }}P</th>
+                                            <th class="t_r">{{ number_format($detailTotals['sms_postpaid_amount'] ?? 0) }}원</th>
                                             <th class="t_r">{{ number_format($detailTotals['payout_amount'] ?? $detailTotals['settlement_amount']) }}원</th>
                                             <th class="t_r">{{ number_format($detailTotals['admin_amount']) }}원</th>
                                         </tr>

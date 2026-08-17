@@ -72,6 +72,12 @@
                                             <td colspan="3">{{ number_format($summary->invoice_sales_amount ?? $summary->gross_sales_amount) }} 원 / {{ number_format($summary->invoice_purchase_amount ?? 0) }} 원</td>
                                         </tr>
                                         <tr>
+                                            <th>포인트 예수금 / 사용</th>
+                                            <td>{{ number_format($summary->point_deposit_amount ?? 0) }} P / {{ number_format($summary->point_used_amount ?? 0) }} P</td>
+                                            <th>SMS 후불</th>
+                                            <td>{{ number_format($summary->sms_postpaid_amount ?? 0) }} 원</td>
+                                        </tr>
+                                        <tr>
                                             <th>지급액</th>
                                             <td colspan="3"><strong class="fcol4">{{ number_format($summary->payout_amount ?? $summary->settlement_amount) }} 원</strong></td>
                                         </tr>
@@ -96,6 +102,7 @@
                                     <col width="120px">
                                     <col width="120px">
                                     <col width="120px">
+                                    <col width="120px">
                                 </colgroup>
                                 <thead>
                                     <tr>
@@ -108,6 +115,7 @@
                                         <th>매출</th>
                                         <th>매입</th>
                                         <th>포인트</th>
+                                        <th>SMS 후불</th>
                                         <th>지급액</th>
                                     </tr>
                                 </thead>
@@ -126,6 +134,7 @@
                                             <td class="t_r">{{ number_format($item->invoice_sales_amount ?? $item->gross_sales_amount) }} 원</td>
                                             <td class="t_r">{{ number_format($item->invoice_purchase_amount ?? 0) }} 원</td>
                                             <td class="t_r">{{ number_format($item->point_deposit_amount ?? 0) }} / {{ number_format($item->point_used_amount ?? 0) }} P</td>
+                                            <td class="t_r">{{ number_format($item->sms_postpaid_amount ?? 0) }} 원</td>
                                             <td class="t_r">
                                                 <span class="bold">{{ number_format($item->payout_amount ?? $item->settlement_amount) }} 원</span>
                                                 @if(($item->payment_gateway_type ?? 'me9_pg') === 'own_pg')
@@ -135,7 +144,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="10" class="no_data">내역이 없습니다.</td>
+                                            <td colspan="11" class="no_data">내역이 없습니다.</td>
                                         </tr>
                                     @endforelse
                                 </tbody>
@@ -148,6 +157,7 @@
                                             <th class="t_r">{{ number_format($totals['invoice_sales_amount'] ?? $totals['gross_sales_amount']) }} 원</th>
                                             <th class="t_r">{{ number_format($totals['invoice_purchase_amount'] ?? 0) }} 원</th>
                                             <th class="t_r">{{ number_format($totals['point_deposit_amount'] ?? 0) }} / {{ number_format($totals['point_used_amount'] ?? 0) }} P</th>
+                                            <th class="t_r">{{ number_format($totals['sms_postpaid_amount'] ?? 0) }} 원</th>
                                             <th class="t_r">{{ number_format($totals['payout_amount'] ?? $totals['settlement_amount']) }} 원</th>
                                         </tr>
                                     </tfoot>

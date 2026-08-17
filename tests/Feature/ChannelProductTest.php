@@ -132,6 +132,67 @@ class ChannelProductTest extends TestCase
         ]);
     }
 
+    public function test_common_pg_own_product_rejects_price_below_minimum_with_reward_points()
+    {
+        list($vendor, $admin, $shop, $product) = $this->createSetup();
+        $shop->update(['settlement_rate' => 5, 'use_own_pg' => false]);
+        $product->update(['product_price' => 10000, 'reward_points' => 500]);
+
+        $response = $this->actingAs($admin, 'admin')->post('/channel/shop/product/own/store', [
+            'shop_id' => $shop->id,
+            'product_id' => $product->id,
+            'selling_price' => 10000,
+        ], [
+            'X-Requested-With' => 'XMLHttpRequest'
+        ]);
+
+        $response->assertJson([
+            'status' => false,
+        ]);
+        $this->assertStringContainsString('최소 판매가는', $response->json('message'));
+    }
+
+    public function test_fixed_shared_product_rebate_must_cover_commission_and_reward_points()
+    {
+        list($vendor, $admin, $shop, $product) = $this->createSetup();
+        $shop->update(['settlement_rate' => 5, 'use_own_pg' => false]);
+
+        $publicProduct = Product::create([
+            'section_id' => 1,
+            'category_id' => 1,
+            'brand_id' => 1,
+            'vendor_id' => 999,
+            'admin_id' => 999,
+            'admin_type' => 'vendor',
+            'product_name' => 'Fixed Shared Product',
+            'product_code' => 'FIXED123',
+            'product_color' => 'Black',
+            'product_price' => 10000,
+            'product_discount' => 0,
+            'product_weight' => 500,
+            'reward_points' => 500,
+            'price_constraint_enabled' => true,
+            'price_constraint_type' => 'fixed',
+            'price_fixed' => 10000,
+            'profit_share_type' => 'fixed',
+            'profit_share_value' => 600,
+            'status' => 1,
+        ]);
+
+        $response = $this->actingAs($admin, 'admin')->post('/channel/shop/product/public/store', [
+            'shop_id' => $shop->id,
+            'product_id' => $publicProduct->id,
+            'selling_price' => 10000,
+        ], [
+            'X-Requested-With' => 'XMLHttpRequest'
+        ]);
+
+        $response->assertJson([
+            'status' => false,
+        ]);
+        $this->assertStringContainsString('수수료와 지급 포인트', $response->json('message'));
+    }
+
     public function test_store_partial_product()
     {
         list($vendor, $admin, $shop, $product) = $this->createSetup();

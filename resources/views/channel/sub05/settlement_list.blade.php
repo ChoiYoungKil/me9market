@@ -68,6 +68,7 @@
                                     <col width="140px">
                                     <col width="140px">
                                     <col width="140px">
+                                    <col width="140px">
                                     <col width="100px">
                                     <col width="100px">
                                 </colgroup>
@@ -83,6 +84,7 @@
                                         <th>매입</th>
                                         <th>포인트 예수금</th>
                                         <th>포인트 사용</th>
+                                        <th>SMS 후불</th>
                                         <th>지급액</th>
                                         <th>상태</th>
                                         <th>상세보기</th>
@@ -105,6 +107,7 @@
                                                 <td class="t_r">{{ number_format($settlement->invoice_purchase_amount ?? 0) }} 원</td>
                                                 <td class="t_r">{{ number_format($settlement->point_deposit_amount ?? 0) }} P</td>
                                                 <td class="t_r">{{ number_format($settlement->point_used_amount ?? 0) }} P</td>
+                                                <td class="t_r">{{ number_format($settlement->sms_postpaid_amount ?? 0) }} 원</td>
                                                 <td class="t_r">
                                                     <span class="bold fcol4">{{ number_format($settlement->payout_amount ?? $settlement->settlement_amount) }} 원</span>
                                                     @if(($settlement->payment_gateway_type ?? 'me9_pg') === 'own_pg')
@@ -126,7 +129,7 @@
                                         @endforeach
                                     @else
                                         <tr>
-                                            <td colspan="13" class="no_data">정산 내역이 없습니다.</td>
+                                            <td colspan="14" class="no_data">정산 내역이 없습니다.</td>
                                         </tr>
                                     @endif
                                 </tbody>
@@ -139,6 +142,7 @@
                                             <th class="t_r">{{ number_format($totals['invoice_purchase_amount'] ?? 0) }} 원</th>
                                             <th class="t_r">{{ number_format($totals['point_deposit_amount'] ?? 0) }} P</th>
                                             <th class="t_r">{{ number_format($totals['point_used_amount'] ?? 0) }} P</th>
+                                            <th class="t_r">{{ number_format($totals['sms_postpaid_amount'] ?? 0) }} 원</th>
                                             <th class="t_r">{{ number_format($totals['payout_amount'] ?? $totals['settlement_amount']) }} 원</th>
                                             <th colspan="2"></th>
                                         </tr>

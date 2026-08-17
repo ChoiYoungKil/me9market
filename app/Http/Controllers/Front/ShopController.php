@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\OrderClaim;
 use App\Models\OrdersProduct;
+use App\Services\ShopChannelSmsService;
 use App\Services\ShopChannelRuntime;
 use App\Support\OrderItemStatus;
 
@@ -122,6 +123,7 @@ class ShopController extends Controller
             $item->confirmed_at = now();
             $item->save();
             app(\App\Services\ChannelPointService::class)->recordCustomerPayback($item);
+            app(ShopChannelSmsService::class)->send($shop, $item->order, $item, ShopChannelSmsService::TYPE_PURCHASE_CONFIRMED);
 
             return back()->with('flash_message_success', '구매확정 처리되었습니다.');
         }
@@ -149,6 +151,15 @@ class ShopController extends Controller
                 'detail_reason' => $data['reason'] ?: null,
             ]
         );
+
+        if (in_array($data['action'], ['cancel', 'return'], true)) {
+            app(ShopChannelSmsService::class)->send(
+                $shop,
+                $item->order,
+                $item,
+                $data['action'] === 'cancel' ? ShopChannelSmsService::TYPE_CANCEL : ShopChannelSmsService::TYPE_RETURN
+            );
+        }
 
         return back()->with('flash_message_success', $item->status_label . ' 상태로 접수되었습니다.');
     }

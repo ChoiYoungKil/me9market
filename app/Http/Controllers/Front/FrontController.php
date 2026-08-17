@@ -446,6 +446,15 @@ class FrontController extends Controller
             $ordersProduct->confirmed_at = now();
             $ordersProduct->save();
             app(\App\Services\ChannelPointService::class)->recordCustomerPayback($ordersProduct);
+            $ordersProduct->loadMissing('shopChannel');
+            if ($ordersProduct->shopChannel) {
+                app(\App\Services\ShopChannelSmsService::class)->send(
+                    $ordersProduct->shopChannel,
+                    $order,
+                    $ordersProduct,
+                    \App\Services\ShopChannelSmsService::TYPE_PURCHASE_CONFIRMED
+                );
+            }
 
             // Save rating and review to ratings table
             \Illuminate\Support\Facades\DB::table('ratings')->insert([
@@ -552,10 +561,15 @@ class FrontController extends Controller
     public function shopGateSubmit(Request $request)
     {
         $request->validate([
-            'entry_code' => 'required'
+            'entry_code' => 'required',
+            'phone' => 'nullable|string|max:30',
         ]);
 
-        $shop = app(ShopChannelRuntime::class)->enterChannel($request->entry_code);
+        $runtime = app(ShopChannelRuntime::class);
+        $phone = trim((string) $request->input('phone', ''));
+        $shop = $phone !== ''
+            ? ($runtime->enterPrivateChannel($phone, $request->entry_code) ?: $runtime->enterChannel($request->entry_code, $phone))
+            : $runtime->enterChannel($request->entry_code);
         if ($shop) {
             return redirect()->route('shop.channel_main')->with('flash_message_success', $shop->channel_name . '에 입장했습니다.');
         }

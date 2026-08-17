@@ -12,6 +12,7 @@ use App\Models\Product;
 use App\Models\Section;
 use App\Models\ShopChannel;
 use App\Models\ShopChannelNotice;
+use App\Models\ShopChannelPrivateAccess;
 use App\Models\ShopChannelProduct;
 use App\Models\User;
 use App\Models\Vendor;
@@ -28,6 +29,7 @@ class ShopChannelRuntime
 {
     private const CART_KEY = 'shop_channel_cart';
     private const CHANNEL_KEY = 'shop_channel_id';
+    private const PRIVATE_ACCESS_KEY = 'shop_channel_private_access_id';
 
     public function ensureAdminLoginAccount(): Admin
     {
@@ -419,21 +421,83 @@ class ShopChannelRuntime
         return $shop;
     }
 
-    public function enterChannel(string $entryCode): ?ShopChannel
+    public function enterChannel(string $entryCode, ?string $phone = null): ?ShopChannel
     {
         $this->seedDemoDataIfAllowed();
 
-        $shop = ShopChannel::where('channel_code', $entryCode)
-            ->orWhere('password', $entryCode)
-            ->first();
+        $shop = ShopChannel::where('channel_code', $entryCode)->first()
+            ?: ShopChannel::where('password', $entryCode)->first();
 
         if (!$shop || (int) $shop->status !== 1) {
             return null;
         }
 
+        if ((int) $shop->is_public === 0) {
+            $access = $this->privateAccess($shop, (string) $phone, $entryCode);
+            $usesLegacyPassword = trim((string) $shop->password) !== '' && hash_equals((string) $shop->password, trim($entryCode));
+            if (!$access && !$usesLegacyPassword) {
+                return null;
+            }
+
+            if ($access) {
+                $access->forceFill([
+                    'first_accessed_at' => $access->first_accessed_at ?: now(),
+                    'access_count' => (int) $access->access_count + 1,
+                ])->save();
+                Session::put(self::PRIVATE_ACCESS_KEY, $access->id);
+            } else {
+                Session::forget(self::PRIVATE_ACCESS_KEY);
+            }
+        } else {
+            Session::forget(self::PRIVATE_ACCESS_KEY);
+        }
+
         Session::put(self::CHANNEL_KEY, $shop->id);
 
         return $shop;
+    }
+
+    public function enterPrivateChannel(string $phone, string $entryCode): ?ShopChannel
+    {
+        $this->seedDemoDataIfAllowed();
+
+        $normalizedPhone = ShopChannelPrivateAccess::normalizePhone($phone);
+        if ($normalizedPhone === '' || trim($entryCode) === '') {
+            return null;
+        }
+
+        $access = ShopChannelPrivateAccess::with('shopChannel')
+            ->where('phone_normalized', $normalizedPhone)
+            ->where('entry_code', trim($entryCode))
+            ->whereHas('shopChannel', fn ($query) => $query->where('status', 1)->where('is_public', 0))
+            ->first();
+
+        if (!$access || !$access->shopChannel) {
+            return null;
+        }
+
+        $access->forceFill([
+            'first_accessed_at' => $access->first_accessed_at ?: now(),
+            'access_count' => (int) $access->access_count + 1,
+        ])->save();
+
+        Session::put(self::PRIVATE_ACCESS_KEY, $access->id);
+        Session::put(self::CHANNEL_KEY, $access->shopChannel->id);
+
+        return $access->shopChannel;
+    }
+
+    private function privateAccess(ShopChannel $shop, string $phone, string $entryCode): ?ShopChannelPrivateAccess
+    {
+        $normalizedPhone = ShopChannelPrivateAccess::normalizePhone($phone);
+        if ($normalizedPhone === '') {
+            return null;
+        }
+
+        return ShopChannelPrivateAccess::where('shop_channel_id', $shop->id)
+            ->where('phone_normalized', $normalizedPhone)
+            ->where('entry_code', trim($entryCode))
+            ->first();
     }
 
     public function canSeedDemoData(): bool
@@ -568,6 +632,7 @@ class ShopChannelRuntime
             $order->save();
 
             $jointPurchaseIds = [];
+            $createdItems = collect();
             foreach ($items as $item) {
                 $shopProduct = $item['shop_product'];
                 $product = $item['product'];
@@ -605,6 +670,7 @@ class ShopChannelRuntime
                     'commission' => round($item['line_total'] * 0.1),
                     'settlement_status' => 'pending',
                 ]);
+                $createdItems->push($orderItem);
 
                 if ($isJointPurchase) {
                     $jointPurchaseIds[] = (int) $item['joint_purchase']->id;
@@ -613,6 +679,21 @@ class ShopChannelRuntime
 
             foreach (array_unique($jointPurchaseIds) as $jointPurchaseId) {
                 app(JointPurchasePricingService::class)->repricePurchase($jointPurchaseId);
+            }
+
+            if (Session::has(self::PRIVATE_ACCESS_KEY)) {
+                ShopChannelPrivateAccess::where('id', Session::get(self::PRIVATE_ACCESS_KEY))
+                    ->where('shop_channel_id', $shop->id)
+                    ->increment('purchase_count');
+            }
+
+            if ($shop->use_purchase_sms) {
+                DB::afterCommit(fn () => app(ShopChannelSmsService::class)->send(
+                    $shop,
+                    $order,
+                    $createdItems->first(),
+                    ShopChannelSmsService::TYPE_PURCHASE
+                ));
             }
 
             Session::forget(self::CART_KEY);

@@ -772,6 +772,15 @@ class UserController extends Controller
             $item->confirmed_at = now();
             $item->save();
             app(\App\Services\ChannelPointService::class)->recordCustomerPayback($item);
+            $item->loadMissing('shopChannel');
+            if ($item->shopChannel) {
+                app(\App\Services\ShopChannelSmsService::class)->send(
+                    $item->shopChannel,
+                    $order,
+                    $item,
+                    \App\Services\ShopChannelSmsService::TYPE_PURCHASE_CONFIRMED
+                );
+            }
 
             // Save rating and review to ratings table
             \Illuminate\Support\Facades\DB::table('ratings')->insert([

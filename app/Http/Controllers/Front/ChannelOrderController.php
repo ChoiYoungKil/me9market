@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Models\Order;
 use App\Models\OrdersProduct; // 주문 상품 모델 가정
 use App\Services\ChannelPointService;
+use App\Services\ShopChannelSmsService;
 use App\Support\OrderItemStatus;
 
 class ChannelOrderController extends Controller
@@ -66,7 +67,7 @@ class ChannelOrderController extends Controller
                     $item->save();
                 }
 
-                $this->debitStatusSmsPoints($vendor_id, $status, $items);
+                $this->handleStatusSms($vendor_id, $status, $items);
 
                 // Check if all items in order are shipped, then maybe update main order status?
                 // For now, we stick to item status updates.
@@ -137,6 +138,7 @@ class ChannelOrderController extends Controller
                 }
 
                 DB::commit();
+                $this->handleStatusSms($vendor_id, OrderItemStatus::CANCELLED, $items);
 
                 return response()->json(['status' => true, 'message' => '취소 처리가 완료되었습니다.']);
 
@@ -197,6 +199,7 @@ class ChannelOrderController extends Controller
                 }
                 
                 DB::commit();
+                $this->handleStatusSms($vendor_id, OrderItemStatus::RETURN_REQUESTED, $items);
 
                 return response()->json(['status' => true, 'message' => '반품 요청이 접수되었습니다.']);
             } catch (\Exception $e) {
@@ -274,6 +277,7 @@ class ChannelOrderController extends Controller
     private function vendorItems(array $itemIds, int $vendorId, int $orderId)
     {
         return OrdersProduct::whereIn('id', $itemIds)
+            ->with(['order', 'shopChannel'])
             ->where('vendor_id', $vendorId)
             ->where('order_id', $orderId)
             ->get();
@@ -294,7 +298,13 @@ class ChannelOrderController extends Controller
         }
     }
 
-    private function debitStatusSmsPoints(int $vendorId, string $status, $items): void
+    private function handleStatusSms(int $vendorId, string $status, $items): void
+    {
+        $this->debitLegacyStatusSmsPoints($vendorId, $status, $items);
+        $this->sendTemplateStatusSms($status, $items);
+    }
+
+    private function debitLegacyStatusSmsPoints(int $vendorId, string $status, $items): void
     {
         if (!in_array($status, [OrderItemStatus::SHIPPING, OrderItemStatus::DELIVERED], true)) {
             return;
@@ -318,6 +328,26 @@ class ChannelOrderController extends Controller
                 $item->sms_count = (int) $item->sms_count + 1;
                 $item->sms_fee = (int) $item->sms_fee + abs((int) $transaction->points);
                 $item->save();
+            }
+        }
+    }
+
+    private function sendTemplateStatusSms(string $status, $items): void
+    {
+        $type = match ($status) {
+            OrderItemStatus::CONFIRMED => ShopChannelSmsService::TYPE_PURCHASE_CONFIRMED,
+            OrderItemStatus::CANCELLED => ShopChannelSmsService::TYPE_CANCEL,
+            OrderItemStatus::RETURNED, OrderItemStatus::RETURN_REQUESTED => ShopChannelSmsService::TYPE_RETURN,
+            default => null,
+        };
+
+        if (!$type) {
+            return;
+        }
+
+        foreach ($items as $item) {
+            if ($item->shopChannel && $item->order) {
+                app(ShopChannelSmsService::class)->send($item->shopChannel, $item->order, $item, $type);
             }
         }
     }

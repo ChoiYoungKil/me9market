@@ -60,6 +60,7 @@ class SettlementController extends Controller
                 'invoice_purchase_amount' => $run->invoice_purchase_amount,
                 'point_deposit_amount' => $run->point_deposit_amount,
                 'point_used_amount' => $run->point_used_amount,
+                'sms_postpaid_amount' => $run->sms_postpaid_amount,
                 'payout_amount' => $run->payout_amount,
                 'settlement_amount' => $run->settlement_amount,
                 'admin_amount' => $run->admin_amount,
@@ -79,6 +80,7 @@ class SettlementController extends Controller
             'invoice_purchase_amount' => $rows->sum('invoice_purchase_amount'),
             'point_deposit_amount' => $rows->sum('point_deposit_amount'),
             'point_used_amount' => $rows->sum('point_used_amount'),
+            'sms_postpaid_amount' => $rows->sum('sms_postpaid_amount'),
             'payout_amount' => $rows->sum('payout_amount'),
             'settlement_amount' => $rows->sum('settlement_amount'),
             'admin_amount' => $rows->sum('admin_amount'),
@@ -323,6 +325,7 @@ class SettlementController extends Controller
             'invoice_purchase_amount' => round((float) $rows->sum('invoice_purchase_amount'), 2),
             'point_deposit_amount' => round((float) $rows->sum('point_deposit_amount'), 2),
             'point_used_amount' => round((float) $rows->sum('point_used_amount'), 2),
+            'sms_postpaid_amount' => round((float) $rows->sum('sms_postpaid_amount'), 2),
             'payout_amount' => round((float) $rows->sum('payout_amount'), 2),
             'settlement_amount' => round((float) $rows->sum('settlement_amount'), 2),
             'admin_amount' => round((float) $rows->sum('admin_amount'), 2),
@@ -337,7 +340,7 @@ class SettlementController extends Controller
             }
         }
 
-        foreach (['gross_sales_amount', 'supply_amount', 'sales_profit_amount', 'invoice_sales_amount', 'invoice_purchase_amount', 'point_deposit_amount', 'point_used_amount', 'payout_amount', 'settlement_amount', 'admin_amount'] as $key) {
+        foreach (['gross_sales_amount', 'supply_amount', 'sales_profit_amount', 'invoice_sales_amount', 'invoice_purchase_amount', 'point_deposit_amount', 'point_used_amount', 'sms_postpaid_amount', 'payout_amount', 'settlement_amount', 'admin_amount'] as $key) {
             if (abs(round((float) data_get($summary, $key), 2) - round((float) $totals[$key], 2)) > 0.01) {
                 return false;
             }
@@ -533,7 +536,7 @@ class SettlementController extends Controller
     private function billingRows(SettlementRun $settlement)
     {
         return $settlement->items->map(function ($item) {
-            $smsFee = (float) data_get($item->orderItem, 'sms_fee', 0);
+            $smsFee = (float) ($item->sms_postpaid_amount ?? data_get($item->orderItem, 'sms_fee', 0));
             $usesOwnPg = ($item->payment_gateway_type ?? null) === 'own_pg'
                 || (bool) data_get($item->orderItem, 'shopChannel.use_own_pg', false);
             $billingAmount = $usesOwnPg

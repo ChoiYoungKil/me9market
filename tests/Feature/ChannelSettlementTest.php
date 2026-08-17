@@ -11,6 +11,7 @@ use App\Models\OrdersProduct;
 use App\Services\SettlementCalculator;
 use App\Support\OrderItemStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 use Carbon\Carbon;
 
@@ -586,6 +587,7 @@ class ChannelSettlementTest extends TestCase
         $this->assertEquals(12500.0, $summary['invoice_sales_amount']);
         $this->assertEquals(0.0, $summary['invoice_purchase_amount']);
         $this->assertEquals(3000.0, $summary['point_used_amount']);
+        $this->assertEquals(100.0, $summary['sms_postpaid_amount']);
         $this->assertEquals(2900.0, $summary['payout_amount']);
         $this->assertEquals(2900.0, $summary['settlement_amount']);
         $this->assertEquals(0.0, $summary['admin_amount']);
@@ -605,5 +607,281 @@ class ChannelSettlementTest extends TestCase
         $response = $this->actingAs($admin, 'admin')->get(route('admin.settlements.billing.export', $run->id));
         $response->assertOk();
         $this->assertStringContainsString('자사PG,0,0,100,0,0', $response->streamedContent());
+    }
+
+    public function test_common_pg_own_product_settlement_deducts_reward_points_and_sms_fee()
+    {
+        list($vendor, $admin, $shop, $product) = $this->createSetup();
+        $shop->update(['settlement_rate' => 5, 'use_own_pg' => false]);
+        $product->update(['product_price' => 10000, 'reward_points' => 500]);
+
+        $order = new Order;
+        $order->user_id = 1;
+        $order->name = 'Customer Name';
+        $order->address = 'Test Address';
+        $order->city = 'Seoul';
+        $order->state = 'Seoul';
+        $order->country = 'Korea';
+        $order->pincode = '12345';
+        $order->mobile = '01011112222';
+        $order->email = 'customer@example.com';
+        $order->shipping_charges = 2500;
+        $order->order_status = 'Payment Captured';
+        $order->payment_method = 'Card';
+        $order->payment_gateway = 'Me9';
+        $order->grand_total = 12500;
+        $order->save();
+
+        OrdersProduct::create([
+            'order_id' => $order->id,
+            'user_id' => 1,
+            'vendor_id' => $vendor->id,
+            'shop_channel_id' => $shop->id,
+            'admin_id' => $admin->id,
+            'product_id' => $product->id,
+            'product_code' => $product->product_code,
+            'product_name' => $product->product_name,
+            'product_color' => $product->product_color,
+            'product_size' => 'M',
+            'product_price' => 10000,
+            'selling_price' => 10000,
+            'product_qty' => 1,
+            'line_total' => 10000,
+            'sms_count' => 1,
+            'sms_fee' => 100,
+            'status_code' => OrderItemStatus::CONFIRMED,
+            'item_status' => OrderItemStatus::label(OrderItemStatus::CONFIRMED),
+            'confirmed_at' => Carbon::parse('2026-05-15 12:00:00'),
+        ]);
+
+        $summary = app(SettlementCalculator::class)->preview('2026-05', $vendor->id)->first();
+
+        $this->assertNotNull($summary);
+        $this->assertEquals('me9_pg', $summary['payment_gateway_type']);
+        $this->assertEquals(12500.0, $summary['invoice_sales_amount']);
+        $this->assertEquals(690.0, $summary['invoice_purchase_amount']);
+        $this->assertEquals(500.0, $summary['point_deposit_amount']);
+        $this->assertEquals(100.0, $summary['sms_postpaid_amount']);
+        $this->assertEquals(11210.0, $summary['settlement_amount']);
+        $this->assertEquals(11210.0, $summary['payout_amount']);
+    }
+
+    public function test_shared_free_price_reseller_settlement_deducts_sms_fee()
+    {
+        list($resellerVendor, $resellerAdmin, $shop) = $this->createSetup();
+
+        $supplierVendor = Vendor::create([
+            'name' => 'Supplier Vendor',
+            'mobile' => '010-9999-8888',
+            'email' => 'supplier@example.com',
+            'status' => 1,
+            'commission' => 0,
+            'confirm' => 'Yes',
+        ]);
+
+        $product = Product::create([
+            'section_id' => 1,
+            'category_id' => 1,
+            'brand_id' => 1,
+            'vendor_id' => $supplierVendor->id,
+            'admin_id' => 999,
+            'admin_type' => 'vendor',
+            'product_name' => 'Shared Product',
+            'product_code' => 'SHARED123',
+            'product_color' => 'Black',
+            'product_price' => 10000,
+            'product_discount' => 0,
+            'product_weight' => 500,
+            'status' => 1,
+        ]);
+
+        $shop->update(['settlement_rate' => 10, 'use_own_pg' => false]);
+
+        $shopProduct = \App\Models\ShopChannelProduct::create([
+            'shop_channel_id' => $shop->id,
+            'product_id' => $product->id,
+            'product_type' => 'public',
+            'approval_status' => 'approved',
+            'status' => 1,
+            'constraint_type' => 'none',
+            'stock' => 10,
+            'product_price' => 10000,
+            'selling_price' => 13000,
+            'profit' => 1190,
+            'settlement_type_snapshot' => 1,
+            'settlement_rate_snapshot' => 10,
+            'minimum_selling_price' => 11550,
+            'maximum_reward_points' => 1190,
+            'price_decider' => 'reseller',
+        ]);
+
+        $order = new Order;
+        $order->user_id = 1;
+        $order->name = 'Customer Name';
+        $order->address = 'Test Address';
+        $order->city = 'Seoul';
+        $order->state = 'Seoul';
+        $order->country = 'Korea';
+        $order->pincode = '12345';
+        $order->mobile = '01011112222';
+        $order->email = 'customer@example.com';
+        $order->shipping_charges = 2500;
+        $order->order_status = 'Payment Captured';
+        $order->payment_method = 'Card';
+        $order->payment_gateway = 'Me9';
+        $order->grand_total = 15500;
+        $order->save();
+
+        OrdersProduct::create([
+            'order_id' => $order->id,
+            'user_id' => 1,
+            'vendor_id' => $resellerVendor->id,
+            'shop_channel_id' => $shop->id,
+            'shop_channel_product_id' => $shopProduct->id,
+            'admin_id' => $resellerAdmin->id,
+            'product_id' => $product->id,
+            'product_code' => $product->product_code,
+            'product_name' => $product->product_name,
+            'product_color' => $product->product_color,
+            'product_size' => 'M',
+            'product_price' => 13000,
+            'supply_price' => 10000,
+            'selling_price' => 13000,
+            'product_qty' => 1,
+            'line_total' => 13000,
+            'sms_count' => 1,
+            'sms_fee' => 100,
+            'status_code' => OrderItemStatus::CONFIRMED,
+            'item_status' => OrderItemStatus::label(OrderItemStatus::CONFIRMED),
+            'confirmed_at' => Carbon::parse('2026-05-15 12:00:00'),
+        ]);
+
+        $rows = app(SettlementCalculator::class)->items('2026-05')->keyBy('settlement_role');
+
+        $this->assertEquals(12500.0, $rows['shared_free_supplier']['settlement_amount']);
+        $this->assertEquals(15500.0, $rows['shared_free_reseller']['invoice_sales_amount']);
+        $this->assertEquals(14210.0, $rows['shared_free_reseller']['invoice_purchase_amount']);
+        $this->assertEquals(100.0, $rows['shared_free_reseller']['sms_postpaid_amount']);
+        $this->assertEquals(1190.0, $rows['shared_free_reseller']['settlement_amount']);
+        $this->assertEquals(1190.0, $rows['shared_free_reseller']['payout_amount']);
+    }
+
+    public function test_own_pg_product_with_reward_points_is_settled_as_common_pg()
+    {
+        list($vendor, $admin, $shop, $product) = $this->createSetup();
+        $shop->update(['settlement_rate' => 5, 'use_own_pg' => true, 'pg_provider' => 'kcp']);
+        $product->update(['product_price' => 10000, 'reward_points' => 500]);
+
+        $order = new Order;
+        $order->user_id = 1;
+        $order->name = 'Customer Name';
+        $order->address = 'Test Address';
+        $order->city = 'Seoul';
+        $order->state = 'Seoul';
+        $order->country = 'Korea';
+        $order->pincode = '12345';
+        $order->mobile = '01011112222';
+        $order->email = 'customer@example.com';
+        $order->shipping_charges = 2500;
+        $order->order_status = 'Payment Captured';
+        $order->payment_method = 'Card';
+        $order->payment_gateway = 'Me9';
+        $order->grand_total = 12500;
+        $order->save();
+
+        OrdersProduct::create([
+            'order_id' => $order->id,
+            'user_id' => 1,
+            'vendor_id' => $vendor->id,
+            'shop_channel_id' => $shop->id,
+            'admin_id' => $admin->id,
+            'product_id' => $product->id,
+            'product_code' => $product->product_code,
+            'product_name' => $product->product_name,
+            'product_color' => $product->product_color,
+            'product_size' => 'M',
+            'product_price' => 10000,
+            'selling_price' => 10000,
+            'product_qty' => 1,
+            'line_total' => 10000,
+            'status_code' => OrderItemStatus::CONFIRMED,
+            'item_status' => OrderItemStatus::label(OrderItemStatus::CONFIRMED),
+            'confirmed_at' => Carbon::parse('2026-05-15 12:00:00'),
+        ]);
+
+        $summary = app(SettlementCalculator::class)->preview('2026-05', $vendor->id)->first();
+
+        $this->assertNotNull($summary);
+        $this->assertEquals('me9_pg', $summary['payment_gateway_type']);
+        $this->assertEquals(12500.0, $summary['invoice_sales_amount']);
+        $this->assertEquals(690.0, $summary['invoice_purchase_amount']);
+        $this->assertEquals(500.0, $summary['point_deposit_amount']);
+        $this->assertEquals(11310.0, $summary['settlement_amount']);
+    }
+
+    public function test_joint_purchase_settlement_belongs_to_month_after_end_date_plus_seven_days()
+    {
+        list($vendor, $admin, $shop, $product) = $this->createSetup();
+        $shop->update(['settlement_rate' => 5]);
+        $product->update(['product_price' => 10000]);
+
+        $jointPurchaseId = DB::table('joint_purchases')->insertGetId([
+            'product_id' => $product->id,
+            'min_quantity' => 1,
+            'current_quantity' => 1,
+            'discount_price' => 8000,
+            'start_date' => '2026-05-01',
+            'end_date' => '2026-05-31',
+            'status' => 1,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $order = new Order;
+        $order->user_id = 1;
+        $order->name = 'Customer Name';
+        $order->address = 'Test Address';
+        $order->city = 'Seoul';
+        $order->state = 'Seoul';
+        $order->country = 'Korea';
+        $order->pincode = '12345';
+        $order->mobile = '01011112222';
+        $order->email = 'customer@example.com';
+        $order->shipping_charges = 2500;
+        $order->order_status = 'Payment Captured';
+        $order->payment_method = 'Card';
+        $order->payment_gateway = 'Me9';
+        $order->grand_total = 10500;
+        $order->save();
+
+        OrdersProduct::create([
+            'order_id' => $order->id,
+            'user_id' => 1,
+            'vendor_id' => $vendor->id,
+            'shop_channel_id' => $shop->id,
+            'joint_purchase_id' => $jointPurchaseId,
+            'admin_id' => $admin->id,
+            'product_id' => $product->id,
+            'product_code' => $product->product_code,
+            'product_name' => $product->product_name,
+            'product_color' => $product->product_color,
+            'product_size' => 'M',
+            'product_price' => 8000,
+            'selling_price' => 8000,
+            'product_qty' => 1,
+            'line_total' => 8000,
+            'status_code' => OrderItemStatus::CONFIRMED,
+            'item_status' => OrderItemStatus::label(OrderItemStatus::CONFIRMED),
+            'confirmed_at' => Carbon::parse('2026-05-20 12:00:00'),
+        ]);
+
+        $calculator = app(SettlementCalculator::class);
+
+        $this->assertNull($calculator->preview('2026-05', $vendor->id)->first());
+
+        $juneSummary = $calculator->preview('2026-06', $vendor->id)->first();
+        $this->assertNotNull($juneSummary);
+        $this->assertEquals('2026-06', $juneSummary['period']);
+        $this->assertEquals(10500.0, $juneSummary['invoice_sales_amount']);
     }
 }

@@ -26,6 +26,7 @@ class SettlementItem extends Model
         'invoice_purchase_amount',
         'point_deposit_amount',
         'point_used_amount',
+        'sms_postpaid_amount',
         'payout_amount',
         'settlement_type',
         'settlement_rate',

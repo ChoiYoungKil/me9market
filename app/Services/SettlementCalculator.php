@@ -99,6 +99,7 @@ class SettlementCalculator
     {
         [$from, $to] = $this->periodRange($period);
         $statusValues = $this->confirmedStatusValues();
+        $settlementDateExpression = $this->settlementDateExpression();
 
         return OrdersProduct::with(['order', 'shopChannel', 'shopChannelProduct', 'product', 'product.vendor'])
             ->when($vendorId, function ($query) use ($vendorId) {
@@ -118,8 +119,8 @@ class SettlementCalculator
                 $query->whereIn('status_code', $statusValues)
                     ->orWhereIn('item_status', $statusValues);
             })
-            ->whereRaw('COALESCE(confirmed_at, orders_products.updated_at) >= ?', [$from])
-            ->whereRaw('COALESCE(confirmed_at, orders_products.updated_at) <= ?', [$to])
+            ->whereRaw($settlementDateExpression . ' >= ?', [$from])
+            ->whereRaw($settlementDateExpression . ' <= ?', [$to])
             ->orderBy('vendor_id')
             ->orderBy('shop_channel_id')
             ->orderBy('id');
@@ -136,23 +137,22 @@ class SettlementCalculator
         $invoiceGross = round($grossSales + $shippingAmount, 2);
         $salesProfit = max($grossSales - $supplyAmount, 0);
         $shop = $item->shopChannel ?: $this->fallbackShopForVendor((int) $item->vendor_id);
-        $usesOwnPg = (bool) ($shop?->use_own_pg ?? false);
-        $paymentGatewayType = $usesOwnPg ? 'own_pg' : 'me9_pg';
         $shopProduct = $item->shopChannelProduct;
+        $productType = $shopProduct?->product_type ?: 'own';
+        $isShared = in_array($productType, ['public', 'partial'], true);
+        $configuredRewardPoints = round(max(0, (float) ($item->product?->reward_points ?? 0)) * $quantity, 2);
+        $usesOwnPg = (bool) ($shop?->use_own_pg ?? false) && $configuredRewardPoints <= 0 && !$isShared;
+        $paymentGatewayType = $usesOwnPg ? 'own_pg' : 'me9_pg';
         $vendor = $item->product?->vendor;
         $settlementType = (int) ($shopProduct?->settlement_type_snapshot ?: $shop?->settlement_type ?: 1);
         $settlementRate = (float) ($shopProduct?->settlement_rate_snapshot ?? $shop?->settlement_rate ?? $vendor?->commission ?? 0);
         $commissionAmount = $this->commissionAmount($invoiceGross, $quantity, $settlementType, $settlementRate);
-        $confirmedAt = $item->confirmed_at ?: $item->updated_at;
-        $rewardPoints = $usesOwnPg
-            ? 0
-            : round(max(0, (float) ($item->product?->reward_points ?? 0)) * $quantity, 2);
+        $confirmedAt = $this->settlementDateForItem($item);
+        $rewardPoints = $usesOwnPg ? 0 : $configuredRewardPoints;
         $usedPointAmount = $this->allocatedUsedPointAmount($item);
         $smsFee = (float) ($item->sms_fee ?? 0);
         $ownPgPayoutAmount = $usesOwnPg ? max(0, round($usedPointAmount - $smsFee, 2)) : 0;
         $settlementCommissionAmount = $usesOwnPg ? 0 : $commissionAmount;
-        $productType = $shopProduct?->product_type ?: 'own';
-        $isShared = in_array($productType, ['public', 'partial'], true);
         $isFixedShared = $isShared
             && (bool) ($item->product?->price_constraint_enabled)
             && $item->product?->price_constraint_type === 'fixed';
@@ -170,10 +170,11 @@ class SettlementCalculator
                     'invoice_purchase_amount' => $settlementCommissionAmount,
                     'point_deposit_amount' => $rewardPoints,
                     'point_used_amount' => $usedPointAmount,
+                    'sms_postpaid_amount' => $smsFee,
                     'payment_gateway_type' => $paymentGatewayType,
-                    'settlement_amount' => $usesOwnPg ? $ownPgPayoutAmount : round($invoiceGross - $commissionAmount - $rewardPoints, 2),
+                    'settlement_amount' => $usesOwnPg ? $ownPgPayoutAmount : $this->payoutAfterCosts($invoiceGross, $commissionAmount, $rewardPoints, $smsFee),
                     'admin_amount' => $settlementCommissionAmount,
-                    'payout_amount' => $usesOwnPg ? $ownPgPayoutAmount : round($invoiceGross - $commissionAmount - $rewardPoints, 2),
+                    'payout_amount' => $usesOwnPg ? $ownPgPayoutAmount : $this->payoutAfterCosts($invoiceGross, $commissionAmount, $rewardPoints, $smsFee),
                     'settlement_type' => $settlementType,
                     'settlement_rate' => $settlementRate,
                     'confirmed_at' => $confirmedAt,
@@ -198,6 +199,7 @@ class SettlementCalculator
                     'invoice_purchase_amount' => round($commissionAmount + $rebateAmount, 2),
                     'point_deposit_amount' => 0,
                     'point_used_amount' => $usedPointAmount,
+                    'sms_postpaid_amount' => 0,
                     'payment_gateway_type' => $paymentGatewayType,
                     'settlement_amount' => $usesOwnPg ? 0 : round($invoiceGross - $commissionAmount - $rebateAmount, 2),
                     'admin_amount' => $commissionAmount,
@@ -217,10 +219,11 @@ class SettlementCalculator
                     'invoice_purchase_amount' => 0,
                     'point_deposit_amount' => $rewardPoints,
                     'point_used_amount' => 0,
+                    'sms_postpaid_amount' => $smsFee,
                     'payment_gateway_type' => $paymentGatewayType,
-                    'settlement_amount' => $usesOwnPg ? 0 : round($rebateAmount - $rewardPoints, 2),
+                    'settlement_amount' => $usesOwnPg ? 0 : $this->payoutAfterCosts($rebateAmount, 0, $rewardPoints, $smsFee),
                     'admin_amount' => 0,
-                    'payout_amount' => $usesOwnPg ? 0 : round($rebateAmount - $rewardPoints, 2),
+                    'payout_amount' => $usesOwnPg ? 0 : $this->payoutAfterCosts($rebateAmount, 0, $rewardPoints, $smsFee),
                     'settlement_type' => $settlementType,
                     'settlement_rate' => $settlementRate,
                     'confirmed_at' => $confirmedAt,
@@ -240,6 +243,7 @@ class SettlementCalculator
                 'invoice_purchase_amount' => 0,
                 'point_deposit_amount' => 0,
                 'point_used_amount' => 0,
+                'sms_postpaid_amount' => 0,
                 'payment_gateway_type' => $paymentGatewayType,
                 'settlement_amount' => $usesOwnPg ? 0 : round($supplyAmount + $shippingAmount, 2),
                 'admin_amount' => 0,
@@ -259,10 +263,11 @@ class SettlementCalculator
                 'invoice_purchase_amount' => round($supplyAmount + $shippingAmount + $commissionAmount, 2),
                 'point_deposit_amount' => $rewardPoints,
                 'point_used_amount' => $usedPointAmount,
+                'sms_postpaid_amount' => $smsFee,
                 'payment_gateway_type' => $paymentGatewayType,
-                'settlement_amount' => $usesOwnPg ? 0 : round($invoiceGross - $supplyAmount - $shippingAmount - $commissionAmount - $rewardPoints, 2),
+                'settlement_amount' => $usesOwnPg ? 0 : $this->payoutAfterCosts($invoiceGross - $supplyAmount - $shippingAmount, $commissionAmount, $rewardPoints, $smsFee),
                 'admin_amount' => $commissionAmount,
-                'payout_amount' => $usesOwnPg ? 0 : round($invoiceGross - $supplyAmount - $shippingAmount - $commissionAmount - $rewardPoints, 2),
+                'payout_amount' => $usesOwnPg ? 0 : $this->payoutAfterCosts($invoiceGross - $supplyAmount - $shippingAmount, $commissionAmount, $rewardPoints, $smsFee),
                 'settlement_type' => $settlementType,
                 'settlement_rate' => $settlementRate,
                 'confirmed_at' => $confirmedAt,
@@ -315,6 +320,7 @@ class SettlementCalculator
             'invoice_purchase_amount' => round($group->sum('invoice_purchase_amount'), 2),
             'point_deposit_amount' => round($group->sum('point_deposit_amount'), 2),
             'point_used_amount' => round($group->sum('point_used_amount'), 2),
+            'sms_postpaid_amount' => round($group->sum('sms_postpaid_amount'), 2),
             'payout_amount' => round($group->sum('payout_amount'), 2),
             'settlement_amount' => round($group->sum('settlement_amount'), 2),
             'admin_amount' => round($group->sum('admin_amount'), 2),
@@ -338,6 +344,7 @@ class SettlementCalculator
                     'invoice_purchase_amount',
                     'point_deposit_amount',
                     'point_used_amount',
+                    'sms_postpaid_amount',
                     'payout_amount',
                     'settlement_type',
                     'settlement_rate',
@@ -363,6 +370,11 @@ class SettlementCalculator
             : $grossAmount * ($settlementRate / 100) * self::COMMISSION_VAT_MULTIPLIER;
 
         return $this->ceilToTen(max(0, $amount));
+    }
+
+    private function payoutAfterCosts(float $baseAmount, float $commissionAmount = 0, float $rewardPoints = 0, float $smsFee = 0): float
+    {
+        return round($baseAmount - $commissionAmount - $rewardPoints - $smsFee, 2);
     }
 
     private function ceilToTen(float $amount): float
@@ -454,6 +466,27 @@ class SettlementCalculator
         $to = $from->copy()->endOfMonth();
 
         return [$from, $to];
+    }
+
+    private function settlementDateExpression(): string
+    {
+        $jointSettlementDate = DB::connection()->getDriverName() === 'sqlite'
+            ? "date((SELECT end_date FROM joint_purchases WHERE joint_purchases.id = orders_products.joint_purchase_id), '+7 days')"
+            : "(SELECT DATE_ADD(end_date, INTERVAL 7 DAY) FROM joint_purchases WHERE joint_purchases.id = orders_products.joint_purchase_id)";
+
+        return "COALESCE(CASE WHEN orders_products.joint_purchase_id IS NOT NULL THEN {$jointSettlementDate} END, orders_products.confirmed_at, orders_products.updated_at)";
+    }
+
+    private function settlementDateForItem(OrdersProduct $item)
+    {
+        if ($item->joint_purchase_id && DB::getSchemaBuilder()->hasTable('joint_purchases')) {
+            $endDate = DB::table('joint_purchases')->where('id', $item->joint_purchase_id)->value('end_date');
+            if ($endDate) {
+                return Carbon::parse($endDate)->addDays(7)->endOfDay();
+            }
+        }
+
+        return $item->confirmed_at ?: $item->updated_at;
     }
 
     private function confirmedStatusValues(): array

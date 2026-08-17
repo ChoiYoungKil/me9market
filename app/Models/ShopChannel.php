@@ -42,6 +42,8 @@ class ShopChannel extends Model
         'pg_site_code',
         'pg_client_key',
         'pg_secret_key',
+        'use_purchase_sms',
+        'purchase_sms_templates',
         'use_admin',
         'admin_name',
         'admin_login_id',
@@ -63,6 +65,8 @@ class ShopChannel extends Model
         'pg_site_code' => 'encrypted',
         'pg_client_key' => 'encrypted',
         'pg_secret_key' => 'encrypted',
+        'use_purchase_sms' => 'boolean',
+        'purchase_sms_templates' => 'array',
     ];
 
     public function vendor()
@@ -85,5 +89,15 @@ class ShopChannel extends Model
     public function notices()
     {
         return $this->hasMany(ShopChannelNotice::class);
+    }
+
+    public function privateAccesses()
+    {
+        return $this->hasMany(ShopChannelPrivateAccess::class);
+    }
+
+    public function smsLogs()
+    {
+        return $this->hasMany(ShopChannelSmsLog::class);
     }
 }

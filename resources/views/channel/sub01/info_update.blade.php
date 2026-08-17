@@ -94,6 +94,10 @@
                                                 <input type="text" name="channel_name" value="{{ old('channel_name', $shop->channel_name) }}" required="required">
                                             </td>
                                         </tr>
+                                        @include('channel.sub01.inc.private_access_row', [
+                                            'privateAccessVisible' => old('is_public', $shop->is_public) == '0',
+                                            'privateAccessRowsValue' => old('private_access_rows', $privateAccessRows ?? ''),
+                                        ])
                                         <tr>
                                             <th class="w160"><span>카피라이트</span></th>
                                             <td colspan="3">
@@ -116,6 +120,10 @@
                                     </tbody>
                                 </table>
                             </div>
+
+                            @include('channel.sub01.inc.private_access_popup', [
+                                'privateAccessRowsValue' => old('private_access_rows', $privateAccessRows ?? ''),
+                            ])
 
                             <!-- 사용기간 -->
                             <div class="ttl01 mt40">Shop 채널 사용주기</div>
@@ -397,6 +405,8 @@
                                 </table>
                             </div>
 
+                            @include('channel.sub01.inc.purchase_sms_settings', ['shop' => $shop])
+
                             <!-- 관리자 정보 -->
                             <div class="ttl01 mt40">Shop 채널 (모니터링) 관리자 정보</div>
                             <div class="tb01">
@@ -668,4 +678,6 @@
             checkKeywordList();
         });
     </script>
+    @include('channel.sub01.inc.private_access_script')
+    @include('channel.sub01.inc.purchase_sms_script')
 @endpush

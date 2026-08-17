@@ -205,6 +205,30 @@ class ChannelController extends Controller
         return view('channel.sub01.shop_register', ['dep1_id' => '01']);
     }
 
+    public function privateAccessTemplate()
+    {
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('비공개 입장자');
+        $sheet->fromArray([
+            ['휴대폰번호', '입장코드', '회원ID(선택)'],
+            ['010-1234-5678', 'ABCD1234', ''],
+        ]);
+        $sheet->getStyle('A1:C1')->getFont()->setBold(true);
+        $sheet->getStyle('A:C')->getNumberFormat()->setFormatCode('@');
+        foreach (['A' => 20, 'B' => 20, 'C' => 16] as $column => $width) {
+            $sheet->getColumnDimension($column)->setWidth($width);
+        }
+
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, 'shop-channel-private-access-template.xlsx', [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
     public function shopRegisterSubmit(Request $request)
     {
         $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
@@ -242,6 +266,12 @@ class ChannelController extends Controller
             $rules['password'] = 'required|min:4';
             $messages['password.required'] = '비공개 설정 시 비밀번호를 입력해 주세요.';
         }
+        $rules['private_access_rows'] = 'nullable|string';
+        $rules['private_access_file'] = 'nullable|file|max:5120|mimes:xlsx,xls,csv,txt';
+        $rules['purchase_sms_templates.purchase'] = 'nullable|string|max:500';
+        $rules['purchase_sms_templates.purchase_confirmed'] = 'nullable|string|max:500';
+        $rules['purchase_sms_templates.cancel'] = 'nullable|string|max:500';
+        $rules['purchase_sms_templates.return'] = 'nullable|string|max:500';
 
         // 사용기간(기간제) 체크
         if (($data['use_period_type'] ?? '0') == '1') {
@@ -332,7 +362,7 @@ class ChannelController extends Controller
         $shop->status = $data['status'] ?? 0;
         $shop->is_public = $data['is_public'] ?? 1;
         $shop->password = $data['password'] ?? null;
-        $shop->is_member_only = isset($data['is_member_only']) ? 1 : 0;
+        $shop->is_member_only = ((string) ($data['is_public'] ?? '1') === '0') ? 0 : (isset($data['is_member_only']) ? 1 : 0);
         $shop->channel_name = $data['channel_name'];
         $shop->copyright = $data['copyright'];
         $shop->keywords = json_encode($data['keywords'], JSON_UNESCAPED_UNICODE);
@@ -398,6 +428,9 @@ class ChannelController extends Controller
         $shop->pg_client_key = $shop->use_own_pg ? ($data['pg_client_key'] ?? null) : null;
         $shop->pg_secret_key = $shop->use_own_pg ? ($data['pg_secret_key'] ?? null) : null;
 
+        $shop->use_purchase_sms = ($data['use_purchase_sms'] ?? '0') == '1';
+        $shop->purchase_sms_templates = $shop->use_purchase_sms ? $this->purchaseSmsTemplates($data) : null;
+
         // 관리자 정보 처리
         $shop->use_admin = $data['use_admin'] ?? 0;
         $shop->admin_name = $data['admin_name'] ?? null;
@@ -413,6 +446,7 @@ class ChannelController extends Controller
         }
 
         $shop->save();
+        $this->syncPrivateAccesses($shop, $this->combinedPrivateAccessRows($request, $shop));
 
         return redirect()->route('channel.shop_list')->with('success_message', 'Shop 채널이 성공적으로 등록되었습니다.');
     }
@@ -1306,7 +1340,8 @@ class ChannelController extends Controller
 
         return view('channel.sub01.info_update', [
             'dep1_id' => '01',
-            'shop' => $shop
+            'shop' => $shop,
+            'privateAccessRows' => $this->privateAccessRowsForForm($shop),
         ]);
     }
 
@@ -1332,6 +1367,12 @@ class ChannelController extends Controller
         if (($data['is_public'] ?? '1') == '0') {
             $rules['password'] = 'required|min:4';
         }
+        $rules['private_access_rows'] = 'nullable|string';
+        $rules['private_access_file'] = 'nullable|file|max:5120|mimes:xlsx,xls,csv,txt';
+        $rules['purchase_sms_templates.purchase'] = 'nullable|string|max:500';
+        $rules['purchase_sms_templates.purchase_confirmed'] = 'nullable|string|max:500';
+        $rules['purchase_sms_templates.cancel'] = 'nullable|string|max:500';
+        $rules['purchase_sms_templates.return'] = 'nullable|string|max:500';
 
         // 사용기간(기간제) 체크
         if (($data['use_period_type'] ?? '0') == '1') {
@@ -1376,7 +1417,7 @@ class ChannelController extends Controller
         $shop->status = $data['status'] ?? 0;
         $shop->is_public = $data['is_public'] ?? 1;
         $shop->password = $data['password'] ?? null;
-        $shop->is_member_only = isset($data['is_member_only']) ? 1 : 0;
+        $shop->is_member_only = ((string) ($data['is_public'] ?? '1') === '0') ? 0 : (isset($data['is_member_only']) ? 1 : 0);
         $shop->channel_name = $data['channel_name'];
         $shop->copyright = $data['copyright'];
         $shop->keywords = json_encode($data['keywords'], JSON_UNESCAPED_UNICODE);
@@ -1446,6 +1487,9 @@ class ChannelController extends Controller
             $shop->pg_secret_key = null;
         }
 
+        $shop->use_purchase_sms = ($data['use_purchase_sms'] ?? '0') == '1';
+        $shop->purchase_sms_templates = $shop->use_purchase_sms ? $this->purchaseSmsTemplates($data) : null;
+
         // 관리자 정보 처리
         $shop->use_admin = $data['use_admin'] ?? 0;
         $shop->admin_name = $data['admin_name'] ?? null;
@@ -1461,8 +1505,151 @@ class ChannelController extends Controller
         }
 
         $shop->save();
+        $this->syncPrivateAccesses($shop, $this->combinedPrivateAccessRows($request, $shop));
 
         return redirect()->route('channel.shop_info', ['id' => $shop->id])->with('success_message', '채널 정보가 수정되었습니다.');
+    }
+
+    private function purchaseSmsTemplates(array $data): array
+    {
+        $templates = $data['purchase_sms_templates'] ?? [];
+
+        return [
+            'purchase' => trim((string) ($templates['purchase'] ?? $templates['customer'] ?? '')),
+            'purchase_confirmed' => trim((string) ($templates['purchase_confirmed'] ?? '')),
+            'cancel' => trim((string) ($templates['cancel'] ?? '')),
+            'return' => trim((string) ($templates['return'] ?? '')),
+        ];
+    }
+
+    private function privateAccessRowsForForm(\App\Models\ShopChannel $shop): string
+    {
+        return $shop->privateAccesses()
+            ->orderBy('id')
+            ->get()
+            ->map(fn ($access) => trim($access->phone . ',' . $access->entry_code))
+            ->implode("\n");
+    }
+
+    private function syncPrivateAccesses(\App\Models\ShopChannel $shop, ?string $rawRows): void
+    {
+        $rows = $this->parsePrivateAccessRows($rawRows, (string) $shop->password);
+        $keepIds = [];
+
+        foreach ($rows as $row) {
+            $access = \App\Models\ShopChannelPrivateAccess::updateOrCreate(
+                [
+                    'shop_channel_id' => $shop->id,
+                    'phone_normalized' => $row['phone_normalized'],
+                ],
+                [
+                    'phone' => $row['phone'],
+                    'entry_code' => $row['entry_code'],
+                    'user_id' => $row['user_id'],
+                ]
+            );
+            $keepIds[] = $access->id;
+        }
+
+        $query = $shop->privateAccesses();
+        if (!empty($keepIds)) {
+            $query->whereNotIn('id', $keepIds);
+        }
+        $query->delete();
+    }
+
+    private function combinedPrivateAccessRows(Request $request, \App\Models\ShopChannel $shop): string
+    {
+        $rows = trim((string) $request->input('private_access_rows', ''));
+        $uploadedRows = $this->privateAccessRowsFromUpload($request->file('private_access_file'), (string) $shop->password);
+
+        return trim(implode("\n", array_filter([$rows, $uploadedRows], fn ($value) => trim((string) $value) !== '')));
+    }
+
+    private function privateAccessRowsFromUpload($file, string $defaultEntryCode): string
+    {
+        if (!$file) {
+            return '';
+        }
+
+        $extension = strtolower($file->getClientOriginalExtension());
+        $rows = in_array($extension, ['xlsx', 'xls'], true)
+            ? $this->spreadsheetRows($file->getRealPath())
+            : $this->csvRows($file->getRealPath());
+
+        $lines = [];
+        foreach ($rows as $row) {
+            $phone = trim((string) ($row[0] ?? ''));
+            $entryCode = trim((string) ($row[1] ?? $defaultEntryCode));
+            $userId = trim((string) ($row[2] ?? ''));
+
+            if (\App\Models\ShopChannelPrivateAccess::normalizePhone($phone) === '') {
+                continue;
+            }
+
+            $line = [$phone, $entryCode !== '' ? $entryCode : $defaultEntryCode];
+            if ($userId !== '') {
+                $line[] = $userId;
+            }
+            $lines[] = implode(',', $line);
+        }
+
+        return implode("\n", $lines);
+    }
+
+    private function spreadsheetRows(string $path): array
+    {
+        try {
+            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($path);
+        } catch (\Throwable $e) {
+            return [];
+        }
+
+        return $spreadsheet->getActiveSheet()->toArray(null, true, true, false);
+    }
+
+    private function csvRows(string $path): array
+    {
+        $handle = fopen($path, 'r');
+        if (!$handle) {
+            return [];
+        }
+
+        $rows = [];
+        while (($row = fgetcsv($handle)) !== false) {
+            $rows[] = $row;
+        }
+        fclose($handle);
+
+        return $rows;
+    }
+
+    private function parsePrivateAccessRows(?string $rawRows, string $defaultEntryCode): array
+    {
+        $rows = [];
+        foreach (preg_split('/\r\n|\r|\n/', (string) $rawRows) as $line) {
+            $line = trim($line);
+            if ($line === '') {
+                continue;
+            }
+
+            $parts = array_map('trim', str_getcsv($line));
+            $phone = $parts[0] ?? '';
+            $entryCode = $parts[1] ?? $defaultEntryCode;
+            $normalizedPhone = \App\Models\ShopChannelPrivateAccess::normalizePhone($phone);
+            if ($normalizedPhone === '' || trim((string) $entryCode) === '') {
+                continue;
+            }
+
+            $rows[$normalizedPhone] = [
+                'phone' => $phone,
+                'phone_normalized' => $normalizedPhone,
+                'entry_code' => trim((string) $entryCode),
+                'user_id' => isset($parts[2]) && is_numeric($parts[2]) ? (int) $parts[2] : null,
+            ];
+        }
+
+        return array_values($rows);
     }
 
     // 상품 관리 (Sub02) 관련 메서드는 위에 이미 정의되어 있습니다.

@@ -394,6 +394,7 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
                 Route::get('/list', 'ChannelController@shopList')->name('channel.shop_list');
                 Route::get('/register', 'ChannelController@shopRegister')->name('channel.shop_register');
                 Route::post('/register', 'ChannelController@shopRegisterSubmit')->name('channel.shop_register.submit');
+                Route::get('/private-access-template', 'ChannelController@privateAccessTemplate')->name('channel.shop.private_access.template');
                 Route::get('/info', 'ChannelController@shopInfo')->name('channel.shop_info');
                 Route::post('/delete/{id}', 'ChannelController@deleteShop')->name('channel.shop.delete');
                 Route::get('/product01', 'ChannelController@shopProduct01')->name('channel.shop_product01');

@@ -520,7 +520,7 @@ class ChannelProductController extends Controller
 
         $supplyPrice = (float) $product->product_price;
         $shippingFee = $this->productShippingFee($product);
-        $rewardPoints = $shop->use_own_pg ? 0 : max(0, (float) ($product->reward_points ?? 0));
+        $rewardPoints = max(0, (float) ($product->reward_points ?? 0));
         $settlementType = (int) ($shop->settlement_type ?: 1);
         $settlementRate = (float) ($shop->settlement_rate ?? 0);
         $isShared = in_array($productType, ['public', 'partial'], true);
@@ -538,9 +538,10 @@ class ChannelProductController extends Controller
 
             $commission = $this->shopCommissionAmount($fixedPrice + $shippingFee, 1, $settlementType, $settlementRate);
             $rebate = $this->productRebateAmount($product, $fixedPrice + $shippingFee);
-            if ($rebate < $commission) {
+            $minimumRebate = $commission + $rewardPoints;
+            if ($rebate < $minimumRebate) {
                 throw ValidationException::withMessages([
-                    'selling_price' => '판매가 고정 공유상품의 리베이트는 수수료 ' . number_format($commission) . '원 이상이어야 합니다.',
+                    'selling_price' => '판매가 고정 공유상품의 리베이트는 수수료와 지급 포인트를 포함해 ' . number_format($minimumRebate) . '원 이상이어야 합니다.',
                 ]);
             }
 
@@ -555,7 +556,8 @@ class ChannelProductController extends Controller
         }
 
         $minimumPrice = $this->minimumSellingPrice($product, $shop);
-        if ($isShared && $sellingPrice < $minimumPrice) {
+        $needsCommonPgMinimum = !$shop->use_own_pg || $rewardPoints > 0 || $isShared;
+        if ($needsCommonPgMinimum && $sellingPrice < $minimumPrice) {
             throw ValidationException::withMessages([
                 'selling_price' => '최소 판매가는 ' . number_format($minimumPrice) . '원입니다. 수수료와 지급 포인트를 반영한 금액 이상으로 입력해 주세요.',
             ]);
@@ -607,7 +609,7 @@ class ChannelProductController extends Controller
     {
         $supplyPrice = (float) $product->product_price;
         $shippingFee = $this->productShippingFee($product);
-        $rewardPoints = $shop->use_own_pg ? 0 : max(0, (float) ($product->reward_points ?? 0));
+        $rewardPoints = max(0, (float) ($product->reward_points ?? 0));
         $settlementType = (int) ($shop->settlement_type ?: 1);
         $settlementRate = (float) ($shop->settlement_rate ?? 0);
 
