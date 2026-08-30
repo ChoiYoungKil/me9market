@@ -13,7 +13,7 @@ class JointPurchasePricingService
 {
     public function activePurchaseForProduct(int $productId)
     {
-        if (!Schema::hasTable('joint_purchases')) {
+        if (! Schema::hasTable('joint_purchases')) {
             return null;
         }
 
@@ -28,7 +28,7 @@ class JointPurchasePricingService
 
     public function tiers(int $jointPurchaseId): Collection
     {
-        if (!Schema::hasTable('joint_purchase_price_tiers')) {
+        if (! Schema::hasTable('joint_purchase_price_tiers')) {
             return collect();
         }
 
@@ -48,7 +48,7 @@ class JointPurchasePricingService
                 && ($row->max_quantity === null || $quantity <= (int) $row->max_quantity);
         });
 
-        if (!$tier) {
+        if (! $tier) {
             $tier = $tiers->sortByDesc('min_quantity')->first(fn ($row) => $quantity >= (int) $row->min_quantity);
         }
 
@@ -70,7 +70,7 @@ class JointPurchasePricingService
     public function projectedPriceForProduct(int $productId, int $additionalQuantity = 1): ?array
     {
         $jointPurchase = $this->activePurchaseForProduct($productId);
-        if (!$jointPurchase) {
+        if (! $jointPurchase) {
             return null;
         }
 
@@ -97,6 +97,7 @@ class JointPurchasePricingService
 
         return (int) OrdersProduct::where('product_id', $productId)
             ->where('joint_purchase_id', $jointPurchaseId)
+            ->where('is_exchange_replacement', false)
             ->where(function ($query) use ($statuses) {
                 $query->whereNull('status_code')->orWhereNotIn('status_code', $statuses);
             })
@@ -151,7 +152,7 @@ class JointPurchasePricingService
     public function repricePurchase(int $jointPurchaseId): void
     {
         $jointPurchase = DB::table('joint_purchases')->where('id', $jointPurchaseId)->first();
-        if (!$jointPurchase) {
+        if (! $jointPurchase) {
             return;
         }
 
@@ -169,6 +170,7 @@ class JointPurchasePricingService
             $price = $this->priceForQuantity($jointPurchase, $quantity);
             $items = OrdersProduct::where('product_id', $jointPurchase->product_id)
                 ->where('joint_purchase_id', $jointPurchase->id)
+                ->where('is_exchange_replacement', false)
                 ->where(function ($query) {
                     $query->whereNull('status_code')
                         ->orWhereNotIn('status_code', [OrderItemStatus::CANCELLED, OrderItemStatus::RETURNED]);
@@ -210,7 +212,7 @@ class JointPurchasePricingService
     private function recalculateOrderTotal(int $orderId): void
     {
         $order = Order::find($orderId);
-        if (!$order) {
+        if (! $order) {
             return;
         }
 

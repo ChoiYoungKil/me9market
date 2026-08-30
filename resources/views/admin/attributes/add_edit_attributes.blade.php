@@ -173,6 +173,14 @@
                                                             <i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i> {{-- Icons from Skydash Admin Panel Template --}}
                                                         </a>
                                                     @endif
+                                                    <button type="submit"
+                                                            formaction="{{ url('admin/delete-attribute/' . $attribute['id']) }}"
+                                                            formmethod="POST"
+                                                            class="btn btn-link p-0 ml-2"
+                                                            title="Delete attribute"
+                                                            onclick="return confirm('이 상품 속성을 삭제하시겠습니까?')">
+                                                        <i style="font-size: 25px" class="mdi mdi-delete"></i>
+                                                    </button>
                                                 </td>
                                             </tr>
                                         @endforeach

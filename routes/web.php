@@ -339,15 +339,18 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
     Route::prefix('shop-channel')->group(function () {
         Route::get('/gate', 'FrontController@shopGate')->name('shop.gate');
         Route::post('/gate', 'FrontController@shopGateSubmit')->name('shop.gate.submit');
-        Route::get('/register', 'FrontController@shopRegister')->name('shop.register');
-        Route::post('/register', 'FrontController@shopRegisterSubmit')->name('shop.register.submit');
+        Route::post('/otp/request', 'FrontController@shopOtpRequest')->middleware('throttle:5,1')->name('shop.otp.request');
         Route::get('/enter/{channelCode}', 'FrontController@shopEnter')->name('shop.enter');
-        Route::get('/main', 'FrontController@shopMain')->name('shop.channel_main');
-        Route::get('/products', 'FrontController@shopProducts')->name('shop.products_list');
-        Route::get('/products/{id}', 'FrontController@shopProductDetails')->name('shop.product_details');
-        Route::get('/joint-purchases', 'FrontController@shopJointPurchases')->name('shop.joint_purchases_list');
-        Route::get('/joint-purchases/{id}', 'FrontController@shopJointPurchaseDetails')->name('shop.joint_purchase_details');
-        Route::get('/notices', 'FrontController@shopNotices')->name('shop.notices');
+        Route::middleware('shop.channel.access')->group(function () {
+            Route::get('/register', 'FrontController@shopRegister')->name('shop.register');
+            Route::post('/register', 'FrontController@shopRegisterSubmit')->name('shop.register.submit');
+            Route::get('/main', 'FrontController@shopMain')->name('shop.channel_main');
+            Route::get('/products', 'FrontController@shopProducts')->name('shop.products_list');
+            Route::get('/products/{id}', 'FrontController@shopProductDetails')->name('shop.product_details');
+            Route::get('/joint-purchases', 'FrontController@shopJointPurchases')->name('shop.joint_purchases_list');
+            Route::get('/joint-purchases/{id}', 'FrontController@shopJointPurchaseDetails')->name('shop.joint_purchase_details');
+            Route::get('/notices', 'FrontController@shopNotices')->name('shop.notices');
+        });
     });
 
     // 통합 테스트베드 (Index)
@@ -356,7 +359,7 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
     }
 
     // Shop 라우트
-    Route::prefix('shop')->name('front.shop.')->group(function () {
+    Route::prefix('shop')->name('front.shop.')->middleware('shop.channel.access')->group(function () {
         Route::get('/cart', 'ShopController@cart')->name('cart.index');
         Route::post('/cart/add', 'ShopController@addToCart')->name('cart.add');
         Route::post('/cart/remove', 'ShopController@removeFromCart')->name('cart.remove');
@@ -456,6 +459,7 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
                 Route::post('/cancel/request', 'ChannelOrderController@requestCancel')->name('channel.order.cancel.request');
                 Route::post('/return/request', 'ChannelOrderController@requestReturn')->name('channel.order.return.request');
                 Route::post('/exchange/request', 'ChannelOrderController@requestExchange')->name('channel.order.exchange.request');
+                Route::post('/claim/action', 'ChannelOrderController@claimAction')->name('channel.order.claim.action');
             });
 
             // Customer Product Inquiries

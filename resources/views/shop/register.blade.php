@@ -48,15 +48,16 @@
                 
                 <div style="display: flex; flex-direction: column; gap: 10px;">
                     <label style="display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: #94a3b8; cursor: pointer;">
-                        <input type="checkbox" class="agree-chk shop-register-checkbox align-top" required>
+                        <input type="checkbox" name="terms_service" value="1" class="agree-chk shop-register-checkbox align-top" required>
                         <span>(필수) 쇼핑몰 이용약관 동의 <a href="{{ route('front.service') }}" target="_blank" rel="noopener" style="color: #818cf8; margin-left: 5px; text-decoration: underline;">[보기]</a></span>
                     </label>
                     <label style="display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: #94a3b8; cursor: pointer;">
-                        <input type="checkbox" class="agree-chk shop-register-checkbox align-top" required>
+                        <input type="checkbox" name="terms_privacy" value="1" class="agree-chk shop-register-checkbox align-top" required>
                         <span>(필수) 개인정보 수집 및 이용 동의 <a href="{{ route('front.service') }}" target="_blank" rel="noopener" style="color: #818cf8; margin-left: 5px; text-decoration: underline;">[보기]</a></span>
                     </label>
                     <label style="display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: #94a3b8; cursor: pointer;">
-                        <input type="checkbox" class="agree-chk shop-register-checkbox align-top">
+                        <input type="hidden" name="marketing_opt_in" value="0">
+                        <input type="checkbox" name="marketing_opt_in" value="1" class="agree-chk shop-register-checkbox align-top">
                         <span>(선택) 마케팅 정보 수신 동의 (SMS/이메일)</span>
                     </label>
                 </div>
@@ -78,7 +79,7 @@
                 </div>
                 <div>
                     <label for="password" style="display: block; font-size: 13px; font-weight: 600; color: #cbd5e1; margin-bottom: 6px;">비밀번호</label>
-                    <input type="password" name="password" id="password" placeholder="6자리 이상 비밀번호" required class="shop-register-input">
+                    <input type="password" name="password" id="password" placeholder="8자리 이상 비밀번호" minlength="8" required class="shop-register-input">
                 </div>
             </div>
 

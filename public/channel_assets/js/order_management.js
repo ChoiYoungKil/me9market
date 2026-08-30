@@ -44,10 +44,16 @@ function normalizedOrderItemStatus(item) {
         "취소완료": "cancelled",
         "Return Requested": "return_requested",
         "반품요청": "return_requested",
+        "반품회수완료": "return_received",
+        "반품보류": "return_hold",
         "Returned": "returned",
         "반품완료": "returned",
         "Exchange Requested": "exchange_requested",
         "교환요청": "exchange_requested",
+        "교환승인": "exchange_approved",
+        "교환회수전보류": "exchange_hold_before",
+        "교환회수완료": "exchange_received",
+        "교환회수후보류": "exchange_hold_after",
         "Exchanged": "exchanged",
         "교환완료": "exchanged"
     };
@@ -311,7 +317,7 @@ function populateAllDetailPopups(orderData) {
     // Items list pop1_4
     var $returnTbody = $("#pop_return_order_items_body");
     $returnTbody.empty();
-    var returnItems = orderItemsByStatus(orderItems, ["return_requested", "returned"]);
+    var returnItems = orderItemsByStatus(orderItems, ["return_requested", "return_received", "return_hold", "returned"]);
     if (returnItems.length > 0) {
         returnItems.forEach(function(item) {
             var row = `
@@ -353,7 +359,7 @@ function populateAllDetailPopups(orderData) {
     // Items list pop1_5
     var $exchangeTbody = $("#pop_exchange_order_items_body");
     $exchangeTbody.empty();
-    var exchangeItems = orderItemsByStatus(orderItems, ["exchange_requested", "exchanged"]);
+    var exchangeItems = orderItemsByStatus(orderItems, ["exchange_requested", "exchange_approved", "exchange_hold_before", "exchange_received", "exchange_hold_after", "exchanged"]);
     if (exchangeItems.length > 0) {
         exchangeItems.forEach(function(item) {
             var row = `
@@ -455,66 +461,165 @@ function submitOrderForm(formId, url) {
     });
 }
 
+function claimActionItemIds(action) {
+    var allowed = {
+        cancel_approve: ["cancel_requested"],
+        cancel_reject: ["cancel_requested"],
+        return_receive: ["return_requested", "return_hold"],
+        return_complete: ["return_received", "return_hold"],
+        return_hold: ["return_requested", "return_received"],
+        return_withdraw: ["return_requested", "return_hold"],
+        return_invoice: ["return_requested", "return_received", "return_hold"],
+        exchange_approve: ["exchange_requested", "exchange_hold_before"],
+        exchange_hold_before: ["exchange_requested", "exchange_approved"],
+        exchange_withdraw: ["exchange_requested", "exchange_approved", "exchange_hold_before"],
+        exchange_receive: ["exchange_approved", "exchange_hold_before"],
+        exchange_complete: ["exchange_received", "exchange_hold_after"],
+        exchange_hold_after: ["exchange_received"],
+        exchange_to_return: ["exchange_received", "exchange_hold_after"],
+        exchange_option: ["exchange_requested", "exchange_approved", "exchange_hold_before", "exchange_received", "exchange_hold_after"],
+        exchange_invoice: ["exchange_approved", "exchange_received", "exchange_hold_after"]
+    };
+    var selected = [];
+    var baseId = action.indexOf("cancel_") === 0
+        ? "pop1_3"
+        : (action.indexOf("return_") === 0 ? "pop1_4" : "pop1_5");
+    $(".popup_bx[data-id='" + baseId + "'] input[name='item_ids[]']:checked").each(function () {
+        selected.push(String($(this).val()));
+    });
+
+    return orderItemsArray(window.currentOrder).filter(function (item) {
+        var isSelected = selected.length === 0 || selected.indexOf(String(item.id)) !== -1;
+        return isSelected && (allowed[action] || []).indexOf(normalizedOrderItemStatus(item)) !== -1;
+    }).map(function (item) {
+        return item.id;
+    });
+}
+
+function submitClaimAction(action, popupId, confirmation) {
+    if (!window.currentOrder) {
+        alert("주문 정보를 먼저 선택해 주세요.");
+        return;
+    }
+    if (confirmation && !window.confirm(confirmation)) return;
+
+    var itemIds = claimActionItemIds(action);
+    if (itemIds.length === 0) {
+        alert("현재 상태에서 처리할 수 있는 주문상품이 없습니다.");
+        return;
+    }
+
+    var $popup = $(".popup_bx[data-id='" + popupId + "']");
+    var payload = {
+        _token: $('meta[name="csrf-token"]').attr("content"),
+        order_id: window.currentOrder.id,
+        item_ids: itemIds,
+        action: action,
+        reason: $popup.find('[name="reason"]').val() || "",
+        courier_name: $popup.find('[name="courier_name"]').val() || "",
+        tracking_number: $popup.find('[name="tracking_number"]').val() || "",
+        option: $popup.find('[name="option"]').val() || ""
+    };
+
+    $.ajax({
+        url: "/channel/order/claim/action",
+        method: "POST",
+        data: payload,
+        success: function (response) {
+            alert(response.message || "처리가 완료되었습니다.");
+            window.location.reload();
+        },
+        error: function (xhr) {
+            alert((xhr.responseJSON && xhr.responseJSON.message) || "처리 중 오류가 발생했습니다.");
+        }
+    });
+}
+
 // Bind confirmation listeners
 $(document).ready(function() {
     // Cancel reject
     $(document).on('click', '#btn_cancel_reject_confirm', function(e) {
         e.preventDefault();
-        processOrderStatusUpdate('pop1_3_2', 'New', '취소 요청을 거부하고 이전 결제완료 상태로 되돌리시겠습니까?');
+        submitClaimAction('cancel_reject', 'pop1_3_2', '취소 요청을 거부하고 이전 결제완료 상태로 되돌리시겠습니까?');
     });
 
     // Cancel approve
     $(document).on('click', '#btn_cancel_approve_confirm', function(e) {
         e.preventDefault();
-        processOrderStatusUpdate('pop1_3_3', 'Cancelled', '취소요청을 승인하고 주문을 취소 완료하시겠습니까?');
+        submitClaimAction('cancel_approve', 'pop1_3_3', '취소요청을 승인하고 주문을 취소 완료하시겠습니까?');
     });
 
     // Return received
     $(document).on('click', '#btn_return_received_confirm', function(e) {
         e.preventDefault();
-        processOrderStatusUpdate('pop1_4_2', 'Returned', '반품 회수 완료로 상태를 전환하시겠습니까?');
+        submitClaimAction('return_receive', 'pop1_4_2', '반품 회수 완료로 상태를 전환하시겠습니까?');
     });
 
     // Return approve
     $(document).on('click', '#btn_return_approve_confirm', function(e) {
         e.preventDefault();
-        processOrderStatusUpdate('pop1_4_3', 'Returned', '반품 확정 상태로 전환하시겠습니까?');
+        submitClaimAction('return_complete', 'pop1_4_3', '반품 확정 상태로 전환하시겠습니까?');
     });
 
     // Return reject
     $(document).on('click', '#btn_return_reject_confirm', function(e) {
         e.preventDefault();
-        processOrderStatusUpdate('pop1_4_5', 'Delivered', '반품 요청을 철회하고 배송완료 상태로 되돌리시겠습니까?');
+        submitClaimAction('return_withdraw', 'pop1_4_5', '반품 요청을 철회하고 배송중 상태로 되돌리시겠습니까?');
     });
 
     // Exchange approve
     $(document).on('click', '#btn_exchange_approve_confirm', function(e) {
         e.preventDefault();
-        processOrderStatusUpdate('pop1_5_2', 'Exchanged', '교환 요청을 승인하시겠습니까?');
+        submitClaimAction('exchange_approve', 'pop1_5_2', '교환 요청을 승인하시겠습니까?');
     });
 
     // Exchange reject
     $(document).on('click', '#btn_exchange_reject_confirm', function(e) {
         e.preventDefault();
-        processOrderStatusUpdate('pop1_5_4', 'Delivered', '교환 요청을 철회하고 배송완료 상태로 되돌리시겠습니까?');
+        submitClaimAction('exchange_withdraw', 'pop1_5_4', '교환 요청을 철회하고 배송완료 상태로 되돌리시겠습니까?');
     });
 
     // Exchange received
     $(document).on('click', '#btn_exchange_received_confirm', function(e) {
         e.preventDefault();
-        processOrderStatusUpdate('pop1_5_5', 'Exchanged', '교환 상품 회수 완료로 전환하시겠습니까?');
+        submitClaimAction('exchange_receive', 'pop1_5_5', '교환 상품 회수 완료로 전환하시겠습니까?');
     });
 
     // Exchange complete
     $(document).on('click', '#btn_exchange_complete_confirm', function(e) {
         e.preventDefault();
-        processOrderStatusUpdate('pop1_5_6', 'Exchanged', '교환 확정 처리를 완료하시겠습니까?');
+        submitClaimAction('exchange_complete', 'pop1_5_6', '교환 확정 처리를 완료하시겠습니까?');
     });
 
     // Exchange to return
     $(document).on('click', '#btn_exchange_to_return_confirm', function(e) {
         e.preventDefault();
-        processOrderStatusUpdate('pop1_5_8', 'Returned', '반품 상태로 전환하여 환불을 처리하시겠습니까?');
+        submitClaimAction('exchange_to_return', 'pop1_5_8', '반품 상태로 전환하여 환불을 처리하시겠습니까?');
+    });
+
+    $(document).on('click', '#btn_return_hold_confirm', function(e) {
+        e.preventDefault();
+        submitClaimAction('return_hold', 'pop1_4_4');
+    });
+    $(document).on('click', '#btn_return_invoice_confirm', function(e) {
+        e.preventDefault();
+        submitClaimAction('return_invoice', 'pop1_4_6');
+    });
+    $(document).on('click', '#btn_exchange_hold_before_confirm', function(e) {
+        e.preventDefault();
+        submitClaimAction('exchange_hold_before', 'pop1_5_3');
+    });
+    $(document).on('click', '#btn_exchange_hold_after_confirm', function(e) {
+        e.preventDefault();
+        submitClaimAction('exchange_hold_after', 'pop1_5_7');
+    });
+    $(document).on('click', '#btn_exchange_option_confirm', function(e) {
+        e.preventDefault();
+        submitClaimAction('exchange_option', 'pop1_5_9');
+    });
+    $(document).on('click', '#btn_exchange_invoice_confirm', function(e) {
+        e.preventDefault();
+        submitClaimAction('exchange_invoice', 'pop1_5_10');
     });
 });
 

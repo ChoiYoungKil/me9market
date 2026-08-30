@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\OrdersProduct;
 use App\Models\SettlementItem;
 use App\Models\SettlementRun;
+use App\Models\ShopChannel;
 use App\Support\OrderItemStatus;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -15,6 +16,7 @@ class SettlementCalculator
     private const COMMISSION_VAT_MULTIPLIER = 1.1;
 
     private array $orderLineTotals = [];
+
     private array $fallbackShops = [];
 
     public function periodOptions(int $months = 12): array
@@ -44,7 +46,7 @@ class SettlementCalculator
         $rows = $this->items($period, $vendorId, $shopChannelId);
 
         return $rows
-            ->groupBy(fn (array $row) => $row['vendor_id'] . ':' . ($row['shop_channel_id'] ?: 0) . ':' . ($row['settlement_role'] ?? 'seller'))
+            ->groupBy(fn (array $row) => $row['vendor_id'].':'.($row['shop_channel_id'] ?: 0).':'.($row['settlement_role'] ?? 'seller'))
             ->map(fn (Collection $group) => $this->summarizeGroup($period, $group))
             ->values();
     }
@@ -102,6 +104,7 @@ class SettlementCalculator
         $settlementDateExpression = $this->settlementDateExpression();
 
         return OrdersProduct::with(['order', 'shopChannel', 'shopChannelProduct', 'product', 'product.vendor'])
+            ->where('is_exchange_replacement', false)
             ->when($vendorId, function ($query) use ($vendorId) {
                 $query->where(function ($inner) use ($vendorId) {
                     $inner->where('vendor_id', $vendorId)
@@ -119,8 +122,8 @@ class SettlementCalculator
                 $query->whereIn('status_code', $statusValues)
                     ->orWhereIn('item_status', $statusValues);
             })
-            ->whereRaw($settlementDateExpression . ' >= ?', [$from])
-            ->whereRaw($settlementDateExpression . ' <= ?', [$to])
+            ->whereRaw($settlementDateExpression.' >= ?', [$from])
+            ->whereRaw($settlementDateExpression.' <= ?', [$to])
             ->orderBy('vendor_id')
             ->orderBy('shop_channel_id')
             ->orderBy('id');
@@ -141,7 +144,7 @@ class SettlementCalculator
         $productType = $shopProduct?->product_type ?: 'own';
         $isShared = in_array($productType, ['public', 'partial'], true);
         $configuredRewardPoints = round(max(0, (float) ($item->product?->reward_points ?? 0)) * $quantity, 2);
-        $usesOwnPg = (bool) ($shop?->use_own_pg ?? false) && $configuredRewardPoints <= 0 && !$isShared;
+        $usesOwnPg = (bool) ($shop?->use_own_pg ?? false) && $configuredRewardPoints <= 0 && ! $isShared;
         $paymentGatewayType = $usesOwnPg ? 'own_pg' : 'me9_pg';
         $vendor = $item->product?->vendor;
         $settlementType = (int) ($shopProduct?->settlement_type_snapshot ?: $shop?->settlement_type ?: 1);
@@ -157,12 +160,12 @@ class SettlementCalculator
             && (bool) ($item->product?->price_constraint_enabled)
             && $item->product?->price_constraint_type === 'fixed';
 
-        if (!$isShared) {
+        if (! $isShared) {
             return collect([
                 $this->baseRow($item, $period, [
                     'settlement_role' => 'seller',
                     'vendor_id' => (int) $item->vendor_id,
-                    'vendor_name' => $shop?->vendor?->name ?: '판매자 #' . $item->vendor_id,
+                    'vendor_name' => $shop?->vendor?->name ?: '판매자 #'.$item->vendor_id,
                     'gross_sales_amount' => $invoiceGross,
                     'supply_amount' => $supplyAmount,
                     'sales_profit_amount' => $salesProfit,
@@ -191,7 +194,7 @@ class SettlementCalculator
                 $this->baseRow($item, $period, [
                     'settlement_role' => 'shared_fixed_supplier',
                     'vendor_id' => $supplierVendorId,
-                    'vendor_name' => $vendor?->name ?: '판매자 #' . $supplierVendorId,
+                    'vendor_name' => $vendor?->name ?: '판매자 #'.$supplierVendorId,
                     'gross_sales_amount' => $invoiceGross,
                     'supply_amount' => $supplyAmount,
                     'sales_profit_amount' => 0,
@@ -211,7 +214,7 @@ class SettlementCalculator
                 $this->baseRow($item, $period, [
                     'settlement_role' => 'shared_fixed_reseller',
                     'vendor_id' => $channelVendorId,
-                    'vendor_name' => $shop?->vendor?->name ?: '판매자 #' . $channelVendorId,
+                    'vendor_name' => $shop?->vendor?->name ?: '판매자 #'.$channelVendorId,
                     'gross_sales_amount' => $rebateAmount,
                     'supply_amount' => 0,
                     'sales_profit_amount' => $rebateAmount,
@@ -235,7 +238,7 @@ class SettlementCalculator
             $this->baseRow($item, $period, [
                 'settlement_role' => 'shared_free_supplier',
                 'vendor_id' => $supplierVendorId,
-                'vendor_name' => $vendor?->name ?: '판매자 #' . $supplierVendorId,
+                'vendor_name' => $vendor?->name ?: '판매자 #'.$supplierVendorId,
                 'gross_sales_amount' => round($supplyAmount + $shippingAmount, 2),
                 'supply_amount' => $supplyAmount,
                 'sales_profit_amount' => 0,
@@ -255,7 +258,7 @@ class SettlementCalculator
             $this->baseRow($item, $period, [
                 'settlement_role' => 'shared_free_reseller',
                 'vendor_id' => $channelVendorId,
-                'vendor_name' => $shop?->vendor?->name ?: '판매자 #' . $channelVendorId,
+                'vendor_name' => $shop?->vendor?->name ?: '판매자 #'.$channelVendorId,
                 'gross_sales_amount' => $invoiceGross,
                 'supply_amount' => $supplyAmount,
                 'sales_profit_amount' => $salesProfit,
@@ -288,7 +291,7 @@ class SettlementCalculator
             'shop_channel_id' => $item->shop_channel_id,
             'shop_channel_name' => $item->shopChannel?->channel_name ?: 'Me9 Market',
             'product_id' => $item->product_id,
-            'order_no' => 'Me9-' . str_pad((string) $item->order_id, 8, '0', STR_PAD_LEFT),
+            'order_no' => 'Me9-'.str_pad((string) $item->order_id, 8, '0', STR_PAD_LEFT),
             'product_code' => $item->product_code,
             'product_name' => $item->product_name,
             'quantity' => (int) $item->product_qty,
@@ -360,7 +363,7 @@ class SettlementCalculator
 
     private function settlementKey(string $period, int $vendorId, ?int $shopChannelId, string $role): string
     {
-        return $period . ':vendor:' . $vendorId . ':shop:' . ($shopChannelId ?: 0) . ':role:' . $role;
+        return $period.':vendor:'.$vendorId.':shop:'.($shopChannelId ?: 0).':role:'.$role;
     }
 
     private function commissionAmount(float $grossAmount, int $quantity, int $settlementType, float $settlementRate): float
@@ -401,7 +404,7 @@ class SettlementCalculator
     private function allocatedShippingAmount(OrdersProduct $item): float
     {
         $shipping = (float) ($item->order?->shipping_charges ?? 0);
-        if ($shipping <= 0 || !$item->order_id) {
+        if ($shipping <= 0 || ! $item->order_id) {
             return 0;
         }
 
@@ -418,7 +421,7 @@ class SettlementCalculator
     private function allocatedUsedPointAmount(OrdersProduct $item): float
     {
         $usedPoint = (float) ($item->order?->used_point ?? 0);
-        if ($usedPoint <= 0 || !$item->order_id) {
+        if ($usedPoint <= 0 || ! $item->order_id) {
             return 0;
         }
 
@@ -435,7 +438,7 @@ class SettlementCalculator
     private function allocatedCouponAmount(OrdersProduct $item): float
     {
         $couponAmount = (float) ($item->order?->coupon_amount ?? 0);
-        if ($couponAmount <= 0 || !$item->order_id) {
+        if ($couponAmount <= 0 || ! $item->order_id) {
             return 0;
         }
 
@@ -451,8 +454,9 @@ class SettlementCalculator
 
     private function orderLineTotal(int $orderId): float
     {
-        if (!array_key_exists($orderId, $this->orderLineTotals)) {
+        if (! array_key_exists($orderId, $this->orderLineTotals)) {
             $this->orderLineTotals[$orderId] = (float) OrdersProduct::where('order_id', $orderId)
+                ->where('is_exchange_replacement', false)
                 ->selectRaw('SUM(CASE WHEN line_total > 0 THEN line_total ELSE product_price * product_qty END) as total')
                 ->value('total');
         }
@@ -462,7 +466,7 @@ class SettlementCalculator
 
     private function periodRange(string $period): array
     {
-        $from = Carbon::createFromFormat('Y-m-d H:i:s', $period . '-01 00:00:00')->startOfMonth();
+        $from = Carbon::createFromFormat('Y-m-d H:i:s', $period.'-01 00:00:00')->startOfMonth();
         $to = $from->copy()->endOfMonth();
 
         return [$from, $to];
@@ -472,7 +476,7 @@ class SettlementCalculator
     {
         $jointSettlementDate = DB::connection()->getDriverName() === 'sqlite'
             ? "date((SELECT end_date FROM joint_purchases WHERE joint_purchases.id = orders_products.joint_purchase_id), '+7 days')"
-            : "(SELECT DATE_ADD(end_date, INTERVAL 7 DAY) FROM joint_purchases WHERE joint_purchases.id = orders_products.joint_purchase_id)";
+            : '(SELECT DATE_ADD(end_date, INTERVAL 7 DAY) FROM joint_purchases WHERE joint_purchases.id = orders_products.joint_purchase_id)';
 
         return "COALESCE(CASE WHEN orders_products.joint_purchase_id IS NOT NULL THEN {$jointSettlementDate} END, orders_products.confirmed_at, orders_products.updated_at)";
     }
@@ -505,8 +509,8 @@ class SettlementCalculator
             return null;
         }
 
-        if (!array_key_exists($vendorId, $this->fallbackShops)) {
-            $this->fallbackShops[$vendorId] = \App\Models\ShopChannel::where('vendor_id', $vendorId)
+        if (! array_key_exists($vendorId, $this->fallbackShops)) {
+            $this->fallbackShops[$vendorId] = ShopChannel::where('vendor_id', $vendorId)
                 ->orderByDesc('status')
                 ->orderBy('id')
                 ->first();

@@ -16,8 +16,8 @@ use App\Models\ShopChannelPrivateAccess;
 use App\Models\ShopChannelProduct;
 use App\Models\User;
 use App\Models\Vendor;
+use App\Models\VisitedChannel;
 use App\Support\OrderItemStatus;
-use App\Services\JointPurchasePricingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -28,14 +28,16 @@ use Illuminate\Support\Facades\Session;
 class ShopChannelRuntime
 {
     private const CART_KEY = 'shop_channel_cart';
+
     private const CHANNEL_KEY = 'shop_channel_id';
+
     private const PRIVATE_ACCESS_KEY = 'shop_channel_private_access_id';
 
     public function ensureAdminLoginAccount(): Admin
     {
         $admin = Admin::where('email', 'admin@admin.com')->first();
-        if (!$admin) {
-            $admin = new Admin();
+        if (! $admin) {
+            $admin = new Admin;
             $admin->name = 'Me9 전체관리자';
             $admin->type = 'admin';
             $admin->vendor_id = 0;
@@ -50,7 +52,7 @@ class ShopChannelRuntime
         }
 
         $dirty = false;
-        if (!Hash::check('123456', $admin->password)) {
+        if (! Hash::check('123456', $admin->password)) {
             $admin->password = Hash::make('123456');
             $dirty = true;
         }
@@ -76,7 +78,7 @@ class ShopChannelRuntime
 
     public function ensureDemoData(): ShopChannel
     {
-        if (!$this->canSeedDemoData()) {
+        if (! $this->canSeedDemoData()) {
             return ShopChannel::where('status', 1)->orderBy('id')->firstOrFail();
         }
 
@@ -89,15 +91,15 @@ class ShopChannelRuntime
                 'status' => 1,
             ]
         );
-        if (!Hash::check('123456', $distributor->password)) {
+        if (! Hash::check('123456', $distributor->password)) {
             $distributor->password = Hash::make('123456');
             $distributor->status = 1;
             $distributor->save();
         }
 
         $user = User::where('email', 'user@user.com')->first();
-        if (!$user) {
-            $user = new User();
+        if (! $user) {
+            $user = new User;
             $user->name = 'Me9 일반회원';
             $user->username = 'user@user.com';
             $user->email = 'user@user.com';
@@ -105,7 +107,7 @@ class ShopChannelRuntime
             $user->password = Hash::make('123456');
             $user->status = 1;
             $user->save();
-        } elseif (!Hash::check('123456', $user->password)) {
+        } elseif (! Hash::check('123456', $user->password)) {
             $user->username = $user->username ?: 'user@user.com';
             $user->password = Hash::make('123456');
             $user->status = 1;
@@ -113,8 +115,8 @@ class ShopChannelRuntime
         }
 
         $vendor = Vendor::where('email', 'john@admin.com')->first();
-        if (!$vendor) {
-            $vendor = new Vendor();
+        if (! $vendor) {
+            $vendor = new Vendor;
             $vendor->name = 'Me9 테스트 판매자';
             $vendor->mobile = '010-1111-2222';
             $vendor->email = 'john@admin.com';
@@ -136,8 +138,8 @@ class ShopChannelRuntime
         }
 
         $admin = Admin::where('email', 'john@admin.com')->first();
-        if (!$admin) {
-            $admin = new Admin();
+        if (! $admin) {
+            $admin = new Admin;
             $admin->name = 'Me9 채널관리자';
             $admin->type = 'vendor';
             $admin->vendor_id = $vendor->id;
@@ -152,7 +154,7 @@ class ShopChannelRuntime
             $admin->type = 'vendor';
             $admin->vendor_id = $vendor->id;
             $admin->mobile = $admin->mobile ?: '010-1111-2222';
-            if (!Hash::check('123456', $admin->password)) {
+            if (! Hash::check('123456', $admin->password)) {
                 $admin->password = Hash::make('123456');
             }
             $admin->confirm = 'Yes';
@@ -163,24 +165,24 @@ class ShopChannelRuntime
         $this->ensureAdminLoginAccount();
 
         $section = Section::where('name', '라이프스타일')->first();
-        if (!$section) {
-            $section = new Section();
+        if (! $section) {
+            $section = new Section;
             $section->name = '라이프스타일';
             $section->status = 1;
             $section->save();
         }
 
         $brand = Brand::where('name', 'Me9 Select')->first();
-        if (!$brand) {
-            $brand = new Brand();
+        if (! $brand) {
+            $brand = new Brand;
             $brand->name = 'Me9 Select';
             $brand->status = 1;
             $brand->save();
         }
 
         $category = Category::where('url', 'me9-lifestyle')->first();
-        if (!$category) {
-            $category = new Category();
+        if (! $category) {
+            $category = new Category;
             $category->parent_id = 0;
             $category->section_id = $section->id;
             $category->category_name = 'Me9 라이프스타일';
@@ -199,8 +201,8 @@ class ShopChannelRuntime
         ];
 
         $shop = ShopChannel::where('channel_code', 'me9')->first();
-        if (!$shop) {
-            $shop = new ShopChannel();
+        if (! $shop) {
+            $shop = new ShopChannel;
             $shop->vendor_id = $vendor->id;
             $shop->channel_code = 'me9';
             $shop->status = 1;
@@ -217,8 +219,8 @@ class ShopChannelRuntime
 
         foreach ($products as $productData) {
             $product = Product::where('product_code', $productData['code'])->first();
-            if (!$product) {
-                $product = new Product();
+            if (! $product) {
+                $product = new Product;
                 $product->section_id = $section->id;
                 $product->category_id = $category->id;
                 $product->brand_id = $brand->id;
@@ -231,7 +233,7 @@ class ShopChannelRuntime
                 $product->product_price = $productData['price'];
                 $product->product_discount = 0;
                 $product->product_weight = 1;
-                $product->description = $productData['name'] . ' 상품 상세 설명입니다.';
+                $product->description = $productData['name'].' 상품 상세 설명입니다.';
                 $product->is_featured = 'No';
                 if (Schema::hasColumn('products', 'is_bestseller')) {
                     $product->is_bestseller = 'No';
@@ -267,7 +269,7 @@ class ShopChannelRuntime
         $jointProducts = Product::whereIn('product_code', ['M9-HEADSET-001', 'M9-WALLET-004'])->get();
         foreach ($jointProducts as $index => $jointProduct) {
             $exists = DB::table('joint_purchases')->where('product_id', $jointProduct->id)->exists();
-            if (!$exists) {
+            if (! $exists) {
                 $jointPurchaseId = DB::table('joint_purchases')->insertGetId([
                     'product_id' => $jointProduct->id,
                     'min_quantity' => $index === 0 ? 100 : 50,
@@ -332,7 +334,7 @@ class ShopChannelRuntime
                 $grandTotal += (float) ($shopProduct->selling_price ?: $shopProduct->product?->product_price ?: 0) * $qty;
             }
 
-            $order = new Order();
+            $order = new Order;
             $order->user_id = 0;
             $order->name = '홍길동';
             $order->address = '서울특별시 마포구 월드컵북로 396';
@@ -353,7 +355,7 @@ class ShopChannelRuntime
 
             foreach ($shopProducts as $index => $shopProduct) {
                 $product = $shopProduct->product;
-                if (!$product) {
+                if (! $product) {
                     continue;
                 }
 
@@ -403,79 +405,68 @@ class ShopChannelRuntime
 
     public function currentChannel(): ShopChannel
     {
-        $this->seedDemoDataIfAllowed();
+        $shop = Session::has(self::CHANNEL_KEY)
+            ? ShopChannel::find(Session::get(self::CHANNEL_KEY))
+            : null;
 
-        $shop = null;
-        if (Session::has(self::CHANNEL_KEY)) {
-            $shop = ShopChannel::find(Session::get(self::CHANNEL_KEY));
-        }
-
-        if (!$shop) {
-            $shop = ShopChannel::where('channel_code', 'me9')
-                ->where('status', 1)
-                ->first()
-                ?: ShopChannel::where('status', 1)->orderBy('id')->firstOrFail();
-            Session::put(self::CHANNEL_KEY, $shop->id);
-        }
+        abort_unless($shop && $this->isChannelAvailable($shop), 403, 'Shop 채널 입장이 필요합니다.');
 
         return $shop;
     }
 
-    public function enterChannel(string $entryCode, ?string $phone = null): ?ShopChannel
+    public function hasActiveChannelAccess(): bool
+    {
+        if (! Session::has(self::CHANNEL_KEY)) {
+            return false;
+        }
+
+        $shop = ShopChannel::find(Session::get(self::CHANNEL_KEY));
+        if (! $shop || ! $this->isChannelAvailable($shop)) {
+            $this->leaveChannel();
+
+            return false;
+        }
+
+        if ((int) $shop->is_public === 1) {
+            return true;
+        }
+
+        $accessId = Session::get(self::PRIVATE_ACCESS_KEY);
+
+        return $accessId && ShopChannelPrivateAccess::whereKey($accessId)
+            ->where('shop_channel_id', $shop->id)
+            ->exists();
+    }
+
+    public function leaveChannel(): void
+    {
+        Session::forget([self::CHANNEL_KEY, self::PRIVATE_ACCESS_KEY, self::CART_KEY]);
+    }
+
+    public function enterChannel(string $entryCode): ?ShopChannel
     {
         $this->seedDemoDataIfAllowed();
 
-        $shop = ShopChannel::where('channel_code', $entryCode)->first()
-            ?: ShopChannel::where('password', $entryCode)->first();
+        $shop = ShopChannel::where('channel_code', trim($entryCode))->first();
 
-        if (!$shop || (int) $shop->status !== 1) {
+        if (! $shop || ! $this->isChannelAvailable($shop) || (int) $shop->is_public !== 1) {
             return null;
         }
 
-        if ((int) $shop->is_public === 0) {
-            $access = $this->privateAccess($shop, (string) $phone, $entryCode);
-            $usesLegacyPassword = trim((string) $shop->password) !== '' && hash_equals((string) $shop->password, trim($entryCode));
-            if (!$access && !$usesLegacyPassword) {
-                return null;
-            }
-
-            if ($access) {
-                $access->forceFill([
-                    'first_accessed_at' => $access->first_accessed_at ?: now(),
-                    'access_count' => (int) $access->access_count + 1,
-                ])->save();
-                Session::put(self::PRIVATE_ACCESS_KEY, $access->id);
-            } else {
-                Session::forget(self::PRIVATE_ACCESS_KEY);
-            }
-        } else {
-            Session::forget(self::PRIVATE_ACCESS_KEY);
-        }
+        Session::forget(self::PRIVATE_ACCESS_KEY);
 
         Session::put(self::CHANNEL_KEY, $shop->id);
+        $this->recordAuthenticatedVisit($shop);
 
         return $shop;
     }
 
-    public function enterPrivateChannel(string $phone, string $entryCode): ?ShopChannel
+    public function enterPrivateAccess(ShopChannelPrivateAccess $access): ?ShopChannel
     {
-        $this->seedDemoDataIfAllowed();
-
-        $normalizedPhone = ShopChannelPrivateAccess::normalizePhone($phone);
-        if ($normalizedPhone === '' || trim($entryCode) === '') {
+        $access->loadMissing('shopChannel');
+        if (! $access->shopChannel || ! $this->isChannelAvailable($access->shopChannel) || (int) $access->shopChannel->is_public !== 0) {
             return null;
         }
-
-        $access = ShopChannelPrivateAccess::with('shopChannel')
-            ->where('phone_normalized', $normalizedPhone)
-            ->where('entry_code', trim($entryCode))
-            ->whereHas('shopChannel', fn ($query) => $query->where('status', 1)->where('is_public', 0))
-            ->first();
-
-        if (!$access || !$access->shopChannel) {
-            return null;
-        }
-
         $access->forceFill([
             'first_accessed_at' => $access->first_accessed_at ?: now(),
             'access_count' => (int) $access->access_count + 1,
@@ -483,21 +474,54 @@ class ShopChannelRuntime
 
         Session::put(self::PRIVATE_ACCESS_KEY, $access->id);
         Session::put(self::CHANNEL_KEY, $access->shopChannel->id);
+        $this->recordAuthenticatedVisit($access->shopChannel);
 
         return $access->shopChannel;
     }
 
-    private function privateAccess(ShopChannel $shop, string $phone, string $entryCode): ?ShopChannelPrivateAccess
+    public function recordAuthenticatedVisit(?ShopChannel $shop = null): void
     {
-        $normalizedPhone = ShopChannelPrivateAccess::normalizePhone($phone);
-        if ($normalizedPhone === '') {
-            return null;
+        if (! Auth::id()) {
+            return;
+        }
+        $shop = $shop ?: $this->currentChannel();
+
+        $visit = VisitedChannel::where('user_id', Auth::id())
+            ->where('vendor_id', $shop->vendor_id)
+            ->where(function ($query) use ($shop) {
+                $query->where('shop_channel_id', $shop->id)->orWhereNull('shop_channel_id');
+            })
+            ->first();
+        if ($visit) {
+            $visit->shop_channel_id = $shop->id;
+            $visit->touch();
+            $visit->save();
+        } else {
+            VisitedChannel::create([
+                'user_id' => Auth::id(),
+                'vendor_id' => $shop->vendor_id,
+                'shop_channel_id' => $shop->id,
+            ]);
         }
 
-        return ShopChannelPrivateAccess::where('shop_channel_id', $shop->id)
-            ->where('phone_normalized', $normalizedPhone)
-            ->where('entry_code', trim($entryCode))
-            ->first();
+        app(ChannelPointService::class)->recordFirstVisit($shop, (int) Auth::id());
+    }
+
+    private function isChannelAvailable(ShopChannel $shop): bool
+    {
+        if ((int) $shop->status !== 1 || $shop->closure_status === 'approved') {
+            return false;
+        }
+        if ((int) $shop->use_period_type === 1) {
+            if ($shop->start_at && now()->lt($shop->start_at)) {
+                return false;
+            }
+            if ($shop->end_at && now()->gt($shop->end_at)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     public function canSeedDemoData(): bool
@@ -535,8 +559,9 @@ class ShopChannelRuntime
 
         $items = [];
         foreach ($cart as $id => $row) {
-            if (!$products->has($id)) {
+            if (! $products->has($id)) {
                 unset($cart[$id]);
+
                 continue;
             }
 
@@ -612,7 +637,7 @@ class ShopChannelRuntime
         $totals = $this->totals();
 
         return DB::transaction(function () use ($request, $shop, $items, $totals) {
-            $order = new Order();
+            $order = new Order;
             $order->user_id = Auth::id() ?: 0;
             $order->name = $request->input('name', Auth::user()->name ?? '비회원');
             $order->address = $request->input('address', '서울특별시 중구 세종대로 110');
@@ -638,7 +663,7 @@ class ShopChannelRuntime
                 $product = $item['product'];
                 $status = OrderItemStatus::PAID;
                 $originalPrice = (float) ($shopProduct->selling_price ?: $shopProduct->product_price);
-                $isJointPurchase = !empty($item['joint_purchase']);
+                $isJointPurchase = ! empty($item['joint_purchase']);
                 $orderItem = OrdersProduct::create([
                     'order_id' => $order->id,
                     'user_id' => $order->user_id,

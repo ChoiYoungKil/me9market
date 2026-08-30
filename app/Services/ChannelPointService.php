@@ -14,13 +14,18 @@ use Illuminate\Validation\ValidationException;
 class ChannelPointService
 {
     public const TYPE_PURCHASE = 'purchase';
+
     public const TYPE_CUSTOMER_PAYBACK = 'customer_payback';
+
     public const TYPE_SMS = 'sms';
+
     public const TYPE_REFUND = 'refund';
+
+    public const TYPE_FIRST_VISIT = 'first_visit';
 
     public function balanceForVendor(int $vendorId): int
     {
-        if (!Schema::hasTable('channel_point_transactions')) {
+        if (! Schema::hasTable('channel_point_transactions')) {
             return 0;
         }
 
@@ -31,7 +36,7 @@ class ChannelPointService
 
     public function summaryForVendor(int $vendorId): array
     {
-        if (!Schema::hasTable('channel_point_transactions')) {
+        if (! Schema::hasTable('channel_point_transactions')) {
             return [
                 'balance' => 0,
                 'purchased' => 0,
@@ -82,7 +87,7 @@ class ChannelPointService
         return DB::transaction(function () use ($vendorId, $points, $memo, $shopChannelId, $adminId) {
             $this->lockVendorPoints($vendorId);
 
-            if (!$this->canRequestRefund($vendorId)) {
+            if (! $this->canRequestRefund($vendorId)) {
                 throw ValidationException::withMessages([
                     'points' => '포인트 환급은 Shop 채널 운영중지 요청이 최고관리자 승인 완료된 경우에만 요청할 수 있습니다.',
                 ]);
@@ -152,7 +157,7 @@ class ChannelPointService
 
     public function recordCustomerPayback(OrdersProduct $item): ?PointTransaction
     {
-        if (!$item->user_id || !$item->vendor_id || !Schema::hasTable('channel_point_transactions')) {
+        if (! $item->user_id || ! $item->vendor_id || ! Schema::hasTable('channel_point_transactions')) {
             return null;
         }
 
@@ -189,7 +194,7 @@ class ChannelPointService
                 'type' => self::TYPE_CUSTOMER_PAYBACK,
                 'status' => 'approved',
                 'points' => -$points,
-                'memo' => $item->product_name . ' 구매확정 포인트 페이백',
+                'memo' => $item->product_name.' 구매확정 포인트 페이백',
                 'reference_type' => 'orders_product',
                 'reference_id' => $item->id,
                 'requested_at' => now(),
@@ -206,7 +211,7 @@ class ChannelPointService
                     'shop_channel_id' => $item->shop_channel_id,
                     'order_id' => $item->order_id,
                     'points' => $points,
-                    'description' => $item->product_name . ' 구매확정 포인트 페이백',
+                    'description' => $item->product_name.' 구매확정 포인트 페이백',
                 ]
             );
         });
@@ -236,9 +241,51 @@ class ChannelPointService
         });
     }
 
+    public function recordFirstVisit(ShopChannel $shop, int $userId): ?PointTransaction
+    {
+        $points = max(0, (int) $shop->first_visit_points);
+        if ($points === 0 || ! $shop->vendor_id) {
+            return null;
+        }
+
+        return DB::transaction(function () use ($shop, $userId, $points) {
+            $this->lockVendorPoints((int) $shop->vendor_id);
+            $exists = ChannelPointTransaction::where('type', self::TYPE_FIRST_VISIT)
+                ->where('shop_channel_id', $shop->id)
+                ->where('user_id', $userId)
+                ->lockForUpdate()
+                ->exists();
+            if ($exists || $this->balanceForVendor((int) $shop->vendor_id) < $points) {
+                return null;
+            }
+
+            ChannelPointTransaction::create([
+                'vendor_id' => $shop->vendor_id,
+                'shop_channel_id' => $shop->id,
+                'user_id' => $userId,
+                'type' => self::TYPE_FIRST_VISIT,
+                'status' => 'approved',
+                'points' => -$points,
+                'memo' => $shop->channel_name.' 첫 방문 포인트 적립',
+                'reference_type' => 'shop_channel_first_visit',
+                'reference_id' => $userId,
+                'requested_at' => now(),
+                'approved_at' => now(),
+            ]);
+
+            return PointTransaction::create([
+                'user_id' => $userId,
+                'shop_channel_id' => $shop->id,
+                'type' => self::TYPE_FIRST_VISIT,
+                'points' => $points,
+                'description' => $shop->channel_name.' 첫 방문 포인트 적립',
+            ]);
+        });
+    }
+
     public function hasActiveChannel(int $vendorId): bool
     {
-        if (!Schema::hasTable('shop_channels')) {
+        if (! Schema::hasTable('shop_channels')) {
             return false;
         }
 
@@ -249,7 +296,7 @@ class ChannelPointService
 
     public function hasPendingClosure(int $vendorId): bool
     {
-        if (!Schema::hasTable('shop_channels') || !Schema::hasColumn('shop_channels', 'closure_status')) {
+        if (! Schema::hasTable('shop_channels') || ! Schema::hasColumn('shop_channels', 'closure_status')) {
             return false;
         }
 
@@ -264,7 +311,7 @@ class ChannelPointService
             return false;
         }
 
-        if (!Schema::hasTable('shop_channels') || !Schema::hasColumn('shop_channels', 'closure_status')) {
+        if (! Schema::hasTable('shop_channels') || ! Schema::hasColumn('shop_channels', 'closure_status')) {
             return true;
         }
 
@@ -272,7 +319,7 @@ class ChannelPointService
             && ShopChannel::where('vendor_id', $vendorId)
                 ->where('closure_status', 'approved')
                 ->exists()
-            && !ShopChannel::where('vendor_id', $vendorId)
+            && ! ShopChannel::where('vendor_id', $vendorId)
                 ->whereNotIn('closure_status', ['approved'])
                 ->exists();
     }

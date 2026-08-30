@@ -421,6 +421,7 @@
                             </div>
 
                             @include('channel.sub01.inc.purchase_sms_settings')
+                            @include('channel.sub01.inc.first_visit_points')
 
                             <!-- 관리자 정보 -->
                             <div class="ttl01 mt40">Shop 채널 (모니터링) 관리자 정보</div>

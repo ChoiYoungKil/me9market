@@ -310,4 +310,99 @@ class ChannelOrderTest extends TestCase
             ->assertSee('P123')
             ->assertSee('Test Product');
     }
+
+    public function test_return_claim_enforces_transitions_and_completes_after_receipt(): void
+    {
+        [, $admin, , , $order, $item] = $this->createSetup();
+        $headers = ['X-Requested-With' => 'XMLHttpRequest'];
+
+        $this->actingAs($admin, 'admin')->post('/channel/order/return/request', [
+            'order_id' => $order->id,
+            'item_ids' => [$item->id],
+            'reason' => 'Defective',
+            'detail_reason' => 'Defective after opening',
+        ], $headers)->assertJson(['status' => true]);
+
+        $this->post('/channel/order/claim/action', [
+            'order_id' => $order->id,
+            'item_ids' => [$item->id],
+            'action' => 'return_complete',
+        ], $headers)->assertStatus(422)->assertJson(['status' => false]);
+
+        foreach (['return_receive', 'return_complete'] as $action) {
+            $this->post('/channel/order/claim/action', [
+                'order_id' => $order->id,
+                'item_ids' => [$item->id],
+                'action' => $action,
+            ], $headers)->assertOk()->assertJson(['status' => true]);
+        }
+
+        $this->assertDatabaseHas('orders_products', [
+            'id' => $item->id,
+            'status_code' => OrderItemStatus::RETURNED,
+        ]);
+        $this->assertDatabaseHas('order_claims', [
+            'order_product_id' => $item->id,
+            'type' => 'return',
+            'status' => 'completed',
+        ]);
+    }
+
+    public function test_exchange_claim_creates_one_zero_value_replacement_item(): void
+    {
+        [, $admin, , , $order, $item] = $this->createSetup();
+        $headers = ['X-Requested-With' => 'XMLHttpRequest'];
+
+        $this->actingAs($admin, 'admin')->post('/channel/order/exchange/request', [
+            'order_id' => $order->id,
+            'item_ids' => [$item->id],
+            'reason' => 'Wrong size',
+            'detail_reason' => 'Need a larger size',
+        ], $headers)->assertJson(['status' => true]);
+
+        foreach (['exchange_approve', 'exchange_receive'] as $action) {
+            $this->post('/channel/order/claim/action', [
+                'order_id' => $order->id,
+                'item_ids' => [$item->id],
+                'action' => $action,
+            ], $headers)->assertOk()->assertJson(['status' => true]);
+        }
+        $this->post('/channel/order/claim/action', [
+            'order_id' => $order->id,
+            'item_ids' => [$item->id],
+            'action' => 'exchange_option',
+            'option' => 'L',
+        ], $headers)->assertOk()->assertJson(['status' => true]);
+        $this->post('/channel/order/claim/action', [
+            'order_id' => $order->id,
+            'item_ids' => [$item->id],
+            'action' => 'exchange_complete',
+        ], $headers)->assertOk()->assertJson(['status' => true]);
+
+        $this->assertDatabaseHas('orders_products', [
+            'id' => $item->id,
+            'status_code' => OrderItemStatus::EXCHANGED,
+            'product_size' => 'L',
+        ]);
+        $this->assertDatabaseHas('orders_products', [
+            'replacement_for_order_product_id' => $item->id,
+            'is_exchange_replacement' => 1,
+            'status_code' => OrderItemStatus::READY_TO_SHIP,
+            'product_price' => 0,
+            'line_total' => 0,
+            'settlement_status' => 'excluded_exchange_replacement',
+        ]);
+        $this->assertSame(1, OrdersProduct::where('replacement_for_order_product_id', $item->id)->count());
+    }
+
+    public function test_order_actions_reject_non_ajax_requests(): void
+    {
+        [, $admin, , , $order, $item] = $this->createSetup();
+
+        $this->actingAs($admin, 'admin')->post('/channel/order/status/update', [
+            'order_id' => $order->id,
+            'status' => 'shipping',
+            'item_ids' => [$item->id],
+        ])->assertStatus(422)->assertJson(['status' => false]);
+    }
 }

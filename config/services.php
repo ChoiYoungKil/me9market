@@ -31,4 +31,15 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'sms' => [
+        'driver' => env('SMS_DRIVER', 'log'),
+        'endpoint' => env('SMS_ENDPOINT', 'https://www.fast2sms.com/dev/bulk'),
+        'authorization' => env('SMS_AUTHORIZATION'),
+        'sender_id' => env('SMS_SENDER_ID'),
+        'username' => env('SMS_USERNAME'),
+        'password' => env('SMS_PASSWORD'),
+        'otp_ttl_minutes' => (int) env('SMS_OTP_TTL_MINUTES', 5),
+        'otp_max_attempts' => (int) env('SMS_OTP_MAX_ATTEMPTS', 5),
+    ],
+
 ];

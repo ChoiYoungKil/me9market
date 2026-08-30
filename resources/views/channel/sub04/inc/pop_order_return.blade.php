@@ -269,7 +269,7 @@
                                     <tr>
                                         <th class="w160"><span>보류 사유</span></th>
                                         <td colspan="3">
-                                            <textarea required="required" placeholder="보류 사유를 입력해 주세요."></textarea>
+                                            <textarea name="reason" required="required" placeholder="보류 사유를 입력해 주세요."></textarea>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -280,7 +280,7 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="{{ url()->current() }}">반품보류</a>
+                    <a href="{{ url()->current() }}" id="btn_return_hold_confirm">반품보류</a>
                     <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                 </div>
             </div>
@@ -359,16 +359,16 @@
                                     <tr>
                                         <th class="w160"><span>택배사</span></th>
                                         <td colspan="3">
-                                            <select class="w200" required="required">
+                                            <select class="w200" name="courier_name" required="required">
                                                 <option value="" disabled="" selected="">택배사 선택</option>
-                                                <option value="1">직접배송</option>
+                                                <option value="직접배송">직접배송</option>
                                             </select>
                                         </td>
                                     </tr>
                                     <tr>
                                         <th class="w160"><span>송장번호</span></th>
                                         <td colspan="3">
-                                            <input type="text" value="" required="required">
+                                            <input type="text" name="tracking_number" value="" required="required">
                                         </td>
                                     </tr>
                                 </tbody>
@@ -379,7 +379,7 @@
 
                 <!-- 하단버튼 -->
                 <div class="btm_btn mt10">
-                    <a href="{{ url()->current() }}">변경하기</a>
+                    <a href="{{ url()->current() }}" id="btn_return_invoice_confirm">변경하기</a>
                     <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                 </div>
             </div>

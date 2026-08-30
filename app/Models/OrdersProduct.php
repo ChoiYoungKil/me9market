@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use App\Support\OrderItemStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Support\OrderItemStatus;
 
 class OrdersProduct extends Model
 {
@@ -50,6 +50,8 @@ class OrdersProduct extends Model
         'extra_shipping_fee',
         'sms_count',
         'sms_fee',
+        'replacement_for_order_product_id',
+        'is_exchange_replacement',
     ];
 
     protected $casts = [
@@ -61,6 +63,7 @@ class OrdersProduct extends Model
         'extra_shipping_fee' => 'integer',
         'sms_count' => 'integer',
         'sms_fee' => 'integer',
+        'is_exchange_replacement' => 'boolean',
     ];
 
     public function product()
@@ -86,6 +89,16 @@ class OrdersProduct extends Model
     public function distributor()
     {
         return $this->belongsTo(Distributor::class);
+    }
+
+    public function replacementFor()
+    {
+        return $this->belongsTo(self::class, 'replacement_for_order_product_id');
+    }
+
+    public function exchangeReplacement()
+    {
+        return $this->hasOne(self::class, 'replacement_for_order_product_id');
     }
 
     public function getNormalizedStatusAttribute(): string

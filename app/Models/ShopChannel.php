@@ -44,6 +44,7 @@ class ShopChannel extends Model
         'pg_secret_key',
         'use_purchase_sms',
         'purchase_sms_templates',
+        'first_visit_points',
         'use_admin',
         'admin_name',
         'admin_login_id',
@@ -67,6 +68,7 @@ class ShopChannel extends Model
         'pg_secret_key' => 'encrypted',
         'use_purchase_sms' => 'boolean',
         'purchase_sms_templates' => 'array',
+        'first_visit_points' => 'integer',
     ];
 
     public function vendor()

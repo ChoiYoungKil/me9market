@@ -4,6 +4,7 @@
 <head>
     <title>Me9 market</title>
     <meta charset="utf-8" />
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="format-detection" content="telephone=no" />
     <meta name="description" content="" />

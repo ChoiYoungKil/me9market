@@ -2,14 +2,27 @@
 
 namespace App\Http\Controllers\Front;
 
+use App\Http\Controllers\Admin\OrderController;
 use App\Http\Controllers\Controller;
-use App\Models\Notice;
 use App\Models\Faq;
+use App\Models\Notice;
+use App\Models\Order;
+use App\Models\OrderClaim;
+use App\Models\OrdersProduct;
+use App\Models\ShopChannel;
+use App\Models\ShopChannelNotice;
+use App\Models\ShopChannelProduct;
+use App\Models\User;
+use App\Services\ChannelPointService;
+use App\Services\ShopChannelOtpService;
 use App\Services\ShopChannelRuntime;
+use App\Services\ShopChannelSmsService;
 use App\Support\OrderItemStatus;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Session;
 
 class FrontController extends Controller
 {
@@ -25,35 +38,35 @@ class FrontController extends Controller
         // 검색 기능
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('title', 'like', '%' . $search . '%')
-                  ->orWhere('content', 'like', '%' . $search . '%');
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', '%'.$search.'%')
+                    ->orWhere('content', 'like', '%'.$search.'%');
             });
         }
 
         $notices = $query->paginate(10);
-        
+
         return view('front.pages.notice', compact('notices'));
     }
 
     public function noticeView($id)
     {
         $notice = Notice::where('status', 1)->findOrFail($id);
-        
+
         // 조회수 증가
         $notice->increment('view_count');
-        
+
         // 이전글/다음글
         $prevNotice = Notice::where('status', 1)
             ->where('id', '<', $id)
             ->orderBy('id', 'desc')
             ->first();
-            
+
         $nextNotice = Notice::where('status', 1)
             ->where('id', '>', $id)
             ->orderBy('id', 'asc')
             ->first();
-        
+
         return view('front.pages.notice_view', compact('notice', 'prevNotice', 'nextNotice'));
     }
 
@@ -72,14 +85,14 @@ class FrontController extends Controller
             $search_value = $request->get('search_value');
 
             if ($search_type == 'question') {
-                $query->where('question', 'like', '%' . $search_value . '%');
+                $query->where('question', 'like', '%'.$search_value.'%');
             } elseif ($search_type == 'answer') {
-                $query->where('answer', 'like', '%' . $search_value . '%');
+                $query->where('answer', 'like', '%'.$search_value.'%');
             } else {
                 // 질문 + 답변
-                $query->where(function($q) use ($search_value) {
-                    $q->where('question', 'like', '%' . $search_value . '%')
-                      ->orWhere('answer', 'like', '%' . $search_value . '%');
+                $query->where(function ($q) use ($search_value) {
+                    $q->where('question', 'like', '%'.$search_value.'%')
+                        ->orWhere('answer', 'like', '%'.$search_value.'%');
                 });
             }
         }
@@ -114,7 +127,7 @@ class FrontController extends Controller
         $orderId = 32022;
         $now = now();
         $shop = app(ShopChannelRuntime::class)->seedDemoDataIfAllowed();
-        if (!$shop) {
+        if (! $shop) {
             return;
         }
         $vendorId = (int) $shop->vendor_id;
@@ -124,7 +137,7 @@ class FrontController extends Controller
             ->value('id') ?: 1);
 
         $user = DB::table('users')->where('email', 'user@user.com')->first();
-        if (!$user) {
+        if (! $user) {
             $userId = DB::table('users')->insertGetId([
                 'name' => '일반사용자',
                 'username' => 'user@user.com',
@@ -138,34 +151,34 @@ class FrontController extends Controller
                 'pincode' => '12345',
                 'status' => 1,
                 'created_at' => $now,
-                'updated_at' => $now
+                'updated_at' => $now,
             ]);
         } else {
             $userId = $user->id;
         }
 
         $sectionId = DB::table('sections')->where('name', '의류')->value('id');
-        if (!$sectionId) {
+        if (! $sectionId) {
             $sectionId = DB::table('sections')->insertGetId([
                 'name' => '의류',
                 'status' => 1,
                 'created_at' => $now,
-                'updated_at' => $now
+                'updated_at' => $now,
             ]);
         }
 
         $brandId = DB::table('brands')->where('name', 'Me9 브랜드')->value('id');
-        if (!$brandId) {
+        if (! $brandId) {
             $brandId = DB::table('brands')->insertGetId([
                 'name' => 'Me9 브랜드',
                 'status' => 1,
                 'created_at' => $now,
-                'updated_at' => $now
+                'updated_at' => $now,
             ]);
         }
 
         $categoryId = DB::table('categories')->where('url', 't-shirts')->value('id');
-        if (!$categoryId) {
+        if (! $categoryId) {
             $categoryId = DB::table('categories')->insertGetId([
                 'parent_id' => 0,
                 'section_id' => $sectionId,
@@ -174,7 +187,7 @@ class FrontController extends Controller
                 'url' => 't-shirts',
                 'status' => 1,
                 'created_at' => $now,
-                'updated_at' => $now
+                'updated_at' => $now,
             ]);
         }
 
@@ -196,7 +209,7 @@ class FrontController extends Controller
         $productIds = [];
         foreach ($products as $code => $product) {
             $productId = DB::table('products')->where('product_code', $code)->value('id');
-            if (!$productId) {
+            if (! $productId) {
                 $productId = DB::table('products')->insertGetId([
                     'section_id' => $sectionId,
                     'category_id' => $categoryId,
@@ -214,7 +227,7 @@ class FrontController extends Controller
                     'is_featured' => 'No',
                     'status' => 1,
                     'created_at' => $now,
-                    'updated_at' => $now
+                    'updated_at' => $now,
                 ]);
             } else {
                 DB::table('products')->where('id', $productId)->update([
@@ -235,7 +248,7 @@ class FrontController extends Controller
                 ->where('product_id', $productIds[$code])
                 ->value('id');
 
-            if (!$shopProductId) {
+            if (! $shopProductId) {
                 $shopProductId = DB::table('shop_channel_products')->insertGetId([
                     'shop_channel_id' => $shop->id,
                     'product_id' => $productIds[$code],
@@ -257,7 +270,7 @@ class FrontController extends Controller
         }
 
         $order = DB::table('orders')->where('id', $orderId)->first();
-        if (!$order) {
+        if (! $order) {
             DB::table('orders')->insert([
                 'id' => $orderId,
                 'user_id' => $userId,
@@ -277,7 +290,7 @@ class FrontController extends Controller
                 'payment_gateway' => 'KCP',
                 'grand_total' => 10500,
                 'created_at' => $now,
-                'updated_at' => $now
+                'updated_at' => $now,
             ]);
         }
 
@@ -324,6 +337,7 @@ class FrontController extends Controller
                     'item_status' => OrderItemStatus::label(OrderItemStatus::normalize($existing->status_code ?: $existing->item_status)),
                     'updated_at' => $now,
                 ]);
+
                 continue;
             }
 
@@ -338,7 +352,7 @@ class FrontController extends Controller
                 'selling_price' => $item['product_price'],
                 'line_total' => $item['product_price'] * $item['product_qty'],
                 'created_at' => $now,
-                'updated_at' => $now
+                'updated_at' => $now,
             ]));
         }
     }
@@ -352,7 +366,7 @@ class FrontController extends Controller
     {
         $request->validate([
             'order_id' => 'required',
-            'phone' => 'required'
+            'phone' => 'required',
         ]);
 
         $this->ensureSampleOrderExists();
@@ -368,12 +382,12 @@ class FrontController extends Controller
         $cleanOrderId = preg_replace('/[^0-9]/', '', $cleanOrderId);
         $id = intval($cleanOrderId);
 
-        $order = \App\Models\Order::where('id', $id)->first();
-        if (!$order) {
-            $order = \App\Models\Order::where('id', $request->order_id)->first();
+        $order = Order::where('id', $id)->first();
+        if (! $order) {
+            $order = Order::where('id', $request->order_id)->first();
         }
 
-        if (!$order) {
+        if (! $order) {
             return redirect()->back()->with('flash_message_error', '입력하신 주문 정보와 일치하는 주문을 찾을 수 없습니다.');
         }
 
@@ -382,7 +396,7 @@ class FrontController extends Controller
             return redirect()->back()->with('flash_message_error', '주문번호와 연락처가 일치하지 않습니다.');
         }
 
-        \Illuminate\Support\Facades\Session::put('nonmember_order_id', $order->id);
+        Session::put('nonmember_order_id', $order->id);
 
         return redirect()->route('front.nonmember.order_details');
     }
@@ -391,13 +405,13 @@ class FrontController extends Controller
     {
         $this->ensureSampleOrderExists();
 
-        $orderId = \Illuminate\Support\Facades\Session::get('nonmember_order_id');
-        if (!$orderId) {
+        $orderId = Session::get('nonmember_order_id');
+        if (! $orderId) {
             return redirect()->route('front.nonmember.order_check')->with('flash_message_error', '주문 조회를 먼저 완료해 주세요.');
         }
 
-        $order = \App\Models\Order::with(['orders_products.product', 'claims'])->find($orderId);
-        if (!$order) {
+        $order = Order::with(['orders_products.product', 'claims'])->find($orderId);
+        if (! $order) {
             return redirect()->route('front.nonmember.order_check')->with('flash_message_error', '해당 주문을 찾을 수 없습니다.');
         }
 
@@ -406,22 +420,22 @@ class FrontController extends Controller
 
     public function downloadOrderInvoice($id)
     {
-        $order = \App\Models\Order::findOrFail($id);
-        $user = \Illuminate\Support\Facades\Auth::user();
+        $order = Order::findOrFail($id);
+        $user = Auth::user();
         $sessionOrderIds = array_filter([
-            \Illuminate\Support\Facades\Session::get('nonmember_order_id'),
-            \Illuminate\Support\Facades\Session::get('shop_order_id'),
-            \Illuminate\Support\Facades\Session::get('last_shop_order_id'),
+            Session::get('nonmember_order_id'),
+            Session::get('shop_order_id'),
+            Session::get('last_shop_order_id'),
         ]);
 
         $isOwnedByUser = $user && (int) $order->user_id === (int) $user->id;
         $isVerifiedSessionOrder = in_array((int) $order->id, array_map('intval', $sessionOrderIds), true);
 
-        if (!$isOwnedByUser && !$isVerifiedSessionOrder) {
+        if (! $isOwnedByUser && ! $isVerifiedSessionOrder) {
             abort(403);
         }
 
-        return app(\App\Http\Controllers\Admin\OrderController::class)->viewPDFInvoice($order->id);
+        return app(OrderController::class)->viewPDFInvoice($order->id);
     }
 
     public function nonmemberOrderClaimSubmit(Request $request)
@@ -430,41 +444,45 @@ class FrontController extends Controller
             'order_id' => 'required',
             'order_product_id' => 'required',
             'type' => 'required|in:cancel,return,exchange,confirm',
-            'reason' => 'required_unless:type,confirm'
+            'reason' => 'required_unless:type,confirm',
         ]);
 
-        $order = \App\Models\Order::find($request->order_id);
-        if (!$order) abort(404);
+        $order = Order::find($request->order_id);
+        if (! $order) {
+            abort(404);
+        }
 
-        $ordersProduct = \App\Models\OrdersProduct::where('id', $request->order_product_id)
+        $ordersProduct = OrdersProduct::where('id', $request->order_product_id)
             ->where('order_id', $order->id)
             ->first();
-        if (!$ordersProduct) abort(404);
+        if (! $ordersProduct) {
+            abort(404);
+        }
 
         if ($request->type == 'confirm') {
             $ordersProduct->setStatus(OrderItemStatus::CONFIRMED);
             $ordersProduct->confirmed_at = now();
             $ordersProduct->save();
-            app(\App\Services\ChannelPointService::class)->recordCustomerPayback($ordersProduct);
+            app(ChannelPointService::class)->recordCustomerPayback($ordersProduct);
             $ordersProduct->loadMissing('shopChannel');
             if ($ordersProduct->shopChannel) {
-                app(\App\Services\ShopChannelSmsService::class)->send(
+                app(ShopChannelSmsService::class)->send(
                     $ordersProduct->shopChannel,
                     $order,
                     $ordersProduct,
-                    \App\Services\ShopChannelSmsService::TYPE_PURCHASE_CONFIRMED
+                    ShopChannelSmsService::TYPE_PURCHASE_CONFIRMED
                 );
             }
 
             // Save rating and review to ratings table
-            \Illuminate\Support\Facades\DB::table('ratings')->insert([
+            DB::table('ratings')->insert([
                 'user_id' => $order->user_id ?? 1,
                 'product_id' => $ordersProduct->product_id,
                 'rating' => intval($request->rating ?? 5),
                 'review' => $request->review ?? '이 상품을 구매하겠습니다.',
                 'status' => 1,
                 'created_at' => now(),
-                'updated_at' => now()
+                'updated_at' => now(),
             ]);
 
             return redirect()->back()->with('flash_message_success', '구매 확정이 완료되었습니다.');
@@ -485,11 +503,11 @@ class FrontController extends Controller
                 $recoveryAddress = $request->recovery_address ?? '';
                 $detailReason = "[회수방법: {$recoveryMethod}] 주소: {$recoveryAddress}";
                 if ($request->detail_reason) {
-                    $detailReason .= " | 상세사유: " . $request->detail_reason;
+                    $detailReason .= ' | 상세사유: '.$request->detail_reason;
                 }
             }
 
-            \App\Models\OrderClaim::create([
+            OrderClaim::create([
                 'order_id' => $order->id,
                 'user_id' => $order->user_id,
                 'vendor_id' => $ordersProduct->vendor_id,
@@ -499,11 +517,12 @@ class FrontController extends Controller
                 'detail_reason' => $detailReason,
                 'status' => 'requested',
                 'created_at' => now(),
-                'updated_at' => now()
+                'updated_at' => now(),
             ]);
 
             $label = $claimType == 'cancel' ? '취소' : ($claimType == 'return' ? '반품' : '교환');
-            return redirect()->back()->with('flash_message_success', $label . ' 신청이 완료되었습니다.');
+
+            return redirect()->back()->with('flash_message_success', $label.' 신청이 완료되었습니다.');
         }
     }
 
@@ -513,19 +532,23 @@ class FrontController extends Controller
             'order_id' => 'required',
             'order_product_id' => 'required',
             'subject' => 'required|string|max:255',
-            'message' => 'required|string'
+            'message' => 'required|string',
         ]);
 
-        $order = \App\Models\Order::find($request->order_id);
-        if (!$order) abort(404);
+        $order = Order::find($request->order_id);
+        if (! $order) {
+            abort(404);
+        }
 
-        $ordersProduct = \App\Models\OrdersProduct::where('id', $request->order_product_id)
+        $ordersProduct = OrdersProduct::where('id', $request->order_product_id)
             ->where('order_id', $order->id)
             ->first();
-        if (!$ordersProduct) abort(404);
+        if (! $ordersProduct) {
+            abort(404);
+        }
 
         $shopChannelId = $ordersProduct->shop_channel_id;
-        if (!$shopChannelId && $ordersProduct->shop_channel_product_id) {
+        if (! $shopChannelId && $ordersProduct->shop_channel_product_id) {
             $shopChannelId = DB::table('shop_channel_products')
                 ->where('id', $ordersProduct->shop_channel_product_id)
                 ->value('shop_channel_id');
@@ -541,37 +564,47 @@ class FrontController extends Controller
             'name' => $order->name,
             'email' => $order->email,
             'phone' => $order->mobile,
-            'subject' => '[상품문의] ' . $request->subject . ' (상품: ' . $ordersProduct->product_name . ')',
+            'subject' => '[상품문의] '.$request->subject.' (상품: '.$ordersProduct->product_name.')',
             'message' => $request->message,
             'type' => 'inquiry',
             'status' => 'pending',
             'created_at' => now(),
-            'updated_at' => now()
+            'updated_at' => now(),
         ]);
 
         return redirect()->back()->with('flash_message_success', '상품 문의가 등록되었습니다.');
     }
 
-    public function shopGate()
+    public function shopGate(Request $request)
     {
         app(ShopChannelRuntime::class)->seedDemoDataIfAllowed();
-        return view('shop.gate');
+
+        return view('shop.gate', ['channelCode' => (string) $request->query('channel', '')]);
     }
 
     public function shopGateSubmit(Request $request)
     {
         $request->validate([
-            'entry_code' => 'required',
+            'entry_code' => 'required|string|max:80',
             'phone' => 'nullable|string|max:30',
+            'otp' => 'nullable|digits:6',
         ]);
 
         $runtime = app(ShopChannelRuntime::class);
-        $phone = trim((string) $request->input('phone', ''));
-        $shop = $phone !== ''
-            ? ($runtime->enterPrivateChannel($phone, $request->entry_code) ?: $runtime->enterChannel($request->entry_code, $phone))
-            : $runtime->enterChannel($request->entry_code);
+        $channel = ShopChannel::where('channel_code', trim($request->entry_code))->where('status', 1)->first();
+        if (! $channel) {
+            return redirect()->back()->withInput()->with('flash_message_error', '운영 중인 Shop 채널을 찾을 수 없습니다.');
+        }
+
+        if ((int) $channel->is_public === 0) {
+            $request->validate(['phone' => 'required|string|max:30', 'otp' => 'required|digits:6']);
+            $access = app(ShopChannelOtpService::class)->verify($request->entry_code, $request->phone, $request->otp);
+            $shop = $runtime->enterPrivateAccess($access);
+        } else {
+            $shop = $runtime->enterChannel($request->entry_code);
+        }
         if ($shop) {
-            return redirect()->route('shop.channel_main')->with('flash_message_success', $shop->channel_name . '에 입장했습니다.');
+            return redirect()->route('shop.channel_main')->with('flash_message_success', $shop->channel_name.'에 입장했습니다.');
         }
 
         $message = '입장 코드가 올바르지 않습니다.';
@@ -582,14 +615,25 @@ class FrontController extends Controller
         return redirect()->back()->with('flash_message_error', $message);
     }
 
+    public function shopOtpRequest(Request $request)
+    {
+        $data = $request->validate([
+            'entry_code' => 'required|string|max:80',
+            'phone' => 'required|string|max:30',
+        ]);
+        app(ShopChannelOtpService::class)->request($data['entry_code'], $data['phone']);
+
+        return response()->json(['status' => true, 'message' => '인증번호를 발송했습니다.']);
+    }
+
     public function shopEnter(string $channelCode)
     {
         $shop = app(ShopChannelRuntime::class)->enterChannel($channelCode);
-        if (!$shop) {
-            return redirect()->route('shop.gate')->with('flash_message_error', '운영 중인 Shop 채널을 찾을 수 없습니다.');
+        if (! $shop) {
+            return redirect()->route('shop.gate', ['channel' => $channelCode])->with('flash_message_error', '비공개 채널은 휴대폰 SMS 인증이 필요합니다.');
         }
 
-        return redirect()->route('shop.channel_main')->with('flash_message_success', $shop->channel_name . '에 입장했습니다.');
+        return redirect()->route('shop.channel_main')->with('flash_message_success', $shop->channel_name.'에 입장했습니다.');
     }
 
     public function shopRegister()
@@ -599,7 +643,28 @@ class FrontController extends Controller
 
     public function shopRegisterSubmit(Request $request)
     {
-        app(ShopChannelRuntime::class)->enterChannel('me9');
+        $data = $request->validate([
+            'name' => 'required|string|max:100',
+            'email' => 'required|email|max:150|unique:users,email',
+            'phone' => 'required|string|max:30',
+            'password' => 'required|string|min:8|max:72',
+            'terms_service' => 'accepted',
+            'terms_privacy' => 'accepted',
+            'marketing_opt_in' => 'nullable|boolean',
+        ]);
+
+        $user = User::create([
+            'name' => $data['name'],
+            'username' => $data['email'],
+            'email' => $data['email'],
+            'mobile' => $data['phone'],
+            'password' => Hash::make($data['password']),
+            'status' => 1,
+            'type' => 'general',
+        ]);
+        Auth::login($user);
+        app(ShopChannelRuntime::class)->recordAuthenticatedVisit();
+
         return redirect()->route('shop.channel_main')->with('flash_message_success', '간편회원 가입이 완료되었습니다!');
     }
 
@@ -629,12 +694,12 @@ class FrontController extends Controller
     {
         $runtime = app(ShopChannelRuntime::class);
         $shop = $runtime->currentChannel();
-        $shopProduct = \App\Models\ShopChannelProduct::with(['product.images', 'shopChannel'])
+        $shopProduct = ShopChannelProduct::with(['product.images', 'shopChannel'])
             ->where('shop_channel_id', $shop->id)
             ->where('id', $id)
             ->first();
 
-        if (!$shopProduct) {
+        if (! $shopProduct) {
             abort(404);
         }
 
@@ -660,7 +725,7 @@ class FrontController extends Controller
             ->where('joint_purchases.id', $id)
             ->first();
 
-        if (!$jointPurchase) {
+        if (! $jointPurchase) {
             abort(404);
         }
 
@@ -685,7 +750,7 @@ class FrontController extends Controller
     {
         $runtime = app(ShopChannelRuntime::class);
         $shop = $runtime->currentChannel();
-        $notices = \App\Models\ShopChannelNotice::where('shop_channel_id', $shop->id)
+        $notices = ShopChannelNotice::where('shop_channel_id', $shop->id)
             ->where('status', 1)
             ->orderBy('created_at', 'desc')
             ->get();

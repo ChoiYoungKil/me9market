@@ -2,19 +2,20 @@
 
 namespace App\Models;
 
+use App\Services\ChannelPointService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 
 class Sms extends Model
 {
     use HasFactory;
 
-
-
     // Sending an offline SMS using an SMS API
-    public static function sendSms($message, $mobile, ?int $vendorId = null, ?int $shopChannelId = null, int $pointPerMessage = 20, bool $debitPoints = true) {
+    public static function sendSms($message, $mobile, ?int $vendorId = null, ?int $shopChannelId = null, int $pointPerMessage = 20, bool $debitPoints = true)
+    {
         if ($vendorId && $debitPoints) {
-            $debited = app(\App\Services\ChannelPointService::class)->recordSmsDebit(
+            $debited = app(ChannelPointService::class)->recordSmsDebit(
                 $vendorId,
                 1,
                 $pointPerMessage,
@@ -22,36 +23,42 @@ class Sms extends Model
                 '문자 발송 포인트 차감'
             );
 
-            if (!$debited) {
+            if (! $debited) {
                 return false;
             }
         }
 
-        /*Code for SMS Script Starts*/
-        $request ="";
-        $param['authorization']="0fghGt7O6rJ1C8fsddpUXSEPLWv2aDRuMkyeif7mKBwNHxd4vw0gKcTfrhemqdsFS8gb6Do59Nzp1Ry5fi";
-        $param['sender_id'] = 'FSTSMS';
-        $param['message']= $message;
-        // $param['numbers']= '9800000000';
-        $param['numbers']= $mobile;
-        $param['username']= 'Ahmed';
-        $param['password']= '3212415445fsfgs5';
-        $param['language']="english";
-        $param['route']="p";
+        if (config('services.sms.driver') === 'log') {
+            Log::info('SMS log driver', ['mobile' => $mobile, 'message' => $message]);
 
-        foreach($param as $key=>$val) {
-            $request.= $key."=".urlencode($val);
-            $request.= "&";
+            return 'logged';
         }
-        $request = substr($request, 0, strlen($request)-1);
 
-        $url ="https://www.fast2sms.com/dev/bulk?".$request;
+        $param = [
+            'authorization' => config('services.sms.authorization'),
+            'sender_id' => config('services.sms.sender_id'),
+            'message' => $message,
+            'numbers' => $mobile,
+            'username' => config('services.sms.username'),
+            'password' => config('services.sms.password'),
+            'language' => 'english',
+            'route' => 'p',
+        ];
+        if (empty($param['authorization']) || empty($param['sender_id'])) {
+            Log::error('SMS provider credentials are not configured.');
+
+            return false;
+        }
+
+        $url = rtrim((string) config('services.sms.endpoint'), '?').'?'.http_build_query($param);
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $curl_scraped_page = curl_exec($ch);
+        $httpStatus = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
-        /*Code for SMS Script Ends*/
 
-        return $curl_scraped_page;
+        return $curl_scraped_page !== false && $httpStatus >= 200 && $httpStatus < 300
+            ? $curl_scraped_page
+            : false;
     }
 }

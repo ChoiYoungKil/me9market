@@ -8,6 +8,7 @@ use App\Models\Section;
 use App\Models\Category;
 use App\Models\Brand;
 use App\Models\Product;
+use App\Models\ProductsAttribute;
 use App\Models\Banner;
 use App\Models\Coupon;
 use App\Models\User;
@@ -411,5 +412,45 @@ class AdminRoutesTest extends TestCase
             ->assertRedirect('/');
 
         $this->assertDatabaseMissing('sections', ['id' => $section->id]);
+    }
+
+    public function test_vendor_can_delete_only_own_product_attributes(): void
+    {
+        [, , , , , $product, , , , , , $vendorAdmin] = $this->createSetup();
+        $attribute = ProductsAttribute::create([
+            'product_id' => $product->id,
+            'sku' => 'ATTR-OWN-001',
+            'size' => 'M',
+            'price' => 100,
+            'stock' => 5,
+            'status' => 1,
+        ]);
+        $otherVendor = Vendor::create([
+            'name' => 'Other Attribute Vendor',
+            'mobile' => '01099991111',
+            'email' => 'other-attribute@example.com',
+            'status' => 1,
+            'commission' => 10,
+            'confirm' => 'Yes',
+        ]);
+        $otherAdmin = new Admin();
+        $otherAdmin->name = 'Other Attribute Admin';
+        $otherAdmin->type = 'vendor';
+        $otherAdmin->vendor_id = $otherVendor->id;
+        $otherAdmin->mobile = '01099991111';
+        $otherAdmin->email = 'other-attribute-admin@example.com';
+        $otherAdmin->password = bcrypt('password');
+        $otherAdmin->status = 1;
+        $otherAdmin->save();
+
+        $this->actingAs($otherAdmin, 'admin')
+            ->post("/admin/delete-attribute/{$attribute->id}")
+            ->assertNotFound();
+        $this->assertDatabaseHas('products_attributes', ['id' => $attribute->id]);
+
+        $this->actingAs($vendorAdmin, 'admin')
+            ->post("/admin/delete-attribute/{$attribute->id}")
+            ->assertRedirect();
+        $this->assertDatabaseMissing('products_attributes', ['id' => $attribute->id]);
     }
 }

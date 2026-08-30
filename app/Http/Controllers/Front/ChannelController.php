@@ -272,6 +272,7 @@ class ChannelController extends Controller
         $rules['purchase_sms_templates.purchase_confirmed'] = 'nullable|string|max:500';
         $rules['purchase_sms_templates.cancel'] = 'nullable|string|max:500';
         $rules['purchase_sms_templates.return'] = 'nullable|string|max:500';
+        $rules['first_visit_points'] = 'nullable|integer|min:0|max:100000';
 
         // 사용기간(기간제) 체크
         if (($data['use_period_type'] ?? '0') == '1') {
@@ -430,6 +431,7 @@ class ChannelController extends Controller
 
         $shop->use_purchase_sms = ($data['use_purchase_sms'] ?? '0') == '1';
         $shop->purchase_sms_templates = $shop->use_purchase_sms ? $this->purchaseSmsTemplates($data) : null;
+        $shop->first_visit_points = (int) ($data['first_visit_points'] ?? 0);
 
         // 관리자 정보 처리
         $shop->use_admin = $data['use_admin'] ?? 0;
@@ -1373,6 +1375,7 @@ class ChannelController extends Controller
         $rules['purchase_sms_templates.purchase_confirmed'] = 'nullable|string|max:500';
         $rules['purchase_sms_templates.cancel'] = 'nullable|string|max:500';
         $rules['purchase_sms_templates.return'] = 'nullable|string|max:500';
+        $rules['first_visit_points'] = 'nullable|integer|min:0|max:100000';
 
         // 사용기간(기간제) 체크
         if (($data['use_period_type'] ?? '0') == '1') {
@@ -1489,6 +1492,7 @@ class ChannelController extends Controller
 
         $shop->use_purchase_sms = ($data['use_purchase_sms'] ?? '0') == '1';
         $shop->purchase_sms_templates = $shop->use_purchase_sms ? $this->purchaseSmsTemplates($data) : null;
+        $shop->first_visit_points = (int) ($data['first_visit_points'] ?? 0);
 
         // 관리자 정보 처리
         $shop->use_admin = $data['use_admin'] ?? 0;
@@ -1683,6 +1687,8 @@ class ChannelController extends Controller
     {
         return $this->renderOrderList($request, 'return', [
             OrderItemStatus::RETURN_REQUESTED,
+            OrderItemStatus::RETURN_RECEIVED,
+            OrderItemStatus::RETURN_HOLD,
             OrderItemStatus::RETURNED,
         ]);
     }
@@ -1691,6 +1697,10 @@ class ChannelController extends Controller
     {
         return $this->renderOrderList($request, 'exchange', [
             OrderItemStatus::EXCHANGE_REQUESTED,
+            OrderItemStatus::EXCHANGE_APPROVED,
+            OrderItemStatus::EXCHANGE_HOLD_BEFORE,
+            OrderItemStatus::EXCHANGE_RECEIVED,
+            OrderItemStatus::EXCHANGE_HOLD_AFTER,
             OrderItemStatus::EXCHANGED,
         ]);
     }
@@ -2054,8 +2064,14 @@ class ChannelController extends Controller
             OrderItemStatus::CANCEL_REQUESTED => '취소요청',
             OrderItemStatus::CANCELLED => '취소완료',
             OrderItemStatus::RETURN_REQUESTED => '반품요청',
+            OrderItemStatus::RETURN_RECEIVED => '반품회수완료',
+            OrderItemStatus::RETURN_HOLD => '반품보류',
             OrderItemStatus::RETURNED => '반품완료',
             OrderItemStatus::EXCHANGE_REQUESTED => '교환요청',
+            OrderItemStatus::EXCHANGE_APPROVED => '교환승인',
+            OrderItemStatus::EXCHANGE_HOLD_BEFORE => '교환회수전보류',
+            OrderItemStatus::EXCHANGE_RECEIVED => '교환회수완료',
+            OrderItemStatus::EXCHANGE_HOLD_AFTER => '교환회수후보류',
             OrderItemStatus::EXCHANGED => '교환완료',
         ];
 
@@ -2090,8 +2106,14 @@ class ChannelController extends Controller
             OrderItemStatus::CANCEL_REQUESTED => ['Cancel Requested'],
             OrderItemStatus::CANCELLED => ['Cancelled'],
             OrderItemStatus::RETURN_REQUESTED => ['Return Requested'],
+            OrderItemStatus::RETURN_RECEIVED => [],
+            OrderItemStatus::RETURN_HOLD => [],
             OrderItemStatus::RETURNED => ['Returned'],
             OrderItemStatus::EXCHANGE_REQUESTED => ['Exchange Requested'],
+            OrderItemStatus::EXCHANGE_APPROVED => [],
+            OrderItemStatus::EXCHANGE_HOLD_BEFORE => [],
+            OrderItemStatus::EXCHANGE_RECEIVED => [],
+            OrderItemStatus::EXCHANGE_HOLD_AFTER => [],
             OrderItemStatus::EXCHANGED => ['Exchanged'],
         ];
 
