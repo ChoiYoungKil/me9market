@@ -95,6 +95,25 @@
             <h3 style="margin-top: 0;">배송/교환/반품 안내</h3>
             <p style="color: #475467;">채널관리자가 설정한 취소/환불 정책과 배송비 설정은 이 영역에 연결됩니다. 현재 주문 생성 시 배송비는 30,000원 미만 2,500원으로 계산됩니다.</p>
         </section>
+
+        <section style="margin-top: 24px; background: #fff; border: 1px solid #d9dee7; border-radius: 8px; padding: 24px;">
+            <h3 style="margin-top: 0;">상품 문의하기</h3>
+            <form action="{{ route('front.shop.order.inquiry') }}" method="POST" style="display:grid; grid-template-columns:180px minmax(0, 1fr); gap:10px;">
+                @csrf
+                <input type="hidden" name="shop_product_id" value="{{ $shopProduct->id }}">
+                <select name="inquiry_category" required class="shop-form-control">
+                    <option value="">문의 분류</option>
+                    <option value="delivery">배송문의</option>
+                    <option value="claim">교환·반품</option>
+                    <option value="product">상품관련</option>
+                    <option value="payment">결제문의</option>
+                    <option value="other">기타</option>
+                </select>
+                <input name="subject" required maxlength="255" placeholder="문의 제목" class="shop-form-control">
+                <textarea name="message" required maxlength="3000" placeholder="문의 내용을 입력해 주세요." style="grid-column:1 / -1; min-height:100px; border:1px solid #cfd4dc; border-radius:6px; padding:10px; resize:vertical;"></textarea>
+                <button type="submit" style="grid-column:2; justify-self:end; height:42px; border:0; border-radius:6px; background:#111827; color:#fff; padding:0 18px; font-weight:800; cursor:pointer;">문의하기</button>
+            </form>
+        </section>
     </main>
 </div>
 @endsection

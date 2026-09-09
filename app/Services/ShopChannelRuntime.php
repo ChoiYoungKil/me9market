@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Mail\ShopOrderConfirmation;
 use App\Models\Admin;
 use App\Models\Brand;
 use App\Models\Category;
@@ -22,6 +23,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Session;
 
@@ -720,6 +723,15 @@ class ShopChannelRuntime
                     ShopChannelSmsService::TYPE_PURCHASE
                 ));
             }
+
+            DB::afterCommit(function () use ($shop, $order, $createdItems) {
+                try {
+                    Mail::to($order->email, $order->name)
+                        ->send(new ShopOrderConfirmation($shop, $order, $createdItems));
+                } catch (\Throwable $e) {
+                    Log::error('Shop order email failed', ['order_id' => $order->id, 'message' => $e->getMessage()]);
+                }
+            });
 
             Session::forget(self::CART_KEY);
             Session::put('last_shop_order_id', $order->id);

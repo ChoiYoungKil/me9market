@@ -160,6 +160,11 @@
 	            border-radius: 5px;
 	            overflow: hidden;
 	        }
+        .category-progressive-selects { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+        .category-choice-list { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; max-width:900px; }
+        .category-choice-list button { min-height:36px; border:1px solid #d0d5dd; border-radius:4px; background:#fff; padding:0 12px; cursor:pointer; }
+        .category-choice-list button:hover { border-color:#344054; background:#f8fafc; }
+        .category-choice-list .category-more { font-weight:700; color:#175cd3; }
     </style>
     <div id="contents">
         <div class="row">
@@ -220,9 +225,9 @@
                                             <th>상품분류</th>
                                             <td colspan="3">
                                                 <input type="hidden" name="category_id" id="category_id" value="{{ $selectedFinalCategoryId }}">
-                                                <ul class="type_bx w600" style="display:flex; gap:8px; flex-wrap:wrap;">
+                                                <ul class="type_bx category-progressive-selects">
                                                     <li>
-                                                        <select name="major_category_id" id="major_category_id" required>
+                                                        <select name="major_category_id" id="major_category_id" required style="{{ $selectedMajorCategoryId ? '' : 'display:none;' }}">
                                                             <option value="">대분류</option>
                                                             @foreach($categories as $category)
                                                                 <option value="{{ $category->id }}" {{ (string) $selectedMajorCategoryId === (string) $category->id ? 'selected' : '' }}>{{ $category->category_name }}</option>
@@ -230,12 +235,12 @@
                                                         </select>
                                                     </li>
                                                     <li>
-                                                        <select name="middle_category_id" id="middle_category_id" required>
+                                                        <select name="middle_category_id" id="middle_category_id" required style="{{ $selectedMiddleCategoryId ? '' : 'display:none;' }}">
                                                             <option value="">중분류</option>
                                                         </select>
                                                     </li>
                                                     <li>
-                                                        <select name="minor_category_id" id="minor_category_id">
+                                                        <select name="minor_category_id" id="minor_category_id" style="{{ $selectedMinorCategoryId ? '' : 'display:none;' }}">
                                                             <option value="">소분류</option>
                                                         </select>
                                                     </li>
@@ -243,6 +248,9 @@
                                                         <a href="{{ route('channel.product.categories') }}" style="display:inline-flex; align-items:center; justify-content:center; height:38px; border:1px solid #d0d5dd; padding:0 12px; background:#fff;">분류관리</a>
                                                     </li>
                                                 </ul>
+                                                <div id="major_category_choices" class="category-choice-list"></div>
+                                                <div id="middle_category_choices" class="category-choice-list"></div>
+                                                <div id="minor_category_choices" class="category-choice-list"></div>
                                             </td>
                                         </tr>
                                         <tr>
@@ -983,28 +991,78 @@
 	        fillCategorySelect(minorSelect, '소분류', middle ? middle.children : [], selectedValue);
 	    }
 
+        function renderCategoryChoices(containerId, items, select) {
+            var container = document.getElementById(containerId);
+            if (!container) return;
+            container.innerHTML = '';
+            if (!items || !items.length || (select && select.value)) return;
+
+            var limit = 10;
+            items.forEach(function (item, index) {
+                var button = document.createElement('button');
+                button.type = 'button';
+                button.textContent = item.name;
+                if (index >= limit) button.style.display = 'none';
+                button.addEventListener('click', function () {
+                    select.value = String(item.id);
+                    select.style.display = '';
+                    container.innerHTML = '';
+                    select.dispatchEvent(new Event('change'));
+                });
+                container.appendChild(button);
+            });
+            if (items.length > limit) {
+                var more = document.createElement('button');
+                more.type = 'button';
+                more.className = 'category-more';
+                more.textContent = '더보기';
+                more.addEventListener('click', function () {
+                    Array.from(container.children).forEach(function (child) { child.style.display = ''; });
+                    more.remove();
+                });
+                container.appendChild(more);
+            }
+        }
+
+        function renderProgressiveChoices() {
+            var major = currentMajorCategory();
+            var middle = currentMiddleCategory();
+            renderCategoryChoices('major_category_choices', categoryTree, majorSelect);
+            renderCategoryChoices('middle_category_choices', major ? major.children : [], middleSelect);
+            renderCategoryChoices('minor_category_choices', middle ? middle.children : [], minorSelect);
+        }
+
 	    if (majorSelect) {
 	        renderMiddleSelect(selectedMiddle);
 	        renderMinorSelect(selectedMinor);
 	        updateFinalCategory();
 	        renderProductNotice();
+            renderProgressiveChoices();
 
 	        majorSelect.addEventListener('change', function () {
 	            renderMiddleSelect('');
 	            renderMinorSelect('');
 	            updateFinalCategory();
 	            renderProductNotice();
+                middleSelect.style.display = 'none';
+                minorSelect.style.display = 'none';
+                renderProgressiveChoices();
 	        });
 
 	        if (middleSelect) {
 	            middleSelect.addEventListener('change', function () {
 	                renderMinorSelect('');
 	                updateFinalCategory();
+                    minorSelect.style.display = 'none';
+                    renderProgressiveChoices();
 	            });
 	        }
 
 	        if (minorSelect) {
-	            minorSelect.addEventListener('change', updateFinalCategory);
+	            minorSelect.addEventListener('change', function () {
+                    updateFinalCategory();
+                    renderProgressiveChoices();
+                });
 	        }
 	    }
 

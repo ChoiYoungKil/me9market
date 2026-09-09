@@ -415,4 +415,17 @@ class ChannelProductTest extends TestCase
         $this->assertSame(10.0, (float) $shopProduct->settlement_rate_snapshot);
         $this->assertSame('seller', $shopProduct->price_decider);
     }
+
+    public function test_base_product_form_renders_progressive_category_controls()
+    {
+        list(, $admin) = $this->createSetup();
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('channel.product.base.create'))
+            ->assertOk()
+            ->assertSee('major_category_choices', false)
+            ->assertSee('middle_category_choices', false)
+            ->assertSee('minor_category_choices', false)
+            ->assertSee('category-more', false);
+    }
 }

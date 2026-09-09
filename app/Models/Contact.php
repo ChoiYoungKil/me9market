@@ -20,6 +20,7 @@ class Contact extends Model
         'email',
         'phone',
         'company',
+        'inquiry_category',
         'subject',
         'message',
         'type',

@@ -40,12 +40,16 @@
                                     <tr>
                                         <th><span>Shop채널</span></th>
                                         <td>{{ $inquiry->shopChannel->channel_name ?? '기본 채널' }}</td>
+                                        <th><span>문의유형</span></th>
+                                        <td>{{ ['delivery' => '배송문의', 'claim' => '교환·반품', 'product' => '상품관련', 'payment' => '결제문의', 'other' => '기타'][$inquiry->inquiry_category] ?? '-' }}</td>
+                                    </tr>
+                                    <tr>
                                         <th><span>주문번호</span></th>
-                                        <td>Me9-{{ str_pad($inquiry->order_id, 8, '0', STR_PAD_LEFT) }}</td>
+                                        <td colspan="3">{{ $inquiry->order_id ? 'Me9-' . str_pad($inquiry->order_id, 8, '0', STR_PAD_LEFT) : '-' }}</td>
                                     </tr>
                                     <tr>
                                         <th><span>상품명</span></th>
-                                        <td>{{ $inquiry->orderProduct->product_name ?? '-' }}</td>
+                                        <td>{{ $inquiry->orderProduct->product_name ?? $inquiry->product->product_name ?? '-' }}</td>
                                         <th><span>옵션</span></th>
                                         <td>{{ $inquiry->orderProduct ? trim(($inquiry->orderProduct->product_color ?: '-') . ' / ' . ($inquiry->orderProduct->product_size ?: '-')) : '-' }}</td>
                                     </tr>

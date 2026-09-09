@@ -65,6 +65,7 @@
                                 <colgroup>
                                     <col width="90px">
                                     <col width="120px">
+                                    <col width="110px">
                                     <col width="140px">
                                     <col width="180px">
                                     <col width="">
@@ -76,6 +77,7 @@
                                     <tr>
                                         <th>번호</th>
                                         <th>상태</th>
+                                        <th>문의유형</th>
                                         <th>Shop채널</th>
                                         <th>상품</th>
                                         <th>제목</th>
@@ -94,8 +96,9 @@
                                                 @endphp
                                                 <span style="color: {{ $statusColor }}; font-weight: 700;">{{ $statusLabels[$inquiry->status] ?? $inquiry->status }}</span>
                                             </td>
+                                            <td>{{ ['delivery' => '배송문의', 'claim' => '교환·반품', 'product' => '상품관련', 'payment' => '결제문의', 'other' => '기타'][$inquiry->inquiry_category] ?? '-' }}</td>
                                             <td>{{ $inquiry->shopChannel->channel_name ?? '기본 채널' }}</td>
-                                            <td class="t_l">{{ $inquiry->orderProduct->product_name ?? '-' }}</td>
+                                            <td class="t_l">{{ $inquiry->orderProduct->product_name ?? $inquiry->product->product_name ?? '-' }}</td>
                                             <td class="t_l">
                                                 <a href="{{ route('channel.inquiries.show', $inquiry->id) }}" class="fcol4 link">
                                                     {{ \Illuminate\Support\Str::limit($inquiry->subject, 60) }}
@@ -107,7 +110,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="8" class="no_data">등록된 상품문의가 없습니다.</td>
+                                            <td colspan="9" class="no_data">등록된 상품문의가 없습니다.</td>
                                         </tr>
                                     @endforelse
                                 </tbody>

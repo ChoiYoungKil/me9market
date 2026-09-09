@@ -4,7 +4,7 @@
 <div id="contents" style="padding: 100px 0; min-height: 600px; background:#f6f7f9;">
     <div style="max-width: 1180px; margin: 0 auto; background: #fff; border:1px solid #d9dee7; border-radius:8px; padding: 28px;">
         <h1 style="margin:0 0 8px;">장바구니</h1>
-        <p style="margin:0 0 24px; color:#667085;">{{ $shop->channel_name }}에서 담은 상품입니다.</p>
+        <p style="margin:0 0 24px; color:#667085;">{{ $shop->channel_name }} ({{ $shop->channel_code }}) 장바구니입니다.</p>
 
         @if(session('flash_message_success'))
             <div style="background:#dcfae6; color:#087443; padding:12px 16px; border-radius:6px; margin-bottom:16px;">{{ session('flash_message_success') }}</div>
@@ -17,6 +17,7 @@
             </div>
         @else
             <table style="width:100%; border-collapse:collapse;">
+                <caption style="text-align:left; padding:12px; background:#eef4ff; color:#3538cd; font-weight:900;">{{ $shop->channel_name }} ({{ $shop->channel_code }})</caption>
                 <thead>
                     <tr style="background:#f8fafc;">
                         <th style="padding:12px; text-align:left;">상품</th>

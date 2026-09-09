@@ -3,12 +3,17 @@
 namespace Tests\Feature;
 
 use App\Models\Admin;
+use App\Models\Contact;
+use App\Models\Distributor;
 use App\Models\Order;
+use App\Models\OrderClaim;
 use App\Models\OrdersProduct;
 use App\Models\Product;
 use App\Models\ShopChannel;
 use App\Models\ShopChannelProduct;
 use App\Models\Vendor;
+use App\Mail\ShopOrderConfirmation;
+use App\Support\OrderItemStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -164,9 +169,12 @@ class ShopRuntimeTest extends TestCase
         list(, , $otherShop, $otherProduct) = $this->createShopProduct('other-shop', 'OTH-002', 'Other');
 
         $otherOrder = $this->createOrderForShop($otherShop, $otherProduct, 'Other Customer');
-        $this->createOrderForShop($currentShop, $currentProduct, 'Current Customer');
+        $currentOrder = $this->createOrderForShop($currentShop, $currentProduct, 'Current Customer');
 
-        $this->withSession(['shop_channel_id' => $currentShop->id])
+        $this->withSession([
+            'shop_channel_id' => $currentShop->id,
+            'nonmember_order_id' => $currentOrder->id,
+        ])
             ->get(route('front.shop.order.details', ['id' => $otherOrder->id]))
             ->assertOk()
             ->assertSee('Current Customer')
@@ -245,5 +253,169 @@ class ShopRuntimeTest extends TestCase
         $this->withSession(['shop_channel_id' => $currentShop->id])
             ->get(route('shop.joint_purchase_details', $otherJointId))
             ->assertNotFound();
+    }
+
+    public function test_manual_return_uses_matched_distributor_address_and_accepts_shipment_later()
+    {
+        list($vendor, , $shop, $product) = $this->createShopProduct('claim-shop', 'CLAIM-001', 'Claim');
+        $distributor = Distributor::create([
+            'vendor_id' => $vendor->id,
+            'name' => 'Claim Distributor',
+            'email' => 'claim-distributor@example.com',
+            'password' => bcrypt('password'),
+            'return_postcode' => '06236',
+            'return_address' => '서울특별시 강남구 테헤란로 123 반품센터',
+            'status' => 1,
+        ]);
+        $order = $this->createOrderForShop($shop, $product, 'Claim Customer');
+        $item = $order->orders_products()->firstOrFail();
+        $item->update(['distributor_id' => $distributor->id]);
+
+        $this->withSession(['shop_channel_id' => $shop->id, 'nonmember_order_id' => $order->id])
+            ->post(route('front.shop.order.item.status', $item->id), [
+                'action' => 'return',
+                'reason' => '상품이 파손되었습니다.',
+                'pickup_method' => 'manual',
+            ])
+            ->assertRedirect();
+
+        $claim = OrderClaim::where('order_product_id', $item->id)->firstOrFail();
+        $this->assertSame('manual', $claim->pickup_method);
+        $this->assertSame('06236 서울특별시 강남구 테헤란로 123 반품센터', $claim->return_address);
+        $this->assertSame(OrderItemStatus::RETURN_REQUESTED, $item->fresh()->status_code);
+
+        $this->withSession(['shop_channel_id' => $shop->id, 'nonmember_order_id' => $order->id])
+            ->post(route('front.shop.order.claim.shipment', $claim->id), [
+                'customer_courier_name' => 'CJ대한통운',
+                'customer_tracking_number' => '1234567890',
+            ])
+            ->assertRedirect();
+
+        $claim->refresh();
+        $this->assertSame('CJ대한통운', $claim->customer_courier_name);
+        $this->assertSame('1234567890', $claim->customer_tracking_number);
+        $this->assertNotNull($claim->customer_shipped_at);
+    }
+
+    public function test_product_inquiry_category_is_saved_with_order_context()
+    {
+        list(, , $shop, $product) = $this->createShopProduct('inquiry-shop', 'INQ-001', 'Inquiry');
+        $order = $this->createOrderForShop($shop, $product, 'Inquiry Customer');
+        $item = $order->orders_products()->firstOrFail();
+
+        $this->withSession(['shop_channel_id' => $shop->id, 'nonmember_order_id' => $order->id])
+            ->post(route('front.shop.order.inquiry'), [
+                'order_product_id' => $item->id,
+                'inquiry_category' => 'delivery',
+                'subject' => '배송 일정 문의',
+                'message' => '언제 출고되는지 확인 부탁드립니다.',
+            ])
+            ->assertRedirect();
+
+        $inquiry = Contact::where('order_product_id', $item->id)->firstOrFail();
+        $this->assertSame('delivery', $inquiry->inquiry_category);
+        $this->assertSame($shop->id, $inquiry->shop_channel_id);
+        $this->assertSame($order->id, $inquiry->order_id);
+    }
+
+    public function test_product_detail_inquiry_is_saved_without_an_order()
+    {
+        list(, $admin, $shop, $product, $shopProduct) = $this->createShopProduct('product-inquiry', 'PINQ-001', 'Product Inquiry');
+
+        $this->withSession(['shop_channel_id' => $shop->id])
+            ->get(route('shop.product_details', $shopProduct->id))
+            ->assertOk()
+            ->assertSee('상품 문의하기')
+            ->assertSee('name="inquiry_category"', false);
+
+        $this->withSession(['shop_channel_id' => $shop->id])
+            ->post(route('front.shop.order.inquiry'), [
+                'shop_product_id' => $shopProduct->id,
+                'inquiry_category' => 'product',
+                'subject' => '상품 소재 문의',
+                'message' => '상품 소재를 알려주세요.',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('contacts', [
+            'shop_channel_id' => $shop->id,
+            'product_id' => $product->id,
+            'order_id' => null,
+            'order_product_id' => null,
+            'inquiry_category' => 'product',
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('channel.inquiries.index'))
+            ->assertOk()
+            ->assertSee('상품관련')
+            ->assertSee('상품 소재 문의');
+    }
+
+    public function test_guest_cannot_submit_actions_for_another_order_in_same_channel()
+    {
+        list(, , $shop, $product) = $this->createShopProduct('secure-shop', 'SECURE-001', 'Secure');
+        $ownOrder = $this->createOrderForShop($shop, $product, 'Own Customer');
+        $otherOrder = $this->createOrderForShop($shop, $product, 'Other Customer');
+        $otherItem = $otherOrder->orders_products()->firstOrFail();
+
+        $session = ['shop_channel_id' => $shop->id, 'nonmember_order_id' => $ownOrder->id];
+        $this->withSession($session)
+            ->post(route('front.shop.order.item.status', $otherItem->id), [
+                'action' => 'cancel',
+                'reason' => '권한 확인',
+            ])
+            ->assertNotFound();
+        $this->withSession($session)
+            ->post(route('front.shop.order.inquiry'), [
+                'order_product_id' => $otherItem->id,
+                'inquiry_category' => 'product',
+                'subject' => '권한 확인',
+                'message' => '다른 주문에는 등록할 수 없습니다.',
+            ])
+            ->assertNotFound();
+    }
+
+    public function test_order_management_uses_status_filters_with_counts()
+    {
+        list(, , $shop, $product) = $this->createShopProduct('filter-shop', 'FILTER-001', 'Filter');
+        $delivered = $this->createOrderForShop($shop, $product, 'Delivered Customer');
+        $shipping = $this->createOrderForShop($shop, $product, 'Shipping Customer');
+        $delivered->orders_products()->update(['status_code' => OrderItemStatus::DELIVERED, 'item_status' => '배송완료']);
+        $shipping->orders_products()->update(['status_code' => OrderItemStatus::SHIPPING, 'item_status' => '배송중']);
+        $claimItem = $delivered->orders_products()->firstOrFail()->replicate();
+        $claimItem->status_code = OrderItemStatus::RETURN_REQUESTED;
+        $claimItem->item_status = '반품요청';
+        $claimItem->save();
+
+        $this->withSession([
+            'shop_channel_id' => $shop->id,
+            'last_shop_order_id' => $delivered->id,
+            'nonmember_order_id' => $shipping->id,
+        ])
+            ->get(route('front.shop.order.details', ['status' => 'shipping']))
+            ->assertOk()
+            ->assertSee('전체 2건')
+            ->assertSee('확정대기 1건')
+            ->assertSee('배송중 1건')
+            ->assertSee('취소·교환·반품 1건')
+            ->assertSee('Shipping Customer')
+            ->assertDontSee('Delivered Customer');
+    }
+
+    public function test_cart_and_order_email_show_channel_name_and_code()
+    {
+        list(, , $shop, $product, $shopProduct) = $this->createShopProduct('brand-cart', 'BRAND-001', 'Brand');
+        $this->withSession([
+            'shop_channel_id' => $shop->id,
+            'shop_channel_cart' => [$shopProduct->id => ['qty' => 1, 'option' => '기본옵션']],
+        ])->get(route('front.shop.cart.index'))
+            ->assertOk()
+            ->assertSee('Brand Channel (brand-cart)');
+
+        $order = $this->createOrderForShop($shop, $product, 'Mail Customer');
+        $mailable = new ShopOrderConfirmation($shop, $order, $order->orders_products()->get());
+        $mailable->assertSeeInHtml('Brand Channel (brand-cart)');
+        $this->assertSame('[Brand Channel] 주문이 접수되었습니다.', $mailable->build()->subject);
     }
 }

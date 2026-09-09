@@ -101,6 +101,11 @@ class OrdersProduct extends Model
         return $this->hasOne(self::class, 'replacement_for_order_product_id');
     }
 
+    public function claims()
+    {
+        return $this->hasMany(OrderClaim::class, 'order_product_id');
+    }
+
     public function getNormalizedStatusAttribute(): string
     {
         return OrderItemStatus::normalize($this->status_code ?: $this->item_status);

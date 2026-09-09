@@ -211,6 +211,10 @@
                                                                     <td><input type="text" name="phone" value="{{ old('phone') }}" class="w300"></td>
                                                                 </tr>
                                                                 <tr>
+                                                                    <th class="w160"><span>반송지</span></th>
+                                                                    <td><input type="text" name="return_postcode" value="{{ old('return_postcode') }}" class="w100" placeholder="우편번호"> <input type="text" name="return_address" value="{{ old('return_address') }}" class="wFull" placeholder="수동회수 반송 주소"></td>
+                                                                </tr>
+                                                                <tr>
                                                                     <th class="w160"><span>비밀번호</span></th>
                                                                     <td><input type="password" name="password" value="" class="w300" placeholder="미입력 시 123456"></td>
                                                                 </tr>
@@ -279,6 +283,10 @@
                                                                     <tr>
                                                                         <th class="w160"><span>연락처</span></th>
                                                                         <td><input type="text" name="phone" value="{{ old('phone', $manager->phone) }}" class="w300"></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <th class="w160"><span>반송지</span></th>
+                                                                        <td><input type="text" name="return_postcode" value="{{ old('return_postcode', $manager->return_postcode) }}" class="w100" placeholder="우편번호"> <input type="text" name="return_address" value="{{ old('return_address', $manager->return_address) }}" class="wFull" placeholder="수동회수 반송 주소"></td>
                                                                     </tr>
                                                                     <tr>
                                                                         <th class="w160"><span>비밀번호 변경</span></th>

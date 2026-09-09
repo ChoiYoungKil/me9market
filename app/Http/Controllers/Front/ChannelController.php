@@ -2133,9 +2133,14 @@ class ChannelController extends Controller
     {
         $vendorId = Auth::guard('admin')->user()->vendor_id;
 
-        $query = Contact::with(['order', 'orderProduct', 'shopChannel'])
+        $query = Contact::with(['order', 'orderProduct', 'product', 'shopChannel'])
             ->where('vendor_id', $vendorId)
-            ->whereNotNull('order_product_id');
+            ->where(function ($query) {
+                $query->whereNotNull('order_product_id')
+                    ->orWhere(function ($query) {
+                        $query->whereNotNull('shop_channel_id')->whereNotNull('product_id');
+                    });
+            });
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -2164,9 +2169,14 @@ class ChannelController extends Controller
     {
         $vendorId = Auth::guard('admin')->user()->vendor_id;
 
-        $inquiry = Contact::with(['order', 'orderProduct', 'shopChannel'])
+        $inquiry = Contact::with(['order', 'orderProduct', 'product', 'shopChannel'])
             ->where('vendor_id', $vendorId)
-            ->whereNotNull('order_product_id')
+            ->where(function ($query) {
+                $query->whereNotNull('order_product_id')
+                    ->orWhere(function ($query) {
+                        $query->whereNotNull('shop_channel_id')->whereNotNull('product_id');
+                    });
+            })
             ->findOrFail($id);
 
         return view('channel.inquiries.show', [
@@ -2186,7 +2196,12 @@ class ChannelController extends Controller
         $vendorId = Auth::guard('admin')->user()->vendor_id;
 
         $inquiry = Contact::where('vendor_id', $vendorId)
-            ->whereNotNull('order_product_id')
+            ->where(function ($query) {
+                $query->whereNotNull('order_product_id')
+                    ->orWhere(function ($query) {
+                        $query->whereNotNull('shop_channel_id')->whereNotNull('product_id');
+                    });
+            })
             ->findOrFail($id);
 
         $inquiry->admin_reply = $request->admin_reply;
@@ -2551,6 +2566,8 @@ class ChannelController extends Controller
             'email' => 'required|email|max:255|unique:distributors,email',
             'name' => 'required|string|max:100',
             'phone' => 'nullable|string|max:50',
+            'return_postcode' => 'nullable|string|max:20',
+            'return_address' => 'nullable|string|max:255',
             'password' => 'nullable|string|min:6|max:100',
         ]);
 
@@ -2561,6 +2578,8 @@ class ChannelController extends Controller
             'email' => $data['email'],
             'name' => $data['name'],
             'phone' => $data['phone'] ?? null,
+            'return_postcode' => $data['return_postcode'] ?? null,
+            'return_address' => $data['return_address'] ?? null,
             'password' => \Illuminate\Support\Facades\Hash::make($data['password'] ?? '123456'),
         ];
 
@@ -2587,6 +2606,8 @@ class ChannelController extends Controller
             'email' => 'required|email|max:255|unique:distributors,email,' . $manager->id,
             'name' => 'required|string|max:100',
             'phone' => 'nullable|string|max:50',
+            'return_postcode' => 'nullable|string|max:20',
+            'return_address' => 'nullable|string|max:255',
             'password' => 'nullable|string|min:6|max:100',
         ]);
 
@@ -2595,6 +2616,8 @@ class ChannelController extends Controller
             'email' => $data['email'],
             'name' => $data['name'],
             'phone' => $data['phone'] ?? null,
+            'return_postcode' => $data['return_postcode'] ?? null,
+            'return_address' => $data['return_address'] ?? null,
         ];
 
         if (!empty($data['password'])) {

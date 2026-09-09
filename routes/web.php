@@ -370,6 +370,8 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
         // 상세 페이지 라우트 (추가됨)
         Route::get('/order/details', 'ShopController@orderDetails')->name('order.details');
         Route::post('/order/item/{id}/status', 'ShopController@updateOrderItem')->name('order.item.status');
+        Route::post('/order/inquiry', 'ShopController@storeInquiry')->name('order.inquiry');
+        Route::post('/order/claim/{id}/shipment', 'ShopController@updateClaimShipment')->name('order.claim.shipment');
         Route::get('/cancel/details', 'ShopController@cancelDetails')->name('cancel.details');
         Route::get('/exchange/details', 'ShopController@exchangeDetails')->name('exchange.details');
         Route::get('/return/details', 'ShopController@returnDetails')->name('return.details');

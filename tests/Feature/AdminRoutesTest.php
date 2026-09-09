@@ -204,12 +204,16 @@ class AdminRoutesTest extends TestCase
             'email' => 'distributor-admin@example.com',
             'name' => 'Distributor Admin',
             'phone' => '01099998888',
+            'return_postcode' => '04524',
+            'return_address' => '서울특별시 중구 세종대로 110',
             'password' => 'secret123',
         ])->assertRedirect(route('admin.order_managers.index'));
 
         $this->assertDatabaseHas('distributors', [
             'email' => 'distributor-admin@example.com',
             'name' => 'Distributor Admin',
+            'return_postcode' => '04524',
+            'return_address' => '서울특별시 중구 세종대로 110',
             'status' => 1,
         ]);
 
@@ -227,12 +231,16 @@ class AdminRoutesTest extends TestCase
             'email' => 'distributor-updated@example.com',
             'name' => 'Updated Distributor',
             'phone' => '01077776666',
+            'return_postcode' => '06236',
+            'return_address' => '서울특별시 강남구 테헤란로 123',
         ])->assertRedirect(route('admin.order_managers.index'));
 
         $this->assertDatabaseHas('distributors', [
             'id' => $manager->id,
             'email' => 'distributor-updated@example.com',
             'name' => 'Updated Distributor',
+            'return_postcode' => '06236',
+            'return_address' => '서울특별시 강남구 테헤란로 123',
             'status' => 0,
         ]);
 

@@ -17,8 +17,17 @@ class OrderClaim extends Model
         'type',
         'reason',
         'detail_reason',
+        'pickup_method',
+        'return_address',
+        'customer_courier_name',
+        'customer_tracking_number',
+        'customer_shipped_at',
         'status',
-        'admin_comment'
+        'admin_comment',
+    ];
+
+    protected $casts = [
+        'customer_shipped_at' => 'datetime',
     ];
 
     public function order()
@@ -40,6 +49,6 @@ class OrderClaim extends Model
     {
         // Assuming OrderProduct has product_id or directly links to Product
         // But here we link to the specific order item
-        return $this->belongsTo(OrdersProduct::class, 'order_product_id'); 
+        return $this->belongsTo(OrdersProduct::class, 'order_product_id');
     }
 }

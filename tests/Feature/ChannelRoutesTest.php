@@ -161,6 +161,8 @@ class ChannelRoutesTest extends TestCase
             'email' => 'orders-manager@example.com',
             'name' => 'Orders Manager',
             'phone' => '01012345678',
+            'return_postcode' => '04524',
+            'return_address' => '서울특별시 중구 세종대로 110',
             'password' => 'secret123',
         ])->assertRedirect();
 
@@ -168,6 +170,8 @@ class ChannelRoutesTest extends TestCase
             'vendor_id' => $vendor->id,
             'email' => 'orders-manager@example.com',
             'name' => 'Orders Manager',
+            'return_postcode' => '04524',
+            'return_address' => '서울특별시 중구 세종대로 110',
             'status' => 1,
         ]);
 
@@ -241,12 +245,16 @@ class ChannelRoutesTest extends TestCase
             'email' => 'updated-own-manager@example.com',
             'name' => 'Updated Own Manager',
             'phone' => '01011110001',
+            'return_postcode' => '06236',
+            'return_address' => '서울특별시 강남구 테헤란로 123',
         ])->assertRedirect();
 
         $this->assertDatabaseHas('distributors', [
             'id' => $ownManager->id,
             'email' => 'updated-own-manager@example.com',
             'name' => 'Updated Own Manager',
+            'return_postcode' => '06236',
+            'return_address' => '서울특별시 강남구 테헤란로 123',
             'status' => 0,
         ]);
     }

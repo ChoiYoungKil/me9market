@@ -15,6 +15,8 @@ class Distributor extends Authenticatable
         'email',
         'password',
         'phone',
+        'return_postcode',
+        'return_address',
         'status',
     ];
 

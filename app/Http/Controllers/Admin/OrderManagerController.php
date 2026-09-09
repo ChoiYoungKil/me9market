@@ -45,6 +45,8 @@ class OrderManagerController extends Controller
             'email' => 'required|email|max:255|unique:distributors,email',
             'name' => 'required|string|max:100',
             'phone' => 'nullable|string|max:50',
+            'return_postcode' => 'nullable|string|max:20',
+            'return_address' => 'nullable|string|max:255',
             'password' => 'nullable|string|min:6|max:100',
         ]);
 
@@ -53,6 +55,8 @@ class OrderManagerController extends Controller
             'email' => $data['email'],
             'name' => $data['name'],
             'phone' => $data['phone'] ?? null,
+            'return_postcode' => $data['return_postcode'] ?? null,
+            'return_address' => $data['return_address'] ?? null,
             'password' => Hash::make($data['password'] ?? '123456'),
         ]);
 
@@ -69,6 +73,8 @@ class OrderManagerController extends Controller
             'email' => 'required|email|max:255|unique:distributors,email,' . $manager->id,
             'name' => 'required|string|max:100',
             'phone' => 'nullable|string|max:50',
+            'return_postcode' => 'nullable|string|max:20',
+            'return_address' => 'nullable|string|max:255',
             'password' => 'nullable|string|min:6|max:100',
         ]);
 
@@ -77,6 +83,8 @@ class OrderManagerController extends Controller
             'email' => $data['email'],
             'name' => $data['name'],
             'phone' => $data['phone'] ?? null,
+            'return_postcode' => $data['return_postcode'] ?? null,
+            'return_address' => $data['return_address'] ?? null,
         ];
 
         if (!empty($data['password'])) {
