@@ -94,6 +94,7 @@
                         <div style="text-align:right; font-weight:900;">{{ number_format($item->line_total ?: $item->product_price * $item->product_qty) }}원</div>
                         <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
                             @foreach(['cancel' => '취소요청', 'confirm' => '구매확정'] as $action => $label)
+                                @continue(!\App\Support\OrderItemStatus::customerActionAllowed($action, $item->normalized_status))
                                 <form action="{{ route('front.shop.order.item.status', ['id' => $item->id]) }}" method="POST">
                                     @csrf
                                     <input type="hidden" name="action" value="{{ $action }}">
@@ -105,6 +106,7 @@
                     </div>
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:0 0 16px; border-bottom:1px solid #eef1f5;">
                         @foreach(['return' => '반품', 'exchange' => '교환'] as $claimAction => $claimLabel)
+                            @continue(!\App\Support\OrderItemStatus::customerActionAllowed($claimAction, $item->normalized_status))
                             <form action="{{ route('front.shop.order.item.status', ['id' => $item->id]) }}" method="POST" style="padding:14px; background:#f8fafc; border:1px solid #e4e7ec; border-radius:6px; display:grid; gap:8px;">
                                 @csrf
                                 <strong>{{ $claimLabel }} 요청</strong>

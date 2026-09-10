@@ -2,16 +2,15 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use App\Models\Cart;
 use App\Models\DeliveryAddress;
 use App\Models\Order;
-use App\Models\OrderClaim;
 use App\Models\OrdersProduct;
 use App\Models\PointTransaction;
 use App\Models\Product;
 use App\Models\ShopChannel;
 use App\Models\ShopChannelProduct;
+use App\Models\User;
 use App\Models\Vendor;
 use App\Models\VendorsBankDetail;
 use App\Models\VendorsBusinessDetail;
@@ -30,6 +29,18 @@ class MypageTest extends TestCase
         $response = $this->get('/mypage/main');
 
         $response->assertRedirect('/member/login');
+    }
+
+    public function test_coupon_page_is_routed_and_does_not_invent_sample_data()
+    {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->get(route('mypage.coupon'))
+            ->assertOk()
+            ->assertSee('보유한 쿠폰이 없습니다.')
+            ->assertDontSee('WELCOME2026')
+            ->assertDontSee('SUMMER5000');
     }
 
     public function test_default_member_can_login_from_member_login_page()
@@ -81,7 +92,7 @@ class MypageTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        
+
         $user = $user->fresh();
         $this->assertEquals('New Name', $user->name);
         $this->assertEquals('new@example.com', $user->email);
@@ -102,16 +113,16 @@ class MypageTest extends TestCase
             ->get('/mypage/profile')
             ->assertOk()
             ->assertSee('id="profileForm"', false)
-            ->assertSee('action="' . route('mypage.profile.update') . '"', false)
+            ->assertSee('action="'.route('mypage.profile.update').'"', false)
             ->assertSee('type="submit"', false)
             ->assertSee('정보수정')
             ->assertSee("execDaumPostcode('profile_zipcode', 'profile_address1', 'profile_address2')", false)
             ->assertSee('id="companyInfoForm"', false)
-            ->assertSee('action="' . route('front.member.register.step2.update') . '"', false)
+            ->assertSee('action="'.route('front.member.register.step2.update').'"', false)
             ->assertSee('회원사 정보 저장')
             ->assertSee("execDaumPostcode('company_zipcode', 'company_address1', 'company_address2')", false)
             ->assertSee('id="sellerCertificationForm"', false)
-            ->assertSee('action="' . route('front.member.register.step3.update') . '"', false)
+            ->assertSee('action="'.route('front.member.register.step3.update').'"', false)
             ->assertSee('인증요청')
             ->assertDontSee('href="#" class="btn_submit"', false);
     }
@@ -467,7 +478,7 @@ class MypageTest extends TestCase
                 'vendor_id' => 1,
                 'admin_id' => 1,
                 'product_id' => $index + 1,
-                'product_code' => 'BADGE-' . $index,
+                'product_code' => 'BADGE-'.$index,
                 'product_name' => $name,
                 'product_color' => 'Black',
                 'product_size' => 'FREE',
@@ -538,25 +549,25 @@ class MypageTest extends TestCase
             ->assertOk()
             ->assertSee('class="btn_search"', false)
             ->assertSee('js-review-popup', false)
-            ->assertSee('action="' . route('front.rating.add') . '"', false)
+            ->assertSee('action="'.route('front.rating.add').'"', false)
             ->assertDontSee('<a href="#" class="btn02 col3">리뷰작성</a>', false);
 
         $this->actingAs($user)
             ->get(route('mypage.cart'))
             ->assertOk()
-            ->assertSee('action="' . route('mypage.cart') . '"', false)
+            ->assertSee('action="'.route('mypage.cart').'"', false)
             ->assertDontSee('<a href="#" class="btn01 btn_black">검색</a>', false);
 
         $this->actingAs($user)
             ->get(route('mypage.wishlist'))
             ->assertOk()
-            ->assertSee('action="' . route('mypage.wishlist') . '"', false)
+            ->assertSee('action="'.route('mypage.wishlist').'"', false)
             ->assertDontSee('<a href="#" class="btn01 btn_black">검색</a>', false);
 
         $this->actingAs($user)
             ->get(route('mypage.point.history'))
             ->assertOk()
-            ->assertSee('action="' . route('mypage.point.history') . '"', false)
+            ->assertSee('action="'.route('mypage.point.history').'"', false)
             ->assertDontSee('href="#" class="btn01" style="background-color: #000; border-color: #000;">검색', false);
     }
 

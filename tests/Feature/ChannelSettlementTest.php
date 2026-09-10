@@ -3,17 +3,19 @@
 namespace Tests\Feature;
 
 use App\Models\Admin;
-use App\Models\Vendor;
-use App\Models\Product;
-use App\Models\ShopChannel;
 use App\Models\Order;
 use App\Models\OrdersProduct;
+use App\Models\Product;
+use App\Models\SettlementRun;
+use App\Models\ShopChannel;
+use App\Models\ShopChannelProduct;
+use App\Models\Vendor;
 use App\Services\SettlementCalculator;
 use App\Support\OrderItemStatus;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
-use Carbon\Carbon;
 
 class ChannelSettlementTest extends TestCase
 {
@@ -72,7 +74,7 @@ class ChannelSettlementTest extends TestCase
 
     public function test_settlement_index_displays_correct_data()
     {
-        list($vendor, $admin, $shop, $product) = $this->createSetup();
+        [$vendor, $admin, $shop, $product] = $this->createSetup();
 
         $order = new Order;
         $order->user_id = 1;
@@ -148,7 +150,7 @@ class ChannelSettlementTest extends TestCase
 
     public function test_settlement_view_displays_detailed_orders()
     {
-        list($vendor, $admin, $shop, $product) = $this->createSetup();
+        [$vendor, $admin, $shop, $product] = $this->createSetup();
 
         $order = new Order;
         $order->user_id = 1;
@@ -231,7 +233,7 @@ class ChannelSettlementTest extends TestCase
         $orders = $response->viewData('orders');
         $this->assertCount(1, $orders);
         $this->assertEquals($item1->id, $orders[0]->id);
-        
+
         // Check loaded relations
         $this->assertTrue($orders[0]->relationLoaded('product'));
         $this->assertTrue($orders[0]->relationLoaded('order'));
@@ -241,7 +243,7 @@ class ChannelSettlementTest extends TestCase
 
     public function test_settlement_calculator_allocates_shipping_points_and_commission()
     {
-        list($vendor, $admin, $shop, $product) = $this->createSetup();
+        [$vendor, $admin, $shop, $product] = $this->createSetup();
         $product->update(['reward_points' => 100]);
 
         $order = new Order;
@@ -297,7 +299,7 @@ class ChannelSettlementTest extends TestCase
 
     public function test_admin_settlement_export_uses_storyboard_detail_columns()
     {
-        list($vendor, $admin, $shop, $product) = $this->createSetup();
+        [$vendor, $admin, $shop, $product] = $this->createSetup();
         $product->update(['reward_points' => 100]);
 
         $order = new Order;
@@ -354,7 +356,7 @@ class ChannelSettlementTest extends TestCase
 
     public function test_extra_shipping_export_only_includes_common_pg_items_with_extra_shipping()
     {
-        list($vendor, $admin, $shop, $product) = $this->createSetup();
+        [$vendor, $admin, $shop, $product] = $this->createSetup();
 
         $ownPgShop = ShopChannel::create([
             'vendor_id' => $vendor->id,
@@ -459,7 +461,7 @@ class ChannelSettlementTest extends TestCase
 
         $csv = $response->streamedContent();
         $this->assertStringContainsString('주문번호,상품명,상태,PG구분,반품배송비,교환배송비,기타추가배송비,"추가배송비 합계",택배사,송장번호,처리일', $csv);
-        $this->assertStringContainsString('"' . $commonItem->product_name . '",구매확정,공용PG,3000,2500,500,6000', $csv);
+        $this->assertStringContainsString('"'.$commonItem->product_name.'",구매확정,공용PG,3000,2500,500,6000', $csv);
         $this->assertStringNotContainsString('Common PG No Extra Shipping', $csv);
 
         $response = $this->actingAs($admin, 'admin')->get(route('admin.settlements.extra_shipping.export', $ownPgRun->id));
@@ -469,7 +471,7 @@ class ChannelSettlementTest extends TestCase
 
     public function test_own_pg_settlement_tracks_sales_without_me9_payout()
     {
-        list($vendor, $admin, $shop, $product) = $this->createSetup();
+        [$vendor, $admin, $shop, $product] = $this->createSetup();
         $shop->update(['use_own_pg' => true, 'pg_provider' => 'kcp']);
 
         $order = new Order;
@@ -536,7 +538,7 @@ class ChannelSettlementTest extends TestCase
 
     public function test_own_pg_point_payment_creates_me9_payout_after_sms_fee()
     {
-        list($vendor, $admin, $shop, $product) = $this->createSetup();
+        [$vendor, $admin, $shop, $product] = $this->createSetup();
         $shop->update(['use_own_pg' => true, 'pg_provider' => 'kcp']);
 
         $order = new Order;
@@ -611,7 +613,7 @@ class ChannelSettlementTest extends TestCase
 
     public function test_common_pg_own_product_settlement_deducts_reward_points_and_sms_fee()
     {
-        list($vendor, $admin, $shop, $product) = $this->createSetup();
+        [$vendor, $admin, $shop, $product] = $this->createSetup();
         $shop->update(['settlement_rate' => 5, 'use_own_pg' => false]);
         $product->update(['product_price' => 10000, 'reward_points' => 500]);
 
@@ -668,7 +670,7 @@ class ChannelSettlementTest extends TestCase
 
     public function test_shared_free_price_reseller_settlement_deducts_sms_fee()
     {
-        list($resellerVendor, $resellerAdmin, $shop) = $this->createSetup();
+        [$resellerVendor, $resellerAdmin, $shop] = $this->createSetup();
 
         $supplierVendor = Vendor::create([
             'name' => 'Supplier Vendor',
@@ -697,7 +699,7 @@ class ChannelSettlementTest extends TestCase
 
         $shop->update(['settlement_rate' => 10, 'use_own_pg' => false]);
 
-        $shopProduct = \App\Models\ShopChannelProduct::create([
+        $shopProduct = ShopChannelProduct::create([
             'shop_channel_id' => $shop->id,
             'product_id' => $product->id,
             'product_type' => 'public',
@@ -768,7 +770,7 @@ class ChannelSettlementTest extends TestCase
 
     public function test_own_pg_product_with_reward_points_is_settled_as_common_pg()
     {
-        list($vendor, $admin, $shop, $product) = $this->createSetup();
+        [$vendor, $admin, $shop, $product] = $this->createSetup();
         $shop->update(['settlement_rate' => 5, 'use_own_pg' => true, 'pg_provider' => 'kcp']);
         $product->update(['product_price' => 10000, 'reward_points' => 500]);
 
@@ -821,7 +823,7 @@ class ChannelSettlementTest extends TestCase
 
     public function test_joint_purchase_settlement_belongs_to_month_after_end_date_plus_seven_days()
     {
-        list($vendor, $admin, $shop, $product) = $this->createSetup();
+        [$vendor, $admin, $shop, $product] = $this->createSetup();
         $shop->update(['settlement_rate' => 5]);
         $product->update(['product_price' => 10000]);
 
@@ -883,5 +885,28 @@ class ChannelSettlementTest extends TestCase
         $this->assertNotNull($juneSummary);
         $this->assertEquals('2026-06', $juneSummary['period']);
         $this->assertEquals(10500.0, $juneSummary['invoice_sales_amount']);
+    }
+
+    public function test_vendor_cannot_export_another_vendors_settlement(): void
+    {
+        [, $admin] = $this->createSetup();
+        $otherVendor = Vendor::create([
+            'name' => 'Other Settlement Vendor',
+            'mobile' => '010-5555-6666',
+            'email' => 'other-settlement@example.com',
+            'status' => 1,
+            'commission' => 0,
+            'confirm' => 'Yes',
+        ]);
+        $run = SettlementRun::create([
+            'settlement_key' => '2026-05:other-vendor',
+            'period' => '2026-05',
+            'vendor_id' => $otherVendor->id,
+            'vendor_name' => $otherVendor->name,
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.settlements.export', $run->id))
+            ->assertNotFound();
     }
 }

@@ -15,9 +15,9 @@
         <div style="background:#fff; border:1px solid #d9dee7; border-radius:8px; overflow:hidden;">
             @forelse($notices as $notice)
                 <article style="padding:18px; border-bottom:1px solid #eef1f5;">
-                    <h2 style="margin:0 0 6px; font-size:18px;">{{ $notice->title }}</h2>
+                    <h2 style="margin:0 0 6px; font-size:18px;"><a href="{{ route('shop.notices.show', $notice->id) }}" style="color:#111827; text-decoration:none;">{{ $notice->title }}</a></h2>
                     <div style="color:#667085; font-size:13px;">{{ $notice->created_at?->format('Y-m-d') }} · 조회 {{ $notice->view_count }}</div>
-                    <p style="color:#475467;">{{ $notice->content }}</p>
+                    <p style="color:#475467;">{{ \Illuminate\Support\Str::limit(strip_tags($notice->content), 140) }}</p>
                 </article>
             @empty
                 <div style="padding:18px;">등록된 공지사항이 없습니다.</div>

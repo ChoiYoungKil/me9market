@@ -9,6 +9,7 @@ use App\Models\OrderClaim;
 use App\Models\OrdersProduct;
 use App\Models\ShopChannelProduct;
 use App\Services\ChannelPointService;
+use App\Services\ReturnAddressResolver;
 use App\Services\ShopChannelRuntime;
 use App\Services\ShopChannelSmsService;
 use App\Support\OrderItemStatus;
@@ -49,6 +50,18 @@ class ShopController extends Controller
         $runtime->removeFromCart((int) $request->shop_product_id);
 
         return redirect()->back()->with('flash_message_success', '장바구니에서 상품을 삭제했습니다.');
+    }
+
+    public function updateCart(Request $request, ShopChannelRuntime $runtime)
+    {
+        $data = $request->validate([
+            'shop_product_id' => 'required|integer',
+            'qty' => 'required|integer|min:1|max:999',
+            'option' => 'required|string|max:100',
+        ]);
+        $runtime->updateCart((int) $data['shop_product_id'], (int) $data['qty'], $data['option']);
+
+        return back()->with('flash_message_success', '장바구니 상품 정보를 수정했습니다.');
     }
 
     public function order(ShopChannelRuntime $runtime)
@@ -122,10 +135,10 @@ class ShopController extends Controller
             })->count();
         }
 
-        $ordersQuery = (clone $baseQuery)
-            ->with(['orders_products' => function ($query) use ($shop) {
-                $query->where('shop_channel_id', $shop->id)->with(['claims', 'distributor', 'product.distributor']);
-            }]);
+        $itemLoader = function ($query) use ($shop) {
+            $query->where('shop_channel_id', $shop->id)->with(['claims', 'distributor', 'product.distributor']);
+        };
+        $ordersQuery = (clone $baseQuery)->with(['orders_products' => $itemLoader]);
         if ($status !== 'all') {
             $statuses = $statusGroups[$status];
             $ordersQuery->whereHas('orders_products', function ($query) use ($shop, $statuses) {
@@ -134,7 +147,13 @@ class ShopController extends Controller
         }
         $orders = $ordersQuery->latest()->paginate(10)->withQueryString();
 
-        $order = $orderId ? $orders->firstWhere('id', (int) $orderId) : null;
+        $detailQuery = (clone $baseQuery)->with(['orders_products' => $itemLoader]);
+        if ($status !== 'all') {
+            $detailQuery->whereHas('orders_products', function ($query) use ($shop, $statuses) {
+                $query->where('shop_channel_id', $shop->id)->whereIn('status_code', $statuses);
+            });
+        }
+        $order = $orderId ? $detailQuery->find($orderId) : null;
         $order = $order ?: $orders->first();
         if ($order) {
             $order->orders_products->each(function ($item) {
@@ -161,6 +180,10 @@ class ShopController extends Controller
             ->where('shop_channel_id', $shop->id)
             ->whereHas('order', fn ($query) => $this->constrainOrdersToCustomer($query))
             ->findOrFail($id);
+
+        if (! OrderItemStatus::customerActionAllowed($data['action'], $item->normalized_status)) {
+            return back()->withErrors(['action' => '현재 주문 상태에서는 요청한 처리를 진행할 수 없습니다.']);
+        }
 
         if ($data['action'] === 'confirm') {
             $item->setStatus(OrderItemStatus::CONFIRMED);
@@ -196,7 +219,7 @@ class ShopController extends Controller
                     'reason' => $reason ?: 'Shop 채널 주문상세에서 요청',
                     'detail_reason' => $reason,
                     'pickup_method' => $data['pickup_method'] ?? null,
-                    'return_address' => ($data['pickup_method'] ?? null) === 'manual' ? $this->returnAddressFor($item) : null,
+                    'return_address' => ($data['pickup_method'] ?? null) === 'manual' ? app(ReturnAddressResolver::class)->forOrderItem($item) : null,
                     'customer_courier_name' => $data['customer_courier_name'] ?? null,
                     'customer_tracking_number' => $data['customer_tracking_number'] ?? null,
                     'customer_shipped_at' => ! empty($data['customer_tracking_number']) ? now() : null,
@@ -285,21 +308,7 @@ class ShopController extends Controller
 
     private function returnAddressFor(OrdersProduct $item): string
     {
-        $item->loadMissing(['distributor', 'product.distributor', 'product.vendor.vendorbusinessdetails', 'shopChannel.vendor.vendorbusinessdetails']);
-        $distributor = $item->distributor ?: $item->product?->distributor;
-        if ($distributor?->return_address) {
-            return trim(implode(' ', array_filter([$distributor->return_postcode, $distributor->return_address])));
-        }
-        $vendor = $item->product?->vendor ?: $item->shopChannel?->vendor;
-        $business = $vendor?->vendorbusinessdetails;
-
-        return trim(implode(' ', array_filter([
-            $business?->shop_pincode ?: $vendor?->pincode,
-            $business?->shop_address ?: $vendor?->address,
-            $business?->shop_address_detail,
-            $business?->shop_city ?: $vendor?->city,
-            $business?->shop_state ?: $vendor?->state,
-        ]))) ?: '반송지 정보는 채널 관리자에게 문의해 주세요.';
+        return app(ReturnAddressResolver::class)->forOrderItem($item);
     }
 
     private function constrainOrdersToCustomer($query): void
@@ -320,16 +329,16 @@ class ShopController extends Controller
 
     public function cancelDetails()
     {
-        return view('front.shop.cancel_details');
+        return redirect()->route('front.shop.order.details', ['status' => 'claims']);
     }
 
     public function exchangeDetails()
     {
-        return view('front.shop.exchange_details');
+        return redirect()->route('front.shop.order.details', ['status' => 'claims']);
     }
 
     public function returnDetails()
     {
-        return view('front.shop.return_details');
+        return redirect()->route('front.shop.order.details', ['status' => 'claims']);
     }
 }

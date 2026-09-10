@@ -262,11 +262,13 @@
                                             <button onclick="openCancelModal({{ $prod->id }}, '{{ addslashes($prod->product_name) }}', '옵션: {{ $prod->product_size }} / 수량: {{ $prod->product_qty }}개')" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: 600;">취소신청</button>
                                         @endif
                                         @if(in_array($prod->normalized_status, [\App\Support\OrderItemStatus::SHIPPING, \App\Support\OrderItemStatus::DELIVERED], true))
-                                            <button onclick="openReturnModal({{ $prod->id }}, '{{ addslashes($prod->product_name) }}', '옵션: {{ $prod->product_size }} / 수량: {{ $prod->product_qty }}개')" style="background: #f59e0b; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: 600;">반품신청</button>
-                                            <button onclick="openExchangeModal({{ $prod->id }}, '{{ addslashes($prod->product_name) }}', '옵션: {{ $prod->product_size }} / 수량: {{ $prod->product_qty }}개')" style="background: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: 600;">교환신청</button>
+                                            <button onclick="openReturnModal({{ $prod->id }}, @js($prod->product_name), @js('옵션: '.$prod->product_size.' / 수량: '.$prod->product_qty.'개'), @js($prod->manual_return_address))" style="background: #f59e0b; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: 600;">반품신청</button>
+                                            <button onclick="openExchangeModal({{ $prod->id }}, @js($prod->product_name), @js('옵션: '.$prod->product_size.' / 수량: '.$prod->product_qty.'개'), @js($prod->manual_return_address))" style="background: #3b82f6; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: 600;">교환신청</button>
                                         @endif
                                         <button onclick="openQnaModal({{ $prod->id }}, '{{ addslashes($prod->product_name) }}', '옵션: {{ $prod->product_size }}')" style="background: #475569; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: 600;">상품문의</button>
-                                        <button onclick="openConfirmPurchaseModal({{ $prod->id }}, '{{ addslashes($prod->product_name) }}', '옵션: {{ $prod->product_size }}')" style="background: #10b981; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: 600;">구매확정</button>
+                                        @if($prod->normalized_status === \App\Support\OrderItemStatus::DELIVERED)
+                                            <button onclick="openConfirmPurchaseModal({{ $prod->id }}, '{{ addslashes($prod->product_name) }}', '옵션: {{ $prod->product_size }}')" style="background: #10b981; color: white; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; cursor: pointer; font-weight: 600;">구매확정</button>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -601,8 +603,10 @@
 
                 <div id="return-address-wrap" style="display: none; margin-top: 10px;">
                     <label>상품회수주소</label>
-                    <input type="text" name="recovery_address" value="20202 서울시 마포구 공덕동 2003" readonly>
+                    <input type="text" name="return_address_display" value="" readonly>
                     <p style="font-size: 12px; color: #f59e0b; margin: 4px 0 0 0;">* 수동 회수 시, 위 주소로 상품을 직접 발송해 주셔야 합니다.</p>
+                    <input type="text" name="customer_courier_name" maxlength="100" placeholder="택배사 (나중에 등록 가능)" style="margin-top:10px;">
+                    <input type="text" name="customer_tracking_number" maxlength="100" placeholder="송장번호 (나중에 등록 가능)" style="margin-top:8px;">
                 </div>
 
                 <label>기타내용</label>
@@ -662,8 +666,10 @@
 
                 <div id="exchange-address-wrap" style="display: none; margin-top: 10px;">
                     <label>상품회수주소</label>
-                    <input type="text" name="recovery_address" value="20202 서울시 마포구 공덕동 2003" readonly>
+                    <input type="text" name="return_address_display" value="" readonly>
                     <p style="font-size: 12px; color: #f59e0b; margin: 4px 0 0 0;">* 수동 회수 시, 위 주소로 교환 상품을 직접 발송해 주셔야 합니다.</p>
+                    <input type="text" name="customer_courier_name" maxlength="100" placeholder="택배사 (나중에 등록 가능)" style="margin-top:10px;">
+                    <input type="text" name="customer_tracking_number" maxlength="100" placeholder="송장번호 (나중에 등록 가능)" style="margin-top:8px;">
                 </div>
 
                 <label>기타내용 (교환할 옵션 상세)</label>
@@ -739,6 +745,14 @@
                 </div>
 
                 <label>질문 제목</label>
+                <select name="inquiry_category" required>
+                    <option value="">문의 분류</option>
+                    <option value="delivery">배송문의</option>
+                    <option value="claim">교환·반품</option>
+                    <option value="product">상품관련</option>
+                    <option value="payment">결제문의</option>
+                    <option value="other">기타</option>
+                </select>
                 <input type="text" name="subject" placeholder="질문 제목입니다" required>
 
                 <label>■ 문의내용</label>
@@ -771,11 +785,12 @@
         document.getElementById('cancel_etc_wrap').style.display = (reason === '기타') ? 'block' : 'none';
     }
 
-    function openReturnModal(productId, name, option) {
+    function openReturnModal(productId, name, option, returnAddress) {
         let modal = document.getElementById('return-modal');
         modal.querySelector('input[name="order_product_id"]').value = productId;
         modal.querySelector('.modal-product-name').innerText = name;
         modal.querySelector('.modal-product-option').innerText = option;
+        modal.querySelector('input[name="return_address_display"]').value = returnAddress;
         modal.style.display = 'flex';
     }
 
@@ -784,11 +799,12 @@
         document.getElementById('return-address-wrap').style.display = isAuto ? 'none' : 'block';
     }
 
-    function openExchangeModal(productId, name, option) {
+    function openExchangeModal(productId, name, option, returnAddress) {
         let modal = document.getElementById('exchange-modal');
         modal.querySelector('input[name="order_product_id"]').value = productId;
         modal.querySelector('.modal-product-name').innerText = name;
         modal.querySelector('.modal-product-option').innerText = option;
+        modal.querySelector('input[name="return_address_display"]').value = returnAddress;
         modal.style.display = 'flex';
     }
 

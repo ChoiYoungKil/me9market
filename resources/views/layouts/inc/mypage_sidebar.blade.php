@@ -188,19 +188,22 @@
                     <li class="dep1 icon1_5 {{ request()->routeIs('mypage.wishlist') ? 'on' : '' }}">
                         <a href="{{ route('mypage.wishlist') }}">찜한 상품 목록</a>
                     </li>
+                    <li class="dep1 icon1_5 {{ request()->routeIs('mypage.coupon') ? 'on' : '' }}">
+                        <a href="{{ route('mypage.coupon') }}">쿠폰</a>
+                    </li>
                 </ul>
             </div>
             <div class="con_w dep03">
                 <div class="c_ttl">Me9 Market</div>
                 <ul class="dep1_wrap">
                     <li class="dep1 icon2_1">
-                        <a href="{{ url()->current() }}">서비스 안내</a>
+                        <a href="{{ route('front.service') }}">서비스 안내</a>
                     </li>
                     <li class="dep1 icon2_2">
-                        <a href="{{ url()->current() }}">주요기능</a>
+                        <a href="{{ route('front.features') }}">주요기능</a>
                     </li>
                     <li class="dep1 icon2_3">
-                        <a href="{{ url()->current() }}">가입안내</a>
+                        <a href="{{ route('front.subscription_info') }}">가입안내</a>
                     </li>
                     <li class="dep1 icon2_4 arrow">
                         <a href="{{ url()->current() }}">고객센터</a>
@@ -208,7 +211,7 @@
                             <li><a href="{{ route('cs.notice') }}">공지사항</a></li>
                             <li><a href="{{ route('cs.faq') }}">자주묻는질문</a></li>
                             <li><a href="{{ route('cs.contact') }}">제휴문의</a></li>
-                            <li><a href="{{ url()->current() }}">주문조회</a></li>
+                            <li><a href="{{ route('front.nonmember.order_check') }}">주문조회</a></li>
                         </ul>
                     </li>
                 </ul>

@@ -629,6 +629,24 @@ class ShopChannelRuntime
         Session::put(self::CART_KEY, $cart);
     }
 
+    public function updateCart(int $shopProductId, int $qty, string $option): void
+    {
+        $shop = $this->currentChannel();
+        ShopChannelProduct::whereKey($shopProductId)
+            ->where('shop_channel_id', $shop->id)
+            ->where('status', 1)
+            ->where('approval_status', 'approved')
+            ->firstOrFail();
+
+        $cart = Session::get(self::CART_KEY, []);
+        abort_unless(isset($cart[$shopProductId]), 404);
+        $cart[$shopProductId] = [
+            'qty' => max(1, $qty),
+            'option' => trim($option) ?: '기본옵션',
+        ];
+        Session::put(self::CART_KEY, $cart);
+    }
+
     public function checkout(Request $request): Order
     {
         $shop = $this->currentChannel();

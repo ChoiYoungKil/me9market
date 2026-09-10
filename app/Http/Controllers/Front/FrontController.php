@@ -14,6 +14,7 @@ use App\Models\ShopChannelNotice;
 use App\Models\ShopChannelProduct;
 use App\Models\User;
 use App\Services\ChannelPointService;
+use App\Services\ReturnAddressResolver;
 use App\Services\ShopChannelOtpService;
 use App\Services\ShopChannelRuntime;
 use App\Services\ShopChannelSmsService;
@@ -410,10 +411,13 @@ class FrontController extends Controller
             return redirect()->route('front.nonmember.order_check')->with('flash_message_error', '주문 조회를 먼저 완료해 주세요.');
         }
 
-        $order = Order::with(['orders_products.product', 'claims'])->find($orderId);
+        $order = Order::with(['orders_products.claims', 'orders_products.distributor', 'orders_products.product.distributor', 'claims'])->find($orderId);
         if (! $order) {
             return redirect()->route('front.nonmember.order_check')->with('flash_message_error', '해당 주문을 찾을 수 없습니다.');
         }
+        $order->orders_products->each(function (OrdersProduct $item) {
+            $item->setAttribute('manual_return_address', app(ReturnAddressResolver::class)->forOrderItem($item));
+        });
 
         return view('front.pages.nonmember_order_details', compact('order'));
     }
@@ -440,23 +444,31 @@ class FrontController extends Controller
 
     public function nonmemberOrderClaimSubmit(Request $request)
     {
-        $request->validate([
+        $data = $request->validate([
             'order_id' => 'required',
             'order_product_id' => 'required',
             'type' => 'required|in:cancel,return,exchange,confirm',
             'reason' => 'required_unless:type,confirm',
+            'recovery_method' => 'required_if:type,return,exchange|nullable|in:자동회수,수동회수,automatic,manual',
+            'customer_courier_name' => 'nullable|string|max:100',
+            'customer_tracking_number' => 'nullable|string|max:100',
         ]);
 
         $order = Order::find($request->order_id);
         if (! $order) {
             abort(404);
         }
+        abort_unless((int) Session::get('nonmember_order_id') === (int) $order->id, 403);
 
         $ordersProduct = OrdersProduct::where('id', $request->order_product_id)
             ->where('order_id', $order->id)
             ->first();
         if (! $ordersProduct) {
             abort(404);
+        }
+
+        if (! OrderItemStatus::customerActionAllowed($data['type'], $ordersProduct->normalized_status)) {
+            return back()->withErrors(['action' => '현재 주문 상태에서는 요청한 처리를 진행할 수 없습니다.']);
         }
 
         if ($request->type == 'confirm') {
@@ -475,15 +487,17 @@ class FrontController extends Controller
             }
 
             // Save rating and review to ratings table
-            DB::table('ratings')->insert([
-                'user_id' => $order->user_id ?? 1,
-                'product_id' => $ordersProduct->product_id,
-                'rating' => intval($request->rating ?? 5),
-                'review' => $request->review ?? '이 상품을 구매하겠습니다.',
-                'status' => 1,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            if ($order->user_id && User::whereKey($order->user_id)->exists()) {
+                DB::table('ratings')->insert([
+                    'user_id' => $order->user_id,
+                    'product_id' => $ordersProduct->product_id,
+                    'rating' => intval($request->rating ?? 5),
+                    'review' => $request->review ?? '이 상품을 구매하겠습니다.',
+                    'status' => 1,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
 
             return redirect()->back()->with('flash_message_success', '구매 확정이 완료되었습니다.');
         } else {
@@ -498,26 +512,31 @@ class FrontController extends Controller
             $ordersProduct->save();
 
             $detailReason = $request->detail_reason ?? '';
+            $pickupMethod = null;
+            $returnAddress = null;
             if ($claimType == 'return' || $claimType == 'exchange') {
-                $recoveryMethod = $request->recovery_method ?? '자동회수';
-                $recoveryAddress = $request->recovery_address ?? '';
-                $detailReason = "[회수방법: {$recoveryMethod}] 주소: {$recoveryAddress}";
-                if ($request->detail_reason) {
-                    $detailReason .= ' | 상세사유: '.$request->detail_reason;
-                }
+                $pickupMethod = in_array($data['recovery_method'], ['수동회수', 'manual'], true) ? 'manual' : 'automatic';
+                $returnAddress = $pickupMethod === 'manual'
+                    ? app(ReturnAddressResolver::class)->forOrderItem($ordersProduct)
+                    : null;
             }
 
-            OrderClaim::create([
+            OrderClaim::updateOrCreate([
+                'order_product_id' => $ordersProduct->id,
+                'type' => $claimType,
+                'status' => 'requested',
+            ], [
                 'order_id' => $order->id,
                 'user_id' => $order->user_id,
                 'vendor_id' => $ordersProduct->vendor_id,
-                'order_product_id' => $ordersProduct->id,
-                'type' => $claimType,
                 'reason' => $request->reason,
                 'detail_reason' => $detailReason,
+                'pickup_method' => $pickupMethod,
+                'return_address' => $returnAddress,
+                'customer_courier_name' => $data['customer_courier_name'] ?? null,
+                'customer_tracking_number' => $data['customer_tracking_number'] ?? null,
+                'customer_shipped_at' => ! empty($data['customer_tracking_number']) ? now() : null,
                 'status' => 'requested',
-                'created_at' => now(),
-                'updated_at' => now(),
             ]);
 
             $label = $claimType == 'cancel' ? '취소' : ($claimType == 'return' ? '반품' : '교환');
@@ -528,9 +547,10 @@ class FrontController extends Controller
 
     public function nonmemberOrderInquirySubmit(Request $request)
     {
-        $request->validate([
+        $data = $request->validate([
             'order_id' => 'required',
             'order_product_id' => 'required',
+            'inquiry_category' => 'required|in:delivery,claim,product,payment,other',
             'subject' => 'required|string|max:255',
             'message' => 'required|string',
         ]);
@@ -539,6 +559,7 @@ class FrontController extends Controller
         if (! $order) {
             abort(404);
         }
+        abort_unless((int) Session::get('nonmember_order_id') === (int) $order->id, 403);
 
         $ordersProduct = OrdersProduct::where('id', $request->order_product_id)
             ->where('order_id', $order->id)
@@ -564,6 +585,7 @@ class FrontController extends Controller
             'name' => $order->name,
             'email' => $order->email,
             'phone' => $order->mobile,
+            'inquiry_category' => $data['inquiry_category'],
             'subject' => '[상품문의] '.$request->subject.' (상품: '.$ordersProduct->product_name.')',
             'message' => $request->message,
             'type' => 'inquiry',
@@ -756,6 +778,17 @@ class FrontController extends Controller
             ->get();
 
         return view('shop.notices', compact('shop', 'notices'));
+    }
+
+    public function shopNoticeDetails(int $id)
+    {
+        $shop = app(ShopChannelRuntime::class)->currentChannel();
+        $notice = ShopChannelNotice::where('shop_channel_id', $shop->id)
+            ->where('status', 1)
+            ->findOrFail($id);
+        $notice->increment('view_count');
+
+        return view('shop.notice_details', compact('shop', 'notice'));
     }
 
     public function storyboardTestbed()

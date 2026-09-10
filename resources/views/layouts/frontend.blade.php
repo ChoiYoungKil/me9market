@@ -56,9 +56,9 @@
 
                 <div class="menu_bx">
                     <ul class="dep1_wrap">
-                        <li class="dep1 dep01"><a href="{{ url()->current() }}">서비스안내</a></li>
-                        <li class="dep1 dep02"><a href="{{ url()->current() }}">주요기능</a></li>
-                        <li class="dep1 dep03"><a href="{{ url()->current() }}">가입안내</a></li>
+                        <li class="dep1 dep01"><a href="{{ route('front.service') }}">서비스안내</a></li>
+                        <li class="dep1 dep02"><a href="{{ route('front.features') }}">주요기능</a></li>
+                        <li class="dep1 dep03"><a href="{{ route('front.subscription_info') }}">가입안내</a></li>
                         <li class="dep1 dep04"><a href="{{ route('cs.notice') }}">고객센터</a></li>
                     </ul>
 

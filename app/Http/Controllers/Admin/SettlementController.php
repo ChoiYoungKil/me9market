@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\OrdersProduct;
 use App\Models\SettlementExecution;
 use App\Models\SettlementRun;
 use App\Services\SettlementCalculator;
@@ -102,7 +103,7 @@ class SettlementController extends Controller
 
         return redirect()
             ->route('admin.settlements.index', ['period' => $period])
-            ->with('success_message', $period . ' 정산 자료 ' . $runs->count() . '건을 생성했습니다.');
+            ->with('success_message', $period.' 정산 자료 '.$runs->count().'건을 생성했습니다.');
     }
 
     public function show($id)
@@ -125,14 +126,14 @@ class SettlementController extends Controller
         $period = $calculator->normalizePeriod($request->query('period'));
         $vendorId = (int) $request->query('vendor_id');
 
-        if (!$vendorId) {
+        if (! $vendorId) {
             abort(404);
         }
 
         $shopChannelId = $this->normalizeShopChannelId($request->query('shop_channel_id'));
         $summary = $calculator->preview($period, $vendorId, $shopChannelId)->first();
 
-        if (!$summary) {
+        if (! $summary) {
             abort(404);
         }
 
@@ -174,7 +175,7 @@ class SettlementController extends Controller
             'attachment' => 'nullable|file|max:10240|mimes:xls,xlsx,csv,pdf',
         ]);
 
-        $run = !empty($data['settlement_run_id'])
+        $run = ! empty($data['settlement_run_id'])
             ? SettlementRun::find($data['settlement_run_id'])
             : null;
 
@@ -209,7 +210,7 @@ class SettlementController extends Controller
     {
         $execution = SettlementExecution::findOrFail($id);
 
-        if (!$execution->attachment_path || !Storage::disk('public')->exists($execution->attachment_path)) {
+        if (! $execution->attachment_path || ! Storage::disk('public')->exists($execution->attachment_path)) {
             abort(404);
         }
 
@@ -228,10 +229,10 @@ class SettlementController extends Controller
 
     public function payoutExport($id)
     {
-        $settlement = SettlementRun::with('items.orderItem.shopChannel')->findOrFail($id);
+        $settlement = $this->settlementQuery()->with('items.orderItem.shopChannel')->findOrFail($id);
 
         return $this->downloadCsv(
-            'settlement_payout_' . $settlement->period . '_' . $settlement->id . '.csv',
+            'settlement_payout_'.$settlement->period.'_'.$settlement->id.'.csv',
             ['등록일', '채널아이디', '주문번호', 'PG구분', '자사PG 결제액', '공용PG 결제액', '자사포인트(별도기록없음)', 'Me9포인트(통합사용액)', '상품가', '배송비', '할인금액', '매출액', '채널 지급액', '지급사유'],
             $this->payoutRows($settlement)
         );
@@ -239,10 +240,10 @@ class SettlementController extends Controller
 
     public function billingExport($id)
     {
-        $settlement = SettlementRun::with('items.orderItem.shopChannel')->findOrFail($id);
+        $settlement = $this->settlementQuery()->with('items.orderItem.shopChannel')->findOrFail($id);
 
         return $this->downloadCsv(
-            'settlement_billing_' . $settlement->period . '_' . $settlement->id . '.csv',
+            'settlement_billing_'.$settlement->period.'_'.$settlement->id.'.csv',
             ['등록일', '채널아이디', '주문번호', 'PG구분', '상품+수수료', '배송비', 'SMS수수료', '지급포인트', '채널청구액', '청구사유'],
             $this->billingRows($settlement)
         );
@@ -250,10 +251,10 @@ class SettlementController extends Controller
 
     public function export($id)
     {
-        $settlement = SettlementRun::with(['items.orderItem.order', 'items.orderItem.shopChannelProduct'])->findOrFail($id);
+        $settlement = $this->settlementQuery()->with(['items.orderItem.order', 'items.orderItem.shopChannelProduct'])->findOrFail($id);
 
         return $this->downloadCsv(
-            'settlement_' . $settlement->period . '_' . $settlement->id . '.csv',
+            'settlement_'.$settlement->period.'_'.$settlement->id.'.csv',
             [
                 '등록일',
                 '주문번호',
@@ -278,10 +279,10 @@ class SettlementController extends Controller
 
     public function exportExtraShipping($id)
     {
-        $settlement = SettlementRun::with('items.orderItem.shopChannel')->findOrFail($id);
+        $settlement = $this->settlementQuery()->with('items.orderItem.shopChannel')->findOrFail($id);
 
         return $this->downloadCsv(
-            'settlement_extra_shipping_' . $settlement->period . '_' . $settlement->id . '.csv',
+            'settlement_extra_shipping_'.$settlement->period.'_'.$settlement->id.'.csv',
             ['주문번호', '상품명', '상태', 'PG구분', '반품배송비', '교환배송비', '기타추가배송비', '추가배송비 합계', '택배사', '송장번호', '처리일'],
             $this->extraShippingRows($settlement)
         );
@@ -411,8 +412,8 @@ class SettlementController extends Controller
 
     private function allocatedOrderAmount($orderItem, string $field): float
     {
-        $amount = (float) data_get($orderItem, 'order.' . $field, 0);
-        if ($amount <= 0 || !$orderItem) {
+        $amount = (float) data_get($orderItem, 'order.'.$field, 0);
+        if ($amount <= 0 || ! $orderItem) {
             return 0;
         }
 
@@ -421,7 +422,7 @@ class SettlementController extends Controller
             $lineTotal = (float) data_get($orderItem, 'product_price', 0) * max(1, (int) data_get($orderItem, 'product_qty', 1));
         }
 
-        $orderTotal = (float) \App\Models\OrdersProduct::where('order_id', data_get($orderItem, 'order_id'))
+        $orderTotal = (float) OrdersProduct::where('order_id', data_get($orderItem, 'order_id'))
             ->selectRaw('SUM(CASE WHEN line_total > 0 THEN line_total ELSE product_price * product_qty END) as total')
             ->value('total');
 
@@ -456,7 +457,7 @@ class SettlementController extends Controller
                 $usesOwnPg = ($item->payment_gateway_type ?? null) === 'own_pg'
                     || (bool) data_get($orderItem, 'shopChannel.use_own_pg', false);
 
-                return !$usesOwnPg && $this->extraShippingTotal($orderItem) > 0;
+                return ! $usesOwnPg && $this->extraShippingTotal($orderItem) > 0;
             })
             ->map(function ($item) {
                 $orderItem = $item->orderItem;
@@ -490,7 +491,7 @@ class SettlementController extends Controller
 
     private function amountDetail($id, string $mode)
     {
-        $settlement = SettlementRun::with('items.orderItem.shopChannel')->findOrFail($id);
+        $settlement = $this->settlementQuery()->with('items.orderItem.shopChannel')->findOrFail($id);
         $rows = $mode === 'billing' ? $this->billingRows($settlement) : $this->payoutRows($settlement);
         $title = $mode === 'billing' ? '채널 청구액 상세 목록' : '채널 지급액 상세 목록';
         $exportRoute = $mode === 'billing'
@@ -531,6 +532,16 @@ class SettlementController extends Controller
                     : '공용PG 수납 기준 지급',
             ];
         });
+    }
+
+    private function settlementQuery()
+    {
+        $admin = Auth::guard('admin')->user();
+
+        return SettlementRun::query()->when(
+            $admin->type === 'vendor',
+            fn ($query) => $query->where('vendor_id', $admin->vendor_id)
+        );
     }
 
     private function billingRows(SettlementRun $settlement)
@@ -577,7 +588,7 @@ class SettlementController extends Controller
     {
         return response()->streamDownload(function () use ($headers, $rows) {
             $handle = fopen('php://output', 'w');
-            fwrite($handle, chr(0xEF) . chr(0xBB) . chr(0xBF));
+            fwrite($handle, chr(0xEF).chr(0xBB).chr(0xBF));
             fputcsv($handle, $headers);
 
             foreach ($rows as $row) {

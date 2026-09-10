@@ -105,4 +105,16 @@ class OrderItemStatus
 
         return $map[$status] ?? ($status ?: self::PAID);
     }
+
+    public static function customerActionAllowed(string $action, ?string $status): bool
+    {
+        $allowed = [
+            'cancel' => [self::PAID, self::READY_TO_SHIP],
+            'return' => [self::SHIPPING, self::DELIVERED],
+            'exchange' => [self::SHIPPING, self::DELIVERED],
+            'confirm' => [self::DELIVERED],
+        ];
+
+        return in_array(self::normalize($status), $allowed[$action] ?? [], true);
+    }
 }

@@ -3,19 +3,20 @@
 namespace Tests\Feature;
 
 use App\Models\Admin;
-use App\Models\Vendor;
-use App\Models\Section;
-use App\Models\Category;
-use App\Models\Brand;
-use App\Models\Product;
-use App\Models\ProductsAttribute;
 use App\Models\Banner;
+use App\Models\Brand;
+use App\Models\Category;
 use App\Models\Coupon;
-use App\Models\User;
+use App\Models\Distributor;
+use App\Models\NewsletterSubscriber;
 use App\Models\Order;
 use App\Models\OrdersProduct;
-use App\Models\NewsletterSubscriber;
-use App\Models\Distributor;
+use App\Models\Product;
+use App\Models\ProductsAttribute;
+use App\Models\ProductsImage;
+use App\Models\Section;
+use App\Models\User;
+use App\Models\Vendor;
 use App\Support\OrderItemStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
@@ -164,7 +165,7 @@ class AdminRoutesTest extends TestCase
 
     public function test_authenticated_admin_portal_get_routes()
     {
-        list($admin, $vendor, $section, $category, $brand, $product, $banner, $coupon, $user, $order, $subscriber, $vendorAdmin) = $this->createSetup();
+        [$admin, $vendor, $section, $category, $brand, $product, $banner, $coupon, $user, $order, $subscriber, $vendorAdmin] = $this->createSetup();
 
         $this->actingAs($admin, 'admin')->get('/admin/dashboard')->assertStatus(200);
         $this->actingAs($admin, 'admin')->get('/admin/sub01')->assertStatus(200);
@@ -197,7 +198,7 @@ class AdminRoutesTest extends TestCase
 
     public function test_admin_can_manage_order_managers_and_open_distributor_portal()
     {
-        list($admin, $vendor, $section, $category, $brand, $product, $banner, $coupon, $user, $order) = $this->createSetup();
+        [$admin, $vendor, $section, $category, $brand, $product, $banner, $coupon, $user, $order] = $this->createSetup();
 
         $this->actingAs($admin, 'admin')->post('/admin/order-managers', [
             'status' => 1,
@@ -302,7 +303,7 @@ class AdminRoutesTest extends TestCase
 
     public function test_vendor_admin_order_access_is_scoped_to_own_order_items()
     {
-        list($admin, $vendor, $section, $category, $brand, $product, $banner, $coupon, $user, $order, $subscriber, $vendorAdmin) = $this->createSetup();
+        [$admin, $vendor, $section, $category, $brand, $product, $banner, $coupon, $user, $order, $subscriber, $vendorAdmin] = $this->createSetup();
 
         $ownItem = OrdersProduct::create([
             'order_id' => $order->id,
@@ -409,7 +410,7 @@ class AdminRoutesTest extends TestCase
 
     public function test_admin_delete_routes_require_post_requests()
     {
-        list($admin, $vendor, $section) = $this->createSetup();
+        [$admin, $vendor, $section] = $this->createSetup();
 
         $this->actingAs($admin, 'admin')
             ->get("/admin/delete-section/{$section->id}")
@@ -441,7 +442,7 @@ class AdminRoutesTest extends TestCase
             'commission' => 10,
             'confirm' => 'Yes',
         ]);
-        $otherAdmin = new Admin();
+        $otherAdmin = new Admin;
         $otherAdmin->name = 'Other Attribute Admin';
         $otherAdmin->type = 'vendor';
         $otherAdmin->vendor_id = $otherVendor->id;
@@ -460,5 +461,133 @@ class AdminRoutesTest extends TestCase
             ->post("/admin/delete-attribute/{$attribute->id}")
             ->assertRedirect();
         $this->assertDatabaseMissing('products_attributes', ['id' => $attribute->id]);
+    }
+
+    public function test_vendor_product_and_coupon_writes_are_scoped_to_own_records(): void
+    {
+        [, , $section, $category, $brand, $ownProduct, , , , , , $vendorAdmin] = $this->createSetup();
+
+        $otherVendor = Vendor::create([
+            'name' => 'Other Vendor',
+            'mobile' => '010-9000-0000',
+            'email' => 'other-scope@example.com',
+            'status' => 1,
+            'commission' => 10,
+            'confirm' => 'Yes',
+        ]);
+        $otherProduct = Product::create([
+            'section_id' => $section->id,
+            'category_id' => $category->id,
+            'brand_id' => $brand->id,
+            'vendor_id' => $otherVendor->id,
+            'admin_id' => $vendorAdmin->id,
+            'admin_type' => 'vendor',
+            'product_name' => 'Other Vendor Product',
+            'product_code' => 'OTHER001',
+            'product_color' => 'Black',
+            'product_price' => 500,
+            'product_discount' => 0,
+            'product_weight' => 100,
+            'is_featured' => 'No',
+            'status' => 1,
+        ]);
+        $otherAttribute = ProductsAttribute::create([
+            'product_id' => $otherProduct->id,
+            'size' => 'M',
+            'price' => 500,
+            'stock' => 3,
+            'sku' => 'OTHER001-M',
+            'status' => 1,
+        ]);
+        $otherImage = new ProductsImage;
+        $otherImage->product_id = $otherProduct->id;
+        $otherImage->image = 'other.png';
+        $otherImage->status = 1;
+        $otherImage->save();
+        $otherCoupon = new Coupon;
+        $otherCoupon->vendor_id = $otherVendor->id;
+        $otherCoupon->coupon_option = 'Manual';
+        $otherCoupon->coupon_code = 'OTHER10';
+        $otherCoupon->categories = (string) $category->id;
+        $otherCoupon->brands = (string) $brand->id;
+        $otherCoupon->users = '';
+        $otherCoupon->coupon_type = 'Multiple';
+        $otherCoupon->amount_type = 'Fixed';
+        $otherCoupon->amount = 10;
+        $otherCoupon->expiry_date = '2026-12-31';
+        $otherCoupon->status = 1;
+        $otherCoupon->save();
+
+        $this->actingAs($vendorAdmin, 'admin')
+            ->get('/admin/products')
+            ->assertOk()
+            ->assertSee($ownProduct->product_name)
+            ->assertDontSee($otherProduct->product_name);
+        $this->actingAs($vendorAdmin, 'admin')->get("/admin/add-edit-product/{$otherProduct->id}")->assertNotFound();
+        $this->actingAs($vendorAdmin, 'admin')->get("/admin/add-edit-attributes/{$otherProduct->id}")->assertNotFound();
+        $this->actingAs($vendorAdmin, 'admin')->get("/admin/add-images/{$otherProduct->id}")->assertNotFound();
+        $this->actingAs($vendorAdmin, 'admin')->post("/admin/delete-product/{$otherProduct->id}")->assertNotFound();
+        $this->actingAs($vendorAdmin, 'admin')
+            ->post('/admin/update-product-status', [
+                'product_id' => $otherProduct->id,
+                'status' => 'Active',
+            ], ['X-Requested-With' => 'XMLHttpRequest'])
+            ->assertNotFound();
+        $this->actingAs($vendorAdmin, 'admin')
+            ->post('/admin/update-attribute-status', [
+                'attribute_id' => $otherAttribute->id,
+                'status' => 'Active',
+            ], ['X-Requested-With' => 'XMLHttpRequest'])
+            ->assertNotFound();
+        $this->actingAs($vendorAdmin, 'admin')
+            ->post("/admin/edit-attributes/{$otherProduct->id}", [
+                'attributeId' => [$otherAttribute->id],
+                'price' => [1],
+                'stock' => [1],
+            ])
+            ->assertNotFound();
+        $this->actingAs($vendorAdmin, 'admin')
+            ->post('/admin/update-image-status', [
+                'image_id' => $otherImage->id,
+                'status' => 'Active',
+            ], ['X-Requested-With' => 'XMLHttpRequest'])
+            ->assertNotFound();
+        $this->actingAs($vendorAdmin, 'admin')->post("/admin/delete-image/{$otherImage->id}")->assertNotFound();
+
+        $this->actingAs($vendorAdmin, 'admin')
+            ->get('/admin/coupons')
+            ->assertOk()
+            ->assertDontSee($otherCoupon->coupon_code);
+        $this->actingAs($vendorAdmin, 'admin')->get("/admin/add-edit-coupon/{$otherCoupon->id}")->assertNotFound();
+        $this->actingAs($vendorAdmin, 'admin')
+            ->post('/admin/update-coupon-status', [
+                'coupon_id' => $otherCoupon->id,
+                'status' => 'Active',
+            ], ['X-Requested-With' => 'XMLHttpRequest'])
+            ->assertNotFound();
+        $this->actingAs($vendorAdmin, 'admin')->post("/admin/delete-coupon/{$otherCoupon->id}")->assertNotFound();
+
+        $this->assertDatabaseHas('products', ['id' => $otherProduct->id, 'status' => 1]);
+        $this->assertDatabaseHas('products_attributes', ['id' => $otherAttribute->id, 'price' => 500, 'stock' => 3, 'status' => 1]);
+        $this->assertDatabaseHas('products_images', ['id' => $otherImage->id, 'status' => 1]);
+        $this->assertDatabaseHas('coupons', ['id' => $otherCoupon->id, 'status' => 1]);
+    }
+
+    public function test_vendor_cannot_access_global_admin_management_routes(): void
+    {
+        [, , , , , , , , , , , $vendorAdmin] = $this->createSetup();
+
+        foreach ([
+            '/admin/admins',
+            '/admin/sections',
+            '/admin/categories',
+            '/admin/brands',
+            '/admin/users',
+            '/admin/order-managers',
+            '/admin/settlements',
+            '/admin/channel-points',
+        ] as $url) {
+            $this->actingAs($vendorAdmin, 'admin')->get($url)->assertForbidden();
+        }
     }
 }

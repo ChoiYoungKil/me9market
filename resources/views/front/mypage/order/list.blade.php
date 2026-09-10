@@ -487,7 +487,8 @@
                                                             data-name="{{ $item['product_name'] }}"
                                                             data-image="{{ $item['product_image'] }}"
                                                             data-shop="{{ $item['shop_name'] }}"
-                                                            data-option="{{ $item['option'] }}">반품신청</a>
+                                                            data-option="{{ $item['option'] }}"
+                                                            data-return-address="{{ $item['return_address'] }}">반품신청</a>
                                                     @endif
                                                     @if(in_array('exchange', $item['buttons']))
                                                         <a href="javascript:void(0);" class="btn02 col5 js-exchange-popup"
@@ -495,7 +496,8 @@
                                                             data-name="{{ $item['product_name'] }}"
                                                             data-image="{{ $item['product_image'] }}"
                                                             data-shop="{{ $item['shop_name'] }}"
-                                                            data-option="{{ $item['option'] }}">교환신청</a>
+                                                            data-option="{{ $item['option'] }}"
+                                                            data-return-address="{{ $item['return_address'] }}">교환신청</a>
                                                     @endif
                                                     @if(in_array('confirm', $item['buttons']))
                                                         <a href="javascript:void(0);" class="btn02 col2 js-confirm-popup"
@@ -784,8 +786,10 @@
                                                 <div style="font-size: 13px; font-weight: 700; margin-bottom: 5px;">상품회수주소
                                                 </div>
                                                 <div style="font-size: 13px; color: #444; line-height: 1.5;">
-                                                    {{ $user->pincode ?? '00000' }}<br>
-                                                    {{ $user->address ?? '주소 정보 없음' }} {{ $user->city ?? '' }}
+                                                    <span id="return_pickup_address">반송지 정보를 불러오는 중입니다.</span>
+                                                </div>
+                                                <input type="text" name="customer_courier_name" maxlength="100" placeholder="택배사 (나중에 등록 가능)" style="width:100%; margin-top:10px; height:36px; border:1px solid #ddd; padding:0 8px; box-sizing:border-box;">
+                                                <input type="text" name="customer_tracking_number" maxlength="100" placeholder="송장번호 (나중에 등록 가능)" style="width:100%; margin-top:6px; height:36px; border:1px solid #ddd; padding:0 8px; box-sizing:border-box;">
                                                 </div>
                                             </div>
                                         </div>
@@ -902,8 +906,10 @@
                                                 <div style="font-size: 13px; font-weight: 700; margin-bottom: 5px;">상품회수주소
                                                 </div>
                                                 <div style="font-size: 13px; color: #444; line-height: 1.5;">
-                                                    {{ $user->pincode ?? '00000' }}<br>
-                                                    {{ $user->address ?? '주소 정보 없음' }} {{ $user->city ?? '' }}
+                                                    <span id="exchange_pickup_address">반송지 정보를 불러오는 중입니다.</span>
+                                                </div>
+                                                <input type="text" name="customer_courier_name" maxlength="100" placeholder="택배사 (나중에 등록 가능)" style="width:100%; margin-top:10px; height:36px; border:1px solid #ddd; padding:0 8px; box-sizing:border-box;">
+                                                <input type="text" name="customer_tracking_number" maxlength="100" placeholder="송장번호 (나중에 등록 가능)" style="width:100%; margin-top:6px; height:36px; border:1px solid #ddd; padding:0 8px; box-sizing:border-box;">
                                                 </div>
                                             </div>
                                         </div>
@@ -1087,12 +1093,12 @@
             $(document).on('click', '.js-return-popup', function () {
                 var d = $(this).data();
                 console.log('Return Popup Data:', d);
-                openReturnPopup(d.id, d.name, d.image, d.shop, d.option);
+                openReturnPopup(d.id, d.name, d.image, d.shop, d.option, d.returnAddress);
             });
             $(document).on('click', '.js-exchange-popup', function () {
                 var d = $(this).data();
                 console.log('Exchange Popup Data:', d);
-                openExchangePopup(d.id, d.name, d.image, d.shop, d.option);
+                openExchangePopup(d.id, d.name, d.image, d.shop, d.option, d.returnAddress);
             });
             $(document).on('click', '.js-confirm-popup', function () {
                 var d = $(this).data();
@@ -1155,7 +1161,8 @@
                     reason: reason,
                     detail_reason: $("#return_detail_reason").val(),
                     recovery_method: $("input[name='return_method']:checked").val() === 'auto' ? '자동회수' : '수동회수',
-                    recovery_address: "{{ $user->address ?? '' }} {{ $user->city ?? '' }}"
+                    customer_courier_name: $("#return_form input[name='customer_courier_name']").val(),
+                    customer_tracking_number: $("#return_form input[name='customer_tracking_number']").val()
                 };
 
                 $.ajax({
@@ -1192,7 +1199,8 @@
                     reason: reason,
                     detail_reason: $("#exchange_detail_reason").val(),
                     recovery_method: $("input[name='exchange_method']:checked").val() === 'auto' ? '자동회수' : '수동회수',
-                    recovery_address: "{{ $user->address ?? '' }} {{ $user->city ?? '' }}"
+                    customer_courier_name: $("#exchange_form input[name='customer_courier_name']").val(),
+                    customer_tracking_number: $("#exchange_form input[name='customer_tracking_number']").val()
                 };
 
                 $.ajax({
@@ -1402,12 +1410,13 @@
             $("#pop_cancel").fadeOut();
         }
 
-        function openReturnPopup(id, name, image, shop, option) {
+        function openReturnPopup(id, name, image, shop, option, returnAddress) {
             $("#return_prd_name").text(name);
             $("#return_prd_img").css("background-image", "url('" + image + "')");
             $("#return_prd_shop").text(shop);
             $("#return_prd_option").text(option);
             $("#return_order_item_id").val(id);
+            $("#return_pickup_address").text(returnAddress || '반송지 정보는 채널 관리자에게 문의해 주세요.');
 
             // 초기화
             $("#return_reason_select").val("");
@@ -1426,12 +1435,13 @@
             $("#pop_return").fadeOut();
         }
 
-        function openExchangePopup(id, name, image, shop, option) {
+        function openExchangePopup(id, name, image, shop, option, returnAddress) {
             $("#exchange_prd_name").text(name);
             $("#exchange_prd_img").css("background-image", "url('" + image + "')");
             $("#exchange_prd_shop").text(shop);
             $("#exchange_prd_option").text(option);
             $("#exchange_order_item_id").val(id);
+            $("#exchange_pickup_address").text(returnAddress || '반송지 정보는 채널 관리자에게 문의해 주세요.');
 
             // 초기화
             $("#exchange_reason_select").val("");

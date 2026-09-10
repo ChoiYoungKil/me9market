@@ -18,7 +18,8 @@ use Intervention\Image\Facades\Image;
 class ProductsController extends Controller
 {
     public function products() // 관리자 패널의 상품 목록 페이지 렌더링
-    {Session::put('page', 'products');
+    {
+        Session::put('page', 'products');
 
         // 입점업체인 경우 본인의 상품만 표시하며, 계정이 활성화된 상태인지 확인합니다.
         $adminType = Auth::guard('admin')->user()->type;
@@ -43,7 +44,7 @@ class ProductsController extends Controller
 
         // 입점업체인 경우 본인의 상품만 필터링
         if ($adminType == 'vendor') {
-            $produtcs = $products->where('vendor_id', $vendor_id);
+            $products->where('vendor_id', $vendor_id);
         }
 
         $products = $products->get()->toArray();
@@ -53,29 +54,31 @@ class ProductsController extends Controller
     }
 
     public function updateProductStatus(Request $request) // AJAX를 사용하여 상품 상태 업데이트
-    {if ($request->ajax()) { // AJAX 호출인 경우
-        $data = $request->all(); // AJAX 요청에서 전달된 데이터 배열 가져오기
-        // dd($data);
+    {
+        if ($request->ajax()) { // AJAX 호출인 경우
+            $data = $request->all(); // AJAX 요청에서 전달된 데이터 배열 가져오기
+            // dd($data);
 
-        if ($data['status'] == 'Active') { // 상태값에 따라 0 또는 1로 전환
-            $status = 0;
-        } else {
-            $status = 1;
+            if ($data['status'] == 'Active') { // 상태값에 따라 0 또는 1로 전환
+                $status = 0;
+            } else {
+                $status = 1;
+            }
+
+            $product = $this->productQuery()->findOrFail($data['product_id']);
+            $product->update(['status' => $status]);
+            // echo '<pre>', var_dump($data), '</pre>';
+
+            return response()->json([
+                'status' => $status,
+                'product_id' => $data['product_id'],
+            ]);
         }
-
-        Product::where('id', $data['product_id'])->update(['status' => $status]);
-        // echo '<pre>', var_dump($data), '</pre>';
-
-        return response()->json([
-            'status' => $status,
-            'product_id' => $data['product_id'],
-        ]);
-    }
     }
 
     public function deleteProduct($id)
     {
-        Product::where('id', $id)->delete();
+        $this->productQuery()->findOrFail($id)->delete();
 
         $message = '상품이 성공적으로 삭제되었습니다!';
 
@@ -93,7 +96,7 @@ class ProductsController extends Controller
             $message = '상품이 성공적으로 추가되었습니다!';
         } else { // $id가 있으면 상품 수정
             $title = '상품 수정';
-            $product = Product::find($id);
+            $product = $this->productQuery()->findOrFail($id);
             // dd($product);
             $message = '상품이 성공적으로 업데이트되었습니다!';
         }
@@ -270,7 +273,7 @@ class ProductsController extends Controller
 
     public function deleteProductImage($id) // admin/js/custom.js의 AJAX 호출 - 서버와 DB에서 상품 이미지 삭제
     {// 데이터베이스에 저장된 상품 이미지 레코드 가져오기
-        $productImage = Product::select('product_image')->where('id', $id)->first();
+        $productImage = $this->productQuery()->select('product_image')->findOrFail($id);
         // dd($productImage);
 
         // 서버 상의 상품 이미지 3단계 경로 (small, medium, large 폴더)
@@ -295,7 +298,7 @@ class ProductsController extends Controller
         }
 
         // products 테이블에서 상품 이미지 레코드 삭제 (컬럼 값을 빈 문자열로 업데이트)
-        Product::where('id', $id)->update(['product_image' => '']);
+        $this->productQuery()->whereKey($id)->update(['product_image' => '']);
 
         $message = '상품 이미지가 성공적으로 삭제되었습니다!';
 
@@ -304,7 +307,7 @@ class ProductsController extends Controller
 
     public function deleteProductVideo($id) // admin/js/custom.js의 AJAX 호출 - 서버와 DB에서 상품 동영상 삭제
     {// 데이터베이스에 저장된 상품 동영상 레코드 가져오기
-        $productVideo = Product::select('product_video')->where('id', $id)->first();
+        $productVideo = $this->productQuery()->select('product_video')->findOrFail($id);
         // dd($productVideo);
 
         // 서버 상의 상품 동영상 경로
@@ -316,7 +319,7 @@ class ProductsController extends Controller
         }
 
         // products 테이블에서 상품 동영상 레코드 삭제 (컬럼 값을 빈 문자열로 업데이트)
-        Product::where('id', $id)->update(['product_video' => '']);
+        $this->productQuery()->whereKey($id)->update(['product_video' => '']);
 
         $message = '상품 동영상이 성공적으로 삭제되었습니다!';
 
@@ -324,9 +327,13 @@ class ProductsController extends Controller
     }
 
     public function addAttributes(Request $request, $id) // 속성 추가/수정 함수
-    {Session::put('page', 'products');
+    {
+        Session::put('page', 'products');
 
-        $product = Product::select('id', 'product_name', 'product_code', 'product_color', 'product_price', 'product_image')->with('attributes')->find($id); // with('attributes')는 Product.php 모델의 관계 메소드 이름입니다.
+        $product = $this->productQuery()
+            ->select('id', 'product_name', 'product_code', 'product_color', 'product_price', 'product_image')
+            ->with('attributes')
+            ->findOrFail($id); // with('attributes')는 Product.php 모델의 관계 메소드 이름입니다.
 
         if ($request->isMethod('post')) { // 폼이 제출되었을 때
             $data = $request->all();
@@ -370,23 +377,25 @@ class ProductsController extends Controller
     }
 
     public function updateAttributeStatus(Request $request) // add_edit_attributes.blade.php에서 AJAX를 사용한 속성 상태 업데이트
-    {if ($request->ajax()) { // AJAX 호출인 경우
-        $data = $request->all(); // AJAX 요청에서 전달된 데이터 배열 가져오기
-        // dd($data);
+    {
+        if ($request->ajax()) { // AJAX 호출인 경우
+            $data = $request->all(); // AJAX 요청에서 전달된 데이터 배열 가져오기
+            // dd($data);
 
-        if ($data['status'] == 'Active') { // 상태값에 따라 0 또는 1로 전환
-            $status = 0;
-        } else {
-            $status = 1;
+            if ($data['status'] == 'Active') { // 상태값에 따라 0 또는 1로 전환
+                $status = 0;
+            } else {
+                $status = 1;
+            }
+
+            $attribute = $this->attributeQuery()->findOrFail($data['attribute_id']);
+            $attribute->update(['status' => $status]); // $data['attribute_id']는 $.ajax() 메소드 내 'data' 객체에서 가져옵니다.
+
+            return response()->json([
+                'status' => $status,
+                'attribute_id' => $data['attribute_id'],
+            ]);
         }
-
-        ProductsAttribute::where('id', $data['attribute_id'])->update(['status' => $status]); // $data['attribute_id']는 $.ajax() 메소드 내 'data' 객체에서 가져옵니다.
-
-        return response()->json([
-            'status' => $status,
-            'attribute_id' => $data['attribute_id'],
-        ]);
-    }
     }
 
     public function editAttributes(Request $request)
@@ -397,11 +406,17 @@ class ProductsController extends Controller
             $data = $request->all();
             // dd($data);
 
+            $attributeIds = array_values(array_filter($data['attributeId']));
+            $attributes = $this->attributeQuery()
+                ->where('product_id', (int) $request->route('id'))
+                ->whereIn('id', $attributeIds)
+                ->get()
+                ->keyBy('id');
+            abort_unless($attributes->count() === count(array_unique($attributeIds)), 404);
+
             foreach ($data['attributeId'] as $key => $attribute) {
                 if (! empty($attribute)) {
-                    ProductsAttribute::where([
-                        'id' => $data['attributeId'][$key],
-                    ])->update([
+                    $attributes->get((int) $data['attributeId'][$key])->update([
                         'price' => $data['price'][$key],
                         'stock' => $data['stock'][$key],
                     ]);
@@ -427,9 +442,13 @@ class ProductsController extends Controller
     }
 
     public function addImages(Request $request, $id) // $id는 URL에서 전달된 파라미터(슬러그)입니다.
-    {Session::put('page', 'products');
+    {
+        Session::put('page', 'products');
 
-        $product = Product::select('id', 'product_name', 'product_code', 'product_color', 'product_price', 'product_image')->with('images')->find($id); // with('images')는 Product.php 모델의 관계 메소드 이름입니다.
+        $product = $this->productQuery()
+            ->select('id', 'product_name', 'product_code', 'product_color', 'product_price', 'product_image')
+            ->with('images')
+            ->findOrFail($id); // with('images')는 Product.php 모델의 관계 메소드 이름입니다.
 
         if ($request->isMethod('post')) { // 폼이 제출되었을 때
             $data = $request->all();
@@ -483,28 +502,30 @@ class ProductsController extends Controller
     }
 
     public function updateImageStatus(Request $request) // add_images.blade.php에서 AJAX를 사용한 이미지 상태 업데이트
-    {if ($request->ajax()) { // AJAX 호출인 경우
-        $data = $request->all(); // AJAX 요청에서 전달된 데이터 배열 가져오기
-        // dd($data);
+    {
+        if ($request->ajax()) { // AJAX 호출인 경우
+            $data = $request->all(); // AJAX 요청에서 전달된 데이터 배열 가져오기
+            // dd($data);
 
-        if ($data['status'] == 'Active') { // $data['status']는 $.ajax() 메소드 내 'data' 객체에서 가져옵니다. // 'status'를 (활성/비활성) 0에서 1로, 1에서 0으로 전환
-            $status = 0;
-        } else {
-            $status = 1;
+            if ($data['status'] == 'Active') { // $data['status']는 $.ajax() 메소드 내 'data' 객체에서 가져옵니다. // 'status'를 (활성/비활성) 0에서 1로, 1에서 0으로 전환
+                $status = 0;
+            } else {
+                $status = 1;
+            }
+
+            $image = $this->imageQuery()->findOrFail($data['image_id']);
+            $image->update(['status' => $status]); // $data['image_id']는 $.ajax() 메소드 내 'data' 객체에서 가져옵니다.
+
+            return response()->json([ // JSON 응답: https://laravel.com/docs/9.x/responses#json-responses
+                'status' => $status,
+                'image_id' => $data['image_id'],
+            ]);
         }
-
-        ProductsImage::where('id', $data['image_id'])->update(['status' => $status]); // $data['image_id']는 $.ajax() 메소드 내 'data' 객체에서 가져옵니다.
-
-        return response()->json([ // JSON 응답: https://laravel.com/docs/9.x/responses#json-responses
-            'status' => $status,
-            'image_id' => $data['image_id'],
-        ]);
-    }
     }
 
     public function deleteImage($id) // admin/js/custom.js의 AJAX 호출 // 서버와 데이터베이스에서 상품 이미지 삭제 // $id는 라우트 파라미터로 전달됩니다.
     {// 데이터베이스에 저장된 상품 이미지 레코드 가져오기
-        $productImage = ProductsImage::select('image')->where('id', $id)->first();
+        $productImage = $this->imageQuery()->select('id', 'image')->findOrFail($id);
         // dd($productImage);
 
         // 서버 상의 상품 이미지 세 가지 경로 ('small', 'medium', 'large' 폴더) 가져오기
@@ -529,10 +550,46 @@ class ProductsController extends Controller
         }
 
         // `products_images` 데이터베이스 테이블에서 상품 이미지 이름(레코드) 삭제
-        ProductsImage::where('id', $id)->delete();
+        $productImage->delete();
 
         $message = '상품 이미지가 성공적으로 삭제되었습니다!';
 
         return redirect()->back()->with('success_message', $message);
+    }
+
+    private function productQuery()
+    {
+        $admin = Auth::guard('admin')->user();
+
+        return Product::query()->when(
+            $admin->type === 'vendor',
+            fn ($query) => $query->where('vendor_id', $admin->vendor_id)
+        );
+    }
+
+    private function attributeQuery()
+    {
+        $admin = Auth::guard('admin')->user();
+
+        return ProductsAttribute::query()->when(
+            $admin->type === 'vendor',
+            fn ($query) => $query->whereHas(
+                'product',
+                fn ($productQuery) => $productQuery->where('vendor_id', $admin->vendor_id)
+            )
+        );
+    }
+
+    private function imageQuery()
+    {
+        $admin = Auth::guard('admin')->user();
+
+        return ProductsImage::query()->when(
+            $admin->type === 'vendor',
+            fn ($query) => $query->whereHas(
+                'product',
+                fn ($productQuery) => $productQuery->where('vendor_id', $admin->vendor_id)
+            )
+        );
     }
 }

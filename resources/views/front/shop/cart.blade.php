@@ -34,8 +34,15 @@
                                 <strong>{{ $item['product']->product_name }}</strong>
                                 <div style="color:#667085; font-size:13px;">{{ $item['product']->product_code }}</div>
                             </td>
-                            <td style="padding:12px; text-align:center;">{{ $item['option'] }}</td>
-                            <td style="padding:12px; text-align:center;">{{ number_format($item['qty']) }}</td>
+                            <td colspan="2" style="padding:12px; text-align:center;">
+                                <form action="{{ route('front.shop.cart.update') }}" method="POST" style="display:flex; gap:6px; justify-content:center; align-items:center;">
+                                    @csrf
+                                    <input type="hidden" name="shop_product_id" value="{{ $item['id'] }}">
+                                    <input type="text" name="option" value="{{ $item['option'] }}" maxlength="100" required aria-label="상품 옵션" style="width:120px; height:34px; border:1px solid #d0d5dd; padding:0 8px; box-sizing:border-box;">
+                                    <input type="number" name="qty" value="{{ $item['qty'] }}" min="1" max="999" required aria-label="상품 수량" style="width:70px; height:34px; border:1px solid #d0d5dd; padding:0 8px; box-sizing:border-box;">
+                                    <button type="submit" style="height:34px; border:1px solid #344054; background:#344054; color:#fff; border-radius:6px; padding:0 10px; cursor:pointer;">수정</button>
+                                </form>
+                            </td>
                             <td style="padding:12px; text-align:right; font-weight:900;">{{ number_format($item['line_total']) }}원</td>
                             <td style="padding:12px; text-align:center;">
                                 <form action="{{ route('front.shop.cart.remove') }}" method="POST">

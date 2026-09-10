@@ -350,6 +350,7 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
             Route::get('/joint-purchases', 'FrontController@shopJointPurchases')->name('shop.joint_purchases_list');
             Route::get('/joint-purchases/{id}', 'FrontController@shopJointPurchaseDetails')->name('shop.joint_purchase_details');
             Route::get('/notices', 'FrontController@shopNotices')->name('shop.notices');
+            Route::get('/notices/{id}', 'FrontController@shopNoticeDetails')->name('shop.notices.show');
         });
     });
 
@@ -362,6 +363,7 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
     Route::prefix('shop')->name('front.shop.')->middleware('shop.channel.access')->group(function () {
         Route::get('/cart', 'ShopController@cart')->name('cart.index');
         Route::post('/cart/add', 'ShopController@addToCart')->name('cart.add');
+        Route::post('/cart/update', 'ShopController@updateCart')->name('cart.update');
         Route::post('/cart/remove', 'ShopController@removeFromCart')->name('cart.remove');
         Route::get('/order', 'ShopController@order')->name('order.form');
         Route::post('/order', 'ShopController@checkout')->name('order.checkout');
@@ -550,6 +552,7 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
         Route::get('/points/status', 'UserController@pointStatus')->name('mypage.point.status');
         Route::post('/points/convert', 'UserController@convertChannelPoint')->name('mypage.point.convert');
         Route::get('/points/history', 'UserController@pointHistory')->name('mypage.point.history');
+        Route::get('/coupons', 'UserController@couponList')->name('mypage.coupon');
 
         // 장바구니 목록
         Route::get('/cart', 'UserController@cartList')->name('mypage.cart');
