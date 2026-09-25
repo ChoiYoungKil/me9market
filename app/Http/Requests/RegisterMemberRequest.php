@@ -45,37 +45,26 @@ class RegisterMemberRequest extends FormRequest
      */
     public function rules()
     {
-        $regType = $this->input('register_type', 'general');
-
         $rules = [
+            'register_type' => 'required|in:general',
             'agree_terms' => 'required',
             'agree_privacy' => 'required',
-            'agree_third_party' => 'required'
-        ];
-
-        if ($regType == 'general') {
-            // Username: Alpha-numeric only (a-z, A-Z, 0-9)
-            $rules['username'] = [
+            'agree_third_party' => 'required',
+            'username' => [
                 'required',
                 'min:4',
                 'max:20',
                 'unique:users,username',
-                'regex:/^[a-zA-Z0-9]+$/'
-            ];
-            $rules['email'] = 'required|email|max:150|unique:users';
-            // Password: Upper + Lower + Special + Min 6
-            $rules['password'] = [
+                'regex:/^[a-zA-Z0-9]+$/',
+            ],
+            'email' => 'required|email|max:150|unique:users',
+            'password' => [
                 'required',
                 'confirmed',
-                'min:6',
-                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).+$/'
-            ];
-        } else {
-            // Social
-            $rules['email'] = 'required|email|max:150|unique:users'; 
-            $rules['name'] = 'required|string|max:100';
-            $rules['mobile'] = 'required|numeric|digits_between:10,11';
-        }
+                'min:12',
+                'regex:/^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*]).+$/',
+            ],
+        ];
 
         return $rules;
     }

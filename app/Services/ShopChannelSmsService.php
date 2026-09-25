@@ -50,7 +50,9 @@ class ShopChannelSmsService
             'sent_at' => $response === false ? null : now(),
         ])->save();
 
-        $this->applyBillingToOrderItem($item, self::BILLING_AMOUNT);
+        if ($response !== false) {
+            $this->applyBillingToOrderItem($item, self::BILLING_AMOUNT);
+        }
 
         return $log;
     }

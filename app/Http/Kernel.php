@@ -68,6 +68,7 @@ class Kernel extends HttpKernel
         // My code:
         // Registering Middleware: Assigning Middleware To Routes: https://laravel.com/docs/9.x/middleware#assigning-middleware-to-routes
         'admin' => \App\Http\Middleware\Admin::class,
+        'admin.role' => \App\Http\Middleware\RequireAdminRole::class,
         'shop.channel.access' => \App\Http\Middleware\EnsureShopChannelAccess::class,
     ];
 }

@@ -112,6 +112,8 @@ class ProductsController extends Controller
                 'product_code' => 'required|regex:/^\w+$/',
                 'product_price' => 'required|numeric',
                 'product_color' => 'required|regex:/^[\pL\s\-]+$/u',
+                'product_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
+                'product_video' => 'nullable|file|mimes:mp4,mov,avi,webm|max:102400',
             ];
 
             $customMessages = [
@@ -138,13 +140,13 @@ class ProductsController extends Controller
                     $extension = $image_tmp->getClientOriginalExtension();
 
                     // 이미지 중복 방지를 위한 랜덤 이름 생성
-                    $imageName = rand(111, 99999).'.'.$extension;
+                    $imageName = (string) \Illuminate\Support\Str::uuid().'.'.$extension;
 
                     // 'public' 폴더 내 업로드된 이미지 경로 할당
                     // 이미지 크기에 따라 small, medium, large 세 개의 폴더를 사용합니다.
-                    $largeImagePath = 'front/images/product_images/large/'.$imageName; // 'large'  이미지 폴더
-                    $mediumImagePath = 'front/images/product_images/medium/'.$imageName; // 'medium' 이미지 폴더
-                    $smallImagePath = 'front/images/product_images/small/'.$imageName; // 'small'  이미지 폴더
+                    $largeImagePath = public_path('front/images/product_images/large/'.$imageName);
+                    $mediumImagePath = public_path('front/images/product_images/medium/'.$imageName);
+                    $smallImagePath = public_path('front/images/product_images/small/'.$imageName);
 
                     // 'Intervention' 패키지를 사용하여 이미지 업로드 및 'public' 폴더 내 세 개의 경로(폴더)에 저장
                     Image::make($image_tmp)->resize(1000, 1000)->save($largeImagePath);  // 'large'  이미지 크기로 리사이즈 후 'large'  폴더에 저장
@@ -165,10 +167,10 @@ class ProductsController extends Controller
                     $extension = $video_tmp->getClientOriginalExtension();
 
                     // 업로드된 동영상의 새로운 랜덤 이름 생성 (파일명 중복으로 인한 덮어쓰기 방지)
-                    $videoName = rand().'.'.$extension; // e.g.    75935.mp4
+                    $videoName = (string) \Illuminate\Support\Str::uuid().'.'.$extension;
 
                     // 'public' 폴더 내 업로드된 동영상 경로 할당
-                    $videoPath = 'front/videos/product_videos/';
+                    $videoPath = public_path('front/videos/product_videos');
 
                     // 임시 경로(웹 서버 할당)에서 'public' 폴더 내 지정된 경로로 동영상 이동    // 파일 복사 및 이동: https://laravel.com/docs/9.x/filesystem#copying-moving-files
                     $video_tmp->move($videoPath, $videoName);
@@ -277,9 +279,9 @@ class ProductsController extends Controller
         // dd($productImage);
 
         // 서버 상의 상품 이미지 3단계 경로 (small, medium, large 폴더)
-        $small_image_path = 'front/images/product_images/small/';
-        $medium_image_path = 'front/images/product_images/medium/';
-        $large_image_path = 'front/images/product_images/large/';
+        $small_image_path = public_path('front/images/product_images/small/');
+        $medium_image_path = public_path('front/images/product_images/medium/');
+        $large_image_path = public_path('front/images/product_images/large/');
 
         // 서버에서 실제 상품 이미지 삭제 (3개 폴더 모두)
         // 첫 번째: 'small' 폴더에서 삭제
@@ -311,7 +313,7 @@ class ProductsController extends Controller
         // dd($productVideo);
 
         // 서버 상의 상품 동영상 경로
-        $product_video_path = 'front/videos/product_videos/';
+        $product_video_path = public_path('front/videos/product_videos/');
 
         // 서버에서 상품 동영상 삭제
         if (file_exists($product_video_path.$productVideo->product_video)) {
@@ -336,7 +338,10 @@ class ProductsController extends Controller
             ->findOrFail($id); // with('attributes')는 Product.php 모델의 관계 메소드 이름입니다.
 
         if ($request->isMethod('post')) { // 폼이 제출되었을 때
-            $data = $request->all();
+            $data = $request->validate([
+                'images' => ['required', 'array', 'max:10'],
+                'images.*' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            ]);
             // dd($data);
 
             foreach ($data['sku'] as $key => $value) { // SKU, 사이즈, 가격 또는 재고 데이터 처리
@@ -464,20 +469,17 @@ class ProductsController extends Controller
                     $image_tmp = Image::make($image);
 
                     // 이미지 이름 가져오기
-                    $image_name = $image->getClientOriginalName();
-                    // dd($image_tmp);
-
                     // 이미지 확장자 가져오기
                     $extension = $image->getClientOriginalExtension();
 
                     // 이미지 중복 방지를 위한 랜덤 이름 생성
-                    $imageName = $image_name.rand(111, 99999).'.'.$extension; // 예: 5954.png
+                    $imageName = (string) \Illuminate\Support\Str::uuid().'.'.$extension;
 
                     // 'public' 폴더 내 업로드된 이미지 경로 설정
                     // 이미지 크기에 따라 small, medium, large 세 개의 폴더를 가집니다.
-                    $largeImagePath = 'front/images/product_images/large/'.$imageName; // 'large' 이미지 폴더
-                    $mediumImagePath = 'front/images/product_images/medium/'.$imageName; // 'medium' 이미지 폴더
-                    $smallImagePath = 'front/images/product_images/small/'.$imageName; // 'small' 이미지 폴더
+                    $largeImagePath = public_path('front/images/product_images/large/'.$imageName);
+                    $mediumImagePath = public_path('front/images/product_images/medium/'.$imageName);
+                    $smallImagePath = public_path('front/images/product_images/small/'.$imageName);
 
                     // 'Intervention' 패키지를 사용하여 이미지 업로드 및 세 개의 경로(폴더)에 저장
                     Image::make($image_tmp)->resize(1000, 1000)->save($largeImagePath);  // 'large' 이미지 크기 조정 후 'large' 폴더에 저장
@@ -529,9 +531,9 @@ class ProductsController extends Controller
         // dd($productImage);
 
         // 서버 상의 상품 이미지 세 가지 경로 ('small', 'medium', 'large' 폴더) 가져오기
-        $small_image_path = 'front/images/product_images/small/';
-        $medium_image_path = 'front/images/product_images/medium/';
-        $large_image_path = 'front/images/product_images/large/';
+        $small_image_path = public_path('front/images/product_images/small/');
+        $medium_image_path = public_path('front/images/product_images/medium/');
+        $large_image_path = public_path('front/images/product_images/large/');
 
         // 서버에서 상품 이미지 삭제 (세 개의 폴더 모두에서)
         // 첫 번째: 'small' 폴더에서 삭제

@@ -258,17 +258,17 @@
                 <div class="grid-details">
                     <div class="detail-label">수령인</div>
                     <div class="detail-value">
-                        <input type="text" name="receiver" value="{{ $order['receiver'] }}" class="form-control w250" required>
+                        <span>{{ $order['receiver'] }}</span>
                     </div>
 
                     <div class="detail-label">우편번호</div>
                     <div class="detail-value">
-                        <input type="text" name="zipcode" value="{{ $order['zipcode'] }}" class="form-control w150" required>
+                        <span>{{ $order['zipcode'] }}</span>
                     </div>
 
                     <div class="detail-label">배송지 주소</div>
                     <div class="detail-value">
-                        <input type="text" name="address" value="{{ $order['address'] }}" class="form-control" required>
+                        <span>{{ $order['address'] }}</span>
                     </div>
 
                     <div class="detail-label">발송 상태</div>

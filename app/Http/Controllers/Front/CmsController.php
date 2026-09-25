@@ -78,21 +78,6 @@ class CmsController extends Controller
             $contact->type = 'partnership';
             $contact->save();
 
-            // 이메일 전송 로직은 유지하거나 필요시 수정
-            $email = 'admin@admin.com'; 
-            $messageData = [
-                'name'    => $contact->name,
-                'email'   => $contact->email,
-                'subject' => $contact->subject,
-                'comment' => $contact->message
-            ];
-
-            /*
-            \Illuminate\Support\Facades\Mail::send('emails.inquiry', $messageData, function ($message) use ($email) {
-                $message->to($email)->subject('Inquiry from a user');
-            });
-            */
-            
             // 사용자에게 성공 메시지와 함께 되돌려보냄
             $message = '문의가 성공적으로 접수되었습니다. 담당자가 확인 후 연락드리겠습니다.';
             

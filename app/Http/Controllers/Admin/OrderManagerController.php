@@ -9,6 +9,7 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Validation\Rules\Password;
 
 class OrderManagerController extends Controller
 {
@@ -47,7 +48,7 @@ class OrderManagerController extends Controller
             'phone' => 'nullable|string|max:50',
             'return_postcode' => 'nullable|string|max:20',
             'return_address' => 'nullable|string|max:255',
-            'password' => 'nullable|string|min:6|max:100',
+            'password' => ['required', 'confirmed', Password::min(12)->mixedCase()->letters()->numbers()],
         ]);
 
         Distributor::create([
@@ -57,11 +58,11 @@ class OrderManagerController extends Controller
             'phone' => $data['phone'] ?? null,
             'return_postcode' => $data['return_postcode'] ?? null,
             'return_address' => $data['return_address'] ?? null,
-            'password' => Hash::make($data['password'] ?? '123456'),
+            'password' => Hash::make($data['password']),
         ]);
 
         return redirect()->route('admin.order_managers.index')
-            ->with('success_message', '발주사가 등록되었습니다. 비밀번호 미입력 시 기본 비밀번호는 123456입니다.');
+            ->with('success_message', '발주사가 등록되었습니다.');
     }
 
     public function update(Request $request, $id)
@@ -75,7 +76,7 @@ class OrderManagerController extends Controller
             'phone' => 'nullable|string|max:50',
             'return_postcode' => 'nullable|string|max:20',
             'return_address' => 'nullable|string|max:255',
-            'password' => 'nullable|string|min:6|max:100',
+            'password' => ['nullable', 'confirmed', Password::min(12)->mixedCase()->letters()->numbers()],
         ]);
 
         $payload = [
@@ -95,16 +96,6 @@ class OrderManagerController extends Controller
 
         return redirect()->route('admin.order_managers.index')
             ->with('success_message', '발주사 정보가 수정되었습니다.');
-    }
-
-    public function resetPassword($id)
-    {
-        $manager = Distributor::findOrFail($id);
-        $manager->password = Hash::make('123456');
-        $manager->save();
-
-        return redirect()->route('admin.order_managers.index')
-            ->with('success_message', $manager->name . ' 발주사 비밀번호를 123456으로 초기화했습니다.');
     }
 
     public function destroy($id)
@@ -132,6 +123,7 @@ class OrderManagerController extends Controller
 
         $manager = Distributor::findOrFail($id);
 
+        $request->session()->regenerate();
         Session::put('distributor_id', $manager->id);
         Session::put('distributor_name', $manager->name);
         Session::put('distributor_email', $manager->email);

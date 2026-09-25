@@ -43,19 +43,20 @@ class MypageTest extends TestCase
             ->assertDontSee('SUMMER5000');
     }
 
-    public function test_default_member_can_login_from_member_login_page()
+    public function test_existing_member_can_login_from_member_login_page()
     {
-        $this->get(route('front.member.login'))->assertStatus(200);
-
-        $this->assertDatabaseHas('users', [
+        $user = User::factory()->create([
             'email' => 'user@user.com',
             'username' => 'user@user.com',
+            'password' => Hash::make('StrongPassword123'),
             'status' => 1,
         ]);
 
+        $this->get(route('front.member.login'))->assertStatus(200);
+
         $response = $this->post(route('front.member.login.submit'), [
             'login_id' => 'user@user.com',
-            'password' => '123456',
+            'password' => 'StrongPassword123',
         ]);
 
         $response->assertRedirect('/');
@@ -247,15 +248,15 @@ class MypageTest extends TestCase
         $this->actingAs($user)
             ->postJson(route('user.update.password'), [
                 'current_password' => 'old-password',
-                'new_password' => 'new-password',
-                'confirm_password' => 'new-password',
+                'new_password' => 'NewPassword123',
+                'confirm_password' => 'NewPassword123',
             ], ['X-Requested-With' => 'XMLHttpRequest'])
             ->assertOk()
             ->assertJson([
                 'type' => 'success',
             ]);
 
-        $this->assertTrue(Hash::check('new-password', $user->fresh()->password));
+        $this->assertTrue(Hash::check('NewPassword123', $user->fresh()->password));
     }
 
     public function test_delivery_addresses_management_crud()

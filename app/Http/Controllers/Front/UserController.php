@@ -25,7 +25,6 @@ use App\Models\VisitedChannel;
 use App\Models\Wishlist;
 use App\Services\ChannelPointService;
 use App\Services\ReturnAddressResolver;
-use App\Services\ShopChannelRuntime;
 use App\Services\ShopChannelSmsService;
 use App\Support\OrderItemStatus;
 use Illuminate\Http\Request;
@@ -33,6 +32,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -42,8 +42,6 @@ class UserController extends Controller
     // 새로운 로그인 액션
     public function loginUser(Request $request)
     {
-        $this->ensureDefaultMemberLoginAccount();
-
         if ($request->isMethod('post')) {
             $data = $request->all();
 
@@ -72,6 +70,7 @@ class UserController extends Controller
             }
 
             if ($authenticated) {
+                $request->session()->regenerate();
                 if ((string) Auth::user()->status === '0') {
                     Auth::logout();
 
@@ -144,21 +143,9 @@ class UserController extends Controller
 
     public function registerMember(Request $request)
     {
-        $type = $request->input('type', 'general'); // 'general' 또는 'social'
-
-        // 소셜 로그인 모크 데이터 (실제 앱에서는 세션에서 가져옴)
-        $socialData = [];
-        if ($type == 'social') {
-            $socialData = [
-                'provider' => 'NAVER',
-                'email' => 'social_user@naver.com',
-                'name' => '홍길동',
-            ];
-        }
-
         return view('front.member.join', [
-            'type' => $type,
-            'socialData' => $socialData,
+            'type' => 'general',
+            'socialData' => [],
             'dep1_id' => '05',
             'dep1_tit' => '회원가입',
         ]);
@@ -176,27 +163,19 @@ class UserController extends Controller
             // Ensure they are in the data array if needed, but for 'email' it is in rules.
             // email의 경우 rules에 있음
 
-            $regType = $request->input('register_type', 'general');
-
             // 사용자 생성
             $user = new User;
             $user->email = $request->input('email');
-
-            if ($regType == 'general') {
-                $user->username = $data['username'];
-                $user->name = $data['username'];
-                $user->password = bcrypt($data['password']);
-            } else {
-                $user->name = $data['name'];
-                $user->mobile = $request->input('mobile_str'); // 정제된 입력값
-                $user->password = bcrypt(\Illuminate\Support\Str::random(16));
-            }
+            $user->username = $data['username'];
+            $user->name = $data['username'];
+            $user->password = Hash::make($data['password']);
 
             $user->status = 1;
             $user->save();
 
             // 즉시 자동 로그인 처리
             Auth::login($user);
+            $request->session()->regenerate();
 
             // Axios를 위한 JSON 응답 반환 (로그인 화면이 아닌 1단계 기본정보 입력창으로 이동)
             return response()->json([
@@ -622,8 +601,6 @@ class UserController extends Controller
     // 새로운 로그인 페이지
     public function login()
     {
-        $this->ensureDefaultMemberLoginAccount();
-
         return view('front.member.login');
     }
 
@@ -640,8 +617,6 @@ class UserController extends Controller
         if (! $user) {
             return redirect()->route('front.member.login');
         }
-
-        $this->ensureMypageDevDataExists($user->id);
 
         // Format mobile number with dashes if missing
         $mobileWithDashes = $user->mobile;
@@ -682,82 +657,6 @@ class UserController extends Controller
             ->count();
 
         return view('front.mypage.index', compact('user', 'inquiries', 'ordersCount', 'confirmedCount', 'cancelCount', 'returnCount'));
-    }
-
-    private function ensureMypageDevDataExists($userId)
-    {
-        $shop = app(ShopChannelRuntime::class)->seedDemoDataIfAllowed();
-        if (! $shop) {
-            return;
-        }
-
-        $vendorId = $shop->vendor_id;
-
-        // 1. Ensure vendors_business_details exists for the demo shop vendor
-        $vendorBusiness = DB::table('vendors_business_details')->where('vendor_id', $vendorId)->first();
-        if (! $vendorBusiness) {
-            DB::table('vendors_business_details')->insert([
-                'vendor_id' => $vendorId,
-                'shop_name' => 'Me9 브랜드 전용관',
-                'shop_address' => '서울시 마포구 공덕동 100',
-                'shop_mobile' => '010-1111-2222',
-                'shop_website' => 'http://127.0.0.1:8000/shop-channel/main',
-                'shop_email' => 'john@admin.com',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-
-        // 2. Ensure visited_channels exists for this user and the demo vendor
-        $visited = DB::table('visited_channels')->where(['user_id' => $userId, 'vendor_id' => $vendorId])->first();
-        if (! $visited) {
-            DB::table('visited_channels')->insert([
-                'user_id' => $userId,
-                'vendor_id' => $vendorId,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        }
-
-        $shopProduct = ShopChannelProduct::with('product')
-            ->where('shop_channel_id', $shop->id)
-            ->where('status', 1)
-            ->first();
-
-        if ($shopProduct && $shopProduct->product) {
-            $cartExists = Cart::where('user_id', $userId)
-                ->where('product_id', $shopProduct->product_id)
-                ->exists();
-
-            if (! $cartExists) {
-                DB::table('carts')->insert([
-                    'session_id' => 'mypage-'.$userId,
-                    'user_id' => $userId,
-                    'product_id' => $shopProduct->product_id,
-                    'size' => $shopProduct->product->product_color ?: '기본옵션',
-                    'quantity' => 1,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-
-            Wishlist::firstOrCreate([
-                'user_id' => $userId,
-                'shop_channel_product_id' => $shopProduct->id,
-            ]);
-
-            PointTransaction::firstOrCreate(
-                [
-                    'user_id' => $userId,
-                    'shop_channel_id' => $shop->id,
-                    'type' => 'earn',
-                    'description' => 'Me9 테스트 Shop 채널 방문 적립',
-                ],
-                [
-                    'points' => 100,
-                ]
-            );
-        }
     }
 
     public function orderView(Request $request)
@@ -1189,8 +1088,6 @@ class UserController extends Controller
     // 방문한 채널 목록
     public function visitedChannels(Request $request)
     {
-        $this->ensureMypageDevDataExists(Auth::id());
-
         $query = VisitedChannel::with('vendor.vendorbusinessdetails') // 입점업체 정보 로드
             ->where('user_id', Auth::id());
 
@@ -1247,7 +1144,7 @@ class UserController extends Controller
                 'name' => 'required|string|max:100',
                 'mobile' => 'required|numeric|digits:11',
                 'email' => 'required|email|max:150|unique:users',
-                'password' => 'required|min:6',
+                'password' => ['required', \Illuminate\Validation\Rules\Password::min(12)->mixedCase()->letters()->numbers()],
                 'accept' => 'required',
 
             ], [
@@ -1467,12 +1364,11 @@ class UserController extends Controller
     }
 
     // 사용자 로그아웃 (이 라우트는 헤더의 로그아웃 탭에서 접근됨 (front/layout/header.blade.php))
-    public function userLogout()
+    public function userLogout(Request $request)
     {
         Auth::logout();
-
-        // 로그아웃 시 장바구니를 비우기 위해 세션 초기화
-        Session::flush();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return redirect('/');
     }
@@ -1657,8 +1553,8 @@ class UserController extends Controller
             $validator = Validator::make($request->all(), [
                 // the 'name' HTML attribute of the request (the array key of the $request array) (ATTRIBUTE) => Validation Rules
                 'current_password' => 'required',
-                'new_password' => 'required|min:6',
-                'confirm_password' => 'required|min:6|same:new_password', // same:field: https://laravel.com/docs/9.x/validation#rule-same
+                'new_password' => ['required', \Illuminate\Validation\Rules\Password::min(12)->mixedCase()->letters()->numbers()],
+                'confirm_password' => 'required|same:new_password',
 
             ] /*, [ // Customizing The Error Messages: https://laravel.com/docs/9.x/validation#manual-customizing-the-error-messages
                 // the 'name' HTML attribute of the request (the array key of the $request array) (ATTRIBUTE) => Custom Messages
@@ -1740,43 +1636,37 @@ class UserController extends Controller
     }
 
     /**
-     * 비밀번호 찾기 - GET: 폼 표시, POST: 아이디+이메일로 임시비밀번호 발급
+     * 비밀번호 찾기 - 이메일로 만료되는 재설정 링크를 발송합니다.
      */
     public function findPw(Request $request)
     {
         $result = null;
 
         if ($request->isMethod('post')) {
-            $username = $request->input('username');
-            $email = $request->input('email');
+            $data = $request->validate([
+                'username' => ['required', 'string', 'max:255'],
+                'email' => ['required', 'email', 'max:255'],
+            ]);
 
-            // 아이디와 이메일로 사용자 검색
-            $user = User::where('username', $username)
-                ->where('email', $email)
-                ->first();
+            $userExists = User::where('username', $data['username'])
+                ->where('email', $data['email'])
+                ->exists();
 
-            if ($user) {
-                // 임시비밀번호 생성 (8자리 랜덤)
-                $tempPassword = \Str::random(8).'!';
-
-                // 비밀번호 업데이트
-                $user->password = bcrypt($tempPassword);
-                $user->save();
-
-                $result = [
-                    'type' => 'success',
-                    'temp_password' => $tempPassword,
-                    'message' => '임시비밀번호가 발급되었습니다. 로그인 후 비밀번호를 변경해 주세요.',
-                ];
-
-                // TODO: 이메일 발송 기능 (SMTP 설정 후 활성화)
-                // Mail::to($user->email)->send(new TempPasswordMail($tempPassword));
-            } else {
-                $result = [
-                    'type' => 'fail',
-                    'message' => '일치하는 정보가 없습니다.',
-                ];
+            if (! $userExists) {
+                return back()->withInput($request->only('username', 'email'))
+                    ->withErrors(['email' => '입력한 아이디와 이메일이 일치하지 않습니다.']);
             }
+
+            $status = Password::broker('users')->sendResetLink(['email' => $data['email']]);
+            if ($status !== Password::RESET_LINK_SENT) {
+                return back()->withInput($request->only('username', 'email'))
+                    ->withErrors(['email' => __($status)]);
+            }
+
+            $result = [
+                'type' => 'success',
+                'message' => '비밀번호 재설정 링크를 이메일로 발송했습니다.',
+            ];
         }
 
         return view('front.member.find_pw', compact('result'));
@@ -1785,8 +1675,6 @@ class UserController extends Controller
     public function pointStatus()
     {
         $user = Auth::user();
-        $this->ensureMypageDevDataExists($user->id);
-
         $channelPoints = PointTransaction::where('user_id', $user->id)
             ->whereNotNull('shop_channel_id')
             ->sum('points');
@@ -1898,8 +1786,6 @@ class UserController extends Controller
     public function pointHistory(Request $request)
     {
         $user = Auth::user();
-        $this->ensureMypageDevDataExists($user->id);
-
         $filters = $request->only([
             'start_date',
             'end_date',
@@ -1976,8 +1862,6 @@ class UserController extends Controller
     public function cartList(Request $request)
     {
         $user = Auth::user();
-        $this->ensureMypageDevDataExists($user->id);
-
         $channelName = $request->input('channel_name');
 
         $cartItems = Cart::with('product')
@@ -1998,8 +1882,6 @@ class UserController extends Controller
     public function wishlist(Request $request)
     {
         $user = Auth::user();
-        $this->ensureMypageDevDataExists($user->id);
-
         $channelName = $request->input('channel_name');
 
         $wishlistItems = Wishlist::with('shopChannelProduct.product')
@@ -2259,48 +2141,11 @@ class UserController extends Controller
         return view('front.mypage.order.list', compact('user', 'orders', 'status', 'tab', 'startDate', 'endDate'));
     }
 
-    public function socialJoin()
-    {
-        return view('front.member.social_join');
-    }
-
-    public function socialJoinSubmit(Request $request)
-    {
-        $request->validate([
-            'email' => 'required|email',
-            'accept_terms' => 'required',
-        ]);
-
-        return redirect('/')->with('flash_message_success', '소셜 간편 회원가입 및 연동이 완료되었습니다.');
-    }
-
     public function cancelReturnList()
     {
         $user = Auth::user();
         if (! $user) {
             return redirect()->route('front.member.login');
-        }
-
-        // Self-healing: seed initial claim if none exists
-        $count = DB::table('order_claims')->where('user_id', $user->id)->count();
-        if ($count == 0) {
-            $order = Order::find(32022);
-            if ($order) {
-                DB::table('order_claims')->insert([
-                    [
-                        'order_id' => 32022,
-                        'user_id' => $user->id,
-                        'vendor_id' => 1,
-                        'order_product_id' => 101,
-                        'type' => 'cancel',
-                        'reason' => '고객 단순 변심',
-                        'detail_reason' => '색상이 마음에 안 들어서 취소 신청합니다.',
-                        'status' => 'requested',
-                        'created_at' => now()->subDays(2),
-                        'updated_at' => now()->subDays(2),
-                    ],
-                ]);
-            }
         }
 
         $filterType = request('type', 'all');
@@ -2373,42 +2218,4 @@ class UserController extends Controller
         return view('front.mypage.cancel_return_list', compact('user', 'orders', 'filterType'));
     }
 
-    private function ensureDefaultMemberLoginAccount(): void
-    {
-        $user = User::where('email', 'user@user.com')->first();
-        if (! $user) {
-            User::create([
-                'name' => '일반사용자',
-                'username' => 'user@user.com',
-                'email' => 'user@user.com',
-                'password' => Hash::make('123456'),
-                'mobile' => '01033334444',
-                'address' => 'Seoul, Korea',
-                'city' => 'Seoul',
-                'state' => 'Seoul',
-                'country' => 'Korea',
-                'pincode' => '12345',
-                'status' => 1,
-            ]);
-
-            return;
-        }
-
-        $dirty = false;
-        if ($user->username !== 'user@user.com') {
-            $user->username = 'user@user.com';
-            $dirty = true;
-        }
-        if (! Hash::check('123456', $user->password)) {
-            $user->password = Hash::make('123456');
-            $dirty = true;
-        }
-        if ((string) $user->status !== '1') {
-            $user->status = 1;
-            $dirty = true;
-        }
-        if ($dirty) {
-            $user->save();
-        }
-    }
 }

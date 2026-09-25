@@ -18,6 +18,7 @@ use App\Models\Vendor;
 use App\Support\OrderItemStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class ShopRuntimeTest extends TestCase
@@ -188,6 +189,70 @@ class ShopRuntimeTest extends TestCase
             'qty' => 2,
             'option' => '기본옵션',
         ])->assertNotFound();
+    }
+
+    public function test_checkout_decrements_locked_stock_and_creates_order()
+    {
+        Mail::fake();
+        [, , $shop, , $shopProduct] = $this->createShopProduct('stock-shop', 'STOCK-001', 'Stock');
+        $shopProduct->update(['stock' => 5, 'purchase_limit' => 4]);
+
+        $this->withSession([
+            'shop_channel_id' => $shop->id,
+            'shop_channel_cart' => [$shopProduct->id => ['qty' => 3, 'option' => '기본옵션']],
+        ])->post(route('front.shop.order.checkout'), [
+            'name' => '구매자',
+            'mobile' => '01012345678',
+            'email' => 'buyer@example.com',
+            'pincode' => '04524',
+            'address' => '서울특별시 중구 세종대로 110',
+        ])->assertRedirect(route('front.shop.order.complete'));
+
+        $this->assertSame(2, (int) $shopProduct->fresh()->stock);
+        $this->assertDatabaseHas('orders_products', [
+            'shop_channel_product_id' => $shopProduct->id,
+            'product_qty' => 3,
+        ]);
+        Mail::assertQueued(ShopOrderConfirmation::class);
+    }
+
+    public function test_checkout_rejects_insufficient_stock_without_creating_order()
+    {
+        Mail::fake();
+        [, , $shop, , $shopProduct] = $this->createShopProduct('soldout-shop', 'STOCK-002', 'Soldout');
+        $shopProduct->update(['stock' => 1]);
+
+        $this->withSession([
+            'shop_channel_id' => $shop->id,
+            'shop_channel_cart' => [$shopProduct->id => ['qty' => 2, 'option' => '기본옵션']],
+        ])->from(route('front.shop.order.form'))->post(route('front.shop.order.checkout'), [
+            'name' => '구매자',
+            'mobile' => '01012345678',
+            'email' => 'buyer@example.com',
+            'pincode' => '04524',
+            'address' => '서울특별시 중구 세종대로 110',
+        ])->assertRedirect(route('front.shop.order.form'))
+            ->assertSessionHasErrors('qty');
+
+        $this->assertSame(1, (int) $shopProduct->fresh()->stock);
+        $this->assertDatabaseCount('orders', 0);
+        Mail::assertNothingSent();
+    }
+
+    public function test_cart_rejects_purchase_limit_excess()
+    {
+        [, , $shop, , $shopProduct] = $this->createShopProduct('limit-shop', 'LIMIT-001', 'Limit');
+        $shopProduct->update(['purchase_limit' => 2]);
+
+        $this->withSession(['shop_channel_id' => $shop->id])
+            ->from(route('front.shop.cart.index'))
+            ->post(route('front.shop.cart.add'), [
+                'shop_product_id' => $shopProduct->id,
+                'qty' => 3,
+            ])->assertRedirect(route('front.shop.cart.index'))
+            ->assertSessionHasErrors('qty');
+
+        $this->assertSame([], session('shop_channel_cart', []));
     }
 
     public function test_shop_notice_detail_is_scoped_to_current_channel_and_counts_views()

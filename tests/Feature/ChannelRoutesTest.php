@@ -163,7 +163,8 @@ class ChannelRoutesTest extends TestCase
             'phone' => '01012345678',
             'return_postcode' => '04524',
             'return_address' => '서울특별시 중구 세종대로 110',
-            'password' => 'secret123',
+            'password' => 'StrongPassword123',
+            'password_confirmation' => 'StrongPassword123',
         ])->assertRedirect();
 
         $this->assertDatabaseHas('distributors', [
@@ -339,7 +340,8 @@ class ChannelRoutesTest extends TestCase
             'email' => 'sub-manager@example.com',
             'name' => 'Sub Manager',
             'mobile' => '01012341234',
-            'password' => 'secret123',
+            'password' => 'StrongPass123',
+            'password_confirmation' => 'StrongPass123',
             'started_at' => '2026-08-01',
             'ended_at' => '2026-09-01',
             'permissions' => ['shop', 'order'],
@@ -418,6 +420,37 @@ class ChannelRoutesTest extends TestCase
 
         $this->assertDatabaseMissing('channel_sub_accounts', ['id' => $account->id]);
         $this->assertDatabaseMissing('admins', ['id' => $account->admin_id]);
+    }
+
+    public function test_channel_sub_account_permissions_and_active_period_are_enforced()
+    {
+        [$vendor] = $this->createSetup();
+
+        $subadmin = Admin::forceCreate([
+            'name' => 'Limited Manager',
+            'type' => 'subadmin',
+            'vendor_id' => $vendor->id,
+            'mobile' => '01055556666',
+            'email' => 'limited@example.com',
+            'password' => bcrypt('StrongPass123'),
+            'confirm' => 'Yes',
+            'status' => 1,
+        ]);
+
+        $account = ChannelSubAccount::create([
+            'vendor_id' => $vendor->id,
+            'admin_id' => $subadmin->id,
+            'started_at' => now()->subDay(),
+            'ended_at' => now()->addDay(),
+            'permissions' => ['shop'],
+        ]);
+
+        $this->actingAs($subadmin, 'admin')->get('/channel/shop/list')->assertOk();
+        $this->actingAs($subadmin, 'admin')->get('/channel/product/own')->assertForbidden();
+        $this->actingAs($subadmin, 'admin')->get('/admin/products')->assertForbidden();
+
+        $account->update(['ended_at' => now()->subDay()]);
+        $this->actingAs($subadmin, 'admin')->get('/channel/shop/list')->assertForbidden();
     }
 
     public function test_authenticated_shop_routes()

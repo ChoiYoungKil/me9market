@@ -6,6 +6,7 @@ use App\Services\ChannelPointService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 
 class Sms extends Model
 {
@@ -50,15 +51,23 @@ class Sms extends Model
             return false;
         }
 
-        $url = rtrim((string) config('services.sms.endpoint'), '?').'?'.http_build_query($param);
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        $curl_scraped_page = curl_exec($ch);
-        $httpStatus = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
+        try {
+            $response = Http::timeout(10)
+                ->connectTimeout(5)
+                ->retry(2, 200)
+                ->get((string) config('services.sms.endpoint'), $param);
 
-        return $curl_scraped_page !== false && $httpStatus >= 200 && $httpStatus < 300
-            ? $curl_scraped_page
-            : false;
+            if (! $response->successful()) {
+                Log::error('SMS provider request failed.', ['status' => $response->status()]);
+
+                return false;
+            }
+
+            return $response->body();
+        } catch (\Throwable $e) {
+            report($e);
+
+            return false;
+        }
     }
 }

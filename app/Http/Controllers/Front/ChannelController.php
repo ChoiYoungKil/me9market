@@ -9,7 +9,6 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use App\Models\Contact;
 use App\Services\ChannelOrderMetrics;
-use App\Services\ShopChannelRuntime;
 use App\Support\OrderItemStatus;
 
 class ChannelController extends Controller
@@ -104,17 +103,13 @@ class ChannelController extends Controller
 
     public function login()
     {
-        app(ShopChannelRuntime::class)->seedDemoDataIfAllowed();
-
         return view('channel.login');
     }
 
     public function loginUser(Request $request)
     {
-        app(ShopChannelRuntime::class)->seedDemoDataIfAllowed();
-
         if (Auth::guard('admin')->check()) {
-            if (Auth::guard('admin')->user()->type == 'vendor') {
+            if (in_array(Auth::guard('admin')->user()->type, ['vendor', 'subadmin'], true)) {
                 return redirect()->route('channel.index');
             }
             return redirect('/admin/dashboard');
@@ -135,9 +130,10 @@ class ChannelController extends Controller
 
         // Attempt login using 'admin' guard
         if (Auth::guard('admin')->attempt(['email' => $request->email, 'password' => $request->password])) {
+            $request->session()->regenerate();
             $user = Auth::guard('admin')->user();
 
-            if ($user->type !== 'vendor') {
+            if (! in_array($user->type, ['vendor', 'subadmin'], true)) {
                 Auth::guard('admin')->logout();
                 return redirect()->route('channel.login')->with('error_message', '판매자 전용 로그인 페이지입니다. 최고관리자 계정은 로그인할 수 없습니다.');
             }
@@ -158,9 +154,11 @@ class ChannelController extends Controller
         }
     }
 
-    public function logout()
+    public function logout(Request $request)
     {
         Auth::guard('admin')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
         return redirect()->route('channel.login');
     }
 
@@ -236,6 +234,7 @@ class ChannelController extends Controller
 
         // 1. Validation Rules
         $rules = [
+            'channel_code' => 'required|string|max:80|alpha_dash|unique:shop_channels,channel_code',
             'channel_name' => 'required|max:255',
             'copyright' => 'required|max:255',
             'keywords' => 'required|array|min:1',
@@ -336,7 +335,7 @@ class ChannelController extends Controller
         if (($data['use_admin'] ?? '0') == '1') {
             $rules['admin_name'] = 'required|max:50';
             $rules['admin_login_id'] = 'required|max:50|unique:shop_channels,admin_login_id';
-            $rules['admin_password'] = 'required|min:6';
+            $rules['admin_password'] = ['required', \Illuminate\Validation\Rules\Password::min(12)->mixedCase()->letters()->numbers()];
             
             if (($data['settlement_type'] ?? '1') == '1') {
                 $rules['settlement_rate_percent'] = 'required|numeric|between:0,100';
@@ -359,7 +358,7 @@ class ChannelController extends Controller
         // 2. Create Instance
         $shop = new \App\Models\ShopChannel();
         $shop->vendor_id = $admin->vendor_id;
-        $shop->channel_code = $data['channel_code'] ?? 'Me9-' . date('Y-md') . rand(10, 99);
+        $shop->channel_code = $data['channel_code'];
         $shop->status = $data['status'] ?? 0;
         $shop->is_public = $data['is_public'] ?? 1;
         $shop->password = $data['password'] ?? null;
@@ -1358,6 +1357,7 @@ class ChannelController extends Controller
 
         // 1. Validation Rules (similar to register but less strict on files if already exists)
         $rules = [
+            'channel_code' => 'sometimes|string|max:80|alpha_dash|unique:shop_channels,channel_code,' . $shop->id,
             'channel_name' => 'required|max:255',
             'copyright' => 'required|max:255',
             'keywords' => 'required|array|min:1',
@@ -1389,6 +1389,7 @@ class ChannelController extends Controller
         if (($data['use_admin'] ?? '0') == '1') {
             $rules['admin_name'] = 'required|max:50';
             $rules['admin_login_id'] = 'required|max:50|unique:shop_channels,admin_login_id,' . $shop->id;
+            $rules['admin_password'] = ['nullable', \Illuminate\Validation\Rules\Password::min(12)->mixedCase()->letters()->numbers()];
             
             if (($data['settlement_type'] ?? '1') == '1') {
                 $rules['settlement_rate_percent'] = 'required|numeric|between:0,100';
@@ -2498,25 +2499,24 @@ class ChannelController extends Controller
     public function updatePassword(Request $request)
     {
         if ($request->ajax()) {
-            $data = $request->all();
-            $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
+            $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+                'current_password' => ['required', 'string'],
+                'new_password' => ['required', \Illuminate\Validation\Rules\Password::min(12)->mixedCase()->letters()->numbers()],
+                'confirm_password' => ['required', 'same:new_password'],
+            ]);
 
-            // 1. Validate
-            if (empty($data['current_password']) || empty($data['new_password']) || empty($data['confirm_password'])) {
-                return response()->json(['status' => 'error', 'message' => '모든 항목을 입력해 주세요.']);
+            if ($validator->fails()) {
+                return response()->json(['status' => 'error', 'message' => $validator->errors()->first()]);
             }
+
+            $data = $validator->validated();
+            $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
 
             // 2. Check current password
             if (!\Illuminate\Support\Facades\Hash::check($data['current_password'], $admin->password)) {
                 return response()->json(['status' => 'error', 'message' => '현재 비밀번호가 일치하지 않습니다.']);
             }
 
-            // 3. New password match
-            if ($data['new_password'] !== $data['confirm_password']) {
-                return response()->json(['status' => 'error', 'message' => '새로운 비밀번호와 확인 비밀번호가 일치하지 않습니다.']);
-            }
-
-            // 4. Update
             \App\Models\Admin::where('id', $admin->id)->update([
                 'password' => \Illuminate\Support\Facades\Hash::make($data['new_password'])
             ]);
@@ -2530,8 +2530,6 @@ class ChannelController extends Controller
         if (!Auth::guard('admin')->check()) {
             return redirect()->route('channel.login');
         }
-
-        app(\App\Services\ShopChannelRuntime::class)->seedDemoDataIfAllowed();
 
         $keyword = trim((string) $request->query('keyword', ''));
 
@@ -2568,7 +2566,7 @@ class ChannelController extends Controller
             'phone' => 'nullable|string|max:50',
             'return_postcode' => 'nullable|string|max:20',
             'return_address' => 'nullable|string|max:255',
-            'password' => 'nullable|string|min:6|max:100',
+            'password' => ['required', 'confirmed', \Illuminate\Validation\Rules\Password::min(12)->mixedCase()->letters()->numbers()],
         ]);
 
         $admin = Auth::guard('admin')->user();
@@ -2580,7 +2578,7 @@ class ChannelController extends Controller
             'phone' => $data['phone'] ?? null,
             'return_postcode' => $data['return_postcode'] ?? null,
             'return_address' => $data['return_address'] ?? null,
-            'password' => \Illuminate\Support\Facades\Hash::make($data['password'] ?? '123456'),
+            'password' => \Illuminate\Support\Facades\Hash::make($data['password']),
         ];
 
         if (\Illuminate\Support\Facades\Schema::hasColumn('distributors', 'vendor_id')) {
@@ -2589,7 +2587,7 @@ class ChannelController extends Controller
 
         \App\Models\Distributor::create($payload);
 
-        return back()->with('flash_message_success', '발주담당자가 등록되었습니다. 비밀번호 미입력 시 기본 비밀번호는 123456입니다.');
+        return back()->with('flash_message_success', '발주담당자가 등록되었습니다.');
     }
 
     public function updateOrderManager(Request $request, $id)
@@ -2608,7 +2606,7 @@ class ChannelController extends Controller
             'phone' => 'nullable|string|max:50',
             'return_postcode' => 'nullable|string|max:20',
             'return_address' => 'nullable|string|max:255',
-            'password' => 'nullable|string|min:6|max:100',
+            'password' => ['nullable', 'confirmed', \Illuminate\Validation\Rules\Password::min(12)->mixedCase()->letters()->numbers()],
         ]);
 
         $payload = [
@@ -2638,6 +2636,7 @@ class ChannelController extends Controller
         $admin = Auth::guard('admin')->user();
         $manager = $this->orderManagersForVendor((int) ($admin->vendor_id ?? 0))->findOrFail($id);
 
+        request()->session()->regenerate();
         \Illuminate\Support\Facades\Session::put('distributor_id', $manager->id);
         \Illuminate\Support\Facades\Session::put('distributor_name', $manager->name);
         \Illuminate\Support\Facades\Session::put('distributor_email', $manager->email);
@@ -2839,7 +2838,7 @@ class ChannelController extends Controller
         $admin->vendor_id = (int) $owner->vendor_id;
         $admin->mobile = $data['mobile'] ?? '';
         $admin->email = $data['email'];
-        $admin->password = \Illuminate\Support\Facades\Hash::make($data['password'] ?? '123456');
+        $admin->password = \Illuminate\Support\Facades\Hash::make($data['password']);
         $admin->confirm = 'Yes';
         $admin->status = (int) $data['status'];
         $admin->save();
@@ -2919,7 +2918,11 @@ class ChannelController extends Controller
             'email' => 'required|email|max:255|unique:admins,email' . ($adminId ? ',' . $adminId : ''),
             'name' => 'required|string|max:100',
             'mobile' => 'nullable|string|max:50',
-            'password' => ($adminId ? 'nullable' : 'required') . '|string|min:6|max:100',
+            'password' => [
+                $adminId ? 'nullable' : 'required',
+                'confirmed',
+                \Illuminate\Validation\Rules\Password::min(12)->mixedCase()->letters()->numbers(),
+            ],
             'started_at' => 'nullable|date',
             'ended_at' => 'nullable|date|after_or_equal:started_at',
             'permissions' => 'nullable|array',
@@ -2954,7 +2957,7 @@ class ChannelController extends Controller
                 'name'     => 'required|string|max:100',
                 'mobile'   => 'required|numeric|digits_between:10,15|unique:admins|unique:vendors',
                 'email'    => 'required|email|max:150|unique:admins|unique:vendors',
-                'password' => 'required|min:6',
+                'password' => ['required', \Illuminate\Validation\Rules\Password::min(12)->mixedCase()->letters()->numbers()],
                 'shop_name' => 'required|string|max:150',
                 'shop_mobile' => 'required|numeric|digits_between:10,15',
                 'business_license_number' => 'required|string|max:150',

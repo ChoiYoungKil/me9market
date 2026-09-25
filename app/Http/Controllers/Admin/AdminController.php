@@ -22,8 +22,11 @@ use App\Models\Vendor;
 use App\Models\VendorsBusinessDetail;
 use App\Models\VendorsBankDetail;
 use App\Models\Country;
-use App\Services\ShopChannelRuntime;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Str;
 
 class AdminController extends Controller
 {
@@ -52,13 +55,9 @@ class AdminController extends Controller
     }
 
     public function login(Request $request) { // 'admin' 가드를 사용한 로그인 (판매자 또는 관리자)
-        if (app()->environment('local')) {
-            app(ShopChannelRuntime::class)->ensureAdminLoginAccount();
-        }
-
         if (Auth::guard('admin')->check()) {
              // 이미 로그인된 경우 유형에 따라 리다이렉트
-             if (Auth::guard('admin')->user()->type == 'vendor') {
+             if (in_array(Auth::guard('admin')->user()->type, ['vendor', 'subadmin'], true)) {
                  return redirect()->route('channel.index');
              }
              return redirect('/admin/dashboard');
@@ -82,9 +81,10 @@ class AdminController extends Controller
 
             // 인증 진행
             if (Auth::guard('admin')->attempt(['email' => $data['email'], 'password' => $data['password']])) {
+                $request->session()->regenerate();
                 $user = Auth::guard('admin')->user();
 
-                if ($user->type == 'vendor') {
+                if (in_array($user->type, ['vendor', 'subadmin'], true)) {
                      // 이메일 인증 여부 확인
                     if ($user->confirm == 'No') {
                         Auth::guard('admin')->logout();
@@ -111,8 +111,10 @@ class AdminController extends Controller
         return view('admin/login');
     }
 
-    public function logout() {
-        Auth::guard('admin')->logout(); 
+    public function logout(Request $request) {
+        Auth::guard('admin')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
         return redirect('admin/login');
     }
 
@@ -123,23 +125,20 @@ class AdminController extends Controller
 
         // 비밀번호 변경 폼 제출 처리 (POST 요청)
         if ($request->isMethod('post')) {
-            $data = $request->all();
-            // dd($data);
+            $data = $request->validate([
+                'current_password' => ['required', 'string'],
+                'new_password' => ['required', Password::min(12)->mixedCase()->letters()->numbers()],
+                'confirm_password' => ['required', 'same:new_password'],
+            ]);
 
 
             // 현재 관리자 비밀번호가 일치하는지 확인
             if (Hash::check($data['current_password'], Auth::guard('admin')->user()->password)) { 
-                // 새 비밀번호와 확인 비밀번호가 일치하는지 확인
-                if ($data['confirm_password'] == $data['new_password']) {
-                    Admin::where('id', Auth::guard('admin')->user()->id)->update([ 
-                        'password' => bcrypt($data['new_password'])
-                    ]); 
+                Admin::where('id', Auth::guard('admin')->user()->id)->update([
+                    'password' => Hash::make($data['new_password']),
+                ]);
 
-                    return redirect()->back()->with('success_message', '관리자 비밀번호가 성공적으로 업데이트되었습니다!');
-
-                } else { // 새 비밀번호와 확인 비밀번호가 일치하지 않는 경우
-                    return redirect()->back()->with('error_message', '새 비밀번호와 확인 비밀번호가 일치하지 않습니다!');
-                }
+                return redirect()->back()->with('success_message', '관리자 비밀번호가 성공적으로 업데이트되었습니다!');
             } else {
                 return redirect()->back()->with('error_message', '현재 관리자 비밀번호가 일치하지 않습니다!');
             }
@@ -495,34 +494,28 @@ class AdminController extends Controller
 
     // Update the vendor's commission percentage (by the Admin) in `vendors` table (for every vendor on their own) in the Admin Panel in admin/admins/view_vendor_details.blade.php (Commissions module: Every vendor must pay a certain commission (that may vary from a vendor to another) for the website owner (admin) on every item sold, and it's defined by the website owner (admin))
     public function updateVendorCommission(Request $request) {
-        if ($request->isMethod('post')) { // if the HTML Form is submitted (in admin/admins/view_vendor_details.blade.php)
-            $data = $request->all();
-            // dd($data);
+        $data = $request->validate([
+            'vendor_id' => ['required', 'integer', 'exists:vendors,id'],
+            'commission' => ['required', 'numeric', 'between:0,100'],
+        ]);
 
-            // `vendors` 테이블의 `commission` 퍼센트 업데이트
-            Vendor::where('id', $data['vendor_id'])->update(['commission' => $data['commission']]);
+        Vendor::whereKey($data['vendor_id'])->update(['commission' => $data['commission']]);
 
-
-            return redirect()->back()->with('success_message', '판매자 수수료가 성공적으로 업데이트되었습니다!');
-        }
+        return redirect()->back()->with('success_message', '판매자 수수료가 성공적으로 업데이트되었습니다!');
     }
 
     public function updateVendorCertification(Request $request) {
-        if ($request->isMethod('post')) {
-            $data = $request->all();
-            
-            // vendors 테이블 업데이트
-            Vendor::where('id', $data['vendor_id'])->update([
-                'status' => $data['seller_status'],
-            ]);
+        $data = $request->validate([
+            'vendor_id' => ['required', 'integer', 'exists:vendors,id'],
+            'seller_status' => ['required', Rule::in([0, 1, '0', '1'])],
+        ]);
 
-            // admins 테이블도 같이 업데이트 (로그인 및 권한 연동을 위해)
-            Admin::where('vendor_id', $data['vendor_id'])->update([
-                'status' => $data['seller_status'],
-            ]);
+        DB::transaction(function () use ($data) {
+            Vendor::whereKey($data['vendor_id'])->update(['status' => (int) $data['seller_status']]);
+            Admin::where('vendor_id', $data['vendor_id'])->update(['status' => (int) $data['seller_status']]);
+        });
 
-            return redirect()->back()->with('success_message', '판매 인증 상태가 성공적으로 업데이트되었습니다!');
-        }
+        return redirect()->back()->with('success_message', '판매 인증 상태가 성공적으로 업데이트되었습니다!');
     }
 
     public function admins(Request $request, $type = null) { // $type is the `type` column in the `admins` which can only be: superadmin, admin, subadmin or vendor    // A default value of null (to allow not passing a {type} slug, and in this case, the page will view ALL of the superadmin, admins, subadmins and vendors at the same time)
@@ -575,7 +568,14 @@ class AdminController extends Controller
 
     public function updateAdminStatus(Request $request) { // Update Admin Status using AJAX in admins.blade.php
         if ($request->ajax()) { // if the request is coming via an AJAX call
-            $data = $request->all(); // Getting the name/value pairs array that are sent from the AJAX request (AJAX call)
+            $data = $request->validate([
+                'admin_id' => ['required', 'integer', 'exists:admins,id'],
+                'status' => ['required', 'string', Rule::in(['Active', 'Inactive', '활성', '비활성'])],
+            ]);
+            $actor = Auth::guard('admin')->user();
+            $target = Admin::findOrFail($data['admin_id']);
+            abort_if((int) $actor->id === (int) $target->id, 422, '자기 계정 상태는 변경할 수 없습니다.');
+            abort_if($target->type === 'superadmin' && $actor->type !== 'superadmin', 403);
             // dd($data);
 
             if ($data['status'] == 'Active' || $data['status'] == '활성') { // $data['status'] comes from the 'data' object inside the $.ajax() method    // reverse the 'status' from (ative/inactive) 0 to 1 and 1 to 0 (and vice versa)
@@ -589,11 +589,12 @@ class AdminController extends Controller
             // Note: Vendor receives THREE emails: the first one when they register (please click on the confirmation link mail (in emails/vendor_confirmation.blade.php)), the second one when they click on the confirmation link sent in the first email (telling them that they have been confirmed and asking them to complete filling in their personal, business and bank details to get ACTIVATED/APPROVED (`status gets 1) (in emails/vendor_confirmed.blade.php)), the third email when the 'admin' or 'superadmin' manually activates (`status` becomes 1) the vendor from the Admin Panel from 'Admin Management' tab, then clicks Status (the email tells them they have been approved (activated and `status` became 1) and asks them to add their products on the website (in emails/vendor_approved.blade.php))
 
             // (!! Database Transaction !!) UPDATE the `status` columns in BOTH `admins` and `vendors` tables (I did the code of `vendors` myself!) (!! Database Transaction !!)
-            Admin::where('id', $data['admin_id'])->update(['status' => $status]); // $data['admin_id'] comes from the 'data' object inside the $.ajax() method
+            $target->status = $status;
+            $target->save();
             // echo '<pre>', var_dump($data), '</pre>';
 
             // Send a THIRD Approval Email to the vendor when the superadmin or admin approves their account (`status` column in the `admins` table becomes 1 instead of 0) so that they can add their products on the website now
-            $adminDetails = Admin::where('id', $data['admin_id'])->first()->toArray(); // get the admin that his `status` has been approved
+            $adminDetails = $target->fresh()->toArray();
 
 
             if ($adminDetails['type'] == 'vendor' && $status == 1) { // 판매자 유형이고 상태가 활성화(1)로 변경된 경우 세 번째 확인 메일 발송
@@ -615,7 +616,7 @@ class AdminController extends Controller
                         $message->to($email)->subject('판매자 계정이 승인되었습니다');
                     });
                 } catch (\Exception $e) {
-                    // Log error but proceed
+                    report($e);
                 }
             }
 
@@ -653,10 +654,11 @@ class AdminController extends Controller
                 'mobile' => 'required',
                 'email' => 'required|email|unique:admins,email,' . $id,
                 'type' => 'required',
+                'image' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:5120',
             ];
 
             if ($id == "") {
-                $rules['password'] = 'required|min:6';
+                $rules['password'] = ['required', Password::min(12)->mixedCase()->letters()->numbers()];
             }
 
             $this->validate($request, $rules);
@@ -665,9 +667,9 @@ class AdminController extends Controller
             if ($request->hasFile('image')) {
                 $image_tmp = $request->file('image');
                 if ($image_tmp->isValid()) {
-                    $extension = $image_tmp->getClientOriginalExtension();
-                    $imageName = rand(111, 99999) . '.' . $extension;
-                    $imagePath = 'admin/images/photos/' . $imageName;
+                    $extension = $image_tmp->extension();
+                    $imageName = Str::uuid() . '.' . $extension;
+                    $imagePath = public_path('admin/images/photos/' . $imageName);
                     Image::make($image_tmp)->save($imagePath);
                     $admin->image = $imageName;
                 }
@@ -788,15 +790,20 @@ class AdminController extends Controller
 
     public function deleteAdmin($id)
     {
-        $admin = Admin::find($id);
-        if ($admin->type == 'vendor') {
-            // Delete associated vendor data
-            // Should probably use SoftDeletes in real world, but for now hard delete
-            Vendor::where('id', $admin->vendor_id)->delete();
-            VendorsBusinessDetail::where('vendor_id', $admin->vendor_id)->delete();
-            VendorsBankDetail::where('vendor_id', $admin->vendor_id)->delete();
-        }
-        $admin->delete();
+        $actor = Auth::guard('admin')->user();
+        $admin = Admin::findOrFail($id);
+        abort_if((int) $actor->id === (int) $admin->id, 422, '자기 계정은 삭제할 수 없습니다.');
+        abort_if($admin->type === 'superadmin', 403, '최고관리자 계정은 삭제할 수 없습니다.');
+
+        DB::transaction(function () use ($admin) {
+            if ($admin->type === 'vendor') {
+                VendorsBusinessDetail::where('vendor_id', $admin->vendor_id)->delete();
+                VendorsBankDetail::where('vendor_id', $admin->vendor_id)->delete();
+                Vendor::whereKey($admin->vendor_id)->delete();
+            }
+
+            $admin->delete();
+        });
         
         return redirect()->back()->with('success_message', 'Admin/Vendor deleted successfully!');
     }

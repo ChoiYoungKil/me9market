@@ -124,10 +124,10 @@ public function addEditUser(Request $request, $id = null)
         
         // Password validation for new users
         if ($id == "") {
-            $rules['password'] = 'required|min:6|confirmed';
+            $rules['password'] = ['required', 'confirmed', \Illuminate\Validation\Rules\Password::min(12)->mixedCase()->letters()->numbers()];
         } else {
             if (!empty($data['password'])) {
-                $rules['password'] = 'min:6|confirmed';
+                $rules['password'] = ['confirmed', \Illuminate\Validation\Rules\Password::min(12)->mixedCase()->letters()->numbers()];
             }
         }
 

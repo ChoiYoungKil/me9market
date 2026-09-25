@@ -42,4 +42,17 @@ return [
         'otp_max_attempts' => (int) env('SMS_OTP_MAX_ATTEMPTS', 5),
     ],
 
+    'shiprocket' => [
+        'base_url' => env('SHIPROCKET_BASE_URL', 'https://apiv2.shiprocket.in/v1/external'),
+        'email' => env('SHIPROCKET_EMAIL'),
+        'password' => env('SHIPROCKET_PASSWORD'),
+        'pickup_location' => env('SHIPROCKET_PICKUP_LOCATION'),
+        'channel_id' => env('SHIPROCKET_CHANNEL_ID'),
+        'payment_method' => env('SHIPROCKET_PAYMENT_METHOD'),
+        'length' => env('SHIPROCKET_LENGTH'),
+        'breadth' => env('SHIPROCKET_BREADTH'),
+        'height' => env('SHIPROCKET_HEIGHT'),
+        'weight' => env('SHIPROCKET_WEIGHT'),
+    ],
+
 ];

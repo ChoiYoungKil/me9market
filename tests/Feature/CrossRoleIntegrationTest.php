@@ -174,6 +174,8 @@ class CrossRoleIntegrationTest extends TestCase
             ])
             ->assertRedirect(route('distributor.order.details', $item->id));
 
+        $this->assertSame('Flow Address', $data['order']->fresh()->address);
+
         $this->assertDatabaseHas('orders_products', [
             'id' => $item->id,
             'status_code' => OrderItemStatus::SHIPPING,

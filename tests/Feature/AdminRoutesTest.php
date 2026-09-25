@@ -207,7 +207,8 @@ class AdminRoutesTest extends TestCase
             'phone' => '01099998888',
             'return_postcode' => '04524',
             'return_address' => '서울특별시 중구 세종대로 110',
-            'password' => 'secret123',
+            'password' => 'StrongPassword123',
+            'password_confirmation' => 'StrongPassword123',
         ])->assertRedirect(route('admin.order_managers.index'));
 
         $this->assertDatabaseHas('distributors', [
@@ -225,7 +226,7 @@ class AdminRoutesTest extends TestCase
             ->assertStatus(200)
             ->assertSee(route('distributor.login'))
             ->assertSee('distributor-admin@example.com')
-            ->assertSee('PW초기화');
+            ->assertDontSee('PW초기화');
 
         $this->actingAs($admin, 'admin')->post("/admin/order-managers/{$manager->id}/update", [
             'status' => 0,
@@ -244,13 +245,6 @@ class AdminRoutesTest extends TestCase
             'return_address' => '서울특별시 강남구 테헤란로 123',
             'status' => 0,
         ]);
-
-        $this->actingAs($admin, 'admin')
-            ->post("/admin/order-managers/{$manager->id}/reset-password")
-            ->assertRedirect(route('admin.order_managers.index'));
-
-        $manager->refresh();
-        $this->assertTrue(Hash::check('123456', $manager->password));
 
         $this->actingAs($admin, 'admin')
             ->post("/admin/order-managers/{$manager->id}/portal")

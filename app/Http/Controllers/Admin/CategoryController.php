@@ -84,6 +84,7 @@ class CategoryController extends Controller
                 'category_name' => 'required|regex:/^[\pL\s\-]+$/u', // 알파벳 문자와 공백만 허용
                 'section_id'    => 'required',
                 'url'           => 'required',
+                'category_image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
             ];
 
             $customMessages = [ 
@@ -109,10 +110,10 @@ class CategoryController extends Controller
                     $extension = $image_tmp->getClientOriginalExtension();
 
                     // 업로드된 이미지의 랜덤 이름 생성 (이름 중복 방지)
-                    $imageName = rand(111, 99999) . '.' . $extension;
+                    $imageName = (string) \Illuminate\Support\Str::uuid().'.'.$extension;
 
                     // 'public' 폴더 내 업로드된 이미지 경로 할당
-                    $imagePath = 'front/images/category_images/' . $imageName;
+                    $imagePath = public_path('front/images/category_images/'.$imageName);
 
                     // 'Intervention' 패키지를 사용하여 이미지 업로드 및 'public' 폴더 내 경로에 저장
                     Image::make($image_tmp)->save($imagePath); // '\Image'는 Intervention 패키지입니다.
@@ -121,7 +122,7 @@ class CategoryController extends Controller
                     $category->category_image = $imageName;
                 }
 
-            } else { // 관리자가 다른 필드는 업데이트했지만 이미지는 업데이트하지 않은 경우 (또는 애초에 이미지가 없었던 경우)
+            } elseif ($id == '') {
                 $category->category_image = '';
             }
 
@@ -182,7 +183,7 @@ class CategoryController extends Controller
         // dd($categoryImage);
 
         // 서버의 카테고리 이미지 경로
-        $category_image_path = 'front/images/category_images/';
+        $category_image_path = public_path('front/images/category_images/');
 
         // 서버에서 물리적 카테고리 이미지 삭제
         if (file_exists($category_image_path . $categoryImage->category_image)) {

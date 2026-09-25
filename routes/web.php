@@ -56,7 +56,8 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         return redirect()->route('admin.dashboard');
     })->name('admin.index');
 
-    Route::match(['get', 'post'], 'login', 'AdminController@login')->name('admin.login'); // match() 메소드는 동일한 라우트에 대해 하나 이상의 HTTP 요청 메소드를 허용합니다 (예: 페이지 렌더링은 GET, 폼 제출은 POST)
+    Route::get('login', 'AdminController@login')->name('admin.login');
+    Route::post('login', 'AdminController@login')->middleware('throttle:5,1')->name('admin.login.submit');
 
 
     // 'admin/-'으로 시작하며 'admin' 인증 가드를 사용하는 모든 라우트 그룹    // 참고: 이 그룹 내부의 라우트에서는 '/admin' 부분을 제거해야 합니다 (예: Route::get('admin/logout'); 대신 Route::get('logout'); 사용)
@@ -77,15 +78,15 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
 
         // 입점업체 수수료율 업데이트 (관리자 전용)
         // 입점업체 수수료율 업데이트 (관리자 전용)
-        Route::post('update-vendor-commission', 'AdminController@updateVendorCommission');
+        Route::post('update-vendor-commission', 'AdminController@updateVendorCommission')->middleware('admin.role:superadmin,admin');
 
-        Route::get('admins/{type?}', 'AdminController@admins')->name('admin.admins'); // 인증된 사용자 등급(superadmin, admin, subadmin, vendor)에 따른 관리자 목록 표시. Optional Route Parameter '?' 사용 (전달되지 않으면 모든 목록 표시)
-        Route::match(['get', 'post'], 'add-edit-admin/{id?}', 'AdminController@addEditAdmin'); // 관리자/판매자 추가 및 수정
-        Route::post('delete-admin/{id}', 'AdminController@deleteAdmin'); // 관리자/판매자 삭제
+        Route::get('admins/{type?}', 'AdminController@admins')->middleware('admin.role:superadmin,admin')->name('admin.admins');
+        Route::match(['get', 'post'], 'add-edit-admin/{id?}', 'AdminController@addEditAdmin')->middleware('admin.role:superadmin,admin');
+        Route::post('delete-admin/{id}', 'AdminController@deleteAdmin')->middleware('admin.role:superadmin,admin');
         
-        Route::get('view-vendor-details/{id}', 'AdminController@viewVendorDetails'); // 관리자 관리 테이블에서 입점업체 상세 정보 보기 (superadmin, admin, subadmin인 경우)
-        Route::post('update-admin-status', 'AdminController@updateAdminStatus'); // AJAX를 사용한 관리자 상태 업데이트 (admins.blade.php)
-        Route::post('update-vendor-certification', 'AdminController@updateVendorCertification'); // 판매자 인증 상태 업데이트 (view_vendor_details.blade.php)
+        Route::get('view-vendor-details/{id}', 'AdminController@viewVendorDetails')->middleware('admin.role:superadmin,admin');
+        Route::post('update-admin-status', 'AdminController@updateAdminStatus')->middleware('admin.role:superadmin,admin');
+        Route::post('update-vendor-certification', 'AdminController@updateVendorCertification')->middleware('admin.role:superadmin,admin');
 
 
         // 섹션 (Sections, Categories, Subcategories, Products, Attributes)
@@ -196,32 +197,32 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::get('orders/invoice/pdf/{id}', 'OrderController@viewPDFInvoice');
 
         // 발주사 관리
-        Route::get('order-managers', 'OrderManagerController@index')->name('admin.order_managers.index');
-        Route::post('order-managers', 'OrderManagerController@store')->name('admin.order_managers.store');
-        Route::post('order-managers/{id}/update', 'OrderManagerController@update')->name('admin.order_managers.update');
-        Route::post('order-managers/{id}/reset-password', 'OrderManagerController@resetPassword')->name('admin.order_managers.reset_password');
-        Route::post('order-managers/{id}/delete', 'OrderManagerController@destroy')->name('admin.order_managers.destroy');
-        Route::post('order-managers/{id}/portal', 'OrderManagerController@portal')->name('admin.order_managers.portal');
+        Route::get('order-managers', 'OrderManagerController@index')->middleware('admin.role:superadmin,admin')->name('admin.order_managers.index');
+        Route::post('order-managers', 'OrderManagerController@store')->middleware('admin.role:superadmin,admin')->name('admin.order_managers.store');
+        Route::post('order-managers/{id}/update', 'OrderManagerController@update')->middleware('admin.role:superadmin,admin')->name('admin.order_managers.update');
+        Route::post('order-managers/{id}/delete', 'OrderManagerController@destroy')->middleware('admin.role:superadmin,admin')->name('admin.order_managers.destroy');
+        Route::post('order-managers/{id}/portal', 'OrderManagerController@portal')->middleware('admin.role:superadmin,admin')->name('admin.order_managers.portal');
 
         // 정산관리
-        Route::get('settlements', 'SettlementController@index')->name('admin.settlements.index');
-        Route::post('settlements/generate', 'SettlementController@generate')->name('admin.settlements.generate');
-        Route::get('settlements/preview', 'SettlementController@preview')->name('admin.settlements.preview');
-        Route::post('settlements/executions', 'SettlementController@storeExecution')->name('admin.settlements.executions.store');
-        Route::get('settlements/executions/{id}/download', 'SettlementController@downloadExecutionAttachment')->name('admin.settlements.executions.download');
-        Route::get('settlements/{id}/export', 'SettlementController@export')->name('admin.settlements.export');
-        Route::get('settlements/{id}/extra-shipping/export', 'SettlementController@exportExtraShipping')->name('admin.settlements.extra_shipping.export');
-        Route::get('settlements/{id}/payout', 'SettlementController@payoutDetail')->name('admin.settlements.payout');
-        Route::get('settlements/{id}/billing', 'SettlementController@billingDetail')->name('admin.settlements.billing');
-        Route::get('settlements/{id}/payout/export', 'SettlementController@payoutExport')->name('admin.settlements.payout.export');
-        Route::get('settlements/{id}/billing/export', 'SettlementController@billingExport')->name('admin.settlements.billing.export');
-        Route::get('settlements/{id}', 'SettlementController@show')->name('admin.settlements.show');
-        Route::post('settlements/{id}/complete', 'SettlementController@complete')->name('admin.settlements.complete');
+        Route::group([], function () {
+            Route::get('settlements', 'SettlementController@index')->middleware('admin.role:superadmin,admin')->name('admin.settlements.index');
+            Route::post('settlements/generate', 'SettlementController@generate')->middleware('admin.role:superadmin,admin')->name('admin.settlements.generate');
+            Route::get('settlements/preview', 'SettlementController@preview')->middleware('admin.role:superadmin,admin')->name('admin.settlements.preview');
+            Route::post('settlements/executions', 'SettlementController@storeExecution')->middleware('admin.role:superadmin,admin')->name('admin.settlements.executions.store');
+            Route::get('settlements/executions/{id}/download', 'SettlementController@downloadExecutionAttachment')->middleware('admin.role:superadmin,admin')->name('admin.settlements.executions.download');
+            Route::get('settlements/{id}/export', 'SettlementController@export')->name('admin.settlements.export');
+            Route::get('settlements/{id}/extra-shipping/export', 'SettlementController@exportExtraShipping')->name('admin.settlements.extra_shipping.export');
+            Route::get('settlements/{id}/payout', 'SettlementController@payoutDetail')->name('admin.settlements.payout');
+            Route::get('settlements/{id}/billing', 'SettlementController@billingDetail')->name('admin.settlements.billing');
+            Route::get('settlements/{id}/payout/export', 'SettlementController@payoutExport')->name('admin.settlements.payout.export');
+            Route::get('settlements/{id}/billing/export', 'SettlementController@billingExport')->name('admin.settlements.billing.export');
+            Route::get('settlements/{id}', 'SettlementController@show')->middleware('admin.role:superadmin,admin')->name('admin.settlements.show');
+            Route::post('settlements/{id}/complete', 'SettlementController@complete')->middleware('admin.role:superadmin,admin')->name('admin.settlements.complete');
 
-        // 판매자 포인트 구매/환급 승인
-        Route::get('channel-points', 'ChannelPointController@index')->name('admin.channel_points.index');
-        Route::post('channel-points/{id}/approve', 'ChannelPointController@approve')->name('admin.channel_points.approve');
-        Route::post('channel-points/{id}/reject', 'ChannelPointController@reject')->name('admin.channel_points.reject');
+            Route::get('channel-points', 'ChannelPointController@index')->middleware('admin.role:superadmin,admin')->name('admin.channel_points.index');
+            Route::post('channel-points/{id}/approve', 'ChannelPointController@approve')->middleware('admin.role:superadmin,admin')->name('admin.channel_points.approve');
+            Route::post('channel-points/{id}/reject', 'ChannelPointController@reject')->middleware('admin.role:superadmin,admin')->name('admin.channel_points.reject');
+        });
 
         // Shop 채널 운영중지 승인
         Route::get('shop-channel-closures', 'ShopChannelClosureController@index')->name('admin.shop_channel_closures.index');
@@ -292,7 +293,7 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
     // 회원 라우트
     Route::prefix('member')->name('front.member.')->group(function () {
         Route::get('/login', 'UserController@login')->name('login');
-        Route::post('/login', 'UserController@loginUser')->name('login.submit');
+        Route::post('/login', 'UserController@loginUser')->middleware('throttle:5,1')->name('login.submit');
     });
 
     Route::get('/register/member', 'UserController@registerMember')->name('front.member.register.member');
@@ -301,7 +302,7 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
     Route::post('/add-rating', 'RatingController@addRating')->name('front.rating.add');
     Route::get('/register/step1', 'UserController@registerStep1')->name('front.member.register.step1');
     Route::post('/register/step1/update', 'UserController@updateMemberStep1')->name('front.member.register.step1.update'); // 새로운 라우트
-    Route::post('/user/update-password', 'UserController@userUpdatePassword')->name('user.update.password'); // AJAX를 위한 별칭
+    Route::post('/user/update-password', 'UserController@userUpdatePassword')->middleware('auth')->name('user.update.password'); // AJAX를 위한 별칭
     Route::get('/register/step2', 'UserController@registerStep2')->name('front.member.register.step2');
     Route::post('/register/step2/update', 'UserController@updateMemberStep2')->name('front.member.register.step2.update'); // 새로운 라우트
     Route::get('/register/step3', 'UserController@registerStep3')->name('front.member.register.step3');
@@ -331,10 +332,6 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
     Route::post('/nonmember/order/claim', 'FrontController@nonmemberOrderClaimSubmit')->name('front.nonmember.order_claim.submit');
     Route::post('/nonmember/order/inquiry', 'FrontController@nonmemberOrderInquirySubmit')->name('front.nonmember.order_inquiry.submit');
 
-    // 소셜 로그인 후 동의가입 (RF-01-07-02)
-    Route::get('/member/social-join', 'UserController@socialJoin')->name('front.member.social_join');
-    Route::post('/member/social-join', 'UserController@socialJoinSubmit')->name('front.member.social_join.submit');
-
     // shop 채널 (RF-03)
     Route::prefix('shop-channel')->group(function () {
         Route::get('/gate', 'FrontController@shopGate')->name('shop.gate');
@@ -353,11 +350,6 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
             Route::get('/notices/{id}', 'FrontController@shopNoticeDetails')->name('shop.notices.show');
         });
     });
-
-    // 통합 테스트베드 (Index)
-    if (config('shop_channel.storyboard_test_enabled')) {
-        Route::get('/storyboard-test', 'FrontController@storyboardTestbed')->name('front.storyboard_testbed');
-    }
 
     // Shop 라우트
     Route::prefix('shop')->name('front.shop.')->middleware('shop.channel.access')->group(function () {
@@ -383,7 +375,7 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
     Route::prefix('channel')->group(function () {
         // Guest Channel Routes
         Route::get('/login', 'App\Http\Controllers\Front\ChannelController@login')->name('channel.login');
-        Route::post('/login', 'App\Http\Controllers\Front\ChannelController@loginUser')->name('channel.login.submit');
+        Route::post('/login', 'App\Http\Controllers\Front\ChannelController@loginUser')->middleware('throttle:5,1')->name('channel.login.submit');
         Route::get('/logout', 'App\Http\Controllers\Front\ChannelController@logout')->name('channel.logout');
         Route::get('/register', 'App\Http\Controllers\Front\ChannelController@register')->name('channel.register');
         Route::post('/register', 'App\Http\Controllers\Front\ChannelController@registerSubmit')->name('channel.register.submit');
@@ -577,7 +569,7 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
 });
 
 // Master (Admin) Portal Routes
-Route::group(['prefix' => 'master', 'namespace' => 'App\Http\Controllers\Master'], function () {
+Route::group(['prefix' => 'master', 'namespace' => 'App\Http\Controllers\Master', 'middleware' => ['admin', 'admin.role:superadmin,admin']], function () {
     Route::get('/', 'MasterController@index')->name('master.index');
     Route::get('/sub01', 'MasterController@sub01')->name('master.sub01');
     Route::get('/sub02', 'MasterController@sub02')->name('master.sub02');
@@ -591,7 +583,7 @@ Route::group(['prefix' => 'master', 'namespace' => 'App\Http\Controllers\Master'
 // Distributor Portal Routes (RF-04)
 Route::prefix('distributor')->namespace('App\Http\Controllers\Distributor')->group(function () {
     Route::get('/login', 'DistributorController@login')->name('distributor.login');
-    Route::post('/login', 'DistributorController@loginSubmit')->name('distributor.login.submit');
+    Route::post('/login', 'DistributorController@loginSubmit')->middleware('throttle:5,1')->name('distributor.login.submit');
     Route::get('/logout', 'DistributorController@logout')->name('distributor.logout');
 
     Route::get('/orders/pending', 'DistributorController@ordersPending')->name('distributor.orders.pending');

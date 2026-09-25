@@ -203,11 +203,17 @@
                                                                             </td>
                                                                         </tr>
                                                                         <tr>
-                                                                            <th class="w160"><span>비밀번호</span></th>
-                                                                            <td colspan="3">
-                                                                                <input type="password" name="password" value="" class="w300" placeholder="미입력 시 123456">
-                                                                            </td>
-                                                                        </tr>
+	                                                                            <th class="w160"><span>비밀번호<em>필수</em></span></th>
+	                                                                            <td colspan="3">
+	                                                                                <input type="password" name="password" value="" class="w300" minlength="12" autocomplete="new-password" required>
+	                                                                            </td>
+	                                                                        </tr>
+	                                                                        <tr>
+	                                                                            <th class="w160"><span>비밀번호 확인<em>필수</em></span></th>
+	                                                                            <td colspan="3">
+	                                                                                <input type="password" name="password_confirmation" value="" class="w300" minlength="12" autocomplete="new-password" required>
+	                                                                            </td>
+	                                                                        </tr>
                                                                     </tbody>
                                                                 </table>
                                                             </div>
@@ -358,9 +364,15 @@
                                                                             <tr>
                                                                                 <th class="w160"><span>비밀번호 변경</span></th>
                                                                                 <td colspan="3">
-                                                                                    <input type="password" name="password" value="" class="w300" placeholder="변경할 때만 입력">
-                                                                                </td>
-                                                                            </tr>
+	                                                                                    <input type="password" name="password" value="" class="w300" minlength="12" autocomplete="new-password" placeholder="변경할 때만 입력">
+	                                                                                </td>
+	                                                                            </tr>
+	                                                                            <tr>
+	                                                                                <th class="w160"><span>비밀번호 확인</span></th>
+	                                                                                <td colspan="3">
+	                                                                                    <input type="password" name="password_confirmation" value="" class="w300" minlength="12" autocomplete="new-password">
+	                                                                                </td>
+	                                                                            </tr>
                                                                         </tbody>
                                                                     </table>
                                                                 </div>

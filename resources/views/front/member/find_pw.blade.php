@@ -15,7 +15,7 @@
                             <li><a href="{{ route('front.member.find_pw') }}" class="on">비밀번호 찾기</a></li>
                         </ul>
 
-                        {{-- 검색 폼 --}}
+                        {{-- 재설정 링크 요청 폼 --}}
                         <form method="POST" action="{{ route('front.member.find_pw') }}">
                             @csrf
                             <div class="f_bx">
@@ -23,20 +23,17 @@
                                 <input type="text" name="email" placeholder="대표이메일" value="{{ old('email') }}" required>
                                 <button type="submit" class="btn col2" style="border:none; cursor:pointer; width:100%;">비밀번호 찾기</button>
 
-                                {{-- 결과 영역 --}}
                                 <div class="ans">
+                                    @if($errors->any())
+                                        <div class="txt" style="margin-top:20px; padding:20px; background:#fff5f5; border-radius:5px; text-align:center; color:#e00;">
+                                            <p>{{ $errors->first() }}</p>
+                                        </div>
+                                    @endif
                                     @if(isset($result))
                                         @if($result['type'] === 'success')
-                                            {{-- 임시비밀번호 발급 성공 --}}
                                             <div class="txt" style="margin-top:20px; padding:20px; background:#f0f7ff; border:1px solid #d0e3f7; border-radius:5px; text-align:center;">
-                                                <p style="margin-bottom:10px; font-weight:bold;">임시비밀번호가 발급되었습니다.</p>
-                                                <p style="font-size:20px; font-weight:bold; color:#2563eb; letter-spacing:2px; margin-bottom:10px;">{{ $result['temp_password'] }}</p>
-                                                <p style="font-size:13px; color:#666;">로그인 후 반드시 비밀번호를 변경해 주세요.</p>
-                                            </div>
-                                        @else
-                                            {{-- 비밀번호 찾기 실패 --}}
-                                            <div class="txt" style="margin-top:20px; padding:20px; background:#fff5f5; border-radius:5px; text-align:center; color:#e00;">
-                                                <p>{{ $result['message'] }}</p>
+                                                <p style="margin-bottom:10px; font-weight:bold;">{{ $result['message'] }}</p>
+                                                <p style="font-size:13px; color:#666;">메일의 링크는 일정 시간이 지나면 만료됩니다.</p>
                                             </div>
                                         @endif
                                     @endif

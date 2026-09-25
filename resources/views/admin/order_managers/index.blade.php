@@ -120,7 +120,7 @@
                                             <td class="textL">
                                                 <div>URL: {{ route('distributor.login') }}</div>
                                                 <div>ID: {{ $manager->email }}</div>
-                                                <div>PW: 등록/수정 또는 초기화로 관리</div>
+                                                <div>PW: 등록/수정 화면에서만 변경</div>
                                             </td>
                                             <td>{{ $manager->name }}</td>
                                             <td>{{ $manager->phone ?: '-' }}</td>
@@ -130,10 +130,6 @@
                                             <td class="t_c">
                                                 <div class="order-manager-actions">
                                                     <a href="{{ url()->current() }}" class="btn02 col5 pop_btn" data-pop="pop_edit_{{ $manager->id }}">수정</a>
-                                                    <form method="POST" action="{{ route('admin.order_managers.reset_password', $manager->id) }}" onsubmit="return confirm('비밀번호를 123456으로 초기화하시겠습니까?');">
-                                                        @csrf
-                                                        <button type="submit" class="btn02 col5">PW초기화</button>
-                                                    </form>
                                                     <form method="POST" action="{{ route('admin.order_managers.portal', $manager->id) }}">
                                                         @csrf
                                                         <input type="hidden" name="destination" value="pending">
@@ -215,8 +211,12 @@
                                                                     <td><input type="text" name="return_postcode" value="{{ old('return_postcode') }}" class="w100" placeholder="우편번호"> <input type="text" name="return_address" value="{{ old('return_address') }}" class="wFull" placeholder="수동회수 반송 주소"></td>
                                                                 </tr>
                                                                 <tr>
-                                                                    <th class="w160"><span>비밀번호</span></th>
-                                                                    <td><input type="password" name="password" value="" class="w300" placeholder="미입력 시 123456"></td>
+                                                                    <th class="w160"><span>비밀번호<em>필수</em></span></th>
+                                                                    <td><input type="password" name="password" value="" class="w300" minlength="12" autocomplete="new-password" required></td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <th class="w160"><span>비밀번호 확인<em>필수</em></span></th>
+                                                                    <td><input type="password" name="password_confirmation" value="" class="w300" minlength="12" autocomplete="new-password" required></td>
                                                                 </tr>
                                                                 <tr>
                                                                     <th class="w160"><span>발주사 로그인 URL</span></th>
@@ -290,7 +290,11 @@
                                                                     </tr>
                                                                     <tr>
                                                                         <th class="w160"><span>비밀번호 변경</span></th>
-                                                                        <td><input type="password" name="password" value="" class="w300" placeholder="변경할 때만 입력"></td>
+                                                                        <td><input type="password" name="password" value="" class="w300" minlength="12" autocomplete="new-password" placeholder="변경할 때만 입력"></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <th class="w160"><span>비밀번호 확인</span></th>
+                                                                        <td><input type="password" name="password_confirmation" value="" class="w300" minlength="12" autocomplete="new-password"></td>
                                                                     </tr>
                                                                     <tr>
                                                                         <th class="w160"><span>발주사 로그인 URL</span></th>
@@ -302,7 +306,7 @@
                                                                     </tr>
                                                                     <tr>
                                                                         <th class="w160"><span>비밀번호 관리</span></th>
-                                                                        <td>비밀번호는 보안상 표시되지 않습니다. 변경할 비밀번호를 입력하거나 목록의 PW초기화 버튼을 사용해 주세요.</td>
+                                                                        <td>비밀번호는 보안상 표시되지 않습니다. 변경할 때만 새 비밀번호와 확인값을 입력해 주세요.</td>
                                                                     </tr>
                                                                 </tbody>
                                                             </table>

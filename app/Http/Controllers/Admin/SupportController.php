@@ -61,6 +61,7 @@ class SupportController extends Controller
             $rules = [
                 'title' => 'required',
                 'content' => 'required',
+                'attachment' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,csv,txt,jpg,jpeg,png|max:10240',
             ];
 
             $customMessages = [
@@ -86,7 +87,7 @@ class SupportController extends Controller
 
                 // 새 파일 저장
                 $extension = $file->getClientOriginalExtension();
-                $filename = time() . '_' . rand(1000, 9999) . '.' . $extension;
+                $filename = (string) \Illuminate\Support\Str::uuid().'.'.$extension;
                 $file->move(public_path('admin/attachments/notices'), $filename);
                 $notice->attachment = $filename;
             }

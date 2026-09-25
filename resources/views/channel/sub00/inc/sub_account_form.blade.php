@@ -46,10 +46,16 @@
                     <tr>
                         <th class="w160"><span>비밀번호{{ $account ? '' : ' 필수' }}</span></th>
                         <td colspan="3">
-                            <input type="password" name="password" {{ $account ? '' : 'required=required' }}>
+                            <input type="password" name="password" minlength="12" autocomplete="new-password" {{ $account ? '' : 'required=required' }}>
                             @if($account)
                                 <span class="fs fcol6">미입력 시 기존 비밀번호 유지</span>
                             @endif
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="w160"><span>비밀번호 확인{{ $account ? '' : ' 필수' }}</span></th>
+                        <td colspan="3">
+                            <input type="password" name="password_confirmation" minlength="12" autocomplete="new-password" {{ $account ? '' : 'required=required' }}>
                         </td>
                     </tr>
                 </tbody>

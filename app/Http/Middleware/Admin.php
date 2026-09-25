@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\ChannelSubAccount;
 use Closure;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -36,6 +37,38 @@ class Admin
         }
 
         $admin = Auth::guard('admin')->user();
+
+        if ($admin->type === 'subadmin') {
+            abort_if($request->is('admin', 'admin/*'), 403);
+
+            if ($request->is('channel*')) {
+                $account = ChannelSubAccount::where('admin_id', $admin->id)
+                    ->where('vendor_id', $admin->vendor_id)
+                    ->first();
+
+                abort_unless(
+                    $admin->status == 1
+                    && $account
+                    && (! $account->started_at || $account->started_at->isToday() || $account->started_at->isPast())
+                    && (! $account->ended_at || $account->ended_at->isToday() || $account->ended_at->isFuture()),
+                    403
+                );
+
+                $requiredPermission = match (true) {
+                    $request->is('channel/shop*') => 'shop',
+                    $request->is('channel/product*') => 'product',
+                    $request->is('channel/joint-purchase*') => 'joint_purchase',
+                    $request->is('channel/order*', 'channel/inquiries*') => 'order',
+                    $request->is('channel/settings*', 'channel/settlement*') => 'settings',
+                    default => null,
+                };
+
+                if ($requiredPermission) {
+                    abort_unless(in_array($requiredPermission, $account->permissions ?? [], true), 403);
+                }
+            }
+        }
+
         if ($admin->type === 'vendor' && $request->is('admin/*')) {
             $vendorRoutes = [
                 'admin/dashboard',

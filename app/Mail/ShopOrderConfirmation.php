@@ -5,11 +5,12 @@ namespace App\Mail;
 use App\Models\Order;
 use App\Models\ShopChannel;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Collection;
 
-class ShopOrderConfirmation extends Mailable
+class ShopOrderConfirmation extends Mailable implements ShouldQueue
 {
     use Queueable, SerializesModels;
 
@@ -17,7 +18,9 @@ class ShopOrderConfirmation extends Mailable
         public ShopChannel $shop,
         public Order $order,
         public Collection $items
-    ) {}
+    ) {
+        $this->afterCommit();
+    }
 
     public function build(): self
     {

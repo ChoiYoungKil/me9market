@@ -1,7 +1,6 @@
 @extends('layouts.channel_login')
 
 @section('content')
-    @php($showDemoCredentials = config('shop_channel.show_demo_credentials', false))
     <div id="login">
         <div class="box box1">
             <div class="inner_bx">
@@ -11,18 +10,11 @@
                         {{ Session::get('error_message') }}
                     </div>
                 @endif
-                @if($showDemoCredentials)
-                    <div style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 12px; font-size: 12px; color: #aaa; text-align: left; line-height: 1.5; margin-bottom: 15px;">
-                        <strong style="color: #fff;">테스트 정보:</strong><br>
-                        - 아이디: <code style="background: rgba(255,255,255,0.1); padding: 2px 4px; border-radius: 4px; font-weight: bold; color: #fff;">john@admin.com</code><br>
-                        - 비밀번호: <code style="background: rgba(255,255,255,0.1); padding: 2px 4px; border-radius: 4px; font-weight: bold; color: #fff;">123456</code>
-                    </div>
-                @endif
                 <form action="/channel/login" method="POST">
                     @csrf
                     <div class="f_bx">
-                        <input class="mt0" type="text" name="email" value="{{ $showDemoCredentials ? 'john@admin.com' : '' }}" placeholder="아이디를 입력 해 주세요" required>
-                        <input type="password" name="password" value="{{ $showDemoCredentials ? '123456' : '' }}" placeholder="비밀번호를 입력 해 주세요" required>
+                        <input class="mt0" type="text" name="email" value="{{ old('email') }}" placeholder="아이디를 입력 해 주세요" required>
+                        <input type="password" name="password" placeholder="비밀번호를 입력 해 주세요" required>
                         <ul class="chk01">
                             <li>
                                 <input type="checkbox" id="idSave">
@@ -32,14 +24,6 @@
                         <button type="submit" class="btn" style="border:none; cursor:pointer;">LOGIN</button>
                     </div>
                 </form>
-                <div class="sns_bx">
-                    <div class="txt"><span>간편회원 로그인</span></div>
-                    <ul>
-                        <li class="icon1"><a href="{{ url()->current() }}">kakaotalk</a></li>
-                        <li class="icon2"><a href="{{ url()->current() }}">naver</a></li>
-                        <li class="icon3"><a href="{{ url()->current() }}">gmail</a></li>
-                    </ul>
-                </div>
             </div>
         </div>
     </div>

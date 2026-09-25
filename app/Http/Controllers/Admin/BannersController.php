@@ -49,7 +49,7 @@ class BannersController extends Controller
         $bannerImage = Banner::where('id', $id)->first();
 
         // 서버의 배너 이미지 경로 가져오기
-        $banner_image_path = 'front/images/banner_images/';
+        $banner_image_path = public_path('front/images/banner_images/');
 
         // 서버에서 물리적 파일 삭제
         if (file_exists($banner_image_path . $bannerImage->image)) {
@@ -81,7 +81,13 @@ class BannersController extends Controller
 
         // 둘째, 요청 메소드가 'POST'인 경우, add_edit_banner.blade.php 페이지의 HTML <form>을 제출합니다 (배너 추가 또는 수정):
         if ($request->isMethod('post')) { // 추가 또는 수정 폼 제출 시
-            $data = $request->all();
+            $data = $request->validate([
+                'type' => ['required', 'in:Slider,Fix'],
+                'link' => ['nullable', 'string', 'max:2048'],
+                'title' => ['nullable', 'string', 'max:255'],
+                'alt' => ['nullable', 'string', 'max:255'],
+                'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            ]);
             // dd($data);
 
             $banner->type   = $data['type'];
@@ -107,10 +113,10 @@ class BannersController extends Controller
                     $extension = $image_tmp->getClientOriginalExtension();
 
                     // 업로드된 이미지의 랜덤 이름 생성 (이름 중복 방지)
-                    $imageName = rand(111, 99999) . '.' . $extension;
+                    $imageName = (string) \Illuminate\Support\Str::uuid().'.'.$extension;
 
                     // 'public' 폴더 내 업로드된 이미지 경로 할당
-                    $imagePath = 'front/images/banner_images/' . $imageName;
+                    $imagePath = public_path('front/images/banner_images/'.$imageName);
 
                     // Intervention 패키지를 사용하여 이미지 리사이즈 및 저장
                     Image::make($image_tmp)->resize($width, $height)->save($imagePath); 

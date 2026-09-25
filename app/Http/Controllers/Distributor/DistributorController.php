@@ -5,19 +5,16 @@ namespace App\Http\Controllers\Distributor;
 use App\Http\Controllers\Controller;
 use App\Models\Distributor;
 use App\Models\OrdersProduct;
-use App\Services\ShopChannelRuntime;
 use App\Support\OrderItemStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class DistributorController extends Controller
 {
-    private function ensureRuntime(): void
-    {
-        app(ShopChannelRuntime::class)->seedDemoDataIfAllowed();
-    }
-
     private function currentDistributor(): ?Distributor
     {
         $id = Session::get('distributor_id');
@@ -27,8 +24,6 @@ class DistributorController extends Controller
 
     public function login()
     {
-        $this->ensureRuntime();
-
         if ($this->currentDistributor()) {
             return redirect()->route('distributor.orders.pending');
         }
@@ -38,21 +33,30 @@ class DistributorController extends Controller
 
     public function loginSubmit(Request $request)
     {
-        $this->ensureRuntime();
-
         $request->validate([
             'email' => 'required|email',
             'password' => 'required',
         ]);
 
+        $throttleKey = Str::transliterate(Str::lower($request->email).'|'.$request->ip());
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            throw ValidationException::withMessages([
+                'email' => '로그인 시도가 너무 많습니다. '.$seconds.'초 후 다시 시도해 주세요.',
+            ]);
+        }
+
         $distributor = Distributor::where('email', $request->email)->first();
 
         if (!$distributor || !Hash::check($request->password, $distributor->password) || (int) $distributor->status !== 1) {
+            RateLimiter::hit($throttleKey, 60);
             return back()
                 ->withInput($request->only('email'))
                 ->with('flash_message_error', '발주사 계정 정보가 올바르지 않습니다.');
         }
 
+        RateLimiter::clear($throttleKey);
+        $request->session()->regenerate();
         Session::put('distributor_id', $distributor->id);
         Session::put('distributor_name', $distributor->name);
         Session::put('distributor_email', $distributor->email);
@@ -60,16 +64,16 @@ class DistributorController extends Controller
         return redirect()->route('distributor.orders.pending')->with('flash_message_success', '발주사 로그인 성공!');
     }
 
-    public function logout()
+    public function logout(Request $request)
     {
-        Session::forget(['distributor_id', 'distributor_name', 'distributor_email']);
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
 
         return redirect()->route('distributor.login')->with('flash_message_success', '로그아웃 되었습니다.');
     }
 
     public function ordersPending()
     {
-        $this->ensureRuntime();
         $distributor = $this->currentDistributor();
 
         if (!$distributor) {
@@ -92,7 +96,6 @@ class DistributorController extends Controller
 
     public function ordersCompleted()
     {
-        $this->ensureRuntime();
         $distributor = $this->currentDistributor();
 
         if (!$distributor) {
@@ -113,7 +116,6 @@ class DistributorController extends Controller
 
     public function orderDetails($id)
     {
-        $this->ensureRuntime();
         $distributor = $this->currentDistributor();
 
         if (!$distributor) {
@@ -128,7 +130,6 @@ class DistributorController extends Controller
 
     public function updateOrder(Request $request, $id)
     {
-        $this->ensureRuntime();
         $distributor = $this->currentDistributor();
 
         if (!$distributor) {
@@ -136,27 +137,12 @@ class DistributorController extends Controller
         }
 
         $data = $request->validate([
-            'receiver' => 'nullable|string|max:100',
-            'zipcode' => 'nullable|string|max:20',
-            'address' => 'nullable|string|max:255',
-            'city' => 'nullable|string|max:100',
-            'state' => 'nullable|string|max:100',
             'courier' => 'nullable|string|max:100',
             'tracking_no' => 'nullable|string|max:100',
             'status_code' => 'nullable|string|in:' . implode(',', array_keys(OrderItemStatus::labels())),
         ]);
 
         $item = $this->orderItemQuery($distributor)->findOrFail($id);
-        $order = $item->order;
-
-        if ($order) {
-            $order->name = $data['receiver'] ?? $order->name;
-            $order->pincode = $data['zipcode'] ?? $order->pincode;
-            $order->address = $data['address'] ?? $order->address;
-            $order->city = $data['city'] ?? $order->city;
-            $order->state = $data['state'] ?? $order->state;
-            $order->save();
-        }
 
         $item->courier_name = $data['courier'] ?? $item->courier_name;
         $item->tracking_number = $data['tracking_no'] ?? $item->tracking_number;
@@ -177,7 +163,6 @@ class DistributorController extends Controller
 
     public function uploadInvoice(Request $request)
     {
-        $this->ensureRuntime();
         $distributor = $this->currentDistributor();
 
         if (!$distributor) {
