@@ -11,6 +11,7 @@
 
 /* 테이블 */
 .tb01 {border-top: 1px solid #111111;}
+.tb01.ovS {max-width: 100%; overflow-x: auto;}
 .tb01 table {width: 100%; table-layout: fixed;}
 .tb01 table thead tr {border-bottom: 1px solid #cccccc;}
 .tb01 table thead th {background-color: #6b6d7b; border-right: 1px solid #cccccc; text-align: center; font-size: 14px; color: #ffffff; font-weight: 700; letter-spacing: -0.03em; padding: 15px 5px; line-height: 20px;}

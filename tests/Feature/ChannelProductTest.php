@@ -65,6 +65,30 @@ class ChannelProductTest extends TestCase
         return [$vendor, $admin, $shop, $product];
     }
 
+    public function test_posted_channel_popup_uses_approved_product_channels_and_local_qr(): void
+    {
+        [, $admin, $shop, $product] = $this->createSetup();
+        $shop->update(['channel_name' => '<script>listed channel</script>']);
+        $listing = ShopChannelProduct::create([
+            'shop_channel_id' => $shop->id, 'product_id' => $product->id,
+            'product_type' => 'own', 'status' => 1, 'approval_status' => 'approved',
+            'constraint_type' => 'none', 'stock' => 10, 'product_price' => 100,
+            'selling_price' => 120, 'profit' => 20,
+        ]);
+
+        $this->actingAs($admin, 'admin')->get('/channel/product/own')
+            ->assertOk()->assertSee('data-id="posted-channels-'.$product->id.'"', false)
+            ->assertSee('&lt;script&gt;listed channel&lt;/script&gt;', false)
+            ->assertSee('data:image/png;base64,', false)
+            ->assertSee(route('shop.enter', $shop->channel_code), false)
+            ->assertDontSee('qr_sample1.jpg', false)->assertDontSee('a20392');
+
+        $listing->update(['approval_status' => 'pending']);
+        $this->get('/channel/product/own')->assertOk()
+            ->assertSee('게시된 채널이 없습니다.')
+            ->assertDontSee('data:image/png;base64,', false);
+    }
+
     public function test_base_product_option_validation_rolls_back_and_signed_prices_persist(): void
     {
         [, $admin] = $this->createSetup();

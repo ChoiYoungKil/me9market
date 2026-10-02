@@ -239,7 +239,7 @@
                                                 {{ in_array($product->is_partial, ['Yes', 1, '1'], true) ? '부분공개' : '전체공개' }}
                                             </td>
                                             <td class="t_c">
-                                                <a href="{{ url()->current() }}" class="btn02 col3 pop_btn" data-pop="pop4_1">
+                                                <a href="{{ url()->current() }}" class="btn02 col3 pop_btn" data-pop="posted-channels-{{ $product->id }}">
                                                     {{ $product->shop_channels_count ?? '0' }}
                                                 </a>
                                             </td>
@@ -282,139 +282,7 @@
 
 
                         <!-- 팝업 -->
-                        <!-- 게시채널 팝업 -->
-                        <div class="popup_bx" data-id="pop4_1">
-                            <div class="pop_w">
-                                <div class="pop_inner">
-                                    <div class="pop_con">
-                                        <div class="close_btn close1">닫기</div>
-                                        <div class="page_info type2">
-                                            <div class="ttl">상품게시한 채널목록</div>
-                                        </div>
-
-                                        <div class="conbx">
-                                            <div class="con_w">
-                                                <div class="thum01">
-                                                    <div class="img_bx"
-                                                        style="background-image:url({{ asset('channel_assets/images/sub/thum01.jpg') }})">
-                                                    </div>
-                                                    <div class="txt_bx">
-                                                        <p>대분류 &gt; 중분류 &gt; 소분류</p>
-                                                        <strong>상품명 111111</strong>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="con_w">
-                                                <div class="list_top1">
-                                                    <div class="count">총 <strong>00</strong> 건</div>
-                                                </div>
-                                                <div class="tb01 ovS">
-                                                    <table>
-                                                        <colgroup>
-                                                            <col width="80px">
-                                                            <col width="80px">
-                                                            <col width="">
-                                                            <col width="100px">
-                                                            <col width="80px">
-                                                            <col width="10%">
-                                                            <col width="10%">
-                                                        </colgroup>
-                                                        <thead>
-                                                            <tr>
-                                                                <th>채널코드</th>
-                                                                <th>채널상태</th>
-                                                                <th>채널명</th>
-                                                                <th>채널범위</th>
-                                                                <th>상품수</th>
-                                                                <th>QR 코드</th>
-                                                                <th>단축주소</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody class="textL">
-                                                            <tr>
-                                                                <td class="t_c">a20392</td>
-                                                                <td class="t_c">운영</td>
-                                                                <td>
-                                                                    채널명 123
-                                                                    <ul class="tag_list">
-                                                                        <li>#그룹 키워드 #1</li>
-                                                                        <li>#키워드 #2</li>
-                                                                    </ul>
-                                                                </td>
-                                                                <td class="t_c">공개, 회원용</td>
-                                                                <td class="t_c">03</td>
-                                                                <td class="t_c">
-                                                                    <div class="pop_btn" data-pop="pop4_1_1">
-                                                                        <img src="/images/channel/sub/qr_sample1.jpg"
-                                                                            style="max-width: 60px; width:100%;">
-                                                                    </div>
-                                                                </td>
-                                                                <td class="t_c">//qcc112ko</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td class="t_c">a20392</td>
-                                                                <td class="t_c">중지</td>
-                                                                <td>
-                                                                    비공개 채널명 123
-                                                                    <ul class="tag_list">
-                                                                        <li>#그룹 키워드 #1</li>
-                                                                    </ul>
-                                                                </td>
-                                                                <td class="t_c">비공개, 회원용</td>
-                                                                <td class="t_c">--</td>
-                                                                <td class="t_c">
-                                                                    <div class="pop_btn" data-pop="pop4_1_1">
-                                                                        <img src="/images/channel/sub/qr_sample1.jpg"
-                                                                            style="max-width: 60px; width:100%;">
-                                                                    </div>
-                                                                </td>
-                                                                <td class="t_c">//qcc112ko</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td class="t_c">a20392</td>
-                                                                <td class="t_c">운영</td>
-                                                                <td>
-                                                                    일반용 채널명 123
-                                                                    <ul class="tag_list">
-                                                                        <li>#그룹 키워드 #1</li>
-                                                                        <li>#키워드 #2</li>
-                                                                    </ul>
-                                                                </td>
-                                                                <td class="t_c">공개, 일반용</td>
-                                                                <td class="t_c">13</td>
-                                                                <td class="t_c">
-                                                                    <div class="pop_btn" data-pop="pop4_1_1">
-                                                                        <img src="/images/channel/sub/qr_sample1.jpg"
-                                                                            style="max-width: 60px; width:100%;">
-                                                                    </div>
-                                                                </td>
-                                                                <td class="t_c">//qcc112ko</td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
-
-                                                    <!--<div class="no_data">등록된 데이터가 없습니다.</div>-->
-
-                                                    <!-- 페이징 -->
-                                                    <div class="page_bx1">
-                                                        <a href="{{ url()->current() }}" class="page_first">first</a>
-                                                        <a href="{{ url()->current() }}" class="page_prev">prev</a>
-                                                        <a href="{{ url()->current() }}" class="num on">1</a>
-                                                        <a href="{{ url()->current() }}" class="num">2</a>
-                                                        <a href="{{ url()->current() }}" class="num">3</a>
-                                                        <a href="{{ url()->current() }}" class="num">4</a>
-                                                        <a href="{{ url()->current() }}" class="num">5</a>
-                                                        <a href="{{ url()->current() }}" class="page_next">next</a>
-                                                        <a href="{{ url()->current() }}" class="page_last">last</a>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        @include('channel.sub02.inc.posted_channels')
                         <!-- 게시채널 팝업 ==> RQ 팝업 -->
                         <div class="popup_bx" data-id="pop4_1_1">
                             <div class="pop_w">
