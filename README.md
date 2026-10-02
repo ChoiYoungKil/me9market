@@ -6,12 +6,13 @@ Laravel 기반 Me9 쇼핑몰, 채널관리자, 총괄관리자, 발주사 포털
 - 최신 구현 점검 및 수정: [2026-10-02 갱신 검수 내역](docs/implementation-audit-20261001.md). 최신 사용자 요청에 따라 현재 수정분을 우선 배포합니다. 배송비 세부 사양, 승인 자료 및 운영 HTTPS 조건은 별도 미완료 사항이며 이번 배포가 전체 기능 인수 완료를 의미하지 않습니다.
 - 항목별 대조: [271개 슬라이드](docs/requirements-audit-20261002.csv), [요청서 45건](docs/requested-pages-audit-20261002.csv), [기타 문서 원문 인덱스](docs/supporting-documents-index-20261002.csv). 부분검증 항목은 전체 합격을 의미하지 않습니다.
 - 운영 설정과 배포: [운영 배포 체크리스트](PRODUCTION_DEPLOYMENT_CHECKLIST.md).
+- 최신 운영 반영 결과: [2026-10-03 배포 기록](DEPLOYMENT_REPORT_20261003.md). 두 서버 Git 반영, 마이그레이션/캐시 명령 및 실제 계정 4종의 Chrome 검수 완료. HTTPS와 전체 기능 인수는 별도 미완료 항목입니다.
 - 검증: `php artisan test`. `phpunit.xml`은 테스트 전용 DB `newme9markte_testing`을 사용합니다.
 - 운영 설정 사전 검사: `php artisan deployment:check`. 실제 PG 미구현 상태에서는 전체 오픈 검사가 실패합니다. 승인된 결제 중지 배포만 `--restricted`로 검사하며, 서버 실검수와 외부 연동 확인은 별도입니다.
 - 원장/정산 일관성 읽기 전용 검사: `php artisan commerce:audit --json`. 근거 없는 과거 스냅샷을 자동 생성하지 않으며, 검토 필요 사항도 종료 코드 1로 표시합니다.
 - 로컬 실행: `php artisan serve --host=127.0.0.1 --port=8001`.
 - 주요 진입점: `/shop-channel/gate`, `/channel/login`, `/admin/login`, `/shop-monitor/login`.
-- 최신 검증: 자동 테스트 230개/2,819개 검증 항목, 부운영자 32개 권한 조합, Shop 54개 화면 조합. 이는 전체 사양 인수 및 운영 무장애 보증을 의미하지 않습니다.
+- 최신 검증: 자동 테스트 231개/2,829개 검증 항목, 부운영자 32개 권한 조합, Shop 54개 로컬 화면 조합 및 운영 42개 경로 방문. 이는 전체 사양 인수 및 운영 무장애 보증을 의미하지 않습니다.
 - 결제: 실제 PG 미선정. `SHOP_PAYMENT_DRIVER=disabled`로 주문 결제를 차단합니다. 모의 결제는 `local`/`testing`에서만 허용합니다. PG 구분 스냅샷은 정산 정책을 보존하며 실제 승인 연동을 대신하지 않습니다.
 
 ## 원본 프로젝트 문서
