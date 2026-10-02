@@ -1,168 +1,43 @@
-{{-- This is the HTML Order Invoice. This page is rendered by viewOrderInvoice() method inside Admin/OrderController.php --}}
-
-
-
-<link href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css" rel="stylesheet" id="bootstrap-css">
-<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
-<script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
-<!------ Include the above in your HEAD tag ---------->
-
-<div class="container">
-    <div class="row">
-        <div class="col-xs-12">
-    		<div class="invoice-title">
-    			<h2>Invoice</h2>
-                <h3 class="pull-right">
-                    Order # {{ $orderDetails['id'] }}
-
-                    {{-- Laravel barcode/QR code generation package (to show barcodes/QR codes for both Product ID and Product Code): https://github.com/milon/barcode --}} 
-                    @php
-                        echo DNS1D::getBarcodeHTML($orderDetails['id'], 'C39');       // This is the product `id` Barcode
-                        // echo DNS2D::getBarcodeHTML($orderDetails['id'], 'QRCODE'); // This is the product `id` QR code
-                    @endphp
-                </h3>
-    		</div>
-    		<hr>
-    		<div class="row">
-    			<div class="col-xs-6">
-    				<address>
-    				    <strong>Billed To:</strong><br>
-    					{{ $userDetails['name'] }}<br>
-
-                        @if (!empty($userDetails['address']))
-                            {{ $userDetails['address'] }}<br>
-                        @endif
-                        @if (!empty($userDetails['city']))
-                            {{ $userDetails['city'] }}<br>
-                        @endif
-                        @if (!empty($userDetails['state']))
-                            {{ $userDetails['state'] }}<br>
-                        @endif
-                        @if (!empty($userDetails['country']))
-                            {{ $userDetails['country'] }}<br>
-                        @endif
-                        @if (!empty($userDetails['pincode']))
-                            {{ $userDetails['pincode'] }}<br>
-                        @endif
-
-                        {{ $userDetails['mobile'] }}<br>
-    				</address>
-    			</div>
-    			<div class="col-xs-6 text-right">
-    				<address>
-        			    <strong>Shipped To:</strong><br>
-                        {{ $orderDetails['name'] }}<br>
-                        {{ $orderDetails['address'] }}<br>
-                        {{ $orderDetails['city'] }}, {{ $orderDetails['state'] }}<br>
-                        {{ $orderDetails['country'] }}-{{ $orderDetails['pincode'] }}<br>
-                        {{ $userDetails['mobile'] }}<br>
-    				</address>
-    			</div>
-    		</div>
-    		<div class="row">
-    			<div class="col-xs-6">
-    				<address>
-    					<strong>Payment Method:</strong><br>
-                        {{ $orderDetails['payment_method'] }}
-    				</address>
-    			</div>
-    			<div class="col-xs-6 text-right">
-    				<address>
-    					<strong>Order Date:</strong><br>
-    					{{ date('Y-m-d h:i:s', strtotime($orderDetails['created_at'])) }}<br><br>
-    				</address>
-    			</div>
-    		</div>
-    	</div>
-    </div>
-    
-    <div class="row">
-    	<div class="col-md-12">
-    		<div class="panel panel-default">
-    			<div class="panel-heading">
-    				<h3 class="panel-title"><strong>Order summary</strong></h3>
-    			</div>
-    			<div class="panel-body">
-    				<div class="table-responsive">
-    					<table class="table table-condensed">
-    						<thead>
-                                <tr>
-        							<td><strong>Product Code</strong></td>
-        							<td class="text-center"><strong>Size</strong></td>
-        							<td class="text-center"><strong>Color</strong></td>
-        							<td class="text-center"><strong>Price</strong></td>
-        							<td class="text-center"><strong>Quantity</strong></td>
-        							<td class="text-right"><strong>Totals</strong></td>
-                                </tr>
-    						</thead>
-    						<tbody>
-
-
-                                {{-- Calculate the Subtotal --}}
-                                @php
-                                    $subTotal = 0;
-                                @endphp
-
-                                @foreach ($orderDetails['orders_products'] as $product)
-                                    <tr>
-                                        <td>
-                                            {{ $product['product_code'] }}
-
-                                            {{-- Laravel barcode/QR code generation package (to show barcodes/QR codes for both Product ID and Product Code): https://github.com/milon/barcode --}} 
-                                            @php
-                                                echo DNS1D::getBarcodeHTML($product['product_code'], 'C39');       // This is the product `product_code` Barcode
-                                                // echo DNS2D::getBarcodeHTML($product['product_code'], 'QRCODE'); // This is the product `product_code` QR code
-                                            @endphp
-                                        </td>
-                                        <td class="text-center">{{ $product['product_size'] }}</td>
-                                        <td class="text-center">{{ $product['product_color'] }}</td>
-                                        <td class="text-center">INR {{ $product['product_price'] }}</td>
-                                        <td class="text-center">{{ $product['product_qty'] }}</td>
-                                        <td class="text-right">INR {{ $product['product_price'] * $product['product_qty'] }}</td>
-                                    </tr>
-
-                                    {{-- Continue: Calculate the Subtotal --}}
-                                    @php
-                                        $subTotal = $subTotal + ($product['product_price'] * $product['product_qty'])
-                                    @endphp
-                                @endforeach
-
-                                <tr>
-                                    <td class="thick-line"></td>
-                                    <td class="thick-line"></td>
-                                    <td class="thick-line"></td>
-                                    <td class="thick-line"></td>
-                                    <td class="thick-line text-right"><strong>Subtotal</strong></td>
-                                    <td class="thick-line text-right">INR {{ $subTotal }}</td>
-                                </tr>
-                                <tr>
-                                    <td class="no-line"></td>
-                                    <td class="no-line"></td>
-                                    <td class="no-line"></td>
-                                    <td class="no-line"></td>
-                                    <td class="no-line text-right"><strong>Shipping Charges</strong></td>
-                                    <td class="no-line text-right">INR 0</td>
-                                </tr>
-                                <tr>
-                                    <td class="no-line"></td>
-                                    <td class="no-line"></td>
-                                    <td class="no-line"></td>
-                                    <td class="no-line"></td>
-                                    <td class="no-line text-right"><strong>Grand Total</strong></td>
-                                    <td class="no-line text-right">
-                                        <strong>INR {{ $orderDetails['grand_total'] }}</strong>
-                                        <br>
-
-                                        @if ($orderDetails['payment_method'] == 'COD')
-                                            <font color=red>(Already Paid)</font>
-                                        @endif
-                                    </td>
-                                </tr>
-    						</tbody>
-    					</table>
-    				</div>
-    			</div>
-    		</div>
-    	</div>
-    </div>
-</div>
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Me9 주문명세서 {{ $order->id }}</title>
+<style>
+@font-face{font-family:Me9Invoice;src:url("{{ $pdf ? 'file://'.public_path('master_assets/css/font/NanumGothic-Regular.ttf') : asset('master_assets/css/font/NanumGothic-Regular.ttf') }}") format("truetype");font-weight:normal}
+@font-face{font-family:Me9Invoice;src:url("{{ $pdf ? 'file://'.public_path('mypage_assets/css/font/NanumGothic-Bold.ttf') : asset('mypage_assets/css/font/NanumGothic-Bold.ttf') }}") format("truetype");font-weight:bold}
+@page{margin:30px}
+body{font-family:Me9Invoice,sans-serif;color:#222;font-size:12px;line-height:1.6;margin:0;padding:24px}
+h1{font-size:24px;margin:18px 0}h2{font-size:15px;margin:20px 0 10px}.brand{font-size:18px;color:#087f76}
+table{width:100%;border-collapse:collapse;table-layout:fixed}th,td{border-bottom:1px solid #ddd;padding:10px 6px;text-align:left;word-wrap:break-word;vertical-align:top}th{background:#f2f5f4}
+.number{text-align:right;white-space:nowrap}.totals{margin-top:24px;width:100%}.totals td:first-child{width:70%}.total{font-size:16px}.meta{color:#555}.address{margin:0 0 16px;word-wrap:break-word}thead{display:table-header-group}tr{page-break-inside:avoid}
+@media(max-width:600px){body{padding:16px;font-size:11px}th,td{padding:8px 4px}.number{white-space:normal}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<div class="brand">Me9 market</div>
+<h1>주문명세서</h1>
+<div class="meta">주문번호 Me9-{{ str_pad((string) $order->id, 8, '0', STR_PAD_LEFT) }} · {{ $order->created_at?->format('Y-m-d H:i') }}</div>
+<h2>주문자</h2>
+<p class="address">{{ $order->buyer_name ?: $order->name }}<br>{{ $order->buyer_mobile ?: $order->mobile }}<br>{{ $order->email }}</p>
+<h2>배송정보</h2>
+<p class="address">{{ $order->name }} · {{ $order->mobile }}<br>({{ $order->pincode }}) {{ $order->address }} {{ $order->city }} {{ $order->state }}<br>{{ $order->delivery_memo }}</p>
+<table>
+<thead><tr><th style="width:42%">상품 / 옵션</th><th style="width:10%">수량</th><th style="width:23%">상품금액</th><th style="width:25%">상태</th></tr></thead>
+<tbody>
+@foreach($items as $row)
+<tr><td>{{ $row['item']->product_name }}<br>{{ $row['item']->product_code }} · {{ $row['item']->product_size }}</td><td class="number">{{ number_format($row['item']->product_qty) }}</td><td class="number">{{ number_format($row['amounts']['paid_line_total']) }}원</td><td>{{ $row['item']->status_label }}</td></tr>
+@endforeach
+</tbody>
+</table>
+<table class="totals"><tbody>
+<tr><td>상품 합계</td><td class="number">{{ number_format($totals['paid_line_total']) }}원</td></tr>
+<tr><td>배송비</td><td class="number">{{ number_format($totals['shipping']) }}원</td></tr>
+<tr><td>쿠폰 할인</td><td class="number">{{ number_format($totals['coupon']) }}원</td></tr>
+<tr><td>사용 포인트</td><td class="number">{{ number_format($totals['points']) }}P</td></tr>
+<tr class="total"><td>주문 시 결제금액</td><td class="number">{{ number_format($totals['cash']) }}원</td></tr>
+</tbody></table>
+<p class="meta">결제수단: {{ $order->payment_method }} · {{ $order->payment_gateway }}</p>
+</body>
+</html>

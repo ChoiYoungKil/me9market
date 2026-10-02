@@ -174,20 +174,24 @@
                                                 {{ $shop->is_public == 1 ? '공개' : '비공개' }},
                                                 {{ $shop->is_member_only == 1 ? '회원용' : '일반용' }}
                                             </td>
-                                            <td class="t_c">00</td> {{-- 상품수 추후 연동 --}}
+                                            <td class="t_c">{{ number_format($shop->shop_channel_products_count) }}</td>
                                             <td class="t_c">
                                                 <div class="pop_btn" data-pop="pop1">
-                                                    {{-- QR 샘플 --}}
-                                                    <img src="{{ asset('channel_assets/images/sub/qr_sample1.jpg') }}"
+                                                    <img src="data:image/png;base64,{{ DNS2D::getBarcodePNG(route('shop.enter', $shop->channel_code), 'QRCODE', 6, 6) }}"
+                                                        alt="{{ $shop->channel_name }} 입장 QR 코드"
                                                         style="max-width: 60px; width:100%;">
                                                 </div>
                                             </td>
-                                            <td class="t_c">/{{ $shop->channel_code }}</td> {{-- 단축주소 추후 연동 --}}
+                                            <td class="t_c"><a href="{{ route('shop.enter', $shop->channel_code) }}" target="_blank" rel="noopener">{{ $shop->channel_code }}</a></td>
                                             <td class="t_c">
-                                                <button type="button" class="btn02 col2 copy-channel-url" data-copy-url="{{ route('shop.enter', $shop->channel_code) }}" style="border: none; cursor: pointer; padding: 0 10px;">복사</button>
+                                                <form action="{{ route('channel.shop.copy', $shop->id) }}" method="POST" style="display: inline;">
+                                                    @csrf
+                                                    <button type="submit" class="btn02 col2" onclick="return confirm('Shop 채널 정보를 복사하시겠습니까? 판매상품과 접속자 명단은 복사되지 않습니다.')">복사</button>
+                                                </form>
+                                                <button type="button" class="btn02 col2 copy-channel-url" data-copy-url="{{ route('shop.enter', $shop->channel_code) }}" style="border: none; cursor: pointer; padding: 0 10px;">주소복사</button>
                                                 <a href="{{ route('channel.shop_info', ['id' => $shop->id]) }}"
                                                     class="btn02 col7">관리</a>
-                                                <a href="{{ route('channel.shop_info', ['id' => $shop->id]) }}"
+                                                <a href="{{ route('shop.enter', $shop->channel_code) }}" target="_blank" rel="noopener"
                                                     class="btn02 col5">보기</a>
                                                 <form action="{{ route('channel.shop.delete', $shop->id) }}" method="POST" style="display: inline;">
                                                     @csrf

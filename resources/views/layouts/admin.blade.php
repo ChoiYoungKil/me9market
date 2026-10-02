@@ -73,11 +73,11 @@
             </div>
 
             <div class="r_bx">
-                <div class="name">[최고관리자] {{ Auth::user()->name ?? 'Admin' }}</div>
-                <a href="{{ route('logout') }}"
+                <div class="name">[{{ Auth::guard('admin')->user()?->type === 'vendor' ? '채널 관리자' : '관리자' }}] {{ Auth::guard('admin')->user()?->name }}</div>
+                <a href="{{ url('admin/logout') }}"
                     onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
                     class="btn icon1">로그아웃</a>
-                <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                <form id="logout-form" action="{{ url('admin/logout') }}" method="POST" style="display: none;">
                     @csrf
                 </form>
             </div>

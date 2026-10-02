@@ -1,24 +1,10 @@
-@extends('layouts.frontend')
-
+@extends('layouts.shop')
 @section('content')
-<div id="contents" style="padding: 100px 0; min-height: 600px; background:#f6f7f9;">
-    <div style="max-width:760px; margin:0 auto; background:#fff; border:1px solid #d9dee7; border-radius:8px; padding:36px; text-align:center;">
-        <div style="font-size:42px; font-weight:900; color:#087443;">완료</div>
-        <h1 style="margin:12px 0;">주문이 접수되었습니다</h1>
-        <p style="color:#667085;">주문상품은 채널관리자 주문관리와 발주사 발주대기 목록에 함께 표시됩니다.</p>
-
-        @if($order)
-            <div style="text-align:left; background:#f8fafc; border-radius:8px; padding:18px; margin:28px 0;">
-                <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span>주문번호</span><strong>Me9-{{ str_pad($order->id, 8, '0', STR_PAD_LEFT) }}</strong></div>
-                <div style="display:flex; justify-content:space-between; margin-bottom:10px;"><span>Shop 채널</span><strong>{{ $shop->channel_name }}</strong></div>
-                <div style="display:flex; justify-content:space-between;"><span>결제금액</span><strong>{{ number_format($order->grand_total) }}원</strong></div>
-            </div>
-        @endif
-
-        <div style="display:flex; justify-content:center; gap:10px;">
-            <a href="{{ route('shop.channel_main') }}" style="height:46px; display:inline-flex; align-items:center; padding:0 18px; border:1px solid #111827; border-radius:6px; color:#111827; text-decoration:none; font-weight:900;">채널 홈</a>
-            <a href="{{ route('distributor.orders.pending') }}" style="height:46px; display:inline-flex; align-items:center; padding:0 18px; background:#111827; color:#fff; border-radius:6px; text-decoration:none; font-weight:900;">발주대기 확인</a>
-        </div>
-    </div>
-</div>
+<div id="contents"><div class="order_completed"><div class="shop-inner">
+    <div class="txt_bx"><strong>{{ $order ? '주문이 ' : '주문 내역을 ' }}<span>{{ $order ? '정상적으로 접수' : '확인' }}</span>{{ $order ? '되었습니다.' : '해 주세요.' }}</strong></div>
+    @if($order)
+        <div class="shop-completion-info"><dl class="shop-meta"><dt>주문번호</dt><dd>Me9-Shop-{{ str_pad($order->id, 7, '0', STR_PAD_LEFT) }}</dd><dt>Shop 채널</dt><dd>{{ $shop->channel_name }}</dd><dt>주문자</dt><dd>{{ $order->name }}</dd></dl>@include('front.shop.partials.payment_summary')</div>
+    @endif
+    <div class="btn_bx"><a href="{{ $order ? route('front.shop.order.view', $order->id) : route('front.shop.order.confirm') }}">구매내역 확인</a><a href="{{ route('front.shop.cart.index') }}" class="col2">장바구니 이동</a><a href="{{ route('shop.channel_main') }}" class="col3">메인페이지 이동</a></div>
+</div></div></div>
 @endsection

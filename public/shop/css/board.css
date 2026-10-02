@@ -11,8 +11,17 @@
 #board .list_top .tab_bx li a.on {color: #000000;}
 #board .list_top .search_bx {position: absolute; width: 340px; right: 0; top: 0; height: 60px;}
 #board .list_top .search_bx input {height: 60px; background-color: #f7f7f7; padding: 0 60px 0 30px; border-radius: 30px; font-size: 16px; color: #444; border: none; width: 100%; outline: none;}
+#board .list_top .search_bx.type2 input {background-color: #fafafa}
 #board .list_top .search_bx input::placeholder {color: #aaaaaa;}
 #board .list_top .search_bx .s_btn {width: 60px; height: 60px; font-size: 0; right: 0; top: 0; background: url(../images/icon/search1.png) no-repeat center; position: absolute;}
+#board .list_top .search_bx.type2 .s_btn {background: url(../images/icon/search3.png) no-repeat center;}
+
+#board .type_bx {border-top: 2px solid #111111; padding-top: 17px; margin-bottom: 37px;}
+#board .type_bx ul {text-align: right; font-size: 0;}
+#board .type_bx ul li {display: inline-block; margin-left: 20px;}
+#board .type_bx ul li:first-child {margin-left: 0;}
+#board .type_bx ul li a {font-size: 14px; color: #aaaaaa; letter-spacing: -0.03em; word-break: keep-all; display: block; line-height: 20px;}
+#board .type_bx ul li a.on {color: #111111;}
 
 
 
@@ -24,7 +33,6 @@
 #board .list01 ul li.on a .num {font-size: 0;}
 #board .list01 ul li.on a .num::before {content: '공지'; font-size: 16px; color: #ffffff; font-weight: 500; letter-spacing: -0.03em; display: inline-block; padding: 0 15px; line-height: 40px; background-color: #3470f7; border-radius: 20px;}
 #board .list01 .subject {font-size: 22px; color: #000000; letter-spacing: -0.05em; word-break: keep-all; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipss; display:-webkit-box; width: 85%;}
-
 #board .list01 ul li.on a .subject {color: #000000; font-weight: 700;}
 #board .list01 .date {position: absolute; right: 20px; top: 0; height: 100%; display:flex; justify-content:left; align-items:center; table-layout:fixed; font-size: 16px; color: #aaaaaa; font-weight: 300;}
 
@@ -38,26 +46,78 @@
 #board .list02 ul li .a_bx {padding: 25px 30px; display: none;}
 #board .list02 ul li .a_bx img {max-width: 100%;}
 
+#board .list03 ul {display: flex; flex-flow: wrap;}
+#board .list03 ul li {width: calc(25% - 30px); margin-right: 40px; margin-top: 60px;}
+#board .list03 ul li:nth-child(4n) {margin-right: 0;}
+#board .list03 ul li:nth-child(-n+4) {margin-top: 0;}
+#board .list03 .con_bx {display: block;}
+#board .list03  .img_bx {height: 270px; box-sizing: border-box; border-radius: 10px; overflow: hidden; position: relative;}
+#board .list03  .img_bx::before {content: ''; width: 100%; height: 100%; position: absolute; top: 0; left: 0; border-radius: 10px; border: 1px dashed #eeeeee; z-index: 1; box-sizing: border-box;}
+#board .list03  .img_bx div {position: absolute; width: 100%; height: 100%; top: 0; left: 0; background-size: cover; background-repeat: no-repeat; background-position: center;}
+#board .list03  .txt_bx {margin-top: 26px;}
+#board .list03  .txt_bx .txt1 {font-size: 16px; color: #111111; letter-spacing: -0.03em; -webkit-line-clamp:1; -webkit-box-orient:vertical; overflow:hidden; text-overflow:ellipss; display:-webkit-box;}
+#board .list03  .txt_bx .txt2 {font-size: 16px; color: #3470f7; font-weight: 500; letter-spacing: -0.03em; margin-top: 5px;}
+#board .list03  .txt_bx .txt2 strong {font-size: 20px; font-weight: 800;}
+#board .list03  .txt_bx .txt3 {margin-top: 19px;}
+#board .list03  .txt_bx .txt3 .star {display: inline-block;}
+#board .list03  .txt_bx .txt3 .star span {display: inline-block; vertical-align: middle; width: 14px; height: 14px; background: url(../images/main/star.png) no-repeat center; margin-right: 2px;}
+#board .list03  .txt_bx .txt3 .star span:last-child {margin-right: 0;}
+#board .list03  .txt_bx .txt3 .star[data-star="1"] span:nth-child(1) {background: url(../images/main/star_on.png) no-repeat center;}
+#board .list03  .txt_bx .txt3 .star[data-star="2"] span:nth-child(-n+2) {background: url(../images/main/star_on.png) no-repeat center;}
+#board .list03  .txt_bx .txt3 .star[data-star="3"] span:nth-child(-n+3) {background: url(../images/main/star_on.png) no-repeat center;}
+#board .list03  .txt_bx .txt3 .star[data-star="4"] span:nth-child(-n+4) {background: url(../images/main/star_on.png) no-repeat center;}
+#board .list03  .txt_bx .txt3 .star[data-star="5"] span:nth-child(-n+5) {background: url(../images/main/star_on.png) no-repeat center;}
+#board .list03  .txt_bx .txt3 > p {display: inline-block; font-size: 12px; color: #aaaaaa; font-weight: 300; letter-spacing: -0.03em; margin-left: 5px;}
+
+#board .list04 {}
+
 #board .no_data {text-align: center; font-size: 16px; color: #aaaaaa; letter-spacing: -0.05em; word-break: keep-all; padding: 100px 0;}
+
+#board .tb_list01.two {display: flex; flex-flow: wrap; border-bottom: 1px solid #eeeeee; border-top: 1px solid #111;}
+#board .tb_list01 .tb_list_w {margin-bottom: 31px; box-sizing: border-box;}
+#board .tb_list01 .tb_list_w:last-child {margin-bottom: 0;}
+#board .tb_list01.two .tb_list_w:nth-child(1) {width: 61.403%; margin-bottom: 0;}
+#board .tb_list01.two .tb_list_w:nth-child(2) {width: 38.597%; margin-bottom: 0; background-color: #fafafa; padding: 0 20px;}
+#board .tb_list01 .tb_list_w table {width: 100%; table-layout: fixed; border-top: 1px solid #111;}
+#board .tb_list01.two .tb_list_w table {border-top: none;}
+#board .tb_list01 .tb_list_w table tbody th {width: 100px; box-sizing: border-box; padding: 5px 10px 5px 0; text-align: left; font-size: 16px; color: #666666; font-weight: 400; line-height: 26px; letter-spacing: -0.03em;}
+#board .tb_list01 .tb_list_w table tbody tr:first-child th {padding-top: 19px;}
+#board .tb_list01 .tb_list_w table tbody tr:last-child th {padding-bottom: 19px;}
+#board .tb_list01.two .tb_list_w:nth-child(2) table tbody tr th {width: 130px; color: #111111;}
+#board .tb_list01.two .tb_list_w:nth-child(2) table tbody tr:nth-last-child(2) th {padding-bottom: 18px;}
+#board .tb_list01.two .tb_list_w:nth-child(2) table tbody tr.last th {color: #3470f7; border-top: 1px solid #eee; padding-top: 18px;}
+#board .tb_list01 .tb_list_w table tbody td {font-size: 16px; color: #000000; line-height: 26px; letter-spacing: -0.03em; padding: 5px 0;}
+#board .tb_list01 .tb_list_w table tbody tr:first-child td {padding-top: 19px;}
+#board .tb_list01 .tb_list_w table tbody tr:last-child td {padding-bottom: 19px;}
+#board .tb_list01.two .tb_list_w:nth-child(2) table tbody tr td {text-align: right; color: #444444;}
+#board .tb_list01.two .tb_list_w:nth-child(2) table tbody tr:nth-last-child(2) td {padding-bottom: 18px;}
+#board .tb_list01.two .tb_list_w:nth-child(2) table tbody tr.last td {color: #3470f7; border-top: 1px solid #eee; padding-top: 18px;}
+#board .tb_list01.two .tb_list_w:nth-child(2) table tbody tr.last td strong {font-size: 22px; font-weight: 700;}
+
+#board .tb_list02 {background-color: #fafafa; padding: 8px 20px; border-radius: 10px; margin-top: 20px;}
+#board .tb_list02 table {width: 100%; table-layout: fixed;}
+#board .tb_list02 table tbody th {font-size: 16px; color: #444444; line-height: 26px; letter-spacing: -0.03em; padding: 7px 5px 7px 0; width: 100px; box-sizing: border-box; font-weight: 400; text-align: left; vertical-align: top;}
+#board .tb_list02 table tbody td {font-size: 16px; color: #444444; line-height: 26px; letter-spacing: -0.03em; padding: 7px 0; box-sizing: border-box; vertical-align: top;}
 
 
 
 /* 페이징 */
 #board .page_bx {font-size: 0; text-align: center; padding-top: 60px; padding-top: 60px;}
-#board .page_bx a {display: inline-block; vertical-align: middle; min-width: 30px; line-height: 40px; height: 40px;}
-#board .page_bx .num {font-size: 18px; color: #111111; margin: 0 4px; position: relative; z-index: 1;}
-#board .page_bx .num.on {color: #fff;}
-#board .page_bx .num.on::before {content: ''; width: 40px; height: 40px; background-color: #000000; border-radius: 50%; position: absolute; left: 50%; top: 50%; transform:translate(-50%, -50%); -webkit-transform:translate(-50%, -50%); z-index: -1;}
-#board .page_bx .page_first {background: url(../images/icon/page_first.png) no-repeat center; margin-right: 6px;}
-#board .page_bx .page_prev {background: url(../images/icon/page_prev.png) no-repeat center; margin-right: 12px;}
-#board .page_bx .page_next {background: url(../images/icon/page_next.png) no-repeat center; margin-left: 12px;}
-#board .page_bx .page_last {background: url(../images/icon/page_last.png) no-repeat center; margin-left: 6px;}
+#board .page_bx a {display: inline-block; vertical-align: middle; min-width: 42px; line-height: 42px; height: 42px; box-sizing: border-box; border-radius: 5px;}
+#board .page_bx .num {font-size: 16px; color: #cccccc; margin: 0 2px; position: relative; z-index: 1;}
+#board .page_bx .num.on {color: #fff; background-color: #cccccc;}
+#board .page_bx .page_first {background: url(../images/icon/page_first.png) no-repeat center #fff; margin-right: 4px; border: 1px solid #eeeeee;}
+#board .page_bx .page_prev {background: url(../images/icon/page_prev.png) no-repeat center #fff; margin-right: 2px; border: 1px solid #eeeeee;}
+#board .page_bx .page_next {background: url(../images/icon/page_next.png) no-repeat center #fff; margin-left: 2px; border: 1px solid #eeeeee;}
+#board .page_bx .page_last {background: url(../images/icon/page_last.png) no-repeat center #fff; margin-left: 4px; border: 1px solid #eeeeee;}
 
 
 
 /* 상세 */
 #board .view01 {border-top: 2px solid #111111; border-bottom: 1px solid #111111;}
+#board .view01.type2 {border-top: none;}
 #board .view01 .subject {text-align: center; padding: 42px 30px 36px; border-bottom: 1px solid #eeeeee;}
+#board .view01.type2 .subject {padding-top: 0;}
 #board .view01 .subject .on {margin: 0 auto 12px; width: 60px; line-height: 40px; background-color: #3470f7; border-radius: 20px; font-size: 16px; color: #ffffff; font-weight: 500; letter-spacing: -0.03em;}
 #board .view01 .subject strong {display: block; font-size: 30px; color: #000000; line-height: 40px; font-weight: 700; letter-spacing: -0.05em; word-break: keep-all;}
 #board .view01 .subject ul {font-size: 0; margin-top: 20px;}
@@ -195,7 +255,8 @@
 .chk03 li:last-child {margin-right: 0;}
 .chk03 li input {appearance: none; -webkit-appearance: none; -moz-appearance: none; visibility: hidden; position: absolute;}
 .chk03 li label {display: inline-block; font-size: 14px; color: #666666; letter-spacing: -0.03em; padding: 0 20px; line-height: 38px; border-radius: 20px; background-color: #f7f7f7; cursor: pointer; border: 1px solid #f7f7f7;}
-.chk03 li input:checked + label {border-color: #0076f7; background-color: #ffffff; color: #0076f7; font-weight: 700;}
+.chk03 li label span {font-weight: 700; color: #3470f7;}
+.chk03 li input:checked + label {border-color: #3470f7; background-color: #ffffff; color: #3470f7; font-weight: 700;}
 #board .write02 .tb01 table tbody td .r_btn_w {position: relative; padding-right: 130px; display: inline-block; box-sizing: border-box; min-height: 40px; width: 100%;}
 #board .write02 .tb01 table tbody td .btn01 {display: inline-block; max-width: 120px; width: 100%; text-align: center; line-height: 40px; background-color: #333333; border-radius: 5px; font-size: 14px; color: #ffffff; letter-spacing: -0.03em; box-sizing: border-box;}
 #board .write02 .tb01 table tbody td .btn01.col2 {background-color: #0076f7;}
@@ -265,6 +326,11 @@
 #sub .txt_search01 input {width: 100%; height: 40px; border: none; outline: none; font-size: 14px; color: #111; padding: 0;}
 #sub .txt_search01 input::placeholder {color: #aaaaaa;}
 
+#sub .trackingNum_bx {display: flex; flex-flow: wrap;}
+#sub .trackingNum_bx input {box-sizing: border-box;}
+#sub .trackingNum_bx .num1 {width: 170px!important; margin-right: 10px;}
+#sub .trackingNum_bx .num2 {width: calc(100% - 180px)!important;}
+
 
 
 /* 하단 버튼 */
@@ -284,9 +350,12 @@
 	/* 리스트 */
     #board .list01 .subject {-webkit-transition: all 0.3s; -moz-transition: all 0.3s; transition: all 0.3s;}
     #board .list01 ul li a:hover .subject {text-decoration: underline; text-underline-offset : 3px; text-decoration-thickness: 2px; color: #3470f7;}
-    
+
     #board .list02 ul li .q_bx .subject {-webkit-transition: all 0.3s; -moz-transition: all 0.3s; transition: all 0.3s;}
     #board .list02 ul li .q_bx:hover .subject {text-decoration: underline; text-underline-offset : 3px; text-decoration-thickness: 2px; color: #3470f7;}
+
+    #board .list03 .img_bx div {-webkit-transition: transform 0.3s; -moz-transition: transform 0.3s; transition: transform 0.3s;}
+    #board .list03 .con_bx:hover .img_bx div {transform: scale(1.1);}
 
 
 
@@ -306,10 +375,14 @@
     #board .list_top .tab_bx li a {font-size: 12px;}
     #board .list_top .search_bx {max-width: 240px; height: 40px;}
     #board .list_top .search_bx input {height: 40px; font-size: 12px; padding: 0 40px 0 15px;}
-    #board .list_top .search_bx .s_btn {width: 40px; height: 40px; background-size: 15px auto;}
-    
-    
-    
+    #board .list_top .search_bx .s_btn {width: 40px; height: 40px; background-size: 15px auto!important;}
+
+    #board .type_bx {border-width: 1px; padding-top: 10px; margin-bottom: 20px;}
+    #board .type_bx ul li {margin-left: 10px;}
+    #board .type_bx ul li a {font-size: 12px; line-height: 15px;}
+
+
+
 	/* 리스트 */
     #board .list01 ul {border-width: 1px;}
     #board .list01 ul li a {height: 60px; padding: 0 105px 0 70px;}
@@ -317,27 +390,56 @@
     #board .list01 ul li.on a .num::before {font-size: 11px; line-height: 25px; padding: 0 10px;}
     #board .list01 .subject {font-size: 15px; line-height: 20px;}
     #board .list01 .date {font-size: 12px;}
-    
+
     #board .list02 ul {border-width: 1px;}
     #board .list02 ul li {border-width: 1px;}
     #board .list02 ul li .q_bx {padding: 17px 15px 17px 100px; min-height: 55px;}
     #board .list02 ul li .q_bx .type {left: 15px; font-size: 11px; width: 70px; line-height: 25px; top: 14px;}
     #board .list02 ul li .q_bx .subject {font-size: 15px; line-height: 20px;}
     #board .list02 ul li .a_bx {padding: 12px 15px;}
-    
+
+    #board .list03 ul li {width: calc(25% - 15px); margin-right: 20px; margin-top: 30px;}
+    #board .list03 .img_bx {padding-bottom: 100%; height: auto; border-radius: 5px;}
+    #board .list03 .img_bx::before {border-radius: 5px;}
+    #board .list03 .txt_bx {margin-top: 13px;}
+    #board .list03 .txt_bx .txt1 {font-size: 11px; line-height: 14px;}
+    #board .list03 .txt_bx .txt2 {font-size: 11px; margin-top: 2px;}
+    #board .list03 .txt_bx .txt2 strong {font-size: 13px;}
+    #board .list03 .txt_bx .txt3 {margin-top: 8px;}
+    #board .list03 .txt_bx .txt3 p {font-size: 11px;}
+    #board .list03 .txt_bx .txt3 .star span {width: 10px; height: 10px; background-size: 10px auto!important; margin-right: 1px;}
+
     #board .no_data {font-size: 12px; padding: 50px 0;}
+
+    #board .tb_list01 .tb_list_w {margin-bottom: 15px;}
+    #board .tb_list01 .tb_list_w table tbody th {font-size: 11px; line-height: 14px; width: 70px; padding-right: 5px;}
+    #board .tb_list01 .tb_list_w table tbody tr:first-child th {padding-top: 10px;}
+    #board .tb_list01 .tb_list_w table tbody tr:last-child th {padding-bottom: 10px;}
+    #board .tb_list01.two .tb_list_w:nth-child(2) table tbody tr th {width: 80px;}
+    #board .tb_list01.two .tb_list_w:nth-child(2) table tbody tr:nth-last-child(2) th {padding-bottom: 10px;}
+    #board .tb_list01.two .tb_list_w:nth-child(2) table tbody tr.last th {padding-top: 10px;}
+    #board .tb_list01 .tb_list_w table tbody td {font-size: 11px; line-height: 14px;}
+     #board .tb_list01 .tb_list_w table tbody tr:first-child td {padding-top: 10px;}
+    #board .tb_list01 .tb_list_w table tbody tr:last-child td {padding-bottom: 10px;}
+    #board .tb_list01.two .tb_list_w:nth-child(2) table tbody tr:nth-last-child(2) td {padding-bottom: 10px;}
+    #board .tb_list01.two .tb_list_w:nth-child(2) table tbody tr.last td {padding-top: 10px;}
+    #board .tb_list01.two .tb_list_w:nth-child(2) table tbody tr.last td strong {font-size: 15px;}
+
+    #board .tb_list02 {margin-top: 10px; padding: 5px 10px; border-radius: 5px;}
+    #board .tb_list02 table tbody th {font-size: 11px; line-height: 14px; width: 70px;}
+    #board .tb_list02 table tbody td {font-size: 11px; line-height: 14px;}
 
 
 
     /* 페이징 */
     #board .page_bx {padding-top: 30px;}
-    #board .page_bx a {min-width: 20px; line-height: 30px; height: 30px;}
-    #board .page_bx .num {font-size: 11px; margin: 0 3px;}
+    #board .page_bx a {min-width: 25px; line-height: 25px; height: 25px; border-radius: 3px;}
+    #board .page_bx .num {font-size: 11px; margin: 0 3px; margin: 0 1px;}
     #board .page_bx .num.on::before {width: 30px; height: 30px;}
-    #board .page_bx .page_first {background-size: auto 13px; margin-right: 3px;}
-    #board .page_bx .page_prev {background-size: auto 13px; margin-right: 6px;}
-    #board .page_bx .page_next {background-size: auto 13px; margin-left: 6px;}
-    #board .page_bx .page_last {background-size: auto 13px; margin-left: 3px;}
+    #board .page_bx .page_first {background-size: auto 6px; margin-right: 3px;}
+    #board .page_bx .page_prev {background-size: auto 6px; margin-right: 2px;}
+    #board .page_bx .page_next {background-size: auto 6px; margin-left: 2px;}
+    #board .page_bx .page_last {background-size: auto 6px; margin-left: 3px;}
 
 
 
@@ -369,7 +471,7 @@
     #board .agree_bx .con_bx .s_txt input {width: 16px; height: 16px; top: 2px; background-size: 9px auto!important;}
     #board .agree_bx .con_bx .s_txt .btn {line-height: 20px; font-size: 11px; width: 60px; border-radius: 3px;}
     #board .agree_bx .con_bx .h_txt {border-radius: 3px; padding: 8px 10px; max-height: 100px;}
-    
+
     #board .write01 {padding: 15px 15px 30px; border-radius: 15px;}
     #board .write01 .f_bx {padding: 15px; border-radius: 7px;}
     #board .write01 .f_bx .f_inner {width: calc(50% - 15px); margin-right: 30px;}
@@ -389,7 +491,7 @@
     #board .write01 .f_bx .f_w .spam_bx .l_txt {width: 90px; margin-right: 10px; border-radius: 3px; font-size: 12px; height: 40px;}
     #board .write01 .f_bx .f_w .spam_bx input {width: calc(100% - 100px)!important}
     #board .write01 .btm_btn {padding-top: 20px!important;}
-    
+
     #board .write02 .f_bx {margin-bottom: 25px;}
     #board .write02 .f_bx .f_inner.two .f_w {width: calc(50% - 7.5px); margin-right: 15px; margin-top: 15px;}
     #board .write02 .f_bx .f_w {padding: 15px; margin-bottom: 15px; border-radius: 5px;}
@@ -456,28 +558,28 @@
     #board .write02 .tb01 table tbody td .f_img .img_w {width: 90px; height: 68px;}
     #board .write02 .tb01 table tbody td .f_down {min-height: 30px; padding-right: 100px; max-width: 320px;}
     #board .write02 .tb01 table tbody td .f_down .btn01 {max-width: 95px;}
-    
+
     #board .write02 .agree_bx .con_bx {padding-top: 9px;}
     #board .write02 .agree_bx .con_bx .all_chk {padding: 0 0 8px;}
     #board .write02 .agree_bx .con_bx .all_chk .s_txt label {font-size: 12px;}
     #board .write02 .agree_bx .con_bx li .s_txt label {font-size: 12px;}
-    
+
     #board .write02 .r_txt_bx.type1 .l_f {width: calc(100% - 30px);}
     #board .write02 .r_txt_bx.type1 span {width: 30px; line-height: 30px;}
-    
+
     #sub .counter01 {height: 25px; width: 80px;}
     #sub .counter01 > div {line-height: 25px;}
     #sub .counter01 .num {font-size: 10px;}
     #sub .counter01 .m::before {width: 8px; height: 1px;}
     #sub .counter01 .p::before {width: 8px; height: 1px;}
     #sub .counter01 .p::after {width: 1px; height: 8px;}
-    
+
     #sub .datepicker01 {font-size: 12px; height: 30px; background-size: 12px auto; padding-right: 15px;}
-    
+
     #sub .datepicker_bx01 {height: 30px; padding: 0 15px;}
     #sub .datepicker_bx01 span {line-height: 30px; font-size: 12px; width: 40px;}
     #sub .datepicker_bx01 input {width: calc(50% - 20px);}
-    
+
     #sub .txt_search01 {height: 30px; padding-left: 85px;}
     #sub .txt_search01 select {font-size: 12px; height: 30px; width: 70px; background-size: 5px auto;}
     #sub .txt_search01 input {font-size: 12px; height: 30px;}
@@ -499,20 +601,26 @@
     #board .list_top .tab_bx {width: 100%; text-align: center; margin-bottom: 0;}
     #board .list_top .tab_bx li:nth-child(n) {margin: 0 10px 5px;}
     #board .list_top .search_bx {position: relative; max-width: 100%; top: auto; right: auto; width: 100%; margin-top: 10px;}
-    
-    
-    
+
+
+
 	/* 리스트 */
     #board .list01 ul li a {padding: 12px 15px; flex-flow: wrap; height: auto;}
     #board .list01 .num {display: none;}
     #board .list01 .subject {width: 100%; -webkit-line-clamp: 2;}
     #board .list01 ul li.on a .subject::before {content: '공지'; font-size: 10px; color: #fff; background-color: #3470f7; padding: 3px 7px; border-radius: 50px; margin-right: 5px; position: relative; top: -1px; font-weight: 400;}
     #board .list01 .date {width: 100%; position: relative; top: auto; right: auto; margin-top: 7px;}
-    
+
     #board .list02 ul li .q_bx {padding: 12px 15px; min-height: auto;}
     #board .list02 ul li .q_bx .type {position: relative; top: auto; left: auto; margin-bottom: 10px;}
     #board .list02 ul li .q_bx .subject {-webkit-line-clamp: 2;}
 
+    #board .list03 ul li:nth-child(n) {width: calc(50% - 10px); margin-right: 20px; margin-top: 30px;}
+    #board .list03 ul li:nth-child(2n) {margin-right: 0;}
+    #board .list03 ul li:nth-child(-n+2) {margin-top: 0;}
+
+    #board .tb_list01.two .tb_list_w:nth-child(1) {width: 100%;}
+    #board .tb_list01.two .tb_list_w:nth-child(2) {width: 100%; padding: 0 10px; margin-top: 10px;}
 
 
     /* 상세 */
@@ -524,7 +632,7 @@
     /* 작성 */
     #board .write01 .f_bx .f_inner:nth-child(n) {width: 100%; margin-bottom: 20px; margin-right: 0;}
     #board .write01 .f_bx .f_inner:last-child {margin-bottom: 0;}
-    
+
     #board .write02 .f_bx .f_inner.two .f_w:nth-child(n) {width: 100%; margin-right: 0; margin-top: 15px;}
     #board .write02 .f_bx .f_inner.two .f_w:first-child {margin-top: 0;}
 

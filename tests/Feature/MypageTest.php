@@ -572,7 +572,7 @@ class MypageTest extends TestCase
             ->assertDontSee('href="#" class="btn01" style="background-color: #000; border-color: #000;">검색', false);
     }
 
-    public function test_mypage_search_filters_and_review_submit_persist_data()
+    public function test_mypage_search_filters_and_review_requires_confirmed_purchase()
     {
         $user = User::factory()->create();
 
@@ -708,9 +708,9 @@ class MypageTest extends TestCase
                 'rating' => 4,
                 'review' => '마이페이지 리뷰 저장 테스트',
             ])
-            ->assertRedirect();
+            ->assertForbidden();
 
-        $this->assertDatabaseHas('ratings', [
+        $this->assertDatabaseMissing('ratings', [
             'user_id' => $user->id,
             'product_id' => $matchedProduct->id,
             'rating' => 4,

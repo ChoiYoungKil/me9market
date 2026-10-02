@@ -157,6 +157,10 @@
                                         <th class="w160"><span>배송지 주소</span></th>
                                         <td colspan="3" id="pop_info_recipient_address">[06151] 서울특별시 강남구 테헤란로 112233 (역삼동) 132435</td>
                                     </tr>
+                                    <tr>
+                                        <th class="w160"><span>배송 메모</span></th>
+                                        <td colspan="3" id="pop_info_delivery_memo">-</td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>

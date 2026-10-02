@@ -449,8 +449,39 @@ class ChannelRoutesTest extends TestCase
         $this->actingAs($subadmin, 'admin')->get('/channel/product/own')->assertForbidden();
         $this->actingAs($subadmin, 'admin')->get('/admin/products')->assertForbidden();
 
+        $account->update(['permissions' => ['settings']]);
+        $this->actingAs($subadmin, 'admin')->post('/channel/settings/sub-accounts/'.$account->id.'/update', ['permissions' => ['shop', 'product', 'order', 'settings']])->assertForbidden();
+        $this->actingAs($subadmin, 'admin')->post('/channel/settings/sub-accounts/store', [])->assertForbidden();
+        $this->actingAs($subadmin, 'admin')->post('/channel/settings/operation-stop', [])->assertForbidden();
+        $account->update(['permissions' => ['shop']]);
+
         $account->update(['ended_at' => now()->subDay()]);
         $this->actingAs($subadmin, 'admin')->get('/channel/shop/list')->assertForbidden();
+    }
+
+    public function test_all_32_subaccount_permission_combinations_guard_each_menu_group(): void
+    {
+        [$vendor] = $this->createSetup();
+        $subadmin = Admin::forceCreate(['name' => 'Matrix Manager', 'type' => 'subadmin', 'vendor_id' => $vendor->id,
+            'mobile' => '01055556666', 'email' => 'matrix@example.com', 'password' => bcrypt('StrongPass123'),
+            'confirm' => 'Yes', 'status' => 1]);
+        $account = ChannelSubAccount::create(['vendor_id' => $vendor->id, 'admin_id' => $subadmin->id,
+            'started_at' => now()->subDay(), 'ended_at' => now()->addDay(), 'permissions' => []]);
+        $groups = ['shop' => '/channel/shop/list', 'product' => '/channel/product/own',
+            'joint_purchase' => '/channel/joint-purchase/list', 'order' => '/channel/order/list', 'settings' => '/channel/settings/delivery'];
+        $this->actingAs($subadmin, 'admin');
+        for ($mask = 0; $mask < 32; $mask++) {
+            $permissions = [];
+            foreach (array_keys($groups) as $bit => $permission) {
+                if ($mask & (1 << $bit)) $permissions[] = $permission;
+            }
+            $account->update(['permissions' => $permissions]);
+            foreach ($groups as $permission => $url) {
+                $this->get($url)->assertStatus(in_array($permission, $permissions, true) ? 200 : 403);
+            }
+            $this->get('/admin/users')->assertForbidden();
+            $this->get('/channel/settings/sub-accounts')->assertForbidden();
+        }
     }
 
     public function test_authenticated_shop_routes()

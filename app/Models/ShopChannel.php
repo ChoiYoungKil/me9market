@@ -9,6 +9,8 @@ class ShopChannel extends Model
 {
     use HasFactory;
 
+    protected $hidden = ['password', 'admin_password', 'pg_merchant_id', 'pg_site_code', 'pg_client_key', 'pg_secret_key'];
+
     protected $fillable = [
         'vendor_id',
         'channel_code',

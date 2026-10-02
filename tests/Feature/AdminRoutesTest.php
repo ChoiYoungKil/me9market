@@ -196,6 +196,39 @@ class AdminRoutesTest extends TestCase
         $this->actingAs($vendorAdmin, 'admin')->get('/admin/update-vendor-details/bank')->assertStatus(200);
     }
 
+    public function test_dashboard_uses_real_confirmed_sales_and_scopes_vendor_data(): void
+    {
+        [$admin, $vendor, , , , $product, , , $user, $order, , $vendorAdmin] = $this->createSetup();
+        $item = OrdersProduct::create([
+            'order_id' => $order->id, 'user_id' => $user->id, 'vendor_id' => $vendor->id,
+            'admin_id' => $vendorAdmin->id, 'product_id' => $product->id,
+            'product_code' => $product->product_code, 'product_name' => 'Dashboard Own Product',
+            'product_color' => 'Black', 'product_size' => 'M', 'product_price' => 1200,
+            'product_qty' => 2, 'line_total' => 2400, 'status_code' => OrderItemStatus::CONFIRMED,
+            'item_status' => 'Confirmed', 'confirmed_at' => now(),
+        ]);
+        $otherVendor = Vendor::create(['name' => 'Dashboard Other Vendor', 'email' => 'dashboard-other@example.com',
+            'mobile' => '01099998888', 'status' => 1, 'commission' => 0, 'confirm' => 'Yes']);
+        $other = $item->replicate();
+        $other->fill(['vendor_id' => $otherVendor->id, 'product_name' => 'Dashboard Private Product', 'line_total' => 5000])->save();
+        $this->actingAs($vendorAdmin, 'admin')->get('/admin/dashboard')->assertOk()
+            ->assertViewHas('totalItems', 1)
+            ->assertViewHas('topProducts', fn ($rows) => $rows->count() === 1 && (int) $rows->sum('amount') === 2400)
+            ->assertViewHas('topCategories', fn ($rows) => (int) $rows->sum('amount') === 2400)
+            ->assertSee('Dashboard Own Product')->assertDontSee('Dashboard Private Product');
+        $this->actingAs($admin, 'admin')->get('/admin/dashboard')->assertOk()
+            ->assertViewHas('totalItems', 2)
+            ->assertViewHas('topCategories', fn ($rows) => (int) $rows->sum('amount') === 7400);
+    }
+
+    public function test_admin_logout_clears_the_admin_guard(): void
+    {
+        [$admin] = $this->createSetup();
+        $this->actingAs($admin, 'admin')->post('/admin/logout')->assertRedirect('/admin/login');
+        $this->assertGuest('admin');
+        $this->get('/admin/dashboard')->assertRedirect('/admin/login');
+    }
+
     public function test_admin_can_manage_order_managers_and_open_distributor_portal()
     {
         [$admin, $vendor, $section, $category, $brand, $product, $banner, $coupon, $user, $order] = $this->createSetup();
@@ -245,6 +278,11 @@ class AdminRoutesTest extends TestCase
             'return_address' => '서울특별시 강남구 테헤란로 123',
             'status' => 0,
         ]);
+
+        $this->actingAs($admin, 'admin')->post("/admin/order-managers/{$manager->id}/portal")->assertForbidden();
+        $this->withSession(['distributor_id' => $manager->id])->get(route('distributor.orders.pending'))
+            ->assertRedirect(route('distributor.login'));
+        $manager->refresh()->update(['status' => 1]);
 
         $this->actingAs($admin, 'admin')
             ->post("/admin/order-managers/{$manager->id}/portal")
@@ -394,12 +432,20 @@ class AdminRoutesTest extends TestCase
         $this->actingAs($vendorAdmin, 'admin')->post('/admin/update-order-item-status', [
             'order_item_id' => $ownItem->id,
             'order_item_status' => 'Shipped',
+            'item_courier_name' => 'CJ',
+            'item_tracking_number' => '123456789',
         ])->assertRedirect();
 
         $this->assertDatabaseHas('orders_products', [
             'id' => $ownItem->id,
-            'item_status' => 'Shipped',
+            'item_status' => OrderItemStatus::label(OrderItemStatus::SHIPPING),
+            'status_code' => OrderItemStatus::SHIPPING,
         ]);
+        $otherItem->update(['order_id' => $order->id]);
+        \App\Models\OrdersLog::forceCreate(['order_id' => $order->id, 'order_item_id' => $otherItem->id, 'order_status' => 'Private vendor status']);
+        $this->get("/admin/orders/{$order->id}")->assertOk()
+            ->assertDontSee('Other Vendor Product')->assertDontSee('Private vendor status')
+            ->assertViewHas('orderLog', fn ($logs) => collect($logs)->every(fn ($log) => $log['order_item_id'] === $ownItem->id));
     }
 
     public function test_admin_delete_routes_require_post_requests()

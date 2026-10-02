@@ -235,4 +235,34 @@ class CrossRoleIntegrationTest extends TestCase
             'tracking_number' => null,
         ]);
     }
+
+    public function test_distributor_access_period_is_checked_for_existing_sessions_and_portal(): void
+    {
+        $data = $this->createLinkedOrder('Period');
+        $distributor = $data['distributor'];
+        foreach ([['access_started_at' => now()->addHour(), 'access_ended_at' => now()->addDay()],
+            ['access_started_at' => now()->subDay(), 'access_ended_at' => now()->subMinute()]] as $period) {
+            $distributor->update($period);
+            $this->withSession(['distributor_id' => $distributor->id])->get(route('distributor.orders.pending'))
+                ->assertRedirect(route('distributor.login'));
+            $this->assertNull(session('distributor_id'));
+            $this->actingAs($data['channelAdmin'], 'admin')->post(route('channel.order.manager.portal', $distributor->id))->assertForbidden();
+            $this->actingAs($data['superAdmin'], 'admin')->post(route('admin.order_managers.portal', $distributor->id))->assertForbidden();
+        }
+        $distributor->update(['access_started_at' => now()->subHour(), 'access_ended_at' => now()->addHour()]);
+        $this->withSession(['distributor_id' => $distributor->id])->get(route('distributor.orders.pending'))->assertOk();
+    }
+
+    public function test_distributor_cannot_reopen_cancelled_orders_or_confirm_purchases(): void
+    {
+        $data = $this->createLinkedOrder('Terminal');
+        $item = $data['item'];
+        $item->setStatus(OrderItemStatus::CANCELLED);
+        $item->save();
+        $this->withSession(['distributor_id' => $data['distributor']->id])->postJson(route('distributor.order.update', $item->id), [
+            'courier' => 'CJ', 'tracking_no' => '123', 'status_code' => OrderItemStatus::SHIPPING,
+        ])->assertUnprocessable();
+        $this->postJson(route('distributor.order.update', $item->id), ['status_code' => OrderItemStatus::CONFIRMED])->assertUnprocessable();
+        $this->assertSame(OrderItemStatus::CANCELLED, $item->fresh()->status_code);
+    }
 }

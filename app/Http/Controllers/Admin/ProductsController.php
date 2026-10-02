@@ -434,16 +434,18 @@ class ProductsController extends Controller
 
     public function deleteAttribute($id)
     {
+        return \Illuminate\Support\Facades\DB::transaction(function () use ($id) {
         $admin = Auth::guard('admin')->user();
         $attribute = ProductsAttribute::whereKey($id)
             ->when($admin->type === 'vendor', function ($query) use ($admin) {
                 $query->whereHas('product', fn ($productQuery) => $productQuery->where('vendor_id', $admin->vendor_id));
             })
-            ->firstOrFail();
+            ->lockForUpdate()->firstOrFail();
 
         $attribute->delete();
 
         return redirect()->back()->with('success_message', '상품 속성이 성공적으로 삭제되었습니다!');
+        });
     }
 
     public function addImages(Request $request, $id) // $id는 URL에서 전달된 파라미터(슬러그)입니다.

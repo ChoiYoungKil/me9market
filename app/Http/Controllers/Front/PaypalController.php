@@ -68,7 +68,7 @@ class PaypalController extends Controller
     
     public function success(Request $request) {
         if (!Session::has('order_id')) { // 세션에 'order_id'가 없는 경우
-            return view('cart');
+            return $this->redirectToCart();
         }
 
 
@@ -167,8 +167,17 @@ class PaypalController extends Controller
             return view('front.paypal.paypal');
 
         } else { // 주문이 완료되지 않은 경우
-            return redirect('cart'); // 사용자를 장바구니(cart.blade.php) 페이지로 리다이렉트
+            return $this->redirectToCart();
         }
+    }
+
+    private function redirectToCart()
+    {
+        if (app(\App\Services\ShopChannelRuntime::class)->hasActiveChannelAccess()) {
+            return redirect()->route('front.shop.cart.index');
+        }
+
+        return redirect()->route(Auth::check() ? 'mypage.cart' : 'shop.gate');
     }
 
 }

@@ -30,8 +30,8 @@ class ChannelOrderController extends Controller
             $validator = Validator::make($data, [
                 'order_id' => 'required|exists:orders,id',
                 'status' => 'required|in:paid,ready_to_ship,shipping,delivered,confirmed,New,In Process,Shipped,Delivered,Confirmed',
-                'item_ids' => 'required|array', // Must select items
-                'item_ids.*' => 'exists:orders_products,id',
+                'item_ids' => 'required|array|min:1|max:500', // Must select items
+                'item_ids.*' => 'integer|distinct|exists:orders_products,id',
                 'courier_name' => 'nullable|string', // required_if:status,shipping removed for flexibility, but logic handles it
                 'tracking_number' => 'nullable|string',
             ]);
@@ -56,22 +56,23 @@ class ChannelOrderController extends Controller
                     return response()->json(['status' => false, 'message' => '배송 정보를 모두 입력해주세요.']);
                 }
 
+                $items = DB::transaction(function () use ($data, $vendor_id, $status) {
                 $items = $this->vendorItems($data['item_ids'], $vendor_id, (int) $data['order_id']);
                 if (! $this->containsAllRequestedItems($items, $data['item_ids'])) {
-                    return response()->json(['status' => false, 'message' => '선택된 상품이 없거나 권한이 없습니다.']);
+                    throw ValidationException::withMessages(['item_ids' => '선택된 상품이 없거나 권한이 없습니다.']);
                 }
 
+                $changedItems = $items->filter(fn ($item) => $item->normalized_status !== $status);
                 foreach ($items as $item) {
-                    $item->setStatus($status);
-
                     if ($status === OrderItemStatus::SHIPPING) {
                         $item->courier_name = $data['courier_name'];
                         $item->tracking_number = $data['tracking_number'];
                     }
 
-                    $this->applyStatusTimestamps($item, $status);
-                    $item->save();
+                    app(\App\Services\OrderFulfillmentService::class)->change($item, $status);
                 }
+                return $changedItems;
+                });
 
                 $this->handleStatusSms($vendor_id, $status, $items);
 
@@ -80,8 +81,11 @@ class ChannelOrderController extends Controller
 
                 return response()->json(['status' => true, 'message' => '주문 상품 상태가 업데이트되었습니다.']);
 
+            } catch (ValidationException $e) {
+                return response()->json(['status' => false, 'message' => $e->validator->errors()->first()], 422);
             } catch (\Exception $e) {
-                return response()->json(['status' => false, 'message' => '오류가 발생했습니다: '.$e->getMessage()]);
+                report($e);
+                return response()->json(['status' => false, 'message' => '주문 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.'], 500);
             }
         }
     }
@@ -98,9 +102,10 @@ class ChannelOrderController extends Controller
 
             $validator = Validator::make($data, [
                 'order_id' => 'required|exists:orders,id',
-                'item_ids' => 'required|array',
-                'reason' => 'required|string',
-                'detail_reason' => 'required|string',
+                'item_ids' => 'required|array|min:1|max:500',
+                'item_ids.*' => 'integer|distinct|exists:orders_products,id',
+                'reason' => 'required|string|max:1000',
+                'detail_reason' => 'required|string|max:3000',
             ]);
 
             if ($validator->fails()) {
@@ -127,11 +132,13 @@ class ChannelOrderController extends Controller
                 }
 
                 foreach ($items as $item) {
-                    // Check if claim already exists for this item to avoid duplicates (optional, strictly speaking)
-                    // For now, allow multiple claims if previous one was rejected or cancelled, but here we assume simple flow.
-
-                    // Create Claim
-                    OrderClaim::create([
+                    if (! in_array($item->normalized_status, [OrderItemStatus::PAID, OrderItemStatus::READY_TO_SHIP, OrderItemStatus::CANCEL_REQUESTED], true)) {
+                        throw ValidationException::withMessages(['item_ids' => '취소할 수 없는 주문 상태입니다.']);
+                    }
+                    $claim = OrderClaim::where('order_product_id', $item->id)->where('type', 'cancel')
+                        ->where('status', 'requested')->latest('id')->lockForUpdate()->first();
+                    if (! $claim) {
+                        OrderClaim::create([
                         'order_id' => $order->id,
                         'user_id' => $order->user_id ?? 0, // Fallback if guest order
                         'vendor_id' => $vendor_id,
@@ -139,13 +146,11 @@ class ChannelOrderController extends Controller
                         'type' => 'cancel',
                         'reason' => $data['reason'],
                         'detail_reason' => $data['detail_reason'],
-                        'status' => 'requested',
+                        'status' => 'completed',
                     ]);
 
-                    // 판매자 화면의 취소 처리는 요청 접수와 동시에 취소 완료 상태로 마감한다.
-                    $item->setStatus(OrderItemStatus::CANCELLED);
-                    $this->applyStatusTimestamps($item, OrderItemStatus::CANCELLED);
-                    $item->save();
+                    }
+                    app(\App\Services\OrderFulfillmentService::class)->change($item, OrderItemStatus::CANCELLED);
                 }
 
                 DB::commit();
@@ -153,10 +158,13 @@ class ChannelOrderController extends Controller
 
                 return response()->json(['status' => true, 'message' => '취소 처리가 완료되었습니다.']);
 
-            } catch (\Exception $e) {
-                DB::rollback();
-
-                return response()->json(['status' => false, 'message' => '오류가 발생했습니다: '.$e->getMessage()]);
+            } catch (ValidationException $e) {
+                DB::rollBack();
+                return response()->json(['status' => false, 'message' => $e->validator->errors()->first()], 422);
+            } catch (\Throwable $e) {
+                DB::rollBack();
+                report($e);
+                return response()->json(['status' => false, 'message' => '주문 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.'], 500);
             }
         }
     }
@@ -173,8 +181,9 @@ class ChannelOrderController extends Controller
 
             $validator = Validator::make($data, [
                 'order_id' => 'required|exists:orders,id',
-                'item_ids' => 'required|array',
-                'reason' => 'required|string',
+                'item_ids' => 'required|array|min:1|max:500',
+                'item_ids.*' => 'integer|distinct|exists:orders_products,id',
+                'reason' => 'required|string|max:1000',
                 // 'detail_reason' => 'required|string', // View might need to send this
             ]);
 
@@ -199,6 +208,9 @@ class ChannelOrderController extends Controller
                 }
 
                 foreach ($items as $item) {
+                    if (! OrderItemStatus::customerActionAllowed('return', $item->normalized_status)) {
+                        throw ValidationException::withMessages(['item_ids' => '반품 요청할 수 없는 주문 상태입니다.']);
+                    }
                     OrderClaim::create([
                         'order_id' => $order->id,
                         'user_id' => $order->user_id ?? 0,
@@ -219,10 +231,13 @@ class ChannelOrderController extends Controller
                 $this->handleStatusSms($vendor_id, OrderItemStatus::RETURN_REQUESTED, $items);
 
                 return response()->json(['status' => true, 'message' => '반품 요청이 접수되었습니다.']);
-            } catch (\Exception $e) {
-                DB::rollback();
-
-                return response()->json(['status' => false, 'message' => '오류가 발생했습니다: '.$e->getMessage()]);
+            } catch (ValidationException $e) {
+                DB::rollBack();
+                return response()->json(['status' => false, 'message' => $e->validator->errors()->first()], 422);
+            } catch (\Throwable $e) {
+                DB::rollBack();
+                report($e);
+                return response()->json(['status' => false, 'message' => '주문 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.'], 500);
             }
         }
     }
@@ -239,8 +254,9 @@ class ChannelOrderController extends Controller
 
             $validator = Validator::make($data, [
                 'order_id' => 'required|exists:orders,id',
-                'item_ids' => 'required|array',
-                'reason' => 'required|string',
+                'item_ids' => 'required|array|min:1|max:500',
+                'item_ids.*' => 'integer|distinct|exists:orders_products,id',
+                'reason' => 'required|string|max:1000',
             ]);
 
             if ($validator->fails()) {
@@ -264,6 +280,9 @@ class ChannelOrderController extends Controller
                 }
 
                 foreach ($items as $item) {
+                    if (! OrderItemStatus::customerActionAllowed('exchange', $item->normalized_status)) {
+                        throw ValidationException::withMessages(['item_ids' => '교환 요청할 수 없는 주문 상태입니다.']);
+                    }
                     OrderClaim::create([
                         'order_id' => $order->id,
                         'user_id' => $order->user_id ?? 0,
@@ -283,10 +302,13 @@ class ChannelOrderController extends Controller
                 DB::commit();
 
                 return response()->json(['status' => true, 'message' => '교환 요청이 접수되었습니다.']);
-            } catch (\Exception $e) {
-                DB::rollback();
-
-                return response()->json(['status' => false, 'message' => '오류가 발생했습니다: '.$e->getMessage()]);
+            } catch (ValidationException $e) {
+                DB::rollBack();
+                return response()->json(['status' => false, 'message' => $e->validator->errors()->first()], 422);
+            } catch (\Throwable $e) {
+                DB::rollBack();
+                report($e);
+                return response()->json(['status' => false, 'message' => '주문 처리에 실패했습니다. 잠시 후 다시 시도해 주세요.'], 500);
             }
         }
     }
@@ -301,7 +323,7 @@ class ChannelOrderController extends Controller
             'order_id' => 'required|integer|exists:orders,id',
             'item_ids' => 'required|array|min:1',
             'item_ids.*' => 'integer|exists:orders_products,id',
-            'action' => 'required|in:cancel_approve,cancel_reject,return_receive,return_complete,return_hold,return_withdraw,return_invoice,exchange_approve,exchange_hold_before,exchange_withdraw,exchange_receive,exchange_complete,exchange_hold_after,exchange_to_return,exchange_option,exchange_invoice',
+            'action' => ['required', \Illuminate\Validation\Rule::in(array_keys(\App\Support\OrderClaimActions::definitions()))],
             'reason' => 'nullable|string|max:1000',
             'courier_name' => 'required_if:action,return_invoice,exchange_invoice|nullable|string|max:100',
             'tracking_number' => 'required_if:action,return_invoice,exchange_invoice|nullable|string|max:100',
@@ -319,7 +341,7 @@ class ChannelOrderController extends Controller
                     ->where('vendor_id', $vendorId)
                     ->where('order_id', $data['order_id'])
                     ->with(['order', 'shopChannel', 'exchangeReplacement'])
-                    ->lockForUpdate()
+                    ->orderBy('id')->lockForUpdate()
                     ->get();
 
                 if ($items->count() !== count(array_unique($data['item_ids']))) {
@@ -355,7 +377,7 @@ class ChannelOrderController extends Controller
     {
         $action = $data['action'];
         $current = $item->normalized_status;
-        $definition = $this->claimActionDefinitions()[$action];
+        $definition = \App\Support\OrderClaimActions::definitions()[$action];
 
         if (! in_array($current, $definition['from'], true)) {
             throw ValidationException::withMessages([
@@ -384,13 +406,26 @@ class ChannelOrderController extends Controller
         }
 
         if ($action === 'exchange_option') {
+            $attributes = $item->product?->attributes ?? collect();
+            if ($attributes->isNotEmpty() && ! $attributes->contains(fn ($attribute) => (int) $attribute->status === 1 && $attribute->size === $data['option'])) {
+                throw ValidationException::withMessages(['option' => '판매 중인 옵션을 선택해 주세요.']);
+            }
+            $selected = $attributes->firstWhere('size', $data['option']);
+            if ($selected && abs((float) $selected->price_delta - (float) $item->option_price_adjustment) > 0.001) {
+                throw ValidationException::withMessages(['option' => '차액 결제가 필요한 옵션은 교환할 수 없습니다. 반품 후 새로 주문해 주세요.']);
+            }
             $item->product_size = $data['option'];
         }
 
         $isMetadataOnly = in_array($action, ['return_invoice', 'exchange_option', 'exchange_invoice'], true);
         $targetStatus = $isMetadataOnly ? $current : $definition['to'];
+        if ($action === 'cancel_reject') {
+            $targetStatus = in_array($item->claim_previous_status, [OrderItemStatus::PAID, OrderItemStatus::READY_TO_SHIP], true)
+                ? $item->claim_previous_status : OrderItemStatus::PAID;
+        }
         $item->setStatus($targetStatus);
         $item->save();
+        app(\App\Services\CustomerPointService::class)->reverseItem($item);
 
         $comment = $definition['label'];
         if (! empty($data['reason'])) {
@@ -414,7 +449,7 @@ class ChannelOrderController extends Controller
         }
 
         if ($action === 'exchange_to_return') {
-            OrderClaim::firstOrCreate(
+            OrderClaim::updateOrCreate(
                 [
                     'order_id' => $item->order_id,
                     'order_product_id' => $item->id,
@@ -432,33 +467,13 @@ class ChannelOrderController extends Controller
         }
     }
 
-    private function claimActionDefinitions(): array
-    {
-        return [
-            'cancel_approve' => ['from' => [OrderItemStatus::CANCEL_REQUESTED], 'to' => OrderItemStatus::CANCELLED, 'claim_status' => 'completed', 'label' => '취소 승인'],
-            'cancel_reject' => ['from' => [OrderItemStatus::CANCEL_REQUESTED], 'to' => OrderItemStatus::PAID, 'claim_status' => 'rejected', 'label' => '취소 거절'],
-            'return_receive' => ['from' => [OrderItemStatus::RETURN_REQUESTED, OrderItemStatus::RETURN_HOLD], 'to' => OrderItemStatus::RETURN_RECEIVED, 'claim_status' => 'received', 'label' => '반품 회수 완료'],
-            'return_complete' => ['from' => [OrderItemStatus::RETURN_RECEIVED, OrderItemStatus::RETURN_HOLD], 'to' => OrderItemStatus::RETURNED, 'claim_status' => 'completed', 'label' => '반품 확정'],
-            'return_hold' => ['from' => [OrderItemStatus::RETURN_REQUESTED, OrderItemStatus::RETURN_RECEIVED], 'to' => OrderItemStatus::RETURN_HOLD, 'claim_status' => 'held', 'label' => '반품 보류'],
-            'return_withdraw' => ['from' => [OrderItemStatus::RETURN_REQUESTED, OrderItemStatus::RETURN_HOLD], 'to' => OrderItemStatus::SHIPPING, 'claim_status' => 'withdrawn', 'label' => '반품 철회'],
-            'return_invoice' => ['from' => [OrderItemStatus::RETURN_REQUESTED, OrderItemStatus::RETURN_RECEIVED, OrderItemStatus::RETURN_HOLD], 'to' => OrderItemStatus::RETURN_REQUESTED, 'claim_status' => 'requested', 'label' => '반품 송장 수정'],
-            'exchange_approve' => ['from' => [OrderItemStatus::EXCHANGE_REQUESTED, OrderItemStatus::EXCHANGE_HOLD_BEFORE], 'to' => OrderItemStatus::EXCHANGE_APPROVED, 'claim_status' => 'approved', 'label' => '교환 승인'],
-            'exchange_hold_before' => ['from' => [OrderItemStatus::EXCHANGE_REQUESTED, OrderItemStatus::EXCHANGE_APPROVED], 'to' => OrderItemStatus::EXCHANGE_HOLD_BEFORE, 'claim_status' => 'held_before', 'label' => '교환 회수 전 보류'],
-            'exchange_withdraw' => ['from' => [OrderItemStatus::EXCHANGE_REQUESTED, OrderItemStatus::EXCHANGE_APPROVED, OrderItemStatus::EXCHANGE_HOLD_BEFORE], 'to' => OrderItemStatus::DELIVERED, 'claim_status' => 'withdrawn', 'label' => '교환 철회'],
-            'exchange_receive' => ['from' => [OrderItemStatus::EXCHANGE_APPROVED, OrderItemStatus::EXCHANGE_HOLD_BEFORE], 'to' => OrderItemStatus::EXCHANGE_RECEIVED, 'claim_status' => 'received', 'label' => '교환 회수 완료'],
-            'exchange_complete' => ['from' => [OrderItemStatus::EXCHANGE_RECEIVED, OrderItemStatus::EXCHANGE_HOLD_AFTER], 'to' => OrderItemStatus::EXCHANGED, 'claim_status' => 'completed', 'label' => '교환 확정'],
-            'exchange_hold_after' => ['from' => [OrderItemStatus::EXCHANGE_RECEIVED], 'to' => OrderItemStatus::EXCHANGE_HOLD_AFTER, 'claim_status' => 'held_after', 'label' => '교환 회수 후 보류'],
-            'exchange_to_return' => ['from' => [OrderItemStatus::EXCHANGE_RECEIVED, OrderItemStatus::EXCHANGE_HOLD_AFTER], 'to' => OrderItemStatus::RETURNED, 'claim_status' => 'converted_to_return', 'label' => '반품 전환'],
-            'exchange_option' => ['from' => [OrderItemStatus::EXCHANGE_REQUESTED, OrderItemStatus::EXCHANGE_APPROVED, OrderItemStatus::EXCHANGE_HOLD_BEFORE, OrderItemStatus::EXCHANGE_RECEIVED, OrderItemStatus::EXCHANGE_HOLD_AFTER], 'to' => OrderItemStatus::EXCHANGE_REQUESTED, 'claim_status' => 'requested', 'label' => '교환 옵션 변경'],
-            'exchange_invoice' => ['from' => [OrderItemStatus::EXCHANGE_APPROVED, OrderItemStatus::EXCHANGE_RECEIVED, OrderItemStatus::EXCHANGE_HOLD_AFTER], 'to' => OrderItemStatus::EXCHANGE_APPROVED, 'claim_status' => 'approved', 'label' => '교환 송장 수정'],
-        ];
-    }
-
     private function createExchangeReplacement(OrdersProduct $item): OrdersProduct
     {
         if ($item->exchangeReplacement) {
             return $item->exchangeReplacement;
         }
+
+        app(\App\Services\OrderFulfillmentService::class)->transferExchangeStock($item);
 
         $replacement = $item->replicate();
         $replacement->replacement_for_order_product_id = $item->id;
@@ -476,6 +491,16 @@ class ChannelOrderController extends Controller
         $replacement->confirmed_at = null;
         $replacement->sms_count = 0;
         $replacement->sms_fee = 0;
+        $replacement->used_point_amount = 0;
+        $replacement->point_usage_snapshot = ['channel' => 0, 'me9' => 0];
+        $replacement->paid_line_total_snapshot = 0;
+        $replacement->shipping_amount_snapshot = 0;
+        $replacement->stock_deducted_qty = 0;
+        $replacement->stock_attribute_id = null;
+        $replacement->attribute_stock_deducted_qty = 0;
+        $replacement->financial_reversed_at = null;
+        $replacement->refund_status = null;
+        $replacement->refund_cash_amount = 0;
         $replacement->setStatus(OrderItemStatus::READY_TO_SHIP);
         $replacement->save();
 
@@ -495,6 +520,8 @@ class ChannelOrderController extends Controller
             ->with(['order', 'shopChannel'])
             ->where('vendor_id', $vendorId)
             ->where('order_id', $orderId)
+            ->orderBy('id')
+            ->lockForUpdate()
             ->get();
     }
 
@@ -520,36 +547,7 @@ class ChannelOrderController extends Controller
 
     private function handleStatusSms(int $vendorId, string $status, $items): void
     {
-        $this->debitLegacyStatusSmsPoints($vendorId, $status, $items);
         $this->sendTemplateStatusSms($status, $items);
-    }
-
-    private function debitLegacyStatusSmsPoints(int $vendorId, string $status, $items): void
-    {
-        if (! in_array($status, [OrderItemStatus::SHIPPING, OrderItemStatus::DELIVERED], true)) {
-            return;
-        }
-
-        $itemsByChannel = $items
-            ->filter(fn ($item) => ! empty($item->shop_channel_id))
-            ->groupBy('shop_channel_id');
-
-        foreach ($itemsByChannel as $shopChannelId => $channelItems) {
-            $transaction = app(ChannelPointService::class)->recordSmsDebit(
-                $vendorId,
-                1,
-                20,
-                (int) $shopChannelId,
-                OrderItemStatus::label($status).' 안내 문자 발송'
-            );
-
-            if ($transaction) {
-                $item = $channelItems->first();
-                $item->sms_count = (int) $item->sms_count + 1;
-                $item->sms_fee = (int) $item->sms_fee + abs((int) $transaction->points);
-                $item->save();
-            }
-        }
     }
 
     private function sendTemplateStatusSms(string $status, $items): void

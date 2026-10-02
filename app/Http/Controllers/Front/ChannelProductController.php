@@ -503,6 +503,7 @@ class ChannelProductController extends Controller
                 'value' => $option->size,
                 'sku' => $option->sku,
                 'price' => (float) ($option->price ?? $product->product_price),
+                'price_adjustment' => $option->price_delta,
                 'stock' => (int) $option->stock,
             ];
         })->values();
@@ -901,20 +902,23 @@ class ChannelProductController extends Controller
         $data = $this->validateBaseProduct($request, true);
         $this->validateAdditionalImageLimit($request);
 
-        $product = new Product();
-        $this->fillBaseProduct($product, $data, $admin);
-        $product->product_code = $data['product_code'];
-        $product->vendor_id = $admin->vendor_id;
-        $product->admin_id = $admin->id;
-        $product->admin_type = 'vendor';
-        $product->parent_id = 0;
-        $product->is_featured = 'No';
-        if (\Illuminate\Support\Facades\Schema::hasColumn('products', 'is_bestseller')) {
-            $product->is_bestseller = 'No';
-        }
-        $product->partial_approved = 'Approved';
-        $product->save();
-        $this->syncProductOptions($product, $request);
+        $product = \Illuminate\Support\Facades\DB::transaction(function () use ($data, $admin, $request) {
+            $product = new Product();
+            $this->fillBaseProduct($product, $data, $admin);
+            $product->product_code = $data['product_code'];
+            $product->vendor_id = $admin->vendor_id;
+            $product->admin_id = $admin->id;
+            $product->admin_type = 'vendor';
+            $product->parent_id = 0;
+            $product->is_featured = 'No';
+            if (\Illuminate\Support\Facades\Schema::hasColumn('products', 'is_bestseller')) {
+                $product->is_bestseller = 'No';
+            }
+            $product->partial_approved = 'Approved';
+            $product->save();
+            $this->syncProductOptions($product, $request);
+            return $product;
+        });
         $this->storeProductDetailAssets($product, $request);
         $this->storeUploadedProductImages($product, $request);
 
@@ -968,9 +972,12 @@ class ChannelProductController extends Controller
 
         $data = $this->validateBaseProduct($request, false, $product->id);
         $this->validateAdditionalImageLimit($request, $product);
-        $this->fillBaseProduct($product, $data, $admin);
-        $product->save();
-        $this->syncProductOptions($product, $request);
+        \Illuminate\Support\Facades\DB::transaction(function () use ($product, $data, $admin, $request) {
+            $product->refresh();
+            $this->fillBaseProduct($product, $data, $admin);
+            $product->save();
+            $this->syncProductOptions($product, $request);
+        });
         $this->storeProductDetailAssets($product, $request);
         $this->storeUploadedProductImages($product, $request);
 
@@ -1053,7 +1060,7 @@ class ChannelProductController extends Controller
             'option_skus' => 'nullable|array|max:50',
             'option_skus.*' => 'nullable|string|max:120',
             'option_prices' => 'nullable|array|max:50',
-            'option_prices.*' => 'nullable|numeric|min:0',
+            'option_prices.*' => 'nullable|numeric|between:-99999999,99999999',
             'option_stocks' => 'nullable|array|max:50',
             'option_stocks.*' => 'nullable|integer|min:0',
             'option_statuses' => 'nullable|array|max:50',
@@ -1597,7 +1604,7 @@ class ChannelProductController extends Controller
         $product->category_id = $data['category_id'];
         $product->brand_id = $data['brand_id'];
         $product->product_name = $data['product_name'];
-        $product->product_color = strtolower($data['product_color'] ?: '#000000');
+        $product->product_color = strtolower(($data['product_color'] ?? '') ?: '#000000');
         $product->product_price = $data['product_price'];
         $product->product_discount = $data['product_discount'] ?? 0;
         $product->product_weight = $data['product_weight'] ?? 1;
@@ -1682,7 +1689,7 @@ class ChannelProductController extends Controller
                 'option_type' => 'general',
                 'option_value' => '',
                 'sku' => '',
-                'price' => $product->product_price ?: 0,
+                'price' => 0,
                 'stock' => 0,
                 'status' => 1,
             ]];
@@ -1695,7 +1702,7 @@ class ChannelProductController extends Controller
                 'option_type' => $attribute->option_type ?: 'general',
                 'option_value' => $attribute->size,
                 'sku' => $attribute->sku,
-                'price' => $attribute->price,
+                'price' => $attribute->price_delta,
                 'stock' => $attribute->stock,
                 'status' => $attribute->status,
             ];
@@ -1739,6 +1746,7 @@ class ChannelProductController extends Controller
 
     private function syncProductOptions(Product $product, Request $request): void
     {
+        ProductsAttribute::where('product_id', $product->id)->orderBy('id')->lockForUpdate()->get();
         $optionValues = $request->input('option_values', []);
         $optionIds = $request->input('option_ids', []);
         $optionNames = $request->input('option_names', []);
@@ -1781,7 +1789,11 @@ class ChannelProductController extends Controller
                 : 'general';
             $attribute->size = $value;
             $attribute->sku = trim((string) ($optionSkus[$index] ?? '')) ?: $this->generateOptionSku($product, $index + 1);
-            $attribute->price = (float) ($optionPrices[$index] ?? $product->product_price ?? 0);
+            $attribute->price_adjustment = $attribute->option_type === 'price' ? (float) ($optionPrices[$index] ?? 0) : 0;
+            if ((float) $product->product_price + $attribute->price_adjustment < 0) {
+                throw ValidationException::withMessages(['option_prices.'.$index => '옵션 적용 가격은 0원 이상이어야 합니다.']);
+            }
+            $attribute->price = (float) $product->product_price + $attribute->price_adjustment;
             $attribute->stock = (int) ($optionStocks[$index] ?? 0);
             $attribute->status = (int) ($optionStatuses[$index] ?? 1);
             $attribute->save();
@@ -1793,7 +1805,9 @@ class ChannelProductController extends Controller
         if ($keptIds) {
             $deleteQuery->whereNotIn('id', $keptIds);
         }
-        $deleteQuery->delete();
+        foreach ($deleteQuery->get() as $attribute) {
+            $attribute->delete();
+        }
     }
 
     private function generateOptionSku(Product $product, int $index): string

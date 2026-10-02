@@ -22,9 +22,9 @@
                     </div>
                     <div class="tab_bx1">
                         <ul>
-                            <li><a href="{{ route('channel.shop_info') }}"><span>Shop채널 정보</span></a></li>
+                            <li><a href="{{ route('channel.shop_info', ['id' => $shopId]) }}"><span>Shop채널 정보</span></a></li>
                             <li><a href="{{ route('channel.shop_product01', ['shop_id' => $shopId]) }}" class="on"><span>판매상품</span></a></li>
-                            <li><a href="{{ route('channel.shop_community') }}"><span>커뮤니티</span></a></li>
+                            <li><a href="{{ route('channel.shop_community', ['shop_id' => $shopId]) }}"><span>커뮤니티</span></a></li>
                         </ul>
                     </div>
                     <div class="conbx">
@@ -41,7 +41,7 @@
                             </div>
                             @if(!empty($shop?->use_own_pg))
                                 <div class="alert" style="background:#fff7e6; border:1px solid #ffd591; color:#7a4b00; padding:12px 15px; margin-bottom:15px;">
-                                    자사 PG 사용 Shop 채널은 Ver3.0 기준에 따라 자사상품만 판매할 수 있으며, 공유상품/제휴상품 추가와 지급포인트 설정이 제한됩니다.
+                                    자사 PG 사용 Shop 채널은 자사상품만 판매할 수 있습니다. 제공 포인트가 있는 상품은 공용 PG로 결제됩니다.
                                 </div>
                             @endif
 
@@ -100,7 +100,7 @@
 
                                                 // 재고 표시
                                                 $stockDisplay = '수량제한없음';
-                                                if ($shopProduct->stock) {
+                                                if ($shopProduct->stock !== null) {
                                                     $stockDisplay = number_format($shopProduct->stock) . '개';
                                                     if ($shopProduct->purchase_limit) {
                                                         $stockDisplay .= '<br>(1회 ' . number_format($shopProduct->purchase_limit) . '개 제한)';
@@ -127,20 +127,7 @@
                                                 <td class="t_r">{{ number_format($shopProduct->selling_price) }}원</td>
                                                 <td class="t_r">{{ number_format($shopProduct->profit) }}원</td>
                                                 <td>
-                                                    <a href="{{ url()->current() }}" class="btn02 col5" onclick='openProductViewModal({
-                                                        "id": {{ $shopProduct->id }},
-                                                        "type_label": "{{ $productTypeLabel }}",
-                                                        "code": "{{ $product->product_code }}",
-                                                        "name": "{{ addslashes($product->product_name) }}",
-                                                        "category": "{{ addslashes($categoryPath) }}",
-                                                        "img": "{{ $imageUrl }}",
-                                                        "price_constraint": "{{ $constraintLabel }}",
-                                                        "profit_constraint": "{{ number_format($shopProduct->profit) }}원",
-                                                        "stock_text": "{!! strip_tags($stockDisplay) !!}",
-                                                        "purchase_limit": "{{ $shopProduct->purchase_limit ? number_format($shopProduct->purchase_limit).'개' : '제한없음' }}",
-                                                        "sales_period": "무기한",
-                                                        "selling_price": "{{ number_format($shopProduct->selling_price) }}"
-                                                    }); return false;'>보기</a>
+                                                    @include('channel.sub01.inc.product_view_button')
                                                     <button type="button" class="btn02 col1" onclick='updateProductStatus("{{ route("channel.product.status.update") }}", {{ $shopProduct->id }}, 1, "판매재개");'>판매재개</button>
                                                 </td>
                                             </tr>
@@ -169,106 +156,8 @@
                             <!-- 부분고유상품 -->
                             @include('channel.sub01.pop_shop_product_partial')
 
-                                            <div class="conbx">
-                                                <div class="con_w">
-                                                    <div class="ttl01">판매 상품 코드</div>
-
-                                                    <div class="tb01">
-                                                        <table>
-                                                            <colgroup>
-                                                                <col width="160px">
-                                                                <col width="">
-                                                            </colgroup>
-                                                            <tbody class="textL">
-                                                                <tr>
-                                                                    <th>판매 상품 코드</th>
-                                                                    <td>Me9-Shop-0032022</td>
-                                                                </tr>
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                    <br>
-                                                    <div class="list01">
-                                                        <ul>
-                                                            <li>
-                                                                <a href="{{ url()->current() }}">
-                                                                    <div class="img_bx"
-                                                                        style="background-image:url(../images/sub/thum01.jpg)">
-                                                                    </div>
-                                                                    <div class="txt_bx">
-                                                                        <p>대분류 &gt; 중분류 &gt; 소분류</p>
-                                                                        <strong>상품명 111111</strong>
-                                                                    </div>
-                                                                </a>
-                                                            </li>
-                                                        </ul>
-                                                        <!--<div class="no_data">등록된 데이터가 없습니다.</div>-->
-                                                    </div>
-                                                </div>
-
-                                                <div class="con_w">
-                                                    <div class="ttl01">상품 제약 조건</div>
-
-                                                    <div class="tb01">
-                                                        <table>
-                                                            <colgroup>
-                                                                <col width="160px">
-                                                                <col width="">
-                                                            </colgroup>
-                                                            <tbody class="textL">
-                                                                <tr>
-                                                                    <th>가격제약조건</th>
-                                                                    <td>1,500 원 ~ 5,000 원</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <th>이익분배조건</th>
-                                                                    <td>판매 개당 500 원</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <th>재고</th>
-                                                                    <td>20,000 개</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <th>구매제한수량</th>
-                                                                    <td>1회 구매시 100개 까지</td>
-                                                                </tr>
-                                                                <tr>
-                                                                    <th>상품 판매 기간</th>
-                                                                    <td>무기한</td>
-                                                                </tr>
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                </div>
-
-                                                <div class="con_w">
-                                                    <div class="ttl01">판매 설정 정보</div>
-
-                                                    <div class="tb01">
-                                                        <table>
-                                                            <colgroup>
-                                                                <col width="160px">
-                                                                <col width="">
-                                                            </colgroup>
-                                                            <tbody class="textL">
-                                                                <tr>
-                                                                    <th>판매 설정 금액</th>
-                                                                    <td>3,500원</td>
-                                                                </tr>
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- 하단버튼 -->
-                                            <div class="btm_btn mt10">
-                                                <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                            @include('channel.sub01.inc.product_view_popup')
+                            @include('channel.sub01.inc.base_product_popup')
                         </div>
                     </div>
                 </div>

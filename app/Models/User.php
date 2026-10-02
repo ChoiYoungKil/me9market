@@ -32,6 +32,10 @@ class User extends Authenticatable
         'country',
         'pincode',
         'type',
+        'marketing_opt_in',
+        'terms_accepted_at',
+        'terms_snapshot',
+        'notification_opt_in',
     ];
 
     /**
@@ -51,5 +55,9 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'marketing_opt_in' => 'boolean',
+        'terms_accepted_at' => 'datetime',
+        'terms_snapshot' => 'array',
+        'notification_opt_in' => 'boolean',
     ];
 }

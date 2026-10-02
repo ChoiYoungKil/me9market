@@ -48,6 +48,8 @@ class OrderManagerController extends Controller
             'phone' => 'nullable|string|max:50',
             'return_postcode' => 'nullable|string|max:20',
             'return_address' => 'nullable|string|max:255',
+            'access_started_at' => 'nullable|date',
+            'access_ended_at' => 'nullable|date|after_or_equal:access_started_at',
             'password' => ['required', 'confirmed', Password::min(12)->mixedCase()->letters()->numbers()],
         ]);
 
@@ -58,6 +60,8 @@ class OrderManagerController extends Controller
             'phone' => $data['phone'] ?? null,
             'return_postcode' => $data['return_postcode'] ?? null,
             'return_address' => $data['return_address'] ?? null,
+            'access_started_at' => $data['access_started_at'] ?? null,
+            'access_ended_at' => $data['access_ended_at'] ?? null,
             'password' => Hash::make($data['password']),
         ]);
 
@@ -76,6 +80,8 @@ class OrderManagerController extends Controller
             'phone' => 'nullable|string|max:50',
             'return_postcode' => 'nullable|string|max:20',
             'return_address' => 'nullable|string|max:255',
+            'access_started_at' => 'nullable|date',
+            'access_ended_at' => 'nullable|date|after_or_equal:access_started_at',
             'password' => ['nullable', 'confirmed', Password::min(12)->mixedCase()->letters()->numbers()],
         ]);
 
@@ -86,6 +92,8 @@ class OrderManagerController extends Controller
             'phone' => $data['phone'] ?? null,
             'return_postcode' => $data['return_postcode'] ?? null,
             'return_address' => $data['return_address'] ?? null,
+            'access_started_at' => $data['access_started_at'] ?? null,
+            'access_ended_at' => $data['access_ended_at'] ?? null,
         ];
 
         if (!empty($data['password'])) {
@@ -122,6 +130,8 @@ class OrderManagerController extends Controller
         }
 
         $manager = Distributor::findOrFail($id);
+
+        abort_unless($manager->canAccess(), 403);
 
         $request->session()->regenerate();
         Session::put('distributor_id', $manager->id);

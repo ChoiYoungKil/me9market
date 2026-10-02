@@ -25,6 +25,8 @@ class OrdersProduct extends Model
         'product_name',
         'product_color',
         'product_size',
+        'option_price_adjustment',
+        'claim_previous_status',
         'product_price',
         'supply_price',
         'selling_price',
@@ -42,6 +44,18 @@ class OrdersProduct extends Model
         'tracking_number',
         'commission',
         'settlement_status',
+        'payment_gateway_type',
+        'settlement_policy_snapshot',
+        'shipping_amount_snapshot',
+        'used_point_amount',
+        'point_usage_snapshot',
+        'paid_line_total_snapshot',
+        'stock_deducted_qty',
+        'stock_attribute_id',
+        'attribute_stock_deducted_qty',
+        'financial_reversed_at',
+        'refund_status',
+        'refund_cash_amount',
         'shipped_at',
         'delivered_at',
         'confirmed_at',
@@ -55,6 +69,13 @@ class OrdersProduct extends Model
     ];
 
     protected $casts = [
+        'settlement_policy_snapshot' => 'array',
+        'shipping_amount_snapshot' => 'decimal:2',
+        'used_point_amount' => 'integer',
+        'point_usage_snapshot' => 'array',
+        'stock_deducted_qty' => 'integer',
+        'financial_reversed_at' => 'datetime',
+        'refund_cash_amount' => 'decimal:2',
         'shipped_at' => 'datetime',
         'delivered_at' => 'datetime',
         'confirmed_at' => 'datetime',
@@ -116,9 +137,25 @@ class OrdersProduct extends Model
         return OrderItemStatus::label($this->normalized_status);
     }
 
+    public function getRefundStatusLabelAttribute(): string
+    {
+        return match ($this->refund_status) {
+            'mock_refunded' => '모의 환불 반영',
+            'pending_external' => 'PG 환불 대기',
+            'review_required' => '환불 근거 확인 필요',
+            'not_required' => '현금 환불 없음',
+            'reversed_original' => '원주문 환불 참조',
+            default => '환불 미처리',
+        };
+    }
+
     public function setStatus(string $status): void
     {
         $normalized = OrderItemStatus::normalize($status);
+        if (in_array($normalized, [OrderItemStatus::CANCEL_REQUESTED, OrderItemStatus::RETURN_REQUESTED, OrderItemStatus::EXCHANGE_REQUESTED], true)
+            && in_array($this->normalized_status, [OrderItemStatus::PAID, OrderItemStatus::READY_TO_SHIP, OrderItemStatus::SHIPPING, OrderItemStatus::DELIVERED], true)) {
+            $this->claim_previous_status = $this->normalized_status;
+        }
         $this->status_code = $normalized;
         $this->item_status = OrderItemStatus::label($normalized);
     }

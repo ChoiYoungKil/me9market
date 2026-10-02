@@ -1,119 +1,69 @@
 @extends('layouts.shop')
-
-@section('page_type', 'sub')
-
 @section('content')
 @php
     $product = $shopProduct->product;
     $price = $shopProduct->selling_price ?: $shopProduct->product_price;
-    $galleryImages = collect();
-    if ($product) {
-        if (!empty($product->product_image)) {
-            $galleryImages->push($product->product_image);
-        }
-        if ($product->relationLoaded('images')) {
-            foreach ($product->images as $image) {
-                if (!empty($image->image)) {
-                    $galleryImages->push($image->image);
-                }
-            }
-        }
-    }
-    $galleryImages = $galleryImages->filter()->unique()->values();
-    $mainImageName = $galleryImages->first();
-    $mainImageUrl = $mainImageName ? asset('front/images/product_images/large/' . $mainImageName) : asset('front/images/product_images/small/no-image.png');
+    $images = collect([$product->product_image])->merge($product->images->pluck('image'))->filter()->unique()->values();
+    $imageUrl = $images->first() ? asset('front/images/product_images/large/'.$images->first()) : asset('front/images/product_images/small/no-image.png');
+    $minimumQuantity = $product->purchase_limit_enabled ? max(1, (int) $product->purchase_min_qty) : 1;
+    $maximumQuantity = min($shopProduct->purchase_limit ?: 999, $shopProduct->stock ?? 999, $product->purchase_limit_enabled ? ($product->purchase_max_qty ?: 999) : 999);
 @endphp
-<style>
-    .shop-form-control {
-        width: 100%;
-        height: 44px;
-        border: 1px solid #cfd4dc;
-        border-radius: 6px;
-        padding: 0 10px;
-        box-sizing: border-box;
-    }
-</style>
-<div style="background: #f6f7f9; min-height: 100vh; padding-bottom: 50px;">
-    <div style="background: #111827; color: #fff; padding: 22px 32px;">
-        <div style="max-width: 1180px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center;">
-            <h1 style="margin: 0; font-size: 24px;">{{ $shop->channel_name }}</h1>
-            <a href="{{ route('shop.products_list') }}" style="color: #fff; text-decoration: none; font-weight: 800;">상품 목록</a>
+<div id="contents"><div class="product_details"><div class="shop-inner">
+    <div class="top_bx">
+        <div class="l_bx"><div class="img_bx"><div><img id="product-main-image" src="{{ $imageUrl }}" alt="{{ $product->product_name }}"></div></div>
+            <div class="shop-thumbnails">@foreach($images as $image)<button type="button" data-gallery-image="{{ asset('front/images/product_images/large/'.$image) }}" title="상품 이미지 {{ $loop->iteration }}"><img src="{{ asset('front/images/product_images/small/'.$image) }}" alt="상품 이미지 {{ $loop->iteration }}"></button>@endforeach</div>
+        </div>
+        <div class="r_bx"><div class="txt1">{{ $product->category_path }}<span>상품코드: {{ $product->product_code }}</span></div><h1 class="txt2">{{ $product->product_name }}</h1>
+            @include('shop.partials.rating')
+            <form action="{{ route('front.shop.cart.add') }}" method="POST" class="shop-purchase" data-price="{{ $price }}">
+                @csrf<input type="hidden" name="shop_product_id" value="{{ $shopProduct->id }}">
+                <label>옵션선택<select class="shop-control" name="option">
+                    @forelse($product->attributes->where('status', 1) as $attribute)<option value="{{ $attribute->size }}" data-price-adjustment="{{ $attribute->price_delta }}">{{ $attribute->size }}@if($attribute->price_delta != 0) ({{ $attribute->price_delta > 0 ? '+' : '' }}{{ number_format($attribute->price_delta) }}원)@endif</option>@empty<option value="기본옵션">기본옵션</option>@endforelse
+                </select></label>
+                @if($product->attributes->where('status', 1)->count() > 1)<button type="button" class="shop-btn small shop-option-add" data-add-option>선택 옵션 추가</button>@endif
+                <div class="shop-option-selections" data-option-selections></div>
+                <div class="shop-option-row"><div><label for="product-quantity">수량</label>
+                    <div class="shop-stepper" data-stepper><button type="button" data-step="-1" aria-label="수량 줄이기" title="수량 줄이기">−</button><input id="product-quantity" type="number" name="qty" value="{{ $minimumQuantity }}" min="{{ $minimumQuantity }}" max="{{ max($minimumQuantity, $maximumQuantity) }}" @disabled($maximumQuantity < $minimumQuantity) required><button type="button" data-step="1" aria-label="수량 늘리기" title="수량 늘리기">+</button></div>
+                </div><strong data-option-unit-price>{{ number_format($price) }}원</strong></div>
+                <p class="shop-stock">{{ $maximumQuantity < $minimumQuantity ? '주문 가능 수량 부족' : '주문 가능' }} / 최소 {{ $minimumQuantity }}개 ~ 최대 {{ $maximumQuantity }}개</p>
+                <div class="shop-purchase-total"><strong>총 상품 금액</strong><output data-price-total>{{ number_format($price * $minimumQuantity) }}원</output></div>
+                <div class="shop-actions"><button type="submit" class="shop-btn" @disabled($maximumQuantity < $minimumQuantity)>장바구니</button><button class="shop-btn primary" type="submit" name="buy_now" value="1" @disabled($maximumQuantity < $minimumQuantity)>바로 구매</button></div>
+            </form>
         </div>
     </div>
-
-    <main style="max-width: 1180px; margin: 28px auto; padding: 0 20px;">
-        @if(session('flash_message_success'))
-            <div style="background: #dcfae6; color: #087443; padding: 12px 16px; border-radius: 6px; margin-bottom: 16px;">{{ session('flash_message_success') }}</div>
+    <div class="shop-product-tabs" data-tabs>
+    <div class="shop-tab-buttons" role="tablist" aria-label="상품 정보">
+        <button id="detail-tab" role="tab" type="button" aria-controls="detail-panel" aria-selected="true">상세 정보</button>
+        <button id="sales-tab" role="tab" type="button" aria-controls="sales-panel" aria-selected="false" tabindex="-1">판매 정보</button>
+        <button id="inquiry-tab" role="tab" type="button" aria-controls="inquiry-panel" aria-selected="false" tabindex="-1">상품 Q&amp;A</button>
+    </div>
+    <section id="detail-panel" role="tabpanel" aria-labelledby="detail-tab" class="shop-section"><h2>상품 내용</h2>
+        @if($product->detail_display_type === 'image' && ($product->detail_pc_image || $product->detail_mobile_image))
+            <picture>@if($product->detail_mobile_image)<source media="(max-width:768px)" srcset="{{ asset('front/images/product_detail_images/'.$product->detail_mobile_image) }}">@endif<img src="{{ asset('front/images/product_detail_images/'.($product->detail_pc_image ?: $product->detail_mobile_image)) }}" alt="{{ $product->product_name }} 상세" style="max-width:100%; height:auto;" loading="lazy"></picture>
+        @else<div class="shop-detail-copy">{{ strip_tags($product->detail_text ?: $product->description ?: '상품 상세 설명이 준비 중입니다.') }}</div>@endif
+        @if(($reviews ?? collect())->isNotEmpty())
+            <h2>구매 후기</h2>
+            @foreach($reviews as $review)<article class="shop-review"><strong>{{ $review->rating }} / 5</strong><time>{{ $review->created_at?->format('Y-m-d') }}</time><p class="shop-detail-copy">{{ $review->review }}</p></article>@endforeach
         @endif
-
-        <div style="display: grid; grid-template-columns: minmax(280px, 0.9fr) minmax(320px, 1.1fr); gap: 24px;">
-            <div style="background: #fff; border: 1px solid #d9dee7; border-radius: 8px; padding: 24px;">
-                <div style="height: 360px; background: #eef1f5; border-radius: 6px; overflow:hidden;">
-                    <img src="{{ $mainImageUrl }}" alt="{{ $product->product_name ?? '상품 이미지' }}" style="display:block; width:100%; height:100%; object-fit:cover;">
-                </div>
-                @if($galleryImages->count() > 1)
-                    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:12px;">
-                        @foreach($galleryImages as $imageName)
-                            <div style="width:64px; height:64px; border:1px solid #d9dee7; border-radius:6px; overflow:hidden; background:#f2f4f7;">
-                                <img src="{{ asset('front/images/product_images/small/' . $imageName) }}" alt="{{ $product->product_name ?? '상품 이미지' }}" style="display:block; width:100%; height:100%; object-fit:cover;">
-                            </div>
-                        @endforeach
-                    </div>
-                @endif
-            </div>
-
-            <div style="background: #fff; border: 1px solid #d9dee7; border-radius: 8px; padding: 24px;">
-                <div style="font-size: 13px; color: #667085; font-weight: 800;">{{ strtoupper($shopProduct->product_type) }} 상품</div>
-                <h2 style="margin: 8px 0 12px; font-size: 30px;">{{ $product->product_name }}</h2>
-                <p style="color: #667085;">{{ $product->description ?: '상품 상세 설명이 준비 중입니다.' }}</p>
-
-                <div style="margin: 22px 0; padding: 18px; background: #f8fafc; border-radius: 6px;">
-                    <div style="color: #667085; text-decoration: line-through;">공급가 {{ number_format($shopProduct->product_price) }}원</div>
-                    <div style="font-size: 30px; font-weight: 900;">판매가 {{ number_format($price) }}원</div>
-                    <div style="color: #667085; margin-top: 6px;">재고 {{ number_format($shopProduct->stock ?? 0) }}개 · 1회 구매제한 {{ $shopProduct->purchase_limit ?: '제한 없음' }}</div>
-                </div>
-
-                <form action="{{ route('front.shop.cart.add') }}" method="POST" style="display: grid; gap: 12px;">
-                    @csrf
-                    <input type="hidden" name="shop_product_id" value="{{ $shopProduct->id }}">
-                    <label style="font-weight: 800;">옵션</label>
-                    <select name="option" class="shop-form-control">
-                        <option value="{{ $product->product_color }}/기본">{{ $product->product_color }} / 기본</option>
-                        <option value="{{ $product->product_color }}/추가옵션">{{ $product->product_color }} / 추가옵션</option>
-                    </select>
-                    <label style="font-weight: 800;">수량</label>
-                    <input type="text" name="qty" value="1" min="1" max="{{ $shopProduct->purchase_limit ?: 99 }}" inputmode="numeric" pattern="[0-9]*" class="shop-form-control">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px;">
-                        <button type="submit" style="height: 48px; border: 1px solid #111827; border-radius: 6px; background: #fff; font-weight: 900; cursor: pointer;">장바구니 담기</button>
-                        <button type="submit" name="buy_now" value="1" style="height: 48px; border: 0; border-radius: 6px; background: #111827; color: #fff; font-weight: 900; cursor: pointer;">바로 구매</button>
-                    </div>
-                </form>
-            </div>
+    </section>
+    <section id="sales-panel" role="tabpanel" aria-labelledby="sales-tab" class="shop-section" hidden>
+        @if($product->product_notice_items)<h2>상품정보 제공고시</h2><dl class="shop-meta">@foreach($product->product_notice_items as $key=>$value)<dt>{{ $key }}</dt><dd>{{ is_scalar($value) ? $value : implode(' / ', array_filter($value, 'is_scalar')) }}</dd>@endforeach</dl>@endif
+        <h2>배송 / 교환 / 반품 안내</h2><p>배송비: {{ app(\App\Services\ShopOrderTotals::class)->shippingLabel($product) }}</p>
+        @if($policy)<div class="shop-detail-copy">{{ strip_tags($policy->content) }}</div>@endif
+    </section>
+    <section id="inquiry-panel" role="tabpanel" aria-labelledby="inquiry-tab" class="shop-section" hidden>
+        <h2>내 상품 문의</h2>
+        <div class="shop-inquiries">
+            @forelse($inquiries ?? collect() as $inquiry)<details><summary><span>{{ $inquiry->admin_reply ? '답변완료' : '답변대기' }}</span><strong>{{ $inquiry->subject }}</strong><time>{{ $inquiry->created_at?->format('Y-m-d') }}</time></summary><div class="shop-detail-copy">{{ $inquiry->message }}</div>@if($inquiry->admin_reply)<div class="shop-inquiry-reply shop-detail-copy">{{ $inquiry->admin_reply }}</div>@endif</details>@empty<p class="shop-empty">등록한 문의가 없습니다.</p>@endforelse
         </div>
-
-        <section style="margin-top: 24px; background: #fff; border: 1px solid #d9dee7; border-radius: 8px; padding: 24px;">
-            <h3 style="margin-top: 0;">배송/교환/반품 안내</h3>
-            <p style="color: #475467;">채널관리자가 설정한 취소/환불 정책과 배송비 설정은 이 영역에 연결됩니다. 현재 주문 생성 시 배송비는 30,000원 미만 2,500원으로 계산됩니다.</p>
-        </section>
-
-        <section style="margin-top: 24px; background: #fff; border: 1px solid #d9dee7; border-radius: 8px; padding: 24px;">
-            <h3 style="margin-top: 0;">상품 문의하기</h3>
-            <form action="{{ route('front.shop.order.inquiry') }}" method="POST" style="display:grid; grid-template-columns:180px minmax(0, 1fr); gap:10px;">
-                @csrf
-                <input type="hidden" name="shop_product_id" value="{{ $shopProduct->id }}">
-                <select name="inquiry_category" required class="shop-form-control">
-                    <option value="">문의 분류</option>
-                    <option value="delivery">배송문의</option>
-                    <option value="claim">교환·반품</option>
-                    <option value="product">상품관련</option>
-                    <option value="payment">결제문의</option>
-                    <option value="other">기타</option>
-                </select>
-                <input name="subject" required maxlength="255" placeholder="문의 제목" class="shop-form-control">
-                <textarea name="message" required maxlength="3000" placeholder="문의 내용을 입력해 주세요." style="grid-column:1 / -1; min-height:100px; border:1px solid #cfd4dc; border-radius:6px; padding:10px; resize:vertical;"></textarea>
-                <button type="submit" style="grid-column:2; justify-self:end; height:42px; border:0; border-radius:6px; background:#111827; color:#fff; padding:0 18px; font-weight:800; cursor:pointer;">문의하기</button>
-            </form>
-        </section>
-    </main>
-</div>
+        <h2>상품 문의하기</h2><form action="{{ route('front.shop.order.inquiry') }}" method="POST" class="shop-form-grid">
+        @csrf<input type="hidden" name="shop_product_id" value="{{ $shopProduct->id }}">
+        <label>문의 분류<select name="inquiry_category" required class="shop-control"><option value="">선택</option><option value="delivery">배송문의</option><option value="claim">교환·반품</option><option value="product">상품관련</option><option value="payment">결제문의</option><option value="other">기타</option></select></label>
+        <label>제목<input name="subject" class="shop-control" maxlength="255" required></label>
+        <label class="wide">문의 내용<textarea name="message" class="shop-control" maxlength="3000" required></textarea></label>
+        <div class="shop-actions wide"><button type="submit" class="shop-btn primary">문의하기</button></div>
+    </form></section>
+    </div>
+    <div class="shop-actions"><a href="{{ route('shop.products_list') }}" class="shop-btn">상품 목록</a></div>
+</div></div></div>
 @endsection

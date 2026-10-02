@@ -961,26 +961,7 @@
 
                         <form id="confirm_form">
                             <input type="hidden" name="order_item_id" id="confirm_order_item_id">
-                            <input type="hidden" name="rating" id="confirm_rating_value" value="5">
-
-                            <div class="con"
-                                style="padding: 20px 0; border-top: 1px solid #eee; border-bottom: 1px solid #eee;">
-                                <div style="display: flex; align-items: center; justify-content: space-between;">
-                                    <div class="c_ttl" style="font-size: 15px; font-weight: 700;">별점주기</div>
-                                    <div class="star_rating_bx" style="display: flex; gap: 5px;">
-                                        <a href="javascript:void(0);" onclick="setRating(1)" class="star on" data-idx="1"
-                                            style="font-size: 24px; color: #ddd; text-decoration: none;">★</a>
-                                        <a href="javascript:void(0);" onclick="setRating(2)" class="star on" data-idx="2"
-                                            style="font-size: 24px; color: #ddd; text-decoration: none;">★</a>
-                                        <a href="javascript:void(0);" onclick="setRating(3)" class="star on" data-idx="3"
-                                            style="font-size: 24px; color: #ddd; text-decoration: none;">★</a>
-                                        <a href="javascript:void(0);" onclick="setRating(4)" class="star on" data-idx="4"
-                                            style="font-size: 24px; color: #ddd; text-decoration: none;">★</a>
-                                        <a href="javascript:void(0);" onclick="setRating(5)" class="star on" data-idx="5"
-                                            style="font-size: 24px; color: #ddd; text-decoration: none;">★</a>
-                                    </div>
-                                </div>
-                            </div>
+                            @include('shop.partials.rating_input', ['ratingId' => 'member-confirm'])
 
                             <div class="con" style="text-align: center; margin-top: 30px; margin-bottom: 10px;">
                                 <p style="font-size: 16px; color: #333;">이 상품을 구매하겠습니다.</p>
@@ -1023,26 +1004,7 @@
                         <form id="review_form" action="{{ route('front.rating.add') }}" method="POST">
                             @csrf
                             <input type="hidden" name="product_id" id="review_product_id">
-                            <input type="hidden" name="rating" id="review_rating_value" value="5">
-
-                            <div class="con"
-                                style="padding: 20px 0; border-top: 1px solid #eee; border-bottom: 1px solid #eee;">
-                                <div style="display: flex; align-items: center; justify-content: space-between;">
-                                    <div class="c_ttl" style="font-size: 15px; font-weight: 700;">별점주기</div>
-                                    <div class="review_star_rating_bx" style="display: flex; gap: 5px;">
-                                        <a href="javascript:void(0);" onclick="setReviewRating(1)" class="star on" data-idx="1"
-                                            style="font-size: 24px; color: #ddd; text-decoration: none;">★</a>
-                                        <a href="javascript:void(0);" onclick="setReviewRating(2)" class="star on" data-idx="2"
-                                            style="font-size: 24px; color: #ddd; text-decoration: none;">★</a>
-                                        <a href="javascript:void(0);" onclick="setReviewRating(3)" class="star on" data-idx="3"
-                                            style="font-size: 24px; color: #ddd; text-decoration: none;">★</a>
-                                        <a href="javascript:void(0);" onclick="setReviewRating(4)" class="star on" data-idx="4"
-                                            style="font-size: 24px; color: #ddd; text-decoration: none;">★</a>
-                                        <a href="javascript:void(0);" onclick="setReviewRating(5)" class="star on" data-idx="5"
-                                            style="font-size: 24px; color: #ddd; text-decoration: none;">★</a>
-                                    </div>
-                                </div>
-                            </div>
+                            @include('shop.partials.rating_input', ['ratingId' => 'member-review'])
 
                             <div class="con" style="margin-top: 20px;">
                                 <textarea name="review" id="review_text" required
@@ -1228,8 +1190,7 @@
                     _token: "{{ csrf_token() }}",
                     order_item_id: $("#confirm_order_item_id").val(),
                     type: 'confirm',
-                    rating: $("#confirm_rating_value").val(),
-                    review: '이 상품을 구매하겠습니다.'
+                    rating: $("#confirm_form input[name=rating]:checked").val() || ''
                 };
 
                 $.ajax({
@@ -1467,8 +1428,7 @@
             $("#confirm_prd_option").text(option);
             $("#confirm_order_item_id").val(id);
 
-            // 초기화 (별점 5점 기본)
-            setRating(5);
+            $("#confirm_form .me9-rating-clear").trigger('click');
 
             $("#pop_confirm").fadeIn();
         }
@@ -1477,23 +1437,13 @@
             $("#pop_confirm").fadeOut();
         }
 
-        function setRating(rating) {
-            $("#confirm_rating_value").val(rating);
-            $(".star_rating_bx .star").each(function (index) {
-                if (index < rating) {
-                    $(this).addClass("on");
-                } else {
-                    $(this).removeClass("on");
-                }
-            });
-        }
 
         function openReviewPopup(productId, name, image) {
             $("#review_product_id").val(productId);
             $("#review_prd_name").text(name);
             $("#review_prd_img").css("background-image", "url('" + image + "')");
             $("#review_text").val("");
-            setReviewRating(5);
+            $("#review_form .me9-rating-clear").trigger('click');
             $("#pop_review").fadeIn();
         }
 
@@ -1501,15 +1451,5 @@
             $("#pop_review").fadeOut();
         }
 
-        function setReviewRating(rating) {
-            $("#review_rating_value").val(rating);
-            $(".review_star_rating_bx .star").each(function (index) {
-                if (index < rating) {
-                    $(this).addClass("on");
-                } else {
-                    $(this).removeClass("on");
-                }
-            });
-        }
     </script>
 @endpush

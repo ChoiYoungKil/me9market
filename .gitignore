@@ -52,6 +52,7 @@ docs/
 /public/storage
 /storage/*.key
 /storage/pail
+/storage/fonts
 
 _ide_helper.php
 Homestead.json

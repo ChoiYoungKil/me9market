@@ -132,6 +132,8 @@
                             <a href="{{ url()->current() }}" class="btn01 col3 pop_btn" data-pop="pop1_5_5">교환 회수 완료</a>
                             <a href="{{ url()->current() }}" class="btn01 col3 pop_btn" data-pop="pop1_5_6">교환 확정</a>
                             <a href="{{ url()->current() }}" class="btn01 pop_btn" data-pop="pop1_5_7">교환 회수 후 보류</a>
+                            <button type="button" class="btn01" data-release-claim="exchange_release_before">회수 전 보류 해제</button>
+                            <button type="button" class="btn01" data-release-claim="exchange_release_after">회수 후 보류 해제</button>
                             <a href="{{ url()->current() }}" class="btn01 pop_btn" data-pop="pop1_5_8">반품 전환</a>
                             <a href="{{ url()->current() }}" class="btn01 col6 pop_btn" data-pop="pop1_5_9">옵션 변경</a>
                             <a href="{{ url()->current() }}" class="btn01 col3 pop_btn" data-pop="pop1_5_10">송장수정</a>

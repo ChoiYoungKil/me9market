@@ -213,7 +213,7 @@
                                     <tbody class="textL">
                                         <tr>
                                             <th>판매 상품 코드</th>
-                                            <td id="own_product_code">Me9-Shop-0032022</td>
+                                            <td id="own_product_code"></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -226,8 +226,8 @@
                                             <div class="img_bx" id="own_product_img"
                                                 style="background-image:url(../images/sub/thum01.jpg)"></div>
                                             <div class="txt_bx">
-                                                <p id="own_product_category">대분류 &gt; 중분류 &gt; 소분류</p>
-                                                <strong id="own_product_name">상품명 111111</strong>
+                                                <p id="own_product_category"></p>
+                                                <strong id="own_product_name"></strong>
                                             </div>
                                         </a>
                                     </li>
@@ -248,23 +248,23 @@
                                     <tbody class="textL">
                                         <tr>
                                             <th>가격제약조건</th>
-                                            <td id="own_price_constraint">1,500 원 ~ 5,000 원</td>
+                                            <td id="own_price_constraint"></td>
                                         </tr>
                                         <tr>
                                             <th>이익분배조건</th>
-                                            <td id="own_profit_constraint">판매 개당 500 원</td>
+                                            <td id="own_profit_constraint"></td>
                                         </tr>
                                         <tr>
                                             <th>재고</th>
-                                            <td id="own_stock">20,000 개</td>
+                                            <td id="own_stock"></td>
                                         </tr>
                                         <tr>
                                             <th>구매제한수량</th>
-                                            <td id="own_purchase_limit">1회 구매시 100개 까지</td>
+                                            <td id="own_purchase_limit"></td>
                                         </tr>
                                         <tr>
                                             <th>상품 판매 기간</th>
-                                            <td id="own_sales_period">무기한</td>
+                                            <td id="own_sales_period"></td>
                                         </tr>
                                     </tbody>
                                 </table>

@@ -105,10 +105,14 @@ class SettlementCalculator
 
         return OrdersProduct::with(['order', 'shopChannel', 'shopChannelProduct', 'product', 'product.vendor'])
             ->where('is_exchange_replacement', false)
+            ->where(fn ($query) => $query->whereNull('paid_line_total_snapshot')
+                ->orWhereNull('reprice_status')->orWhere('reprice_status', '!=', 'pending_repayment'))
             ->when($vendorId, function ($query) use ($vendorId) {
                 $query->where(function ($inner) use ($vendorId) {
                     $inner->where('vendor_id', $vendorId)
-                        ->orWhereHas('product', fn ($productQuery) => $productQuery->where('vendor_id', $vendorId));
+                        ->orWhere('settlement_policy_snapshot->supplier_vendor_id', $vendorId)
+                        ->orWhere(fn ($legacy) => $legacy->whereNull('settlement_policy_snapshot')
+                            ->whereHas('product', fn ($productQuery) => $productQuery->where('vendor_id', $vendorId)));
                 });
             })
             ->when($shopChannelId !== null, function ($query) use ($shopChannelId) {
@@ -129,6 +133,31 @@ class SettlementCalculator
             ->orderBy('id');
     }
 
+    public function paymentAmounts(OrdersProduct $item): array
+    {
+        $line = (float) ($item->paid_line_total_snapshot ?? $item->line_total ?? $item->product_price * $item->product_qty);
+        $shipping = $this->allocatedShippingAmount($item);
+        $points = $this->allocatedUsedPointAmount($item);
+        $coupon = $this->allocatedCouponAmount($item);
+        $policy = app(OrderSettlementPolicy::class)->forItem($item);
+        $cash = max(0, round($line + $shipping - $points - $coupon, 2));
+
+        return [
+            'paid_line_total' => $line, 'shipping' => $shipping, 'points' => $points, 'coupon' => $coupon, 'cash' => $cash,
+            'reward' => $policy['payment_gateway_type'] === 'own_pg' ? 0 : (int) $policy['reward_points'] * (int) $item->product_qty,
+        ];
+    }
+
+    public function orderFinancialAmounts(OrdersProduct $item, int $vendorId): array
+    {
+        if ($item->is_exchange_replacement || $item->financial_reversed_at
+            || in_array($item->normalized_status, [OrderItemStatus::CANCELLED, OrderItemStatus::RETURNED], true)) {
+            return ['payout' => 0, 'sales_profit' => 0];
+        }
+        $rows = $this->calculateItemRows($item, now()->format('Y-m'))->where('vendor_id', $vendorId);
+        return ['payout' => $rows->sum('payout_amount'), 'sales_profit' => $rows->sum('sales_profit_amount')];
+    }
+
     private function calculateItemRows(OrdersProduct $item, string $period): Collection
     {
         $quantity = (int) $item->product_qty;
@@ -140,15 +169,15 @@ class SettlementCalculator
         $invoiceGross = round($grossSales + $shippingAmount, 2);
         $salesProfit = max($grossSales - $supplyAmount, 0);
         $shop = $item->shopChannel ?: $this->fallbackShopForVendor((int) $item->vendor_id);
-        $shopProduct = $item->shopChannelProduct;
-        $productType = $shopProduct?->product_type ?: 'own';
+        $policy = app(OrderSettlementPolicy::class)->forItem($item, $shop);
+        $productType = $policy['product_type'];
         $isShared = in_array($productType, ['public', 'partial'], true);
-        $configuredRewardPoints = round(max(0, (float) ($item->product?->reward_points ?? 0)) * $quantity, 2);
-        $usesOwnPg = (bool) ($shop?->use_own_pg ?? false) && $configuredRewardPoints <= 0 && ! $isShared;
-        $paymentGatewayType = $usesOwnPg ? 'own_pg' : 'me9_pg';
+        $configuredRewardPoints = round($policy['reward_points'] * $quantity, 2);
+        $paymentGatewayType = $policy['payment_gateway_type'];
+        $usesOwnPg = $paymentGatewayType === 'own_pg';
         $vendor = $item->product?->vendor;
-        $settlementType = (int) ($shopProduct?->settlement_type_snapshot ?: $shop?->settlement_type ?: 1);
-        $settlementRate = (float) ($shopProduct?->settlement_rate_snapshot ?? $shop?->settlement_rate ?? $vendor?->commission ?? 0);
+        $settlementType = (int) $policy['settlement_type'];
+        $settlementRate = (float) $policy['settlement_rate'];
         $commissionAmount = $this->commissionAmount($invoiceGross, $quantity, $settlementType, $settlementRate);
         $confirmedAt = $this->settlementDateForItem($item);
         $rewardPoints = $usesOwnPg ? 0 : $configuredRewardPoints;
@@ -156,9 +185,7 @@ class SettlementCalculator
         $smsFee = (float) ($item->sms_fee ?? 0);
         $ownPgPayoutAmount = $usesOwnPg ? max(0, round($usedPointAmount - $smsFee, 2)) : 0;
         $settlementCommissionAmount = $usesOwnPg ? 0 : $commissionAmount;
-        $isFixedShared = $isShared
-            && (bool) ($item->product?->price_constraint_enabled)
-            && $item->product?->price_constraint_type === 'fixed';
+        $isFixedShared = $policy['is_fixed_shared'];
 
         if (! $isShared) {
             return collect([
@@ -185,7 +212,7 @@ class SettlementCalculator
             ]);
         }
 
-        $supplierVendorId = (int) ($item->product?->vendor_id ?: $item->vendor_id);
+        $supplierVendorId = (int) ($policy['supplier_vendor_id'] ?: $item->vendor_id);
         $channelVendorId = (int) $item->vendor_id;
         $rebateAmount = $this->rebateAmount($item, $invoiceGross);
 
@@ -194,7 +221,7 @@ class SettlementCalculator
                 $this->baseRow($item, $period, [
                     'settlement_role' => 'shared_fixed_supplier',
                     'vendor_id' => $supplierVendorId,
-                    'vendor_name' => $vendor?->name ?: '판매자 #'.$supplierVendorId,
+                    'vendor_name' => ($policy['supplier_vendor_name'] ?? $vendor?->name) ?: '판매자 #'.$supplierVendorId,
                     'gross_sales_amount' => $invoiceGross,
                     'supply_amount' => $supplyAmount,
                     'sales_profit_amount' => 0,
@@ -238,7 +265,7 @@ class SettlementCalculator
             $this->baseRow($item, $period, [
                 'settlement_role' => 'shared_free_supplier',
                 'vendor_id' => $supplierVendorId,
-                'vendor_name' => $vendor?->name ?: '판매자 #'.$supplierVendorId,
+                'vendor_name' => ($policy['supplier_vendor_name'] ?? $vendor?->name) ?: '판매자 #'.$supplierVendorId,
                 'gross_sales_amount' => round($supplyAmount + $shippingAmount, 2),
                 'supply_amount' => $supplyAmount,
                 'sales_profit_amount' => 0,
@@ -387,8 +414,9 @@ class SettlementCalculator
 
     private function rebateAmount(OrdersProduct $item, float $invoiceGross): float
     {
-        $type = $item->product?->profit_share_type;
-        $value = (float) ($item->product?->profit_share_value ?? 0);
+        $policy = app(OrderSettlementPolicy::class)->forItem($item);
+        $type = $policy['profit_share_type'];
+        $value = (float) $policy['profit_share_value'];
 
         if ($type === 'percent') {
             return round($invoiceGross * ($value / 100), 2);
@@ -403,6 +431,10 @@ class SettlementCalculator
 
     private function allocatedShippingAmount(OrdersProduct $item): float
     {
+        if ($item->shipping_amount_snapshot !== null) {
+            return (float) $item->shipping_amount_snapshot;
+        }
+
         $shipping = (float) ($item->order?->shipping_charges ?? 0);
         if ($shipping <= 0 || ! $item->order_id) {
             return 0;
@@ -420,6 +452,9 @@ class SettlementCalculator
 
     private function allocatedUsedPointAmount(OrdersProduct $item): float
     {
+        if ($item->used_point_amount !== null) {
+            return (float) $item->used_point_amount;
+        }
         $usedPoint = (float) ($item->order?->used_point ?? 0);
         if ($usedPoint <= 0 || ! $item->order_id) {
             return 0;

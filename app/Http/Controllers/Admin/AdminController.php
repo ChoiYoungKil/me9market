@@ -11,7 +11,9 @@ use Intervention\Image\Facades\Image;
 use Symfony\Component\VarDumper\VarDumper;
 
 use App\Models\Admin;
+use App\Models\Distributor;
 use App\Models\Section;
+use App\Models\ShopChannel;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Order;
@@ -37,21 +39,116 @@ class AdminController extends Controller
     public function newpage() { return view('admin.sub.newpage'); }
     public function loading() { return view('admin.sub.loading'); }
 
-    public function dashboard() {
-        // Skydash 관리자 패널 사이드바의 활성 페이지 설정을 위해 세션 사용
+    public function refundPolicies(Request $request)
+    {
+        Session::put('page', 'refund_policies');
+        $policies = \App\Models\ShopCancelRefundPolicy::with('vendor')
+            ->when($request->filled('search'), fn ($query) => $query->where('name', 'like', '%'.$request->string('search').'%'))
+            ->latest()->paginate(20)->withQueryString();
+        return view('admin.refund_policies', compact('policies'));
+    }
+
+    public function dashboard()
+    {
         Session::put('page', 'dashboard');
+        $admin = Auth::guard('admin')->user();
+        $vendorId = $admin->type === 'vendor' ? (int) $admin->vendor_id : null;
+        $items = \App\Models\OrdersProduct::query()->where('orders_products.is_exchange_replacement', false)
+            ->when($vendorId !== null, fn ($query) => $query->where('orders_products.vendor_id', $vendorId));
+        $counts = [];
+        foreach ((clone $items)->select('status_code', 'item_status')->selectRaw('COUNT(*) as aggregate')->groupBy('status_code', 'item_status')->get() as $group) {
+            $status = \App\Support\OrderItemStatus::normalize($group->status_code ?: $group->item_status);
+            $counts[$status] = ($counts[$status] ?? 0) + (int) $group->aggregate;
+        }
+        $totalItems = array_sum($counts);
+        $periodStart = now()->startOfMonth();
+        $periodEnd = now();
+        $confirmed = (clone $items)->where(function ($query) {
+            $query->where('orders_products.status_code', \App\Support\OrderItemStatus::CONFIRMED)
+                ->orWhere(fn ($legacy) => $legacy->whereNull('orders_products.status_code')->whereIn('orders_products.item_status', ['Confirmed', '구매확정']));
+        })->whereRaw('COALESCE(confirmed_at, orders_products.created_at) BETWEEN ? AND ?', [$periodStart, $periodEnd]);
+        $topProducts = (clone $confirmed)->select('product_id', 'product_name')
+            ->selectRaw('SUM(line_total) as amount, SUM(product_qty) as quantity')
+            ->groupBy('product_id', 'product_name')->orderByDesc('amount')->limit(20)->get();
+        $topCategories = (clone $confirmed)->leftJoin('products', 'products.id', '=', 'orders_products.product_id')
+            ->leftJoin('categories', 'categories.id', '=', 'products.category_id')
+            ->select('categories.id', 'categories.category_name')
+            ->selectRaw('SUM(orders_products.line_total) as amount, SUM(orders_products.product_qty) as quantity')
+            ->groupBy('categories.id', 'categories.category_name')->orderByDesc('amount')->limit(20)->get();
+        $recentOrders = (clone $items)->select('order_id')->selectRaw('MAX(created_at) as ordered_at, SUM(line_total) as amount')
+            ->groupBy('order_id')->orderByDesc('ordered_at')->limit(10)->get();
+        $recentPoints = \App\Models\PointTransaction::with('shopChannel')
+            ->when($vendorId !== null, fn ($query) => $query->whereHas('shopChannel', fn ($shop) => $shop->where('vendor_id', $vendorId)))
+            ->latest('id')->limit(10)->get();
 
+        $charts = [
+            ['labels' => $topProducts->pluck('product_name'), 'values' => $topProducts->pluck('amount')],
+            ['labels' => $topCategories->pluck('category_name'), 'values' => $topCategories->pluck('amount')],
+        ];
 
-        $sectionsCount   = Section::count();
-        $categoriesCount = Category::count();
-        $productsCount   = Product::count();
-        $ordersCount     = Order::count();
-        $couponsCount    = Coupon::count();
-        $brandsCount     = Brand::count();
-        $usersCount      = User::count();
+        return view('admin.dashboard', compact('counts', 'totalItems', 'periodStart', 'periodEnd', 'topProducts', 'topCategories', 'recentOrders', 'recentPoints', 'charts'));
+    }
 
+    public function storyboardTestbed()
+    {
+        $testPassword = (string) config('storyboard.test_password');
+        $definitions = [
+            [
+                'key' => 'member',
+                'title' => '일반 회원',
+                'login_id' => 'user@user.com',
+                'login_url' => rtrim(config('storyboard.front_url'), '/') . '/member/login',
+                'model' => User::where('email', 'user@user.com')->first(),
+            ],
+            [
+                'key' => 'channel',
+                'title' => '채널 관리자',
+                'login_id' => 'john@admin.com',
+                'login_url' => rtrim(config('storyboard.front_url'), '/') . '/channel/login',
+                'model' => Admin::where('email', 'john@admin.com')->where('type', 'vendor')->first(),
+            ],
+            [
+                'key' => 'distributor',
+                'title' => '발주사',
+                'login_id' => 'partner@main.com',
+                'login_url' => rtrim(config('storyboard.front_url'), '/') . '/distributor/login',
+                'model' => Distributor::where('email', 'partner@main.com')->first(),
+            ],
+            [
+                'key' => 'superadmin',
+                'title' => '전체 관리자',
+                'login_id' => 'admin@admin.com',
+                'login_url' => rtrim(config('storyboard.admin_url'), '/') . '/admin/login',
+                'model' => Admin::where('email', 'admin@admin.com')->where('type', 'superadmin')->first(),
+            ],
+        ];
 
-        return view('admin/dashboard')->with(compact('sectionsCount', 'categoriesCount', 'productsCount', 'ordersCount', 'couponsCount', 'brandsCount', 'usersCount')); 
+        $accounts = collect($definitions)->map(function (array $definition) use ($testPassword) {
+            $account = $definition['model'];
+            $active = $account && (string) ($account->status ?? '1') === '1';
+
+            if ($account instanceof Admin && $account->type === 'vendor') {
+                $active = $active && (string) $account->confirm !== 'No';
+            }
+
+            unset($definition['model']);
+
+            return $definition + [
+                'exists' => (bool) $account,
+                'active' => (bool) $active,
+                'password' => $testPassword,
+                'password_matches' => $account
+                    && $testPassword !== ''
+                    && Hash::check($testPassword, $account->password),
+            ];
+        });
+
+        $shopChannel = ShopChannel::query()
+            ->where('status', 1)
+            ->orderBy('id')
+            ->first(['id', 'channel_name', 'channel_code', 'is_public', 'is_member_only']);
+
+        return view('admin.storyboard_testbed', compact('accounts', 'shopChannel'));
     }
 
     public function login(Request $request) { // 'admin' 가드를 사용한 로그인 (판매자 또는 관리자)

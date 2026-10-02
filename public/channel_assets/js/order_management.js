@@ -9,6 +9,12 @@ function numberFormat(val) {
     return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 }
 
+function escapeOrderHtml(value) {
+    return String(value == null ? '' : value).replace(/[&<>"']/g, function (character) {
+        return {'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[character];
+    });
+}
+
 function orderItemsArray(orderData) {
     if (!orderData || !orderData.items) return [];
     return Array.isArray(orderData.items) ? orderData.items : Object.values(orderData.items);
@@ -112,15 +118,15 @@ function openOrderModal(modalId, orderData) {
             modalItems.forEach(function (item) {
                 var row = `
                     <tr>
-                        <td><input type="checkbox" name="item_ids[]" value="${item.id}" checked></td>
-                        <td>${item.status_label || item.status}</td>
-                        <td class="t_l"><span class="fcol2">${item.product_name}</span></td>
-                        <td>${item.product_code}</td>
-                        <td>${item.option_name}</td>
-                        <td>${item.qty}</td>
+                        <td><input type="checkbox" name="item_ids[]" value="${escapeOrderHtml(item.id)}" checked></td>
+                        <td>${escapeOrderHtml(item.status_label || item.status)}</td>
+                        <td class="t_l"><span class="fcol2">${escapeOrderHtml(item.product_name)}</span></td>
+                        <td>${escapeOrderHtml(item.product_code)}</td>
+                        <td>${escapeOrderHtml(item.option_name)}</td>
+                        <td>${escapeOrderHtml(item.qty)}</td>
                         ${prefix === 'exchange' ? `
                         <td>
-                             <select name="exchange_options[${item.id}]">
+                             <select name="exchange_options[${escapeOrderHtml(item.id)}]">
                                  <option value="same" selected>동일 옵션</option>
                              </select>
                         </td>
@@ -166,15 +172,16 @@ function populateAllDetailPopups(orderData) {
     $("#pop_info_orig_order_no").text(orderData.order_no);
     
     // User Email / Info
-    $("#pop_info_user_email").html(`<a class="fcol2 link" href="mailto:${orderData.user?.email || ''}">${orderData.user?.email || ''}</a> (${orderData.user_id || '비회원'})`);
-    $("#pop_info_user_name").text(orderData.name);
-    $("#pop_info_user_mobile").text(orderData.mobile);
-    $("#pop_info_user_email2").html(`<a class="fcol2 link" href="mailto:${orderData.email || ''}">${orderData.email || ''}</a>`);
+    $("#pop_info_user_email").html(`<a class="fcol2 link" href="mailto:${escapeOrderHtml(orderData.user?.email || '')}">${escapeOrderHtml(orderData.user?.email || '')}</a> (${escapeOrderHtml(orderData.user_id || '비회원')})`);
+    $("#pop_info_user_name").text(orderData.buyer_name || orderData.name);
+    $("#pop_info_user_mobile").text(orderData.buyer_mobile || orderData.mobile);
+    $("#pop_info_user_email2").html(`<a class="fcol2 link" href="mailto:${escapeOrderHtml(orderData.email || '')}">${escapeOrderHtml(orderData.email || '')}</a>`);
     
     // Recipient
     $("#pop_info_recipient_name").text(orderData.recipient_name || orderData.name);
     $("#pop_info_recipient_mobile").text(orderData.recipient_mobile || orderData.mobile);
-    $("#pop_info_recipient_address").text('[' + (orderData.recipient_zipcode || '') + '] ' + (orderData.recipient_address || '') + ' ' + (orderData.recipient_address_detail || ''));
+    $("#pop_info_recipient_address").text('[' + (orderData.recipient_zipcode || orderData.pincode || '') + '] ' + (orderData.recipient_address || orderData.address || '') + ' ' + (orderData.recipient_address_detail || ''));
+    $("#pop_info_delivery_memo").text(orderData.delivery_memo || '-');
     
     // Payments
     $("#pop_info_total_sale_price").text(numberFormat(orderData.total_sale_price) + " 원");
@@ -195,11 +202,11 @@ function populateAllDetailPopups(orderData) {
             var statusText = item.status_label || item.status || '-';
             var row = `
                 <tr>
-                    <td>${item.product_type || '자사'}</td>
-                    <td class="t_l"><span class="fcol2">${item.product_name}</span></td>
-                    <td>${item.product_code}</td>
-                    <td>${item.option_name}</td>
-                    <td>${item.qty}</td>
+                    <td>${escapeOrderHtml(item.product_type || '자사')}</td>
+                    <td class="t_l"><span class="fcol2">${escapeOrderHtml(item.product_name)}</span></td>
+                    <td>${escapeOrderHtml(item.product_code)}</td>
+                    <td>${escapeOrderHtml(item.option_name)}</td>
+                    <td>${escapeOrderHtml(item.qty)}</td>
                     <td>${statusText.includes('Cancel') || statusText.includes('취소') ? item.qty : 0}</td>
                     <td>${statusText.includes('Return') || statusText.includes('반품') ? item.qty : 0}</td>
                     <td>${statusText.includes('Exchange') || statusText.includes('교환') ? item.qty : 0}</td>
@@ -211,9 +218,9 @@ function populateAllDetailPopups(orderData) {
                     <td class="t_r">0 p</td>
                     <td class="t_r"><span class="bold fcol4">${numberFormat(item.price * item.qty)} 원</span></td>
                     <td class="t_r">0 p</td>
-                    <td>${statusText}</td>
-                    <td>${item.courier_name || '-'}</td>
-                    <td>${item.tracking_number || '-'}</td>
+                    <td>${escapeOrderHtml(statusText)}</td>
+                    <td>${escapeOrderHtml(item.courier_name || '-')}</td>
+                    <td>${escapeOrderHtml(item.tracking_number || '-')}</td>
                 </tr>
             `;
             $infoTbody.append(row);
@@ -238,12 +245,12 @@ function populateAllDetailPopups(orderData) {
             var exchangedQty = statusText.includes('Exchange') || statusText.includes('교환') ? item.qty : 0;
             var row = `
                 <tr>
-                    <td><input type="checkbox" name="item_ids[]" value="${item.id}" checked></td>
-                    <td>${statusText}</td>
-                    <td class="t_l"><span class="fcol2">${item.product_name || '-'}</span></td>
-                    <td>${item.product_code || '-'}</td>
-                    <td>${item.option_name || '-'}</td>
-                    <td>${item.qty || 0}</td>
+                    <td><input type="checkbox" name="item_ids[]" value="${escapeOrderHtml(item.id)}" checked></td>
+                    <td>${escapeOrderHtml(statusText)}</td>
+                    <td class="t_l"><span class="fcol2">${escapeOrderHtml(item.product_name || '-')}</span></td>
+                    <td>${escapeOrderHtml(item.product_code || '-')}</td>
+                    <td>${escapeOrderHtml(item.option_name || '-')}</td>
+                    <td>${escapeOrderHtml(item.qty || 0)}</td>
                     <td>${cancelledQty}</td>
                     <td>${returnedQty}</td>
                     <td>${exchangedQty}</td>
@@ -266,25 +273,25 @@ function populateAllDetailPopups(orderData) {
     $("#pop_cancel_claim_no").text(cancelClaim ? 'C-' + cancelClaim.id : '-');
     $("#pop_cancel_request_date").text(cancelClaim ? cancelClaim.created_at : '-');
     $("#pop_cancel_reason").text(cancelClaim ? cancelClaim.reason : '-');
-    $("#pop_cancel_refund_amount").text(numberFormat(orderData.total_payment_price) + " 원");
+    var cancelItems = orderItemsByStatus(orderItems, ["cancel_requested", "cancelled"]);
+    $("#pop_cancel_refund_amount").text(numberFormat(cancelItems.reduce(function (sum, item) { return sum + Number(item.refund_cash_amount || 0); }, 0)) + " 원");
     $("#pop_cancel_refund_account").text(cancelClaim && cancelClaim.detail_reason ? cancelClaim.detail_reason : '기존 결제 수단 환불');
     $("#pop_cancel_shop_name").text(orderData.shop_name);
 
     // Items list pop1_3
     var $cancelTbody = $("#pop_cancel_order_items_body");
     $cancelTbody.empty();
-    var cancelItems = orderItemsByStatus(orderItems, ["cancel_requested", "cancelled"]);
     if (cancelItems.length > 0) {
         cancelItems.forEach(function(item) {
             var row = `
                 <tr>
-                    <td><input type="checkbox" name="item_ids[]" value="${item.id}" checked></td>
-                    <td>${item.status_label || item.status}</td>
-                    <td class="t_l"><span class="fcol2">${item.product_name}</span></td>
-                    <td>${item.product_code}</td>
-                    <td>${item.option_name}</td>
-                    <td>${item.qty}</td>
-                    <td>${item.qty}</td>
+                    <td><input type="checkbox" name="item_ids[]" value="${escapeOrderHtml(item.id)}" checked></td>
+                    <td>${escapeOrderHtml(item.status_label || item.status)}</td>
+                    <td class="t_l"><span class="fcol2">${escapeOrderHtml(item.product_name)}</span></td>
+                    <td>${escapeOrderHtml(item.product_code)}</td>
+                    <td>${escapeOrderHtml(item.option_name)}</td>
+                    <td>${escapeOrderHtml(item.qty)}</td>
+                    <td>${escapeOrderHtml(item.qty)}</td>
                     <td>0</td>
                     <td>0</td>
                     <td class="t_r">${numberFormat(item.price * item.qty)} 원</td>
@@ -309,28 +316,28 @@ function populateAllDetailPopups(orderData) {
     $("#pop_return_method").text(returnClaim && returnClaim.detail_reason && returnClaim.detail_reason.includes('회수방법') ? returnClaim.detail_reason.split(']')[0].replace('[회수방법: ', '') : '자동 회수');
     $("#pop_return_reason").text(returnClaim ? returnClaim.reason : '-');
     $("#pop_return_address").text(returnClaim && returnClaim.detail_reason && returnClaim.detail_reason.includes('주소:') ? returnClaim.detail_reason.split('주소:')[1].split('|')[0].trim() : '-');
-    $("#pop_return_payment_amount").text(numberFormat(orderData.total_payment_price) + " 원");
-    $("#pop_return_deduction").text("0 원");
-    $("#pop_return_refund_amount").text(numberFormat(orderData.total_payment_price) + " 원");
+    var returnItems = orderItemsByStatus(orderItems, ["return_requested", "return_received", "return_hold", "returned"]);
+    $("#pop_return_payment_amount").text(numberFormat(returnItems.reduce(function (sum, item) { return sum + Number(item.paid_cash_amount || 0); }, 0)) + " 원");
+    $("#pop_return_deduction").text(numberFormat(returnItems.reduce(function (sum, item) { return sum + Number(item.return_shipping_fee || 0); }, 0)) + " 원");
+    $("#pop_return_refund_amount").text(numberFormat(returnItems.reduce(function (sum, item) { return sum + Number(item.refund_cash_amount || 0); }, 0)) + " 원");
     $("#pop_return_refund_account").text(returnClaim && returnClaim.detail_reason && returnClaim.detail_reason.includes('상세사유:') ? returnClaim.detail_reason.split('상세사유:')[1].trim() : '기존 결제 수단 환불');
 
     // Items list pop1_4
     var $returnTbody = $("#pop_return_order_items_body");
     $returnTbody.empty();
-    var returnItems = orderItemsByStatus(orderItems, ["return_requested", "return_received", "return_hold", "returned"]);
     if (returnItems.length > 0) {
         returnItems.forEach(function(item) {
             var row = `
                 <tr>
-                    <td><input type="checkbox" name="item_ids[]" value="${item.id}" checked></td>
+                    <td><input type="checkbox" name="item_ids[]" value="${escapeOrderHtml(item.id)}" checked></td>
                     <td>-</td>
-                    <td>${item.status_label || item.status}</td>
-                    <td class="t_l"><span class="fcol2">${item.product_name}</span></td>
-                    <td>${item.product_code}</td>
-                    <td>${item.option_name}</td>
-                    <td>${item.qty}</td>
+                    <td>${escapeOrderHtml(item.status_label || item.status)}</td>
+                    <td class="t_l"><span class="fcol2">${escapeOrderHtml(item.product_name)}</span></td>
+                    <td>${escapeOrderHtml(item.product_code)}</td>
+                    <td>${escapeOrderHtml(item.option_name)}</td>
+                    <td>${escapeOrderHtml(item.qty)}</td>
                     <td>0</td>
-                    <td>${item.qty}</td>
+                    <td>${escapeOrderHtml(item.qty)}</td>
                     <td>0</td>
                     <td class="t_r">${numberFormat(item.price * item.qty)} 원</td>
                     <td class="t_r">${numberFormat(item.price * item.qty)} 원</td>
@@ -352,7 +359,7 @@ function populateAllDetailPopups(orderData) {
     $("#pop_exchange_address").text(exchangeClaim && exchangeClaim.detail_reason && exchangeClaim.detail_reason.includes('주소:') ? exchangeClaim.detail_reason.split('주소:')[1].split('|')[0].trim() : '-');
     $("#pop_exchange_recipient_name").text(orderData.recipient_name || orderData.name);
     $("#pop_exchange_recipient_mobile").text(orderData.recipient_mobile || orderData.mobile);
-    $("#pop_exchange_recipient_address").text('[' + (orderData.recipient_zipcode || '') + '] ' + (orderData.recipient_address || '') + ' ' + (orderData.recipient_address_detail || ''));
+    $("#pop_exchange_recipient_address").text('[' + (orderData.recipient_zipcode || orderData.pincode || '') + '] ' + (orderData.recipient_address || orderData.address || '') + ' ' + (orderData.recipient_address_detail || ''));
     $("#pop_exchange_fee").text("0 원");
     $("#pop_exchange_payment_method").text("판매처 협의");
 
@@ -364,14 +371,14 @@ function populateAllDetailPopups(orderData) {
         exchangeItems.forEach(function(item) {
             var row = `
                 <tr>
-                    <td><input type="checkbox" name="item_ids[]" value="${item.id}" checked></td>
+                    <td><input type="checkbox" name="item_ids[]" value="${escapeOrderHtml(item.id)}" checked></td>
                     <td>-</td>
-                    <td>${item.status_label || item.status}</td>
-                    <td class="t_l"><span class="fcol2">${item.product_name}</span></td>
-                    <td>${item.product_code}</td>
-                    <td>${item.option_name}</td>
-                    <td>${item.option_name}</td>
-                    <td>${item.qty}</td>
+                    <td>${escapeOrderHtml(item.status_label || item.status)}</td>
+                    <td class="t_l"><span class="fcol2">${escapeOrderHtml(item.product_name)}</span></td>
+                    <td>${escapeOrderHtml(item.product_code)}</td>
+                    <td>${escapeOrderHtml(item.option_name)}</td>
+                    <td>${escapeOrderHtml(item.option_name)}</td>
+                    <td>${escapeOrderHtml(item.qty)}</td>
                     <td class="t_r">${numberFormat(item.price * item.qty)} 원</td>
                     <td class="t_r">${numberFormat(item.price * item.qty)} 원</td>
                 </tr>
@@ -462,24 +469,7 @@ function submitOrderForm(formId, url) {
 }
 
 function claimActionItemIds(action) {
-    var allowed = {
-        cancel_approve: ["cancel_requested"],
-        cancel_reject: ["cancel_requested"],
-        return_receive: ["return_requested", "return_hold"],
-        return_complete: ["return_received", "return_hold"],
-        return_hold: ["return_requested", "return_received"],
-        return_withdraw: ["return_requested", "return_hold"],
-        return_invoice: ["return_requested", "return_received", "return_hold"],
-        exchange_approve: ["exchange_requested", "exchange_hold_before"],
-        exchange_hold_before: ["exchange_requested", "exchange_approved"],
-        exchange_withdraw: ["exchange_requested", "exchange_approved", "exchange_hold_before"],
-        exchange_receive: ["exchange_approved", "exchange_hold_before"],
-        exchange_complete: ["exchange_received", "exchange_hold_after"],
-        exchange_hold_after: ["exchange_received"],
-        exchange_to_return: ["exchange_received", "exchange_hold_after"],
-        exchange_option: ["exchange_requested", "exchange_approved", "exchange_hold_before", "exchange_received", "exchange_hold_after"],
-        exchange_invoice: ["exchange_approved", "exchange_received", "exchange_hold_after"]
-    };
+    var allowed = window.Me9ClaimActions || {};
     var selected = [];
     var baseId = action.indexOf("cancel_") === 0
         ? "pop1_3"
@@ -535,12 +525,17 @@ function submitClaimAction(action, popupId, confirmation) {
     });
 }
 
+$(document).on('click', '[data-release-claim]', function () {
+    var action = this.dataset.releaseClaim;
+    submitClaimAction(action, action.indexOf('return_') === 0 ? 'pop1_4' : 'pop1_5', '보류를 해제하고 이전 처리 단계로 돌아가시겠습니까?');
+});
+
 // Bind confirmation listeners
 $(document).ready(function() {
     // Cancel reject
     $(document).on('click', '#btn_cancel_reject_confirm', function(e) {
         e.preventDefault();
-        submitClaimAction('cancel_reject', 'pop1_3_2', '취소 요청을 거부하고 이전 결제완료 상태로 되돌리시겠습니까?');
+        submitClaimAction('cancel_reject', 'pop1_3_2', '취소 요청을 거부하고 요청 이전 상태로 되돌리시겠습니까?');
     });
 
     // Cancel approve

@@ -137,6 +137,7 @@
                         @if($shop->use_admin == 1)
                         <div class="con_w">
                             <div class="ttl01">Shop 채널 (모니터링) 관리자 정보</div>
+                            @if($shop->use_admin)<p><a href="{{ route('shop.monitor.login') }}" target="_blank" rel="noopener">모니터링 로그인</a></p>@endif
                             <div class="tb01">
                                 <table>
                                     <colgroup>

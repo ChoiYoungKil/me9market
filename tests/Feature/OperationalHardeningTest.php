@@ -17,6 +17,27 @@ class OperationalHardeningTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_registered_controller_actions_exist_and_are_public(): void
+    {
+        foreach (app('router')->getRoutes() as $route) {
+            $action = $route->getActionName();
+            if ($action === 'Closure') continue;
+            [$class, $method] = str_contains($action, '@') ? explode('@', $action, 2) : [$action, '__invoke'];
+            $this->assertTrue(class_exists($class), $action);
+            $this->assertTrue(method_exists($class, $method), $route->uri().' '.$action);
+            $this->assertTrue((new \ReflectionMethod($class, $method))->isPublic(), $action);
+        }
+    }
+
+    public function test_homepage_displays_published_notices_and_no_sample_company_details(): void
+    {
+        \App\Models\Notice::create(['title' => 'Published notice', 'content' => 'Notice', 'status' => 1]);
+        \App\Models\Notice::create(['title' => 'Private draft', 'content' => 'Draft', 'status' => 0]);
+        $this->get('/')->assertOk()->assertSee('Published notice')->assertDontSee('Private draft')
+            ->assertSee('Shop 입장코드')->assertDontSee('123-45-67890')->assertDontSee('abc1234@email.com');
+        $this->get('/shop-channel/gate?channel=example')->assertOk()->assertSee('value="example"', false);
+    }
+
     public function test_demo_data_is_not_created_when_disabled()
     {
         config(['shop_channel.seed_demo_data' => false]);

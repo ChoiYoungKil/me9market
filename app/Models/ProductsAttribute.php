@@ -15,6 +15,7 @@ class ProductsAttribute extends Model
         'option_type',
         'size',
         'price',
+        'price_adjustment',
         'stock',
         'sku',
         'status',
@@ -23,6 +24,22 @@ class ProductsAttribute extends Model
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    protected static function booted(): void
+    {
+        static::deleting(function (ProductsAttribute $attribute) {
+            if (OrdersProduct::where('stock_attribute_id', $attribute->id)->exists()) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'option_values' => '주문에 사용된 옵션은 삭제할 수 없습니다. 미사용 상태로 변경해 주세요.',
+                ]);
+            }
+        });
+    }
+
+    public function getPriceDeltaAttribute(): float
+    {
+        return $this->option_type === 'price' ? (float) $this->price_adjustment : 0.0;
     }
 
     public static function getProductStock($product_id, $size) // Get the `stock` available for that specific product (`product_id`) with that specific size (`size`) (in `products_attributes` table)?

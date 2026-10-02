@@ -692,6 +692,8 @@ class UserController extends Controller
             'recovery_method' => 'required_if:type,return,exchange|nullable|in:자동회수,수동회수,automatic,manual',
             'customer_courier_name' => 'nullable|string|max:100',
             'customer_tracking_number' => 'nullable|string|max:100',
+            'rating' => 'nullable|numeric|between:0.5,5|multiple_of:0.5|required_with:review',
+            'review' => 'nullable|string|max:2000',
         ]);
 
         $user = Auth::user();
@@ -699,9 +701,10 @@ class UserController extends Controller
             return response()->json(['success' => false, 'message' => '로그인이 필요합니다.'], 401);
         }
 
-        // Find the orders_product item belonging to the current user
+        return DB::transaction(function () use ($request, $data, $user) {
         $item = OrdersProduct::where('id', $request->order_item_id)
             ->where('user_id', $user->id)
+            ->lockForUpdate()
             ->first();
 
         if (! $item) {
@@ -725,24 +728,24 @@ class UserController extends Controller
             $item->setStatus(OrderItemStatus::CONFIRMED);
             $item->confirmed_at = now();
             $item->save();
-            app(ChannelPointService::class)->recordCustomerPayback($item);
+            app(\App\Services\OrderFulfillmentService::class)->confirmPoints($item);
             $item->loadMissing('shopChannel');
             if ($item->shopChannel) {
-                app(ShopChannelSmsService::class)->send(
+                DB::afterCommit(fn () => app(ShopChannelSmsService::class)->send(
                     $item->shopChannel,
                     $order,
                     $item,
                     ShopChannelSmsService::TYPE_PURCHASE_CONFIRMED
-                );
+                ));
             }
 
             // Save rating and review to ratings table
-            DB::table('ratings')->insert([
+            if (! empty($data['rating'])) DB::table('ratings')->insert([
                 'user_id' => $user->id,
                 'product_id' => $item->product_id,
-                'rating' => intval($request->rating ?? 5),
-                'review' => $request->review ?? '이 상품을 구매하겠습니다.',
-                'status' => 1,
+                'rating' => $data['rating'],
+                'review' => $data['review'] ?? '',
+                'status' => 0,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -797,6 +800,7 @@ class UserController extends Controller
                 'message' => $label.' 신청이 완료되었습니다.',
             ]);
         }
+        });
     }
 
     public function profileEdit()
@@ -1748,34 +1752,7 @@ class UserController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($user, $shop) {
-                $availablePoints = PointTransaction::where('user_id', $user->id)
-                    ->where('shop_channel_id', $shop->id)
-                    ->lockForUpdate()
-                    ->sum('points');
-
-                if ($availablePoints <= 0) {
-                    throw ValidationException::withMessages([
-                        'shop_channel_id' => '전환 가능한 채널 포인트가 없습니다.',
-                    ]);
-                }
-
-                PointTransaction::create([
-                    'user_id' => $user->id,
-                    'shop_channel_id' => $shop->id,
-                    'type' => 'convert_out',
-                    'points' => -$availablePoints,
-                    'description' => $shop->channel_name.' 채널 포인트 Me9 포인트 전환 차감',
-                ]);
-
-                PointTransaction::create([
-                    'user_id' => $user->id,
-                    'shop_channel_id' => null,
-                    'type' => 'convert_in',
-                    'points' => $availablePoints,
-                    'description' => $shop->channel_name.' 채널 포인트 Me9 포인트 전환 적립',
-                ]);
-            });
+            app(\App\Services\CustomerPointService::class)->convertClosedChannel($user->id, $shop);
         } catch (ValidationException $e) {
             return back()->withErrors($e->errors());
         }

@@ -189,7 +189,7 @@ class ChannelController extends Controller
             $query->whereIn('is_member_only', $request->is_member_only);
         }
 
-        $shops = $query->orderBy('created_at', 'desc')->paginate(10);
+        $shops = $query->withCount('shopChannelProducts')->orderBy('created_at', 'desc')->paginate(10);
 
         return view('channel.sub01.shop_list', [
             'dep1_id' => '01',
@@ -469,6 +469,25 @@ class ChannelController extends Controller
             'dep1_id' => '01',
             'shop' => $shop
         ]);
+    }
+
+    public function copyShop(int $id)
+    {
+        $admin = Auth::guard('admin')->user();
+        $shop = \App\Models\ShopChannel::where('vendor_id', $admin->vendor_id)->findOrFail($id);
+        $copy = $shop->replicate([
+            'channel_code', 'closure_status', 'closure_requested_at', 'closure_approved_at',
+            'closure_rejected_at', 'closure_reviewed_by', 'closure_memo',
+            'admin_name', 'admin_login_id', 'admin_password',
+        ]);
+        $copy->channel_code = 'shop-'.\Illuminate\Support\Str::uuid();
+        $copy->channel_name = \Illuminate\Support\Str::limit($shop->channel_name, 90, '').' (복사)';
+        $copy->status = 0;
+        $copy->use_admin = 0;
+        $copy->save();
+
+        return redirect()->route('channel.info_update', $copy->id)
+            ->with('success_message', 'Shop 채널 정보가 복사되었습니다. 설정을 확인한 후 운영 상태로 변경해 주세요.');
     }
 
     public function deleteShop($id)
@@ -1896,6 +1915,7 @@ class ChannelController extends Controller
                             ->orWhere('id', 'like', '%' . $orderNumber . '%');
                     }
                     $orderQuery->orWhere('name', 'like', '%' . $keyword . '%')
+                        ->orWhere('buyer_name', 'like', '%' . $keyword . '%')
                         ->orWhere('email', 'like', '%' . $keyword . '%')
                         ->orWhere('mobile', 'like', '%' . $keyword . '%');
                 })->orWhereHas('orders_products', function ($itemQuery) use ($keyword, $vendor_id, $vendorShopIds, $vendorShopProductIds, $vendorProductIds, $statusValues, $hasImpossibleStatusFilter, $filters) {
@@ -1951,6 +1971,8 @@ class ChannelController extends Controller
             $buyer = $filters['buyer'];
             $query->where(function ($buyerQuery) use ($buyer) {
                 $buyerQuery->where('name', 'like', '%' . $buyer . '%')
+                    ->orWhere('buyer_name', 'like', '%' . $buyer . '%')
+                    ->orWhere('buyer_mobile', 'like', '%' . $buyer . '%')
                     ->orWhere('email', 'like', '%' . $buyer . '%')
                     ->orWhere('mobile', 'like', '%' . $buyer . '%');
             });
@@ -1981,7 +2003,7 @@ class ChannelController extends Controller
 
         $orders->getCollection()->transform(function($order) use ($jointProductIds) {
             $order->order_no = 'Me9-' . str_pad($order->id, 8, '0', STR_PAD_LEFT); 
-            $order->user_name = $order->name; 
+            $order->user_name = $order->buyer_name ?: $order->name;
             $order->claims_data = $order->claims; 
             
             $vendorItems = $order->orders_products;
@@ -1993,6 +2015,8 @@ class ChannelController extends Controller
                     ? $item->line_total
                     : $item->product_price * $item->product_qty;
                 $isJointPurchase = $jointProductIds->has((int) $item->product_id);
+                $payment = app(\App\Services\SettlementCalculator::class)->paymentAmounts($item);
+                $financial = app(\App\Services\SettlementCalculator::class)->orderFinancialAmounts($item, (int) $item->vendor_id);
 
                 return [
                     'id' => $item->id,
@@ -2006,6 +2030,16 @@ class ChannelController extends Controller
                     'qty' => $item->product_qty,
                     'price' => $item->selling_price ?: $item->product_price,
                     'line_total' => $lineTotal,
+                    'shipping_amount' => $payment['shipping'],
+                    'used_point_amount' => $payment['points'],
+                    'paid_cash_amount' => $payment['cash'],
+                    'estimated_payout' => $financial['payout'],
+                    'sales_profit' => $financial['sales_profit'],
+                    'reward_points' => $item->is_exchange_replacement ? 0 : $payment['reward'],
+                    'refund_cash_amount' => $item->financial_reversed_at ? (float) $item->refund_cash_amount : max(0, $payment['cash'] - (float) $item->return_shipping_fee),
+                    'refund_status' => $item->refund_status,
+                    'refund_status_label' => $item->refund_status_label,
+                    'return_shipping_fee' => (float) $item->return_shipping_fee,
                     'original_line_total' => $item->original_line_total,
                     'repriced_line_total' => $item->repriced_line_total,
                     'reprice_adjustment_amount' => $item->reprice_adjustment_amount,
@@ -2022,12 +2056,12 @@ class ChannelController extends Controller
 
             $order->total_product_price = $totalProductPrice;
             $order->total_sale_price = $totalProductPrice; 
-            $order->total_profit = 0; 
-            $order->total_selling_profit = 0; 
-            $order->delivery_fee = (int) ($order->shipping_charges ?? 0);
-            $order->used_point = 0;
-            $order->total_payment_price = $totalProductPrice + $order->delivery_fee;
-            $order->earned_point = 0;
+            $order->total_profit = $order->items->sum('estimated_payout');
+            $order->total_selling_profit = $order->items->sum('sales_profit');
+            $order->delivery_fee = $order->items->sum('shipping_amount');
+            $order->used_point = $order->items->sum('used_point_amount');
+            $order->total_payment_price = $order->items->sum('paid_cash_amount');
+            $order->earned_point = $order->items->sum('reward_points');
             $order->status = $order->items->first()['status_label'] ?? OrderItemStatus::label(OrderItemStatus::PAID);
             $order->order_type_label = $order->items->pluck('order_type_label')->unique()->implode(', ');
             
@@ -2566,6 +2600,8 @@ class ChannelController extends Controller
             'phone' => 'nullable|string|max:50',
             'return_postcode' => 'nullable|string|max:20',
             'return_address' => 'nullable|string|max:255',
+            'access_started_at' => 'nullable|date',
+            'access_ended_at' => 'nullable|date|after_or_equal:access_started_at',
             'password' => ['required', 'confirmed', \Illuminate\Validation\Rules\Password::min(12)->mixedCase()->letters()->numbers()],
         ]);
 
@@ -2578,6 +2614,8 @@ class ChannelController extends Controller
             'phone' => $data['phone'] ?? null,
             'return_postcode' => $data['return_postcode'] ?? null,
             'return_address' => $data['return_address'] ?? null,
+            'access_started_at' => $data['access_started_at'] ?? null,
+            'access_ended_at' => $data['access_ended_at'] ?? null,
             'password' => \Illuminate\Support\Facades\Hash::make($data['password']),
         ];
 
@@ -2606,6 +2644,8 @@ class ChannelController extends Controller
             'phone' => 'nullable|string|max:50',
             'return_postcode' => 'nullable|string|max:20',
             'return_address' => 'nullable|string|max:255',
+            'access_started_at' => 'nullable|date',
+            'access_ended_at' => 'nullable|date|after_or_equal:access_started_at',
             'password' => ['nullable', 'confirmed', \Illuminate\Validation\Rules\Password::min(12)->mixedCase()->letters()->numbers()],
         ]);
 
@@ -2616,6 +2656,8 @@ class ChannelController extends Controller
             'phone' => $data['phone'] ?? null,
             'return_postcode' => $data['return_postcode'] ?? null,
             'return_address' => $data['return_address'] ?? null,
+            'access_started_at' => $data['access_started_at'] ?? null,
+            'access_ended_at' => $data['access_ended_at'] ?? null,
         ];
 
         if (!empty($data['password'])) {
@@ -2635,6 +2677,8 @@ class ChannelController extends Controller
 
         $admin = Auth::guard('admin')->user();
         $manager = $this->orderManagersForVendor((int) ($admin->vendor_id ?? 0))->findOrFail($id);
+
+        abort_unless($manager->canAccess(), 403);
 
         request()->session()->regenerate();
         \Illuminate\Support\Facades\Session::put('distributor_id', $manager->id);
@@ -2664,39 +2708,32 @@ class ChannelController extends Controller
 
         $admin = Auth::guard('admin')->user();
         $vendorId = (int) ($admin->vendor_id ?? 0);
-        $pointService = app(\App\Services\ChannelPointService::class);
         $history = $request->query('history', 'all');
-        $status = $request->query('status', 'all');
-        $transactions = \App\Models\ChannelPointTransaction::with('shopChannel')
-            ->where('vendor_id', $vendorId);
+        $ledger = \App\Models\PointTransaction::whereHas('shopChannel', fn ($query) => $query->where('vendor_id', $vendorId));
+        $transactions = (clone $ledger)->with('shopChannel');
 
-        if ($history === 'purchase') {
-            $transactions->where('type', \App\Services\ChannelPointService::TYPE_PURCHASE);
+        if ($history === 'earn') {
+            $transactions->where('points', '>', 0)->where('type', '!=', 'refund');
         } elseif ($history === 'use') {
-            $transactions->whereIn('type', [
-                \App\Services\ChannelPointService::TYPE_CUSTOMER_PAYBACK,
-                \App\Services\ChannelPointService::TYPE_SMS,
-            ]);
+            $transactions->where('points', '<', 0);
         } elseif ($history === 'refund') {
-            $transactions->where('type', \App\Services\ChannelPointService::TYPE_REFUND);
-        }
-
-        if ($status !== 'all') {
-            $transactions->where('status', $status);
+            $transactions->where('type', 'refund');
         }
 
         $transactions = $transactions->latest()->paginate(20)->withQueryString();
 
         return view('channel.sub00.point_list', [
             'dep1_id' => '00',
-            'summary' => $pointService->summaryForVendor($vendorId),
+            'summary' => [
+                'balance' => (int) (clone $ledger)->sum('points'),
+                'distributed' => (int) (clone $ledger)->where('points', '>', 0)->where('type', '!=', 'refund')->sum('points'),
+                'used' => -(int) (clone $ledger)->where('type', 'use')->sum('points'),
+                'converted' => -(int) (clone $ledger)->where('type', 'convert_out')->sum('points'),
+                'restored' => (int) (clone $ledger)->where('type', 'refund')->sum('points'),
+            ],
             'transactions' => $transactions,
-            'canRequestRefund' => $pointService->canRequestRefund($vendorId),
-            'hasActiveChannel' => $pointService->hasActiveChannel($vendorId),
-            'hasPendingClosure' => $pointService->hasPendingClosure($vendorId),
             'filters' => [
                 'history' => $history,
-                'status' => $status,
             ],
         ]);
     }
@@ -2739,7 +2776,7 @@ class ChannelController extends Controller
             ])->save();
         }
 
-        return redirect()->back()->with('success_message', 'Shop 채널 운영중지 요청이 접수되었습니다. 최고관리자 승인 후 포인트 환급과 Me9 포인트 전환이 가능합니다.');
+        return redirect()->back()->with('success_message', 'Shop 채널 운영중지 요청이 접수되었습니다. 최고관리자 승인 후 고객의 Me9 포인트 전환이 가능합니다.');
     }
 
     public function requestPointPurchase(Request $request)

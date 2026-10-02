@@ -210,6 +210,7 @@
                                                                     <th class="w160"><span>반송지</span></th>
                                                                     <td><input type="text" name="return_postcode" value="{{ old('return_postcode') }}" class="w100" placeholder="우편번호"> <input type="text" name="return_address" value="{{ old('return_address') }}" class="wFull" placeholder="수동회수 반송 주소"></td>
                                                                 </tr>
+                                                                @include('distributor.partials.access_period', ['accessManager' => null, 'colspan' => 1])
                                                                 <tr>
                                                                     <th class="w160"><span>비밀번호<em>필수</em></span></th>
                                                                     <td><input type="password" name="password" value="" class="w300" minlength="12" autocomplete="new-password" required></td>
@@ -288,6 +289,7 @@
                                                                         <th class="w160"><span>반송지</span></th>
                                                                         <td><input type="text" name="return_postcode" value="{{ old('return_postcode', $manager->return_postcode) }}" class="w100" placeholder="우편번호"> <input type="text" name="return_address" value="{{ old('return_address', $manager->return_address) }}" class="wFull" placeholder="수동회수 반송 주소"></td>
                                                                     </tr>
+                                                                    @include('distributor.partials.access_period', ['accessManager' => $manager, 'colspan' => 1])
                                                                     <tr>
                                                                         <th class="w160"><span>비밀번호 변경</span></th>
                                                                         <td><input type="password" name="password" value="" class="w300" minlength="12" autocomplete="new-password" placeholder="변경할 때만 입력"></td>

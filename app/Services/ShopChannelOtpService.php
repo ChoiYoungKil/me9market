@@ -14,6 +14,9 @@ class ShopChannelOtpService
 {
     public function request(string $channelCode, string $phone): ShopChannelAccessOtp
     {
+        if (! app()->environment(['local', 'testing']) && config('services.sms.driver') === 'log') {
+            throw ValidationException::withMessages(['phone' => '문자 인증 서비스를 이용할 수 없습니다. 판매자에게 문의해 주세요.']);
+        }
         $access = $this->findAccess($channelCode, $phone);
         $latest = ShopChannelAccessOtp::where('shop_channel_private_access_id', $access->id)
             ->latest('id')
@@ -51,12 +54,11 @@ class ShopChannelOtpService
 
         DB::transaction(function () use ($access, $code, $maxAttempts, &$error) {
             $otp = ShopChannelAccessOtp::where('shop_channel_private_access_id', $access->id)
-                ->whereNull('verified_at')
                 ->latest('id')
                 ->lockForUpdate()
                 ->first();
 
-            if (! $otp || $otp->expires_at->isPast()) {
+            if (! $otp || $otp->verified_at || $otp->expires_at->isPast()) {
                 throw ValidationException::withMessages(['otp' => '인증번호가 만료되었거나 존재하지 않습니다.']);
             }
             if ($otp->attempts >= $maxAttempts) {

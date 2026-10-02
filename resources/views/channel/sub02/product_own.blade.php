@@ -716,12 +716,13 @@
 
             $select.append('<option>-선택-</option>');
             options.forEach(function (option) {
-                var label = (option.name ? option.name + ' : ' : '') + (option.value || '-');
+                var rawLabel = (option.name ? option.name + ' : ' : '') + (option.value || '-');
+                var label = $('<div>').text(rawLabel).html();
                 $select.append('<option>' + label + '</option>');
                 $list.append(
                     '<li style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #eee;">' +
                         '<div class="txt1" style="flex:1; font-weight:bold;">' + label + '</div>' +
-                        '<div class="txt2" style="width:90px; text-align:right; font-weight:bold; margin-right:10px;">' + numberFormat(option.price) + '원</div>' +
+                        '<div class="txt2" style="width:90px; text-align:right; font-weight:bold; margin-right:10px;">' + (Number(option.price_adjustment || 0) > 0 ? '+' : '') + numberFormat(option.price_adjustment || 0) + '원</div>' +
                         '<div style="width:70px; text-align:right; color:#777;">재고 ' + numberFormat(option.stock) + '</div>' +
                     '</li>'
                 );

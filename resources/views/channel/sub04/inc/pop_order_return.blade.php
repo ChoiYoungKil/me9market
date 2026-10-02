@@ -129,6 +129,7 @@
                             <a href="{{ url()->current() }}" class="btn01 col3 pop_btn" data-pop="pop1_4_2">반품회수완료</a>
                             <a href="{{ url()->current() }}" class="btn01 col3 pop_btn" data-pop="pop1_4_3">반품확정</a>
                             <a href="{{ url()->current() }}" class="btn01 pop_btn" data-pop="pop1_4_4">반품보류</a>
+                            <button type="button" class="btn01" data-release-claim="return_release">보류 해제</button>
                             <a href="{{ url()->current() }}" class="btn01 pop_btn" data-pop="pop1_4_5">반품철회</a>
                             <a href="{{ url()->current() }}" class="btn01 col3 pop_btn" data-pop="pop1_4_6">송장수정</a>
                         </div>

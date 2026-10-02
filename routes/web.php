@@ -18,6 +18,13 @@ require __DIR__ . '/auth.php';
 // 수정: 기본 /login 경로를 새로운 /member/login 페이지로 리다이렉트
 Route::redirect('/login', '/member/login');
 
+Route::prefix('shop-monitor')->controller(\App\Http\Controllers\Front\ShopMonitorController::class)->group(function () {
+    Route::get('login', 'login')->name('shop.monitor.login');
+    Route::post('login', 'loginSubmit')->middleware('throttle:5,1')->name('shop.monitor.login.submit');
+    Route::get('/', 'index')->name('shop.monitor.index');
+    Route::post('logout', 'logout')->name('shop.monitor.logout');
+});
+
 
 
 // 참고: 웹사이트는 두 가지 주요 섹션으로 구분됩니다: 관리자(Admin) 경로 및 사용자(Frontend) 경로!:
@@ -70,7 +77,12 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::get('loading', 'AdminController@loading')->name('admin.loading');
         Route::get('sub/layer-large', 'AdminController@layerLarge')->name('admin.layer_large');
         Route::get('dashboard', 'AdminController@dashboard')->name('admin.dashboard'); // 관리자 로그인
-        Route::get('logout', 'AdminController@logout'); // 관리자 로그아웃
+        if (config('storyboard.enabled')) {
+            Route::get('storyboard-test', 'AdminController@storyboardTestbed')
+                ->middleware('admin.role:superadmin')
+                ->name('admin.storyboard_testbed');
+        }
+        Route::match(['get', 'post'], 'logout', 'AdminController@logout'); // 관리자 로그아웃
         Route::match(['get', 'post'], 'update-admin-password', 'AdminController@updateAdminPassword'); // 비밀번호 변경 폼 보기(GET) 및 제출(POST)
         Route::post('check-admin-password', 'AdminController@checkAdminPassword'); // 관리자 비밀번호 확인 // admin/js/custom.js의 AJAX 호출에서 사용됨
         Route::match(['get', 'post'], 'update-admin-details', 'AdminController@updateAdminDetails'); // update_admin_details.blade.php 페이지에서 관리자 정보 수정    // 페이지 렌더링(GET) 및 폼 제출(POST)
@@ -232,6 +244,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         // 배송비 관리 모듈 (Shipping Charges module)
         // 배송비 관리 페이지 (admin/shipping/shipping_charges.blade.php) 렌더링 (관리자 전용)
         Route::get('shipping-charges', 'ShippingController@shippingCharges');
+        Route::get('refund-policies', 'AdminController@refundPolicies')->name('admin.refund_policies');
 
         // AJAX를 사용한 배송비 상태 업데이트 (active/inactive)
         Route::post('update-shipping-status', 'ShippingController@updateShippingStatus');
@@ -288,7 +301,7 @@ Route::get('orders/invoice/download/{id}', 'App\Http\Controllers\Front\FrontCont
 // 새로운 프로젝트 재구축 라우트 (우선순위)
 Route::namespace('App\Http\Controllers\Front')->group(function () {
     // Me9market (메인 몰)
-    Route::get('/', function() { return view('front.index'); })->name('home');
+    Route::get('/', 'FrontController@index')->name('home');
 
     // 회원 라우트
     Route::prefix('member')->name('front.member.')->group(function () {
@@ -334,6 +347,9 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
 
     // shop 채널 (RF-03)
     Route::prefix('shop-channel')->group(function () {
+        Route::get('/login', 'ShopController@login')->name('shop.login');
+        Route::post('/login', 'ShopController@loginSubmit')->middleware('throttle:5,1')->name('shop.login.submit');
+        Route::post('/logout', 'ShopController@logout')->name('shop.logout');
         Route::get('/gate', 'FrontController@shopGate')->name('shop.gate');
         Route::post('/gate', 'FrontController@shopGateSubmit')->name('shop.gate.submit');
         Route::post('/otp/request', 'FrontController@shopOtpRequest')->middleware('throttle:5,1')->name('shop.otp.request');
@@ -348,18 +364,23 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
             Route::get('/joint-purchases/{id}', 'FrontController@shopJointPurchaseDetails')->name('shop.joint_purchase_details');
             Route::get('/notices', 'FrontController@shopNotices')->name('shop.notices');
             Route::get('/notices/{id}', 'FrontController@shopNoticeDetails')->name('shop.notices.show');
+            Route::get('/notices/{id}/attachment', 'FrontController@shopNoticeAttachment')->name('shop.notices.attachment');
         });
     });
 
     // Shop 라우트
     Route::prefix('shop')->name('front.shop.')->middleware('shop.channel.access')->group(function () {
         Route::get('/cart', 'ShopController@cart')->name('cart.index');
+        Route::post('/cart/remove-selected', 'ShopController@removeSelectedFromCart')->name('cart.remove_selected');
         Route::post('/cart/add', 'ShopController@addToCart')->name('cart.add');
         Route::post('/cart/update', 'ShopController@updateCart')->name('cart.update');
         Route::post('/cart/remove', 'ShopController@removeFromCart')->name('cart.remove');
         Route::get('/order', 'ShopController@order')->name('order.form');
         Route::post('/order', 'ShopController@checkout')->name('order.checkout');
         Route::get('/order/complete', 'ShopController@orderComplete')->name('order.complete');
+        Route::get('/order/confirm', 'ShopController@orderConfirm')->name('order.confirm');
+        Route::post('/order/confirm', 'ShopController@orderConfirmSubmit')->middleware('throttle:5,1')->name('order.confirm.submit');
+        Route::get('/order/view/{id}', 'ShopController@orderView')->whereNumber('id')->name('order.view');
         
         // 상세 페이지 라우트 (추가됨)
         Route::get('/order/details', 'ShopController@orderDetails')->name('order.details');
@@ -396,6 +417,7 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
                 Route::get('/private-access-template', 'ChannelController@privateAccessTemplate')->name('channel.shop.private_access.template');
                 Route::get('/info', 'ChannelController@shopInfo')->name('channel.shop_info');
                 Route::post('/delete/{id}', 'ChannelController@deleteShop')->name('channel.shop.delete');
+                Route::post('/copy/{id}', 'ChannelController@copyShop')->whereNumber('id')->name('channel.shop.copy');
                 Route::get('/product01', 'ChannelController@shopProduct01')->name('channel.shop_product01');
                 Route::get('/product02', 'ChannelController@shopProduct02')->name('channel.shop_product02');
                 Route::get('/community', 'ChannelController@shopCommunity')->name('channel.shop_community');
@@ -505,8 +527,6 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
                 Route::post('/order-manager/{id}/update', 'ChannelController@updateOrderManager')->name('channel.order.manager.update');
                 Route::post('/order-manager/{id}/portal', 'ChannelController@openOrderManagerPortal')->name('channel.order.manager.portal');
                 Route::get('/points', 'ChannelController@pointList')->name('channel.point.list');
-                Route::post('/points/purchase', 'ChannelController@requestPointPurchase')->name('channel.point.purchase');
-                Route::post('/points/refund', 'ChannelController@requestPointRefund')->name('channel.point.refund');
                 Route::get('/sub-accounts', 'ChannelController@subList')->name('channel.sub_accounts.list');
                 Route::post('/sub-accounts/store', 'ChannelController@storeSubAccount')->name('channel.sub_accounts.store');
                 Route::post('/sub-accounts/{id}/update', 'ChannelController@updateSubAccount')->name('channel.sub_accounts.update');

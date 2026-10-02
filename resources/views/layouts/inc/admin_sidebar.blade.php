@@ -50,10 +50,10 @@
                         <a href="{{ route('admin.channel_points.index') }}">포인트관리</a>
                     </li>
                     <li class="dep1 icon1_6">
-                        <a href="{{ url()->current() }}">배송비설정</a>
+                        <a href="{{ url('admin/shipping-charges') }}">배송비설정</a>
                     </li>
                     <li class="dep1 icon1_6">
-                        <a href="{{ url()->current() }}">취소/환불안내</a>
+                        <a href="{{ route('admin.refund_policies') }}">취소/환불안내</a>
                     </li>
                     <li class="dep1 icon1_5 @if(Session::get('page') == 'settlements') on @endif">
                         <a href="{{ route('admin.settlements.index') }}">정산관리</a>
@@ -64,19 +64,19 @@
                 <div class="c_ttl">바로가기 메뉴</div>
                 <ul class="dep1_wrap type2">
                     <li class="dep1 icon2_1">
-                        <a href="{{ url()->current() }}">바로가기 메뉴</a>
+                        <a href="{{ url('admin/orders') }}">주문관리</a>
                     </li>
                     <li class="dep1">
-                        <a href="{{ url()->current() }}">바로가기 메뉴</a>
+                        <a href="{{ route('home') }}">Me9 market</a>
                     </li>
                     <li class="dep1">
-                        <a href="{{ url()->current() }}">바로가기 메뉴</a>
+                        <a href="{{ route('shop.monitor.login') }}">Shop 모니터링</a>
                     </li>
                     <li class="dep1">
-                        <a href="{{ url()->current() }}">바로가기 메뉴</a>
+                        <a href="{{ url('admin/update-admin-details') }}">내 정보</a>
                     </li>
                     <li class="dep1">
-                        <a href="{{ url()->current() }}">바로가기 메뉴</a>
+                        <a href="{{ url('admin/update-admin-password') }}">비밀번호 변경</a>
                     </li>
                 </ul>
             </div>

@@ -228,6 +228,10 @@
                                 <label style="font-weight: 550">Mobile: </label>
                                 <label>{{ $orderDetails['mobile'] }}</label>
                             </div>
+                            <div class="form-group">
+                                <label>배송 메모</label>
+                                <label>{{ $orderDetails['delivery_memo'] ?? '-' }}</label>
+                            </div>
                         </div>
                     </div>
                 </div>

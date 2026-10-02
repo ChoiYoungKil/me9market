@@ -7,6 +7,7 @@ use App\Models\OrdersProduct;
 use App\Models\SettlementExecution;
 use App\Models\SettlementRun;
 use App\Services\SettlementCalculator;
+use App\Services\OrderSettlementPolicy;
 use App\Support\OrderItemStatus;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -377,7 +378,7 @@ class SettlementController extends Controller
                 optional($item->confirmed_at)->format('Y-m-d H:i'),
                 $item->order_no,
                 $this->orderTypeLabel($orderItem),
-                $this->productTypeLabel(data_get($orderItem, 'shopChannelProduct.product_type')),
+                $this->productTypeLabel(data_get($orderItem, 'settlement_policy_snapshot.product_type') ?? data_get($orderItem, 'shopChannelProduct.product_type')),
                 $this->settlementRoleTypeLabel($item->settlement_role ?? 'seller'),
                 $pgPayment,
                 $pointPayment,
@@ -412,6 +413,10 @@ class SettlementController extends Controller
 
     private function allocatedOrderAmount($orderItem, string $field): float
     {
+        if ($field === 'shipping_charges' && data_get($orderItem, 'shipping_amount_snapshot') !== null) {
+            return (float) $orderItem->shipping_amount_snapshot;
+        }
+
         $amount = (float) data_get($orderItem, 'order.'.$field, 0);
         if ($amount <= 0 || ! $orderItem) {
             return 0;
@@ -423,6 +428,7 @@ class SettlementController extends Controller
         }
 
         $orderTotal = (float) OrdersProduct::where('order_id', data_get($orderItem, 'order_id'))
+            ->where('is_exchange_replacement', false)
             ->selectRaw('SUM(CASE WHEN line_total > 0 THEN line_total ELSE product_price * product_qty END) as total')
             ->value('total');
 
@@ -454,8 +460,7 @@ class SettlementController extends Controller
         return $settlement->items
             ->filter(function ($item) {
                 $orderItem = $item->orderItem;
-                $usesOwnPg = ($item->payment_gateway_type ?? null) === 'own_pg'
-                    || (bool) data_get($orderItem, 'shopChannel.use_own_pg', false);
+                $usesOwnPg = $this->usesOwnPg($item);
 
                 return ! $usesOwnPg && $this->extraShippingTotal($orderItem) > 0;
             })
@@ -505,8 +510,7 @@ class SettlementController extends Controller
     {
         return $settlement->items->map(function ($item) {
             $orderItem = $item->orderItem;
-            $usesOwnPg = ($item->payment_gateway_type ?? null) === 'own_pg'
-                || (bool) data_get($orderItem, 'shopChannel.use_own_pg', false);
+            $usesOwnPg = $this->usesOwnPg($item);
             $pgPayment = max(0, (float) $item->invoice_sales_amount - (float) $item->point_used_amount);
             $payoutAmount = (float) $item->payout_amount;
             $productAmount = $this->orderItemLineTotal($orderItem, (int) $item->quantity);
@@ -548,8 +552,7 @@ class SettlementController extends Controller
     {
         return $settlement->items->map(function ($item) {
             $smsFee = (float) ($item->sms_postpaid_amount ?? data_get($item->orderItem, 'sms_fee', 0));
-            $usesOwnPg = ($item->payment_gateway_type ?? null) === 'own_pg'
-                || (bool) data_get($item->orderItem, 'shopChannel.use_own_pg', false);
+            $usesOwnPg = $this->usesOwnPg($item);
             $billingAmount = $usesOwnPg
                 ? max(0, $smsFee - (float) $item->point_used_amount)
                 : (float) $item->invoice_purchase_amount + $smsFee + (float) $item->point_deposit_amount;
@@ -567,6 +570,16 @@ class SettlementController extends Controller
                 $usesOwnPg ? '자사PG 결제건 수수료/부가비용 청구' : '공용PG 정산 차감/청구',
             ];
         });
+    }
+
+    private function usesOwnPg($item): bool
+    {
+        $gateway = $item->payment_gateway_type;
+        if (! $gateway && $item->orderItem) {
+            $gateway = app(OrderSettlementPolicy::class)->forItem($item->orderItem)['payment_gateway_type'];
+        }
+
+        return $gateway === 'own_pg';
     }
 
     private function paymentGatewayLabel(?string $type): string

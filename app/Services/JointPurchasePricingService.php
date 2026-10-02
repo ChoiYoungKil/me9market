@@ -175,15 +175,16 @@ class JointPurchasePricingService
                     $query->whereNull('status_code')
                         ->orWhereNotIn('status_code', [OrderItemStatus::CANCELLED, OrderItemStatus::RETURNED]);
                 })
-                ->get();
+                ->orderBy('id')->lockForUpdate()->get();
 
             $orderIds = [];
             foreach ($items as $item) {
                 $qty = max(1, (int) $item->product_qty);
                 $originalUnit = (float) ($item->original_unit_price ?? $item->selling_price ?? $item->product_price);
                 $originalLine = (float) ($item->original_line_total ?? ($originalUnit * $qty));
-                $newUnit = (float) $price['unit_price'];
+                $newUnit = max(0, (float) $price['unit_price'] + (float) $item->option_price_adjustment);
                 $newLine = round($newUnit * $qty, 2);
+                $paidLine = (float) ($item->paid_line_total_snapshot ?? $originalLine);
 
                 $item->forceFill([
                     'joint_purchase_id' => $jointPurchase->id,
@@ -195,8 +196,8 @@ class JointPurchasePricingService
                     'line_total' => $newLine,
                     'repriced_unit_price' => $newUnit,
                     'repriced_line_total' => $newLine,
-                    'reprice_adjustment_amount' => round($originalLine - $newLine, 2),
-                    'reprice_status' => $originalLine == $newLine ? 'none' : 'pending_repayment',
+                    'reprice_adjustment_amount' => round($paidLine - $newLine, 2),
+                    'reprice_status' => $paidLine == $newLine ? 'none' : 'pending_repayment',
                     'commission' => round($newLine * 0.1),
                 ])->save();
 
@@ -216,8 +217,13 @@ class JointPurchasePricingService
             return;
         }
 
+        // New payments keep the amount actually collected; repricing is a separate adjustment.
+        if ($order->orders_products()->whereNotNull('paid_line_total_snapshot')->exists()) {
+            return;
+        }
+
         $lineTotal = (float) OrdersProduct::where('order_id', $orderId)->sum('line_total');
-        $order->grand_total = round($lineTotal + (float) $order->shipping_charges - (float) $order->coupon_amount, 2);
+        $order->grand_total = max(0, round($lineTotal + (float) $order->shipping_charges - (float) $order->coupon_amount - (float) $order->used_point, 2));
         $order->save();
     }
 }

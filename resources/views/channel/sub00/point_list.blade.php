@@ -4,22 +4,17 @@
     $dep1_id = "00";
     $dep1_tit = "포인트관리";
     $typeLabels = [
-        'purchase' => '구매(이전)',
-        'customer_payback' => '분배',
-        'sms' => '문자 차감',
-        'refund' => '환급(이전)',
-    ];
-    $statusLabels = [
-        'all' => '전체',
-        'pending' => '승인대기',
-        'approved' => '승인완료',
-        'rejected' => '반려',
+        'earn' => '분배',
+        'first_visit' => '첫 방문 지급(이전)',
+        'use' => '구매 사용',
+        'convert_out' => 'Me9 전환',
+        'refund' => '취소/반품 복구',
     ];
     $historyLabels = [
         'all' => '전체',
-        'purchase' => '구매내역(이전)',
-        'use' => '분배/소진내역',
-        'refund' => '환급내역(이전)',
+        'earn' => '분배내역',
+        'use' => '소진내역',
+        'refund' => '복구내역',
     ];
 @endphp
 
@@ -50,7 +45,7 @@
                         @endif
 
                         <div class="list_top1 btn">
-                            <div class="count">보유 포인트 <strong>{{ number_format($summary['balance'] ?? 0) }}</strong> P</div>
+                            <div class="count">고객 보유 포인트 <strong>{{ number_format($summary['balance'] ?? 0) }}</strong> P</div>
                         </div>
 
                         <div class="tb01">
@@ -65,28 +60,21 @@
                                 </colgroup>
                                 <tbody class="textL">
                                     <tr>
-                                        <th><span>이전 구매</span></th>
-                                        <td>{{ number_format($summary['purchased'] ?? 0) }} P</td>
                                         <th><span>분배 포인트</span></th>
-                                        <td>{{ number_format($summary['customer_payback'] ?? 0) }} P</td>
-                                        <th><span>소진 포인트</span></th>
-                                        <td>{{ number_format($summary['sms_used'] ?? 0) }} P</td>
+                                        <td>{{ number_format($summary['distributed'] ?? 0) }} P</td>
+                                        <th><span>구매 사용</span></th>
+                                        <td>{{ number_format($summary['used'] ?? 0) }} P</td>
+                                        <th><span>Me9 전환</span></th>
+                                        <td>{{ number_format($summary['converted'] ?? 0) }} P</td>
                                     </tr>
                                     <tr>
-                                        <th><span>이전 환급</span></th>
-                                        <td>{{ number_format($summary['refunded'] ?? 0) }} P</td>
-                                        <th><span>이전 구매 승인대기</span></th>
-                                        <td>{{ number_format($summary['pending_purchase'] ?? 0) }} P</td>
-                                        <th><span>이전 환급 승인대기</span></th>
-                                        <td>{{ number_format($summary['pending_refund'] ?? 0) }} P</td>
+                                        <th><span>취소/반품 복구</span></th>
+                                        <td colspan="5">{{ number_format($summary['restored'] ?? 0) }} P</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
 
-                        <p class="mt10 fcol1">
-                            Ver3 정책에서는 포인트 구매/충전 요청 없이 상품 구매확정 시 분배되고, 고객 사용 또는 Shop 채널 포인트 전환 시 소진됩니다.
-                        </p>
                     </div>
                 </div>
             </div>
@@ -103,14 +91,6 @@
                                             <select name="history" class="w160">
                                                 @foreach($historyLabels as $value => $label)
                                                     <option value="{{ $value }}" {{ ($filters['history'] ?? 'all') === $value ? 'selected' : '' }}>{{ $label }}</option>
-                                                @endforeach
-                                            </select>
-                                        </td>
-                                        <th class="w160"><span>상태</span></th>
-                                        <td>
-                                            <select name="status" class="w160">
-                                                @foreach($statusLabels as $value => $label)
-                                                    <option value="{{ $value }}" {{ ($filters['status'] ?? 'all') === $value ? 'selected' : '' }}>{{ $label }}</option>
                                                 @endforeach
                                             </select>
                                         </td>
@@ -141,9 +121,9 @@
                                         <th>No</th>
                                         <th>등록일</th>
                                         <th>구분</th>
-                                        <th>상태</th>
+                                        <th>Shop 채널</th>
                                         <th>포인트</th>
-                                        <th>금액</th>
+                                        <th>주문번호</th>
                                         <th>내역</th>
                                     </tr>
                                 </thead>
@@ -153,14 +133,14 @@
                                             <td>{{ $transactions->firstItem() + $loop->index }}</td>
                                             <td>{{ optional($transaction->created_at)->format('Y-m-d H:i') }}</td>
                                             <td>{{ $typeLabels[$transaction->type] ?? $transaction->type }}</td>
-                                            <td>{{ $statusLabels[$transaction->status] ?? $transaction->status }}</td>
+                                            <td>{{ $transaction->shopChannel?->channel_name }}</td>
                                             <td class="t_r">
                                                 <span class="{{ $transaction->points >= 0 ? 'fcol5' : 'fcol3' }}">
                                                     {{ $transaction->points >= 0 ? '+' : '' }}{{ number_format($transaction->points) }} P
                                                 </span>
                                             </td>
-                                            <td class="t_r">{{ number_format($transaction->payment_amount ?? 0) }} 원</td>
-                                            <td>{{ $transaction->memo ?: '-' }}</td>
+                                            <td>{{ $transaction->order_id ?: '-' }}</td>
+                                            <td>{{ $transaction->description ?: '-' }}</td>
                                         </tr>
                                     @empty
                                         <tr>

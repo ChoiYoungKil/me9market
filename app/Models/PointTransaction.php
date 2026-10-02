@@ -17,6 +17,7 @@ class PointTransaction extends Model
         'type',
         'points',
         'description',
+        'reference_key',
     ];
 
     public function shopChannel()

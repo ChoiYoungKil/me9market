@@ -1,74 +1,54 @@
-@extends('layouts.frontend')
-
+@extends('layouts.shop')
 @section('content')
-<div id="contents" style="padding: 100px 0; min-height: 600px; background:#f6f7f9;">
-    <div style="max-width: 1180px; margin: 0 auto; background: #fff; border:1px solid #d9dee7; border-radius:8px; padding: 28px;">
-        <h1 style="margin:0 0 8px;">장바구니</h1>
-        <p style="margin:0 0 24px; color:#667085;">{{ $shop->channel_name }} ({{ $shop->channel_code }}) 장바구니입니다.</p>
-
-        @if(session('flash_message_success'))
-            <div style="background:#dcfae6; color:#087443; padding:12px 16px; border-radius:6px; margin-bottom:16px;">{{ session('flash_message_success') }}</div>
-        @endif
-
+<div id="contents"><div id="join" class="shopping_basket">
+    <div class="top_v"><h1 class="title">장바구니</h1></div>
+    <div class="shop-inner">
         @if(empty($cartItems))
-            <div style="padding:40px; text-align:center; border:1px dashed #d9dee7; border-radius:8px;">
-                장바구니가 비어 있습니다.
-                <div style="margin-top:18px;"><a href="{{ route('shop.products_list') }}" style="font-weight:900;">상품 보러가기</a></div>
-            </div>
+            <div class="shop-empty">장바구니가 비어 있습니다.<div class="shop-actions"><a class="shop-btn primary" href="{{ route('shop.products_list') }}">상품 보러가기</a></div></div>
         @else
-            <table style="width:100%; border-collapse:collapse;">
-                <caption style="text-align:left; padding:12px; background:#eef4ff; color:#3538cd; font-weight:900;">{{ $shop->channel_name }} ({{ $shop->channel_code }})</caption>
-                <thead>
-                    <tr style="background:#f8fafc;">
-                        <th style="padding:12px; text-align:left;">상품</th>
-                        <th style="padding:12px;">옵션</th>
-                        <th style="padding:12px;">수량</th>
-                        <th style="padding:12px;">금액</th>
-                        <th style="padding:12px;">삭제</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($cartItems as $item)
-                        <tr style="border-bottom:1px solid #eef1f5;">
-                            <td style="padding:12px;">
-                                <strong>{{ $item['product']->product_name }}</strong>
-                                <div style="color:#667085; font-size:13px;">{{ $item['product']->product_code }}</div>
-                            </td>
-                            <td colspan="2" style="padding:12px; text-align:center;">
-                                <form action="{{ route('front.shop.cart.update') }}" method="POST" style="display:flex; gap:6px; justify-content:center; align-items:center;">
-                                    @csrf
-                                    <input type="hidden" name="shop_product_id" value="{{ $item['id'] }}">
-                                    <input type="text" name="option" value="{{ $item['option'] }}" maxlength="100" required aria-label="상품 옵션" style="width:120px; height:34px; border:1px solid #d0d5dd; padding:0 8px; box-sizing:border-box;">
-                                    <input type="number" name="qty" value="{{ $item['qty'] }}" min="1" max="999" required aria-label="상품 수량" style="width:70px; height:34px; border:1px solid #d0d5dd; padding:0 8px; box-sizing:border-box;">
-                                    <button type="submit" style="height:34px; border:1px solid #344054; background:#344054; color:#fff; border-radius:6px; padding:0 10px; cursor:pointer;">수정</button>
-                                </form>
-                            </td>
-                            <td style="padding:12px; text-align:right; font-weight:900;">{{ number_format($item['line_total']) }}원</td>
-                            <td style="padding:12px; text-align:center;">
-                                <form action="{{ route('front.shop.cart.remove') }}" method="POST">
-                                    @csrf
-                                    <input type="hidden" name="shop_product_id" value="{{ $item['id'] }}">
-                                    <button type="submit" style="border:1px solid #d9dee7; background:#fff; border-radius:6px; padding:6px 10px; cursor:pointer;">삭제</button>
-                                </form>
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-
-            <div style="margin-top:24px; display:grid; justify-content:end;">
-                <div style="min-width:320px; background:#f8fafc; border-radius:8px; padding:18px;">
-                    <div style="display:flex; justify-content:space-between; margin-bottom:8px;"><span>상품금액</span><strong>{{ number_format($totals['subtotal']) }}원</strong></div>
-                    <div style="display:flex; justify-content:space-between; margin-bottom:8px;"><span>배송비</span><strong>{{ number_format($totals['shipping']) }}원</strong></div>
-                    <div style="display:flex; justify-content:space-between; border-top:1px solid #d9dee7; padding-top:12px; font-size:20px;"><span>결제예정</span><strong>{{ number_format($totals['total']) }}원</strong></div>
+            <form id="cart-remove-selected" action="{{ route('front.shop.cart.remove_selected') }}" method="POST">@csrf</form>
+            <div class="shop-order-heading"><label class="shop-check"><input type="checkbox" data-select-all=".shop-cart-select">전체선택</label><button type="submit" form="cart-remove-selected" class="shop-btn small">선택삭제</button></div>
+            <section class="shop-order"><div class="shop-order-heading"><h2>{{ $shop->channel_name }} ({{ $shop->channel_code }})</h2></div>
+            @foreach($cartItems as $item)
+                @php
+                    $image = $item['product']?->product_image ?: $item['product']?->images->first()?->image;
+                    $imageUrl = $image ? asset('front/images/product_images/small/'.$image) : asset('front/images/product_images/small/no-image.png');
+                @endphp
+                <div class="shop-item">
+                    <img src="{{ $imageUrl }}" alt="{{ $item['product']->product_name }}" loading="lazy">
+                    <div><label class="shop-check"><input class="shop-cart-select" type="checkbox" name="shop_product_ids[]" form="cart-remove-selected" value="{{ $item['key'] }}"><strong>{{ $item['product']->product_name }}</strong></label><p>{{ $item['option'] }} / {{ $item['qty'] }}개</p></div>
+                    <div class="shop-item-side"><strong>{{ number_format($item['line_total']) }}원</strong><div class="shop-item-actions">
+                        <button type="button" class="shop-btn small" data-dialog="cart-option-{{ $item['key'] }}">옵션/수량변경</button>
+                        <a class="shop-btn small" href="{{ route('shop.product_details', $item['id']) }}">상품 보기</a>
+                        <form action="{{ route('front.shop.cart.remove') }}" method="POST">@csrf<input type="hidden" name="shop_product_id" value="{{ $item['id'] }}"><input type="hidden" name="cart_key" value="{{ $item['key'] }}"><button type="submit" class="shop-btn small">삭제</button></form>
+                    </div></div>
                 </div>
+                <dialog id="cart-option-{{ $item['key'] }}" class="shop-dialog" aria-labelledby="cart-option-title-{{ $item['key'] }}">
+                    <div class="shop-dialog-head"><h2 id="cart-option-title-{{ $item['key'] }}">옵션/수량변경</h2><button type="button" data-close class="shop-dialog-close" title="닫기" aria-label="닫기">&times;</button></div>
+                    <div class="shop-dialog-body"><form action="{{ route('front.shop.cart.update') }}" method="POST">
+                        @csrf<input type="hidden" name="shop_product_id" value="{{ $item['id'] }}"><input type="hidden" name="cart_key" value="{{ $item['key'] }}">
+                        <strong>{{ $item['product']->product_name }}</strong>
+                        <label>상품 옵션<select class="shop-control" name="option" required>
+                            @forelse($item['product']->attributes->where('status', 1) as $attribute)<option value="{{ $attribute->size }}" @selected($item['option'] === $attribute->size)>{{ $attribute->size }}</option>@empty<option value="{{ $item['option'] }}">{{ $item['option'] }}</option>@endforelse
+                        </select></label>
+                        @php
+                            $minQty = 1;
+                            $maxQty = min($item['shop_product']->purchase_limit ?: 999, $item['shop_product']->stock ?? 999, $item['product']->purchase_limit_enabled ? ($item['product']->purchase_max_qty ?: 999) : 999);
+                        @endphp
+                        <label>상품 수량<input class="shop-control" type="number" name="qty" value="{{ $item['qty'] }}" required min="{{ $minQty }}" max="{{ max($minQty, $maxQty) }}"></label>
+                        <p>배송비: {{ app(\App\Services\ShopOrderTotals::class)->shippingLabel($item['product']) }}</p>
+                        <button type="submit" class="shop-btn primary" @disabled($maxQty < $minQty)>변경하기</button>
+                    </form></div>
+                </dialog>
+            @endforeach
+            </section>
+            <div class="shop-summary shop-cart-summary">
+                <div><span>총 상품금액</span><strong>{{ number_format($totals['subtotal']) }}원</strong></div>
+                <div><span>배송비</span><strong>{{ number_format($totals['shipping']) }}원</strong></div>
+                <div class="total"><span>최종 결제예정금액</span><strong>{{ number_format($totals['total']) }}원</strong></div>
             </div>
-
-            <div style="display:flex; justify-content:center; gap:10px; margin-top:28px;">
-                <a href="{{ route('shop.products_list') }}" style="height:48px; display:inline-flex; align-items:center; padding:0 22px; border:1px solid #111827; border-radius:6px; color:#111827; text-decoration:none; font-weight:900;">쇼핑 계속하기</a>
-                <a href="{{ route('front.shop.order.form') }}" style="height:48px; display:inline-flex; align-items:center; padding:0 22px; background:#111827; color:#fff; border-radius:6px; text-decoration:none; font-weight:900;">주문하기</a>
-            </div>
+            <div class="shop-actions"><a class="shop-btn" href="{{ route('shop.products_list') }}">쇼핑 계속하기</a><a class="shop-btn primary" href="{{ route('front.shop.order.form') }}">주문하기</a></div>
         @endif
     </div>
-</div>
+</div></div>
 @endsection

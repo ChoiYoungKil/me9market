@@ -131,7 +131,6 @@ class ShopChannelRuntime
             ]);
         }
 
-        app(ChannelPointService::class)->recordFirstVisit($shop, (int) Auth::id());
     }
 
     private function isChannelAvailable(ShopChannel $shop): bool
@@ -154,10 +153,11 @@ class ShopChannelRuntime
     public function products(?string $type = null)
     {
         $shop = $this->currentChannel();
-        $query = ShopChannelProduct::with(['product.images', 'shopChannel'])
+        $query = ShopChannelProduct::with(['product' => fn ($query) => $query->with(['images', 'category'])->withCount('approvedRatings')->withAvg('approvedRatings', 'rating'), 'shopChannel'])
             ->where('shop_channel_id', $shop->id)
             ->where('status', 1)
-            ->where('approval_status', 'approved');
+            ->where('approval_status', 'approved')
+            ->whereHas('product', fn ($query) => $query->where('status', 1));
 
         if ($type) {
             $query->where('product_type', $type);
@@ -170,29 +170,38 @@ class ShopChannelRuntime
     {
         $shop = $this->currentChannel();
         $cart = Session::get(self::CART_KEY, []);
-        $ids = array_keys($cart);
-        $products = ShopChannelProduct::with(['product.images', 'shopChannel'])
+        $ids = array_unique(array_map('intval', array_keys($cart)));
+        $products = ShopChannelProduct::with(['product.images', 'product.attributes', 'shopChannel'])
             ->whereIn('id', $ids)
             ->where('shop_channel_id', $shop->id)
             ->where('status', 1)
             ->where('approval_status', 'approved')
+            ->whereHas('product', fn ($query) => $query->where('status', 1))
             ->get()
             ->keyBy('id');
 
         $items = [];
-        foreach ($cart as $id => $row) {
+        $quantities = [];
+        foreach ($cart as $key => $row) {
+            $quantities[(int) $key] = ($quantities[(int) $key] ?? 0) + max(1, (int) ($row['qty'] ?? 1));
+        }
+        foreach ($cart as $key => $row) {
+            $id = (int) $key;
             if (! $products->has($id)) {
-                unset($cart[$id]);
+                unset($cart[$key]);
 
                 continue;
             }
 
             $shopProduct = $products[$id];
             $qty = max(1, (int) ($row['qty'] ?? 1));
-            $jointPrice = app(JointPurchasePricingService::class)->projectedPriceForProduct((int) $shopProduct->product_id, $qty);
+            $jointPrice = app(JointPurchasePricingService::class)->projectedPriceForProduct((int) $shopProduct->product_id, $quantities[$id]);
             $price = (float) ($jointPrice['unit_price'] ?? ($shopProduct->selling_price ?: $shopProduct->product_price));
+            $adjustment = (float) ($shopProduct->product->attributes->firstWhere('size', $row['option'] ?? '기본옵션')?->price_delta ?? 0);
+            $price += $adjustment;
             $items[] = [
                 'id' => $id,
+                'key' => $key,
                 'shop_product' => $shopProduct,
                 'product' => $shopProduct->product,
                 'joint_purchase' => $jointPrice['joint_purchase'] ?? null,
@@ -201,6 +210,7 @@ class ShopChannelRuntime
                 'option' => $row['option'] ?? '기본옵션',
                 'qty' => $qty,
                 'price' => $price,
+                'option_price_adjustment' => $adjustment,
                 'line_total' => $price * $qty,
             ];
         }
@@ -212,17 +222,15 @@ class ShopChannelRuntime
 
     public function totals(): array
     {
-        $subtotal = array_sum(array_column($this->cartItems(), 'line_total'));
-        $shipping = $subtotal > 0 && $subtotal < 30000 ? 2500 : 0;
-
-        return [
-            'subtotal' => $subtotal,
-            'shipping' => $shipping,
-            'total' => $subtotal + $shipping,
-        ];
+        return app(ShopOrderTotals::class)->calculate($this->cartItems());
     }
 
     public function addToCart(int $shopProductId, int $qty = 1, string $option = '기본옵션'): void
+    {
+        $this->addOptionsToCart($shopProductId, [['qty' => $qty, 'option' => $option]]);
+    }
+
+    public function addOptionsToCart(int $shopProductId, array $selections): void
     {
         $shop = $this->currentChannel();
 
@@ -234,24 +242,46 @@ class ShopChannelRuntime
             ->firstOrFail();
 
         $cart = Session::get(self::CART_KEY, []);
-        $requestedQty = ($cart[$shopProduct->id]['qty'] ?? 0) + max(1, $qty);
-        $this->validatePurchasableQuantity($shopProduct, $requestedQty);
-        $cart[$shopProduct->id] = [
-            'qty' => $requestedQty,
-            'option' => $option ?: '기본옵션',
-        ];
+        foreach ($selections as $selection) {
+            $option = trim($selection['option'] ?? '') ?: '기본옵션';
+            $this->validateOption($shopProduct, $option);
+            $key = null;
+            foreach ($cart as $existingKey => $row) {
+                if ((int) $existingKey === $shopProductId && ($row['option'] ?? '기본옵션') === $option) {
+                    $key = $existingKey;
+                    break;
+                }
+            }
+            if ($key === null) {
+                $key = $shopProductId;
+                $attempt = 0;
+                // A row may have changed options while retaining its original key.
+                while (isset($cart[$key])) {
+                    $key = $shopProductId.':'.substr(hash('sha256', $option."\0".$attempt++), 0, 16);
+                }
+            }
+            $cart[$key] = ['qty' => ($cart[$key]['qty'] ?? 0) + max(1, (int) $selection['qty']), 'option' => $option];
+        }
+        $quantity = collect($cart)->filter(fn ($row, $key) => (int) $key === $shopProductId)->sum('qty');
+        $this->validatePurchasableQuantity($shopProduct, $quantity);
+
+        foreach ($cart as $key => $row) {
+            if ((int) $key === $shopProductId) {
+                $this->validateOption($shopProduct, $row['option'], $row['qty']);
+            }
+        }
 
         Session::put(self::CART_KEY, $cart);
     }
 
-    public function removeFromCart(int $shopProductId): void
+    public function removeFromCart(int|string $cartKey): void
     {
         $cart = Session::get(self::CART_KEY, []);
-        unset($cart[$shopProductId]);
+        unset($cart[$cartKey]);
         Session::put(self::CART_KEY, $cart);
     }
 
-    public function updateCart(int $shopProductId, int $qty, string $option): void
+    public function updateCart(int $shopProductId, int $qty, string $option, ?string $cartKey = null): void
     {
         $shop = $this->currentChannel();
         $shopProduct = ShopChannelProduct::whereKey($shopProductId)
@@ -262,17 +292,70 @@ class ShopChannelRuntime
             ->firstOrFail();
 
         $cart = Session::get(self::CART_KEY, []);
-        abort_unless(isset($cart[$shopProductId]), 404);
-        $this->validatePurchasableQuantity($shopProduct, $qty);
-        $cart[$shopProductId] = [
+        $key = $cartKey ?? (string) $shopProductId;
+        abort_unless((int) $key === $shopProductId && isset($cart[$key]), 404);
+        $option = trim($option) ?: '기본옵션';
+        $this->validateOption($shopProduct, $option);
+        $cart[$key] = [
             'qty' => max(1, $qty),
-            'option' => trim($option) ?: '기본옵션',
+            'option' => $option,
         ];
+        foreach ($cart as $otherKey => $row) {
+            if ((string) $otherKey !== (string) $key && (int) $otherKey === $shopProductId && ($row['option'] ?? '기본옵션') === $option) {
+                $cart[$key]['qty'] += $row['qty'];
+                unset($cart[$otherKey]);
+            }
+        }
+        $quantity = collect($cart)->filter(fn ($row, $key) => (int) $key === $shopProductId)->sum('qty');
+        $this->validatePurchasableQuantity($shopProduct, $quantity);
+        foreach ($cart as $rowKey => $row) {
+            if ((int) $rowKey === $shopProductId) {
+                $this->validateOption($shopProduct, $row['option'], $row['qty']);
+            }
+        }
         Session::put(self::CART_KEY, $cart);
+    }
+
+    public function canCheckout(): bool
+    {
+        return config('shop_channel.payment_driver') === 'mock' && app()->environment(['local', 'testing']);
+    }
+
+    public function canRegister(): bool
+    {
+        if (! app()->environment('production')) {
+            return true;
+        }
+        foreach (['terms_url', 'privacy_url', 'third_party_url'] as $document) {
+            $url = config('shop_channel.'.$document);
+            if (! filter_var($url, FILTER_VALIDATE_URL) || parse_url($url, PHP_URL_SCHEME) !== 'https') {
+                return false;
+            }
+        }
+
+        return filled(config('shop_channel.terms_version'));
+    }
+
+    private function validateOption(ShopChannelProduct $shopProduct, string $option, int $quantity = 1): void
+    {
+        $attributes = $shopProduct->product->attributes;
+        if ($attributes->isNotEmpty() && ! $attributes->contains(fn ($attribute) => (int) $attribute->status === 1 && $attribute->size === $option)) {
+            throw ValidationException::withMessages(['option' => '판매 중인 상품 옵션을 선택해 주세요.']);
+        }
+        if ($shopProduct->product->stock_usage === 'used') {
+            $attribute = $attributes->firstWhere('size', $option);
+            if (! $attribute || (int) $attribute->stock < $quantity) {
+                throw ValidationException::withMessages(['qty' => '선택한 옵션의 재고가 부족합니다.']);
+            }
+        }
     }
 
     public function checkout(Request $request): Order
     {
+        if (! $this->canCheckout()) {
+            throw ValidationException::withMessages(['payment_method' => '현재 결제를 이용할 수 없습니다. 판매자에게 문의해 주세요.']);
+        }
+
         $shop = $this->currentChannel();
         $items = $this->cartItems();
         if (empty($items)) {
@@ -280,6 +363,9 @@ class ShopChannelRuntime
         }
 
         return DB::transaction(function () use ($request, $shop, $items) {
+            if (Auth::id()) {
+                \App\Models\User::whereKey(Auth::id())->lockForUpdate()->firstOrFail();
+            }
             $lockedProducts = ShopChannelProduct::with('product')
                 ->whereIn('id', collect($items)->pluck('id'))
                 ->where('shop_channel_id', $shop->id)
@@ -290,44 +376,67 @@ class ShopChannelRuntime
                 ->get()
                 ->keyBy('id');
 
-            if ($lockedProducts->count() !== count($items)) {
+            if ($lockedProducts->count() !== collect($items)->pluck('id')->unique()->count()) {
                 throw ValidationException::withMessages([
                     'cart' => '판매가 중지되었거나 주문할 수 없는 상품이 포함되어 있습니다.',
                 ]);
             }
 
+            $quantities = collect($items)->groupBy('id')->map(fn ($rows) => $rows->sum('qty'));
+            $attributes = \App\Models\ProductsAttribute::whereIn('product_id', $lockedProducts->pluck('product_id'))
+                ->orderBy('id')->lockForUpdate()->get()->groupBy('product_id');
+            foreach ($lockedProducts as $lockedProduct) {
+                $lockedProduct->product->setRelation('attributes', $attributes->get($lockedProduct->product_id, collect()));
+            }
+            $optionQuantities = collect($items)->groupBy(fn ($row) => $row['product']->id.':'.$row['option'])->map(fn ($rows) => $rows->sum('qty'));
             foreach ($items as &$item) {
                 $shopProduct = $lockedProducts->get($item['id']);
-                $this->validatePurchasableQuantity($shopProduct, (int) $item['qty']);
+                $this->validateOption($shopProduct, $item['option'], $optionQuantities[$shopProduct->product_id.':'.$item['option']]);
+                $this->validatePurchasableQuantity($shopProduct, (int) $quantities[$item['id']]);
                 $item['shop_product'] = $shopProduct;
                 $item['product'] = $shopProduct->product;
+                $jointPrice = app(JointPurchasePricingService::class)->projectedPriceForProduct((int) $shopProduct->product_id, (int) $quantities[$item['id']]);
+                $item['joint_purchase'] = $jointPrice['joint_purchase'] ?? null;
+                $item['joint_price_tier_id'] = $jointPrice['tier_id'] ?? null;
+                $item['price'] = (float) ($jointPrice['unit_price'] ?? ($shopProduct->selling_price ?: $shopProduct->product_price));
+                $item['option_price_adjustment'] = (float) ($shopProduct->product->attributes->firstWhere('size', $item['option'])?->price_delta ?? 0);
+                $item['price'] += $item['option_price_adjustment'];
+                if ($item['price'] < 0) {
+                    throw ValidationException::withMessages(['option' => '옵션 적용 가격을 확인해 주세요.']);
+                }
+                $item['line_total'] = $item['price'] * $item['qty'];
             }
             unset($item);
 
-            $subtotal = array_sum(array_column($items, 'line_total'));
-            $totals = [
-                'subtotal' => $subtotal,
-                'shipping' => $subtotal > 0 && $subtotal < 30000 ? 2500 : 0,
-                'total' => $subtotal + ($subtotal > 0 && $subtotal < 30000 ? 2500 : 0),
-            ];
+            $totals = app(ShopOrderTotals::class)->calculate($items);
+            $pointAllocations = app(CustomerPointService::class)->allocateForCheckout(
+                (int) Auth::id(), (int) $shop->id,
+                (int) $request->input('channel_points', 0), (int) $request->input('me9_points', 0), $items, $totals
+            );
+            $usedPoints = (int) $request->input('channel_points', 0) + (int) $request->input('me9_points', 0);
 
             $order = new Order;
             $order->user_id = Auth::id() ?: 0;
             $order->name = $request->input('name', Auth::user()->name ?? '비회원');
             $order->address = $request->input('address', '서울특별시 중구 세종대로 110');
-            $order->city = $request->input('city', '서울특별시');
-            $order->state = $request->input('state', '중구');
+            $order->city = $request->input('city') ?? '';
+            $order->state = $request->input('state') ?? '';
             $order->country = '대한민국';
             $order->pincode = $request->input('pincode', '04524');
             $order->mobile = $request->input('mobile', '010-0000-0000');
             $order->email = $request->input('email', Auth::user()->email ?? 'guest@me9.local');
+            $order->buyer_name = $request->input('buyer_name') ?: $order->name;
+            $order->buyer_mobile = $request->input('buyer_mobile') ?: $order->mobile;
+            $order->delivery_memo = $request->input('delivery_memo');
+            $order->order_confirmed_at = now();
             $order->shipping_charges = $totals['shipping'];
             $order->coupon_code = '';
             $order->coupon_amount = 0;
             $order->order_status = 'Payment Captured';
             $order->payment_method = $request->input('payment_method', 'Card');
             $order->payment_gateway = 'Me9 Mock Payment';
-            $order->grand_total = $totals['total'];
+            $order->used_point = $usedPoints;
+            $order->grand_total = $totals['total'] - $usedPoints;
             $order->save();
 
             $jointPurchaseIds = [];
@@ -336,8 +445,10 @@ class ShopChannelRuntime
                 $shopProduct = $item['shop_product'];
                 $product = $item['product'];
                 $status = OrderItemStatus::PAID;
-                $originalPrice = (float) ($shopProduct->selling_price ?: $shopProduct->product_price);
+                $originalPrice = (float) ($shopProduct->selling_price ?: $shopProduct->product_price) + $item['option_price_adjustment'];
                 $isJointPurchase = ! empty($item['joint_purchase']);
+                $policy = app(OrderSettlementPolicy::class)->capture($shop, $shopProduct, $product);
+                $stockAttribute = $product->stock_usage === 'used' ? $product->attributes->firstWhere('size', $item['option']) : null;
                 $orderItem = OrdersProduct::create([
                     'order_id' => $order->id,
                     'user_id' => $order->user_id,
@@ -353,6 +464,7 @@ class ShopChannelRuntime
                     'product_name' => $product->product_name,
                     'product_color' => $product->product_color ?: '-',
                     'product_size' => $item['option'],
+                    'option_price_adjustment' => $item['option_price_adjustment'],
                     'product_price' => $item['price'],
                     'supply_price' => $shopProduct->product_price ?: $product->product_price,
                     'selling_price' => $item['price'],
@@ -368,8 +480,23 @@ class ShopChannelRuntime
                     'status_code' => $status,
                     'commission' => round($item['line_total'] * 0.1),
                     'settlement_status' => 'pending',
+                    'payment_gateway_type' => $policy['payment_gateway_type'],
+                    'settlement_policy_snapshot' => $policy,
+                    'shipping_amount_snapshot' => $totals['shipping_by_item'][$item['key']],
+                    'used_point_amount' => array_sum($pointAllocations[$item['key']]),
+                    'point_usage_snapshot' => $pointAllocations[$item['key']],
+                    'paid_line_total_snapshot' => $item['line_total'],
+                    'stock_deducted_qty' => $shopProduct->stock !== null ? $item['qty'] : 0,
+                    'stock_attribute_id' => $stockAttribute?->id,
+                    'attribute_stock_deducted_qty' => $stockAttribute ? $item['qty'] : 0,
                 ]);
+                app(CustomerPointService::class)->recordSpend($order, $orderItem);
                 $createdItems->push($orderItem);
+
+                if ($stockAttribute) {
+                    $stockAttribute->stock -= $item['qty'];
+                    $stockAttribute->save();
+                }
 
                 if ($shopProduct->stock !== null) {
                     $shopProduct->stock = (int) $shopProduct->stock - (int) $item['qty'];
@@ -424,6 +551,16 @@ class ShopChannelRuntime
         }
 
         $purchaseLimit = (int) ($shopProduct->purchase_limit ?? 0);
+        $product = $shopProduct->product;
+        if ($product?->purchase_limit_enabled) {
+            if ($quantity < (int) $product->purchase_min_qty) {
+                throw ValidationException::withMessages(['qty' => '이 상품은 최소 '.$product->purchase_min_qty.'개부터 주문할 수 있습니다.']);
+            }
+            $productLimit = (int) $product->purchase_max_qty;
+            if ($productLimit > 0) {
+                $purchaseLimit = $purchaseLimit > 0 ? min($purchaseLimit, $productLimit) : $productLimit;
+            }
+        }
         if ($purchaseLimit > 0 && $quantity > $purchaseLimit) {
             throw ValidationException::withMessages([
                 'qty' => '이 상품은 한 번에 '.$purchaseLimit.'개까지 주문할 수 있습니다.',

@@ -1,62 +1,62 @@
-@extends('layouts.frontend')
-
+@extends('layouts.shop')
 @section('content')
-<style>
-    .order-form-control {
-        width: 100%;
-        height: 42px;
-        border: 1px solid #cfd4dc;
-        border-radius: 6px;
-        padding: 0 10px;
-        box-sizing: border-box;
-    }
-</style>
-<div id="contents" style="padding: 100px 0; min-height: 600px; background:#f6f7f9;">
-    <form action="{{ route('front.shop.order.checkout') }}" method="POST" style="max-width:1180px; margin:0 auto; display:grid; grid-template-columns:minmax(0,1fr) 360px; gap:20px;">
-        @csrf
-        <div style="background:#fff; border:1px solid #d9dee7; border-radius:8px; padding:28px;">
-            <h1 style="margin:0 0 8px;">주문/결제</h1>
-            <p style="margin:0 0 24px; color:#667085;">{{ $shop->channel_name }} 상품 주문서입니다.</p>
-
-            @if ($errors->any())
-                <div style="background:#fee4e2; color:#b42318; padding:12px; border-radius:6px; margin-bottom:16px;">{{ $errors->first() }}</div>
-            @endif
-
-            <h2 style="font-size:18px;">주문 상품</h2>
-            @forelse($cartItems as $item)
-                <div style="display:flex; justify-content:space-between; gap:12px; border-bottom:1px solid #eef1f5; padding:12px 0;">
-                    <div>
-                        <strong>{{ $item['product']->product_name }}</strong>
-                        <div style="color:#667085; font-size:13px;">{{ $item['option'] }} / {{ $item['qty'] }}개</div>
+<div id="contents"><div id="join" class="order_form">
+    <div class="top_v"><h1 class="title">주문서 작성</h1></div>
+    <div class="shop-inner">
+        @if(empty($cartItems))
+            <div class="shop-empty">장바구니가 비어 있습니다.<div class="shop-actions"><a class="shop-btn primary" href="{{ route('shop.products_list') }}">상품 보러가기</a></div></div>
+        @else
+        <form action="{{ route('front.shop.order.checkout') }}" method="POST" data-checkout-total="{{ $totals['total'] }}">
+            @csrf
+            <section class="shop-form-section"><h2>주문자 정보</h2><div class="shop-form-grid shop-table-form">
+                <label>주문자 이름<input class="shop-control" name="buyer_name" value="{{ old('buyer_name', auth()->user()?->name) }}" required maxlength="100" autocomplete="billing name"></label>
+                <label>연락처<input class="shop-control" type="tel" name="buyer_mobile" value="{{ old('buyer_mobile', auth()->user()?->mobile) }}" required maxlength="30" autocomplete="billing tel"></label>
+                <label class="wide">이메일<input class="shop-control" type="email" name="email" value="{{ old('email', auth()->user()?->email) }}" required maxlength="150" autocomplete="email"></label>
+            </div></section>
+            <section class="shop-form-section"><div class="shop-order-heading"><h2>배송지 정보</h2><label class="shop-check"><input type="checkbox" data-copy-buyer>주문자 정보와 동일</label></div><div class="shop-form-grid shop-table-form">
+                @if($deliveryAddresses->isNotEmpty())
+                    <label class="wide">배송지 선택<select class="shop-control" data-delivery-address><option value="">직접 입력</option>@foreach($deliveryAddresses as $deliveryAddress)<option value="{{ $deliveryAddress->id }}" data-address="{{ json_encode($deliveryAddress->only(['name','mobile','pincode','address','city','state'])) }}">{{ $deliveryAddress->is_default ? '기본 배송지: ' : '' }}{{ $deliveryAddress->name }} / {{ $deliveryAddress->address }}</option>@endforeach</select></label>
+                @endif
+                <label>수신자 이름<input class="shop-control" name="name" value="{{ old('name', auth()->user()?->name) }}" required maxlength="100" autocomplete="shipping name"></label>
+                <label>연락처<input class="shop-control" type="tel" name="mobile" value="{{ old('mobile', auth()->user()?->mobile) }}" required maxlength="30" autocomplete="shipping tel"></label>
+                <label class="wide">우편번호<div class="shop-postcode"><input class="shop-control" name="pincode" value="{{ old('pincode', auth()->user()?->pincode) }}" required maxlength="20" autocomplete="postal-code"><button class="shop-btn dark" type="button" data-postcode>우편번호 찾기</button></div></label>
+                <label class="wide">배송주소<textarea class="shop-control" name="address" required maxlength="255" autocomplete="street-address" placeholder="기본주소와 상세주소">{{ old('address', auth()->user()?->address) }}</textarea></label>
+                <label>시/도<input class="shop-control" name="state" value="{{ old('state', auth()->user()?->state) }}" maxlength="100" autocomplete="address-level1"></label>
+                <label>시/군/구<input class="shop-control" name="city" value="{{ old('city', auth()->user()?->city) }}" maxlength="100" autocomplete="address-level2"></label>
+                <label class="wide">배송 메모<textarea class="shop-control" name="delivery_memo" maxlength="500">{{ old('delivery_memo') }}</textarea></label>
+            </div></section>
+            <h2 class="shop-block-title">주문 상품 정보</h2>
+            <section class="shop-order"><div class="shop-order-heading"><strong>{{ $shop->channel_name }} ({{ $shop->channel_code }})</strong></div>
+                @foreach($cartItems as $item)
+                    @php($image = $item['product']->product_image ?: $item['product']->images->first()?->image)
+                    <div class="shop-item">
+                        <img src="{{ $image ? asset('front/images/product_images/small/'.$image) : asset('front/images/product_images/small/no-image.png') }}" alt="{{ $item['product']->product_name }}">
+                        <div><strong>{{ $item['product']->product_name }}</strong><p>{{ $item['option'] }} / {{ $item['qty'] }}개</p><p>배송비: {{ $item['product']->shipping_payment_type === 'collect' ? '착불' : number_format($totals['shipping_by_item'][$item['key']]).'원' }}</p></div>
+                        <div class="shop-item-side"><strong>{{ number_format($item['line_total']) }}원</strong></div>
                     </div>
-                    <strong>{{ number_format($item['line_total']) }}원</strong>
-                </div>
-            @empty
-                <div style="padding:20px; background:#f8fafc; border-radius:6px;">장바구니가 비어 있습니다.</div>
-            @endforelse
-
-            <h2 style="font-size:18px; margin-top:28px;">주문자/배송 정보</h2>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                <label>이름<input name="name" value="{{ old('name', Auth::user()->name ?? '홍길동') }}" required class="order-form-control"></label>
-                <label>연락처<input name="mobile" value="{{ old('mobile', Auth::user()->mobile ?? '010-1234-5678') }}" required class="order-form-control"></label>
-                <label>이메일<input name="email" value="{{ old('email', Auth::user()->email ?? 'guest@me9.local') }}" required class="order-form-control"></label>
-                <label>우편번호<input name="pincode" value="{{ old('pincode', '04524') }}" required class="order-form-control"></label>
-                <label style="grid-column:1 / -1;">주소<input name="address" value="{{ old('address', '서울특별시 중구 세종대로 110') }}" required class="order-form-control"></label>
-                <label>시/도<input name="city" value="{{ old('city', '서울특별시') }}" class="order-form-control"></label>
-                <label>구/군<input name="state" value="{{ old('state', '중구') }}" class="order-form-control"></label>
-            </div>
-        </div>
-
-        <aside style="background:#fff; border:1px solid #d9dee7; border-radius:8px; padding:24px; align-self:start;">
-            <h2 style="font-size:18px; margin-top:0;">결제 상세</h2>
-            <div style="display:flex; justify-content:space-between; margin-bottom:8px;"><span>상품금액</span><strong>{{ number_format($totals['subtotal']) }}원</strong></div>
-            <div style="display:flex; justify-content:space-between; margin-bottom:8px;"><span>배송비</span><strong>{{ number_format($totals['shipping']) }}원</strong></div>
-            <div style="display:flex; justify-content:space-between; border-top:1px solid #d9dee7; padding-top:12px; font-size:20px;"><span>최종 결제</span><strong>{{ number_format($totals['total']) }}원</strong></div>
-            <input type="hidden" name="payment_method" value="Card">
-            <button type="submit" style="width:100%; height:52px; margin-top:22px; border:0; border-radius:6px; background:#111827; color:#fff; font-weight:900; cursor:pointer;" {{ empty($cartItems) ? 'disabled' : '' }}>
-                {{ number_format($totals['total']) }}원 결제하기
-            </button>
-        </aside>
-    </form>
-</div>
+                @endforeach
+            </section>
+            <h2 class="shop-block-title">주문 결제</h2>
+            <div class="shop-payment-grid">
+            <section class="shop-form-section"><h2>결제수단</h2>
+                <input type="hidden" name="payment_method" value="Card">
+                <label class="shop-check"><input type="radio" checked disabled>신용카드</label>
+                @auth
+                    <div class="shop-form-grid">
+                        <label>채널 포인트 ({{ number_format($pointBalances['channel'] ?? 0) }}P)<input class="shop-control" type="number" name="channel_points" data-point-use min="0" max="{{ max(0, min($pointBalances['channel'] ?? 0, floor($totals['total']))) }}" step="1" value="{{ old('channel_points', 0) }}"></label>
+                        <label>Me9 포인트 ({{ number_format($pointBalances['me9'] ?? 0) }}P)<input class="shop-control" type="number" name="me9_points" data-point-use min="0" max="{{ max(0, min($pointBalances['me9'] ?? 0, floor($totals['total']))) }}" step="1" value="{{ old('me9_points', 0) }}"></label>
+                    </div>
+                @endauth
+                <div class="shop-order-consent"><label class="shop-check"><input type="checkbox" name="order_confirmed" value="1" required @checked(old('order_confirmed'))>주문 상품과 최종 결제금액을 확인했습니다. (필수)</label></div>
+            </section>
+            <section class="shop-form-section">
+                <div class="shop-summary"><div><span>상품금액</span><strong>{{ number_format($totals['subtotal']) }}원</strong></div><div><span>배송비</span><strong>{{ number_format($totals['shipping']) }}원</strong></div><div><span>사용 포인트</span><strong data-used-points>0P</strong></div><div class="total"><span>최종 결제금액</span><strong data-checkout-payable>{{ number_format($totals['total']) }}원</strong></div></div>
+                @unless($canCheckout)<p class="shop-payment-unavailable" role="status">현재 결제를 이용할 수 없습니다. 판매자에게 문의해 주세요.</p>@endunless
+                <div class="shop-actions"><a class="shop-btn dark" href="{{ route('front.shop.cart.index') }}">취소</a><button class="shop-btn primary" type="submit" @disabled(!$canCheckout)>주문하기</button></div>
+            </section></div>
+        </form>
+        <dialog id="postcode-dialog" class="shop-dialog" aria-labelledby="postcode-title"><div class="shop-dialog-head"><h2 id="postcode-title">우편번호 찾기</h2><button type="button" data-close class="shop-dialog-close" aria-label="닫기" title="닫기">&times;</button></div><div data-postcode-container style="min-height:420px;"><p class="shop-empty" role="status">주소 검색을 불러오는 중입니다.</p></div></dialog>
+        @endif
+    </div>
+</div></div>
 @endsection

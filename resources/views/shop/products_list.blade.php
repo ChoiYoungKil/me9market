@@ -1,32 +1,31 @@
 @extends('layouts.shop')
-
-@section('page_type', 'sub')
-
 @section('content')
-<div style="background: #f6f7f9; min-height: 100vh; padding-bottom: 50px;">
-    <div style="background: #111827; color: #fff; padding: 22px 32px;">
-        <div style="max-width: 1180px; margin: 0 auto; display: flex; justify-content: space-between; gap: 20px; align-items: center;">
-            <h1 style="margin: 0; font-size: 24px;">{{ $shop->channel_name }} 상품</h1>
-            <a href="{{ route('front.shop.cart.index') }}" style="color: #fff; font-weight: 800; text-decoration: none;">장바구니</a>
-        </div>
+<div id="contents"><div class="product_list">
+    <div class="top_v"><h1 class="title">{{ $shop->channel_name }} 상품</h1>
+        <nav class="shop-categories" aria-label="상품 카테고리">
+            <a href="{{ route('shop.products_list', request()->except('category', 'page')) }}" @if(!request('category')) aria-current="page" @endif>전체</a>
+            @foreach($categories as $category)
+                <a href="{{ route('shop.products_list', array_merge(request()->except('page'), ['category' => $category->id])) }}" @if((int) request('category') === $category->id) aria-current="page" @endif>{{ $category->category_name }}</a>
+            @endforeach
+        </nav>
     </div>
-
-    <main style="max-width: 1180px; margin: 28px auto; padding: 0 20px;">
-        <div style="display: flex; justify-content: space-between; align-items: end; gap: 16px; margin-bottom: 18px;">
-            <div>
-                <h2 style="margin: 0; font-size: 26px;">전체 판매상품</h2>
-                <p style="margin: 6px 0 0; color: #667085;">자사상품, 공유상품, 제휴/부분공개 상품이 승인 상태에 따라 노출됩니다.</p>
-            </div>
-            <a href="{{ route('shop.channel_main') }}" style="color: #475467; font-weight: 800;">채널 홈</a>
+    <div class="box box1"><div class="inner_bx"><div id="board">
+        <div class="list_top">
+            <div class="count">총 <strong>{{ number_format($products->total()) }}</strong> 개</div>
+            <form method="GET" action="{{ route('shop.products_list') }}" class="search_bx type2">
+                @if(request('category'))<input type="hidden" name="category" value="{{ request('category') }}">@endif
+                <input type="hidden" name="sort" value="{{ request('sort', 'latest') }}">
+                <input type="search" name="search" value="{{ request('search') }}" maxlength="100" aria-label="상품 검색" placeholder="상품 검색">
+                <button class="s_btn" type="submit" aria-label="검색" title="검색"></button>
+            </form>
         </div>
-
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 16px;">
-            @forelse($products as $shopProduct)
-                @include('shop.partials.product_card', ['shopProduct' => $shopProduct])
-            @empty
-                <div style="background: #fff; border: 1px solid #d9dee7; border-radius: 8px; padding: 18px;">판매중인 상품이 없습니다.</div>
-            @endforelse
-        </div>
-    </main>
-</div>
+        <nav class="shop-sort" aria-label="상품 정렬">
+            @foreach(['rating'=>'별점순', 'latest'=>'신상품순', 'price_asc'=>'낮은가격순', 'price_desc'=>'높은가격순'] as $key=>$label)
+                <a href="{{ route('shop.products_list', array_merge(request()->except('page'), ['sort'=>$key])) }}" @if(request('sort', 'latest') === $key) aria-current="page" @endif>{{ $label }}</a>
+            @endforeach
+        </nav>
+        <div class="shop-product-grid">@forelse($products as $shopProduct) @include('shop.partials.product_card') @empty<div class="shop-empty">조회된 상품이 없습니다.</div>@endforelse</div>
+        @include('shop.partials.pagination', ['paginator' => $products])
+    </div></div></div>
+</div></div>
 @endsection

@@ -1,46 +1,86 @@
 # Me9 Market 운영 배포 체크리스트
 
+## 배포 판정 기준
+
+- 2026-10-02 최신 요청: **현재까지 수정분 우선 Git 푸시 및 각 서버 적용, migrate/optimize:clear/view:cache 실행과 실제 브라우저 확인**. 이전 전체 검수 후 배포 조건은 이 요청으로 변경됐다. 결제 차단 상태를 유지하며 기존 서버 변경과 DB를 백업한 후 진행한다. 아래 절차 자체는 실행 결과가 아니며 실제 결과는 배포 기록에 별도로 남긴다.
+- 최신 로컬 검증: 230개 테스트/2,819개 검증 항목, 부운영자 32개 권한 조합, Shop 54개 화면 조합, 홈페이지/모니터링 9개 조합, 인보이스 3개 조합 및 한글 PDF, 관리자 대시보드 3개 폭 통과. 배송비 미구현/미검수와 승인 약관/과거 계약 대조가 남아 있어 전체 완료 판정 불가.
+- 2026-10-02 22~23시 KST 서버 읽기 전용 재점검: 두 도메인 443 연결 실패, 서버 리스닝 목록에도 443 없음. 두 APP_URL은 HTTP, Secure 쿠키 false. 관리자 서버는 storyboard true, 프런트는 false. HTTP 공개 진입점은 200 응답. 관리자 계정은 sudo 권한이 없어 TLS 설정은 인프라 관리자 조치가 필요하다.
+- 두 계정의 DB 호스트/DB명 해시가 동일하다. 각 조회에서 주문 2건, 정산 실행 0건. 관리 계정에만 스케줄러/큐 cron이 있고 front crontab은 없다. 이는 작업 성공/메일 도달/백업 복구 확인은 아니다. 운영 데이터를 변경하지 않았다.
+- 로컬 테스트 통과와 운영 서버 검수 통과를 구분한다. 2026-10-01 추가 검수 결과는 자동 테스트 197개/1,142개 검증 항목, 18개 화면의 54개 반응형 조합 통과다. 실제 두 운영 서버의 검수가 완료되었다는 의미는 아니다.
+- PG, 약관, 외부 발송 연동이 미완료인 현재 상태는 전체 서비스 오픈 승인 대상이 아니다. 결제 중지 상태의 제한 배포는 사용자 승인 후에만 진행한다.
+- `php artisan deployment:check`는 설정/DB/자산을 읽기만 하며 개인정보나 자격증명을 출력하지 않는다. 미충족 항목이 있으면 종료 코드 1을 반환한다. 현재 실제 PG 미구현 때문에 전체 오픈 검사는 실패하는 것이 정상이다.
+- 제한 배포가 승인된 경우에만 `php artisan deployment:check --restricted`를 사용한다. 이 검사가 성공해도 실결제, 실제 발송, 큐 실행, 백업 복구, 웹 서버 동작이 검증된 것은 아니다.
+
 ## 현재 제외 항목
 
 - PG 결제: 운영 PG 계약 정보와 API 자격증명 확정 전에는 실결제 완료로 전환하지 않는다.
+- `SHOP_PAYMENT_DRIVER=disabled`가 운영 기본값이다. `mock`은 `APP_ENV=local/testing`에서만 허용하며 그 외 환경에서는 주문 생성 전에 차단된다. 실제 PG 어댑터는 아직 구현되지 않았다.
 - 소셜 로그인: 공급자 앱 키와 콜백 URL 확정 전에는 노출하지 않는다.
+- 회원가입 약관: `SHOP_TERMS_URL`, `SHOP_PRIVACY_URL`, `SHOP_THIRD_PARTY_URL`에 확정 HTTPS 문서 주소를, `SHOP_TERMS_VERSION`에 승인 버전을 설정한다. 운영에서는 미설정 상태의 가입을 차단한다. 서비스 소개 페이지는 동의서로 사용하지 않는다.
 
 ## 필수 환경 설정
 
 - `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=https://...`
+- `SESSION_SECURE_COOKIE=true`, HTTP-only 쿠키, `STORYBOARD_TEST_ENABLED=false`를 확인한다. 이전 환경에서 생성한 설정/라우트 캐시를 그대로 사용하지 않는다.
 - `APP_TIMEZONE=Asia/Seoul`, `APP_LOCALE=ko`
 - 운영 DB, Redis/캐시, 세션 정보를 환경변수로 설정한다.
 - `QUEUE_CONNECTION=database` 또는 운영 큐 드라이버를 사용한다.
 - SMTP와 `MAIL_FROM_ADDRESS`를 실제 발신 도메인으로 설정하고 SPF/DKIM/DMARC를 확인한다.
 - SMS 공급자 URL과 인증정보, 발신번호를 설정한다.
+- `SMS_DRIVER=log`는 실제 발송이 아니다. 구매현황 SMS는 `simulated`로 기록하며 과금하지 않는다. 운영 비공개 Shop의 OTP 요청은 로그 드라이버에서 발송 성공으로 처리하지 않고 차단한다.
 - 배송 연동을 사용할 경우 모든 `SHIPROCKET_*` 값을 실제 계약 정보로 설정한다.
 - `.env`는 저장소에 커밋하지 않고 웹 서버에서 직접 접근할 수 없게 한다.
 
 ## 배포 명령
 
+서버별 현재 커밋/브랜치/로컬 수정과 DB 공유 여부를 먼저 확인하고, 웹 루트 밖에 접근 제한된 DB·업로드 백업을 생성해 복구 가능성을 검증한다. 아래 명령을 무조건 복사 실행하지 않고 서버의 배포 방식과 변경된 잠금 파일에 맞춰 적용한다.
+
 ```bash
-composer install --no-dev --optimize-autoloader
-npm ci
-npm run build
+git pull --ff-only
+php artisan optimize:clear
 php artisan migrate --force
 php artisan storage:link
-php artisan optimize
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan deployment:check --restricted
+php artisan queue:restart
+php artisan commerce:audit --json
 ```
+
+`--restricted`는 제한 배포 승인 시에만 사용한다. Composer 의존성 설치가 필요한 경우 `composer install --no-dev --optimize-autoloader`를 마이그레이션 전에 실행한다. 프론트 빌드 소스가 바뀐 경우에만 승인된 빌드 환경에서 `npm ci`, `npm run build`를 실행한다. 두 서버가 같은 DB를 사용하면 마이그레이션을 동시에 실행하지 않는다.
+
+2026-10-02 읽기 전용 점검에서 두 서버 모두 서버 고유 커밋 및 미커밋 storyboard 관련 파일, 미추적 중첩 디렉터리가 발견됐다. 실제 배포 전에 제한된 백업 위치에 보존하고 최신 원격과 대조해야 한다. `reset --hard`, `clean`, 강제 pull로 기존 변경을 없애지 않는다. 운영 DB에서 테스트를 실행하지 않는다.
+
+2026-10-02 추가 마이그레이션 3개는 고객 포인트 참조키, 품목별 결제/사용포인트/재고/환급 스냅샷, 동의 문서 증거, 발주사 접속기간을 추가한다. 과거 값은 추정해 역산하지 않는다. `commerce:audit`의 검토 필요 항목은 계약·PG·입금 근거로 확인하고, 경고를 없애기 위해 임의 수정하지 않는다. 코드/DB 변경이 함께 배포되어야 하며 온라인 DDL과 백업 복구 검증이 선행되어야 한다.
 
 `php artisan db:seed`는 샘플 계정이나 상품을 생성하지 않지만, 운영 초기 데이터는 관리자 화면 또는 별도 승인된 이관 절차로만 등록한다.
 
+2026-10-01 주문 정책 마이그레이션은 `orders_products`에 PG 구분, 정산 정책 JSON, 품목별 배송비 스냅샷을 추가한다. 신규 주문부터 적용하며, 이전 주문은 당시 정책을 복원할 근거가 없어 기존 조회 방식을 유지한다. 소스 배포 시 해당 마이그레이션도 함께 적용해야 한다.
+
 ## 상시 프로세스
+
+2026-10-02의 `000004`는 옵션 증감액/주문 당시 옵션 증감액/클레임 이전 상태 컬럼과 소수 별점을 추가한다. 과거 옵션 절대가격을 임의로 증감액으로 이관하지 않는다. PDF 한글 글꼴은 저장소의 NanumGothic 파일을 사용하고 생성 캐시는 `storage/fonts`에 쓰므로 storage 쓰기 권한이 필요하다.
+
+2026-10-01의 `000001`은 회원 동의 기록, `000003`은 주문자 이름/연락처, 배송 메모, 주문 확인 시각을 추가한다. 기존 `orders.name`, `mobile`, `address`는 수령인/배송 정보이며, 신규 `buyer_name`, `buyer_mobile`이 주문자 정보다. 기존 주문은 종전 필드를 사용한다.
+
+이번 Shop CSS/JS는 `public/shop`의 직접 제공 자산이다. Vite 번들 소스/잠금 파일 변경이 없다면 npm 재설치는 필요 없다. 두 서버의 배포 경로와 기존 커밋, 로컬 수정 여부를 각각 확인하고 DB 백업 후 `git pull --ff-only`, 추가 마이그레이션, 설정/뷰/라우트 캐시 갱신, `php artisan queue:restart` 순서로 적용한다. 원격 수정사항이 있으면 임의로 초기화하지 않는다.
 
 - 큐 워커: `php artisan queue:work --sleep=3 --tries=3 --max-time=3600`
 - 스케줄러: 매분 `php artisan schedule:run`을 실행한다.
 - 정산 생성 일정: 매일 02:10, 중복 실행 방지 및 단일 서버 실행 설정.
+- 두 서버에서 스케줄러를 동시에 구동한다면 동일한 공유 캐시 저장소를 사용해야 한다. 서버별 파일 캐시의 `onOneServer()`만으로는 두 서버 간 중복 실행을 막을 수 없으므로 스케줄러를 한 서버로 한정하거나 공유 잠금을 검증한다.
 - 워커는 Supervisor, systemd 또는 동등한 프로세스 관리자로 자동 재시작한다.
 
 ## 배포 전 검증
 
+아래 자동 테스트는 분리된 테스트 DB 또는 운영 복제 환경에서만 실행한다. 운영 서버에서 테스트용 DB 설정을 운영 DB로 바꾸거나 `migrate:fresh`, `db:wipe`, 테스트 시더를 실행하지 않는다.
+
 ```bash
 php artisan test
-composer audit
+composer validate --no-check-publish
+composer check-platform-reqs --no-dev
+composer audit --locked --no-dev
 npm audit
 php artisan route:list --except-vendor
 php artisan schedule:list
@@ -54,6 +94,16 @@ php artisan schedule:list
 
 ## 배포 후 확인
 
+- CLI와 PHP-FPM의 PHP 버전/확장/환경 설정/실행 계정이 일치하는지 확인한다. CLI 검사 통과만으로 웹 프로세스 권한을 통과로 간주하지 않는다.
+- 두 서버 각각에서 HTTPS, 로그인, 채널 입장, 상품/장바구니, 본인 주문 조회, 타인 주문 접근 차단, 정적 자산, 업로드 파일 제공을 확인한다. 상태 변경 실검수는 별도로 승인된 테스트 계정/상품으로 수행한다.
+- `.env`, 테스트 경로, 스토리보드 테스트베드가 외부에서 노출되지 않고 쿠키가 Secure/HTTP-only인지 확인한다.
 - 애플리케이션 로그, 큐 실패 작업, HTTP 5xx, DB 연결 수, 디스크 사용량을 모니터링한다.
+- SMS `failed`/장시간 `pending` 및 애플리케이션의 `Shop order SMS failed` 기록은 공급자 내역과 대조한다. 발송 이후 기록에 실패했을 수 있으므로 확인 없이 자동 재발송하여 중복 과금하지 않는다.
 - `failed_jobs`를 알림과 연결하고 실패 원인을 확인한 뒤에만 재시도한다.
 - 첫 주문은 PG 연동 완료 후 소액 실결제로 승인, 주문, 재고, 취소, 환불까지 전 과정을 확인한다.
+
+## 중단 및 복구
+
+- 배포 검사 실패, 신규 5xx, 로그인/세션 이상, 권한 누출, 주문/재고/금액 불일치 발생 시 신규 트래픽 확대와 상태 변경 테스트를 중단한다.
+- 이전 릴리스 커밋과 서버 로컬 변경 백업을 보존하고 검증된 이전 코드로 복귀한다. 이번 추가 컬럼은 유지하며, 운영 주문 데이터가 존재하는 상태에서 무조건 `migrate:rollback`을 실행하지 않는다.
+- 코드 복귀 뒤 설정/라우트/뷰 캐시와 큐 워커를 다시 갱신하고 두 서버의 핵심 HTTP 경로를 재검증한다. DB 복구가 필요한 경우 장애 이후 주문 보존 대책을 먼저 확정한다.

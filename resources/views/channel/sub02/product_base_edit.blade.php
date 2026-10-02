@@ -53,7 +53,7 @@
             'option_type' => 'general',
             'option_value' => '',
             'sku' => '',
-            'price' => old('product_price', $product->product_price ?: 0),
+            'price' => 0,
             'stock' => 0,
             'status' => 1,
         ]];
@@ -503,7 +503,7 @@
                                             <th>옵션타입</th>
                                             <th>옵션값</th>
                                             <th>SKU</th>
-                                            <th>옵션 판매가</th>
+                                            <th>옵션 증감액 (원)</th>
                                             <th class="stock-column">재고</th>
                                             <th>상태</th>
                                             <th>관리</th>
@@ -525,7 +525,7 @@
                                                 </td>
                                                 <td><input type="text" name="option_values[]" value="{{ $option['option_value'] ?? '' }}" placeholder="예: S, 블랙, 추가상품" class="wFull"></td>
                                                 <td><input type="text" name="option_skus[]" value="{{ $option['sku'] ?? '' }}" placeholder="자동생성 가능" class="wFull"></td>
-                                                <td><input type="text" name="option_prices[]" value="{{ $option['price'] ?? old('product_price', $product->product_price ?? 0) }}" inputmode="numeric" pattern="[0-9]*" class="wFull"></td>
+                                                <td><input type="number" name="option_prices[]" value="{{ $option['price'] ?? 0 }}" step="1" class="wFull"></td>
 	                                                <td class="stock-column"><input type="text" name="option_stocks[]" value="{{ $option['stock'] ?? 0 }}" inputmode="numeric" pattern="[0-9]*" class="wFull"></td>
                                                 <td>
                                                     <select name="option_statuses[]" class="wFull">
@@ -1201,7 +1201,7 @@
 	            '<td><select name="option_types[]" class="wFull"><option value="text">비고형</option><option value="general" selected>일반선택형</option><option value="price">금액선택형</option></select></td>' +
 	            '<td><input type="text" name="option_values[]" value="" placeholder="예: S, 블랙, 추가상품" class="wFull"></td>' +
 	            '<td><input type="text" name="option_skus[]" value="" placeholder="자동생성 가능" class="wFull"></td>' +
-	            '<td><input type="text" name="option_prices[]" value="' + basePrice + '" inputmode="numeric" pattern="[0-9]*" class="wFull"></td>' +
+	            '<td><input type="number" name="option_prices[]" value="0" step="1" class="wFull"></td>' +
 	            '<td class="stock-column"><input type="text" name="option_stocks[]" value="0" inputmode="numeric" pattern="[0-9]*" class="wFull"></td>' +
 	            '<td><select name="option_statuses[]" class="wFull"><option value="1" selected>사용</option><option value="0">중지</option></select></td>' +
 	            '<td><button type="button" class="remove-option-row" style="height:32px; border:1px solid #ddd; background:#fff; padding:0 8px;">삭제</button></td>' +

@@ -202,6 +202,7 @@
                                                                                 <input type="text" name="return_address" value="{{ old('return_address') }}" class="wFull" placeholder="수동회수 반송 주소">
                                                                             </td>
                                                                         </tr>
+                                                                        @include('distributor.partials.access_period', ['accessManager' => null, 'colspan' => 3])
                                                                         <tr>
 	                                                                            <th class="w160"><span>비밀번호<em>필수</em></span></th>
 	                                                                            <td colspan="3">
@@ -361,6 +362,7 @@
                                                                                     <input type="text" name="return_address" value="{{ old('return_address', $manager->return_address) }}" class="wFull" placeholder="수동회수 반송 주소">
                                                                                 </td>
                                                                             </tr>
+                                                                            @include('distributor.partials.access_period', ['accessManager' => $manager, 'colspan' => 3])
                                                                             <tr>
                                                                                 <th class="w160"><span>비밀번호 변경</span></th>
                                                                                 <td colspan="3">

@@ -162,17 +162,19 @@ class ChannelPointService
         }
 
         $item->loadMissing(['product', 'order', 'shopChannel']);
-        if ($item->shopChannel?->use_own_pg) {
+        $policy = app(OrderSettlementPolicy::class)->forItem($item);
+        if ($policy['payment_gateway_type'] === 'own_pg') {
             return null;
         }
 
-        $points = max(0, (int) ($item->product?->reward_points ?? 0)) * max(1, (int) $item->product_qty);
+        $points = (int) $policy['reward_points'] * max(1, (int) $item->product_qty);
 
         if ($points <= 0) {
             return null;
         }
 
         return DB::transaction(function () use ($item, $points) {
+            \App\Models\User::whereKey($item->user_id)->lockForUpdate()->firstOrFail();
             $this->lockVendorPoints((int) $item->vendor_id);
 
             $exists = ChannelPointTransaction::where('type', self::TYPE_CUSTOMER_PAYBACK)
@@ -181,7 +183,7 @@ class ChannelPointService
                 ->lockForUpdate()
                 ->exists();
 
-            if ($exists || $this->balanceForVendor((int) $item->vendor_id) < $points) {
+            if ($exists) {
                 return null;
             }
 
@@ -212,6 +214,7 @@ class ChannelPointService
                     'order_id' => $item->order_id,
                     'points' => $points,
                     'description' => $item->product_name.' 구매확정 포인트 페이백',
+                    'reference_key' => 'earn:'.$item->id,
                 ]
             );
         });

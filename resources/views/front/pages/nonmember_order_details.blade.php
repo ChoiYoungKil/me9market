@@ -704,18 +704,10 @@
                     <div class="modal-product-option">옵션 정보 로딩중...</div>
                 </div>
 
-                <label style="text-align: center; margin-top: 20px;">별점주기</label>
-                <div style="font-size: 28px; display: flex; gap: 8px; justify-content: center; margin: 10px 0;">
-                    <span class="star-btn" data-value="1" onclick="setRating(1)">★</span>
-                    <span class="star-btn" data-value="2" onclick="setRating(2)">★</span>
-                    <span class="star-btn" data-value="3" onclick="setRating(3)">★</span>
-                    <span class="star-btn" data-value="4" onclick="setRating(4)">★</span>
-                    <span class="star-btn" data-value="5" onclick="setRating(5)">★</span>
-                </div>
-                <input type="hidden" name="rating" id="rating-value" value="5">
+                @include('shop.partials.rating_input', ['ratingId' => 'guest-confirm'])
 
                 <label style="text-align: left; margin-top: 15px;">이 상품을 구매하겠습니다.</label>
-                <textarea name="review" placeholder="상품에 대한 평가 및 만족도를 작성해주세요." style="text-align: left;">이 상품을 구매하겠습니다.</textarea>
+                <textarea name="review" placeholder="상품에 대한 평가 및 만족도를 작성해주세요." style="text-align: left;"></textarea>
             </div>
             <div class="modal-footer">
                 <button type="submit" class="modal-btn primary">구매확정하기</button>
@@ -819,20 +811,9 @@
         modal.querySelector('.modal-product-name').innerText = name;
         modal.querySelector('.modal-product-option').innerText = option;
         modal.style.display = 'flex';
-        setRating(5); // Default rating is 5 stars
+        document.querySelector('#confirm-modal .me9-rating-clear')?.click();
     }
 
-    function setRating(rating) {
-        document.getElementById('rating-value').value = rating;
-        let stars = document.querySelectorAll('#confirm-modal .star-btn');
-        stars.forEach((star, index) => {
-            if (index < rating) {
-                star.classList.add('active');
-            } else {
-                star.classList.remove('active');
-            }
-        });
-    }
 
     function openQnaModal(productId, name, option) {
         let modal = document.getElementById('qna-modal');

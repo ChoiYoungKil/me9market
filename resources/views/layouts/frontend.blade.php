@@ -94,18 +94,15 @@
             <div class="f_inner">
                 <img src="/me9market/images/common/f_logo.png" class="logo">
                 <ul class="info_bx">
-                    <li><span>상호명</span>&nbsp;&nbsp;&nbsp;&nbsp;스카이테크</li>
-                    <li><span>대표자</span>&nbsp;&nbsp;&nbsp;&nbsp;홍길동</li>
-                    <li><span>사업자등록번호</span>&nbsp;&nbsp;&nbsp;&nbsp;123-45-67890</li>
-                    <li><span>통신판매업신고번호</span>&nbsp;&nbsp;&nbsp;&nbsp;0000-1234-567호</li>
-                    <li><span>주소</span>&nbsp;&nbsp;&nbsp;&nbsp;사업자주소영역입니다 도로명 주소 자료수급 요청드립니다</li>
-                    <li><span>E-mail</span>&nbsp;&nbsp;&nbsp;&nbsp;abc1234@email.com</li>
+                    @foreach(['company_name' => '상호명', 'representative' => '대표자', 'business_number' => '사업자등록번호', 'commerce_number' => '통신판매업신고번호', 'address' => '주소', 'email' => 'E-mail'] as $key => $label)
+                        @if(config('storefront.'.$key))<li><span>{{ $label }}</span> {{ config('storefront.'.$key) }}</li>@endif
+                    @endforeach
                 </ul>
                 <ul class="link_bx">
-                    <li><a href="{{ url()->current() }}">이용약관</a></li>
-                    <li><a class="bold" href="{{ url()->current() }}">개인정보취급방침</a></li>
+                    @if(config('shop_channel.terms_url'))<li><a href="{{ config('shop_channel.terms_url') }}" rel="noopener">이용약관</a></li>@endif
+                    @if(config('shop_channel.privacy_url'))<li><a class="bold" href="{{ config('shop_channel.privacy_url') }}" rel="noopener">개인정보처리방침</a></li>@endif
                 </ul>
-                <div class="btm_txt">ⓒ Skytech Co., Ltd</div>
+                <div class="btm_txt">© {{ date('Y') }} {{ config('storefront.company_name') ?: 'Me9 market' }}</div>
                 <div class="top_btn">TOP</div>
             </div>
         </footer>

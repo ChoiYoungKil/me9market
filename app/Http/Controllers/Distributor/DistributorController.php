@@ -8,6 +8,7 @@ use App\Models\OrdersProduct;
 use App\Support\OrderItemStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
@@ -19,7 +20,15 @@ class DistributorController extends Controller
     {
         $id = Session::get('distributor_id');
 
-        return $id ? Distributor::find($id) : null;
+        $distributor = $id ? Distributor::where('status', 1)->find($id) : null;
+        if ($distributor && ! $distributor->canAccess()) {
+            $distributor = null;
+        }
+        if (! $distributor && $id) {
+            Session::forget(['distributor_id', 'distributor_name', 'distributor_email']);
+        }
+
+        return $distributor;
     }
 
     public function login()
@@ -48,7 +57,7 @@ class DistributorController extends Controller
 
         $distributor = Distributor::where('email', $request->email)->first();
 
-        if (!$distributor || !Hash::check($request->password, $distributor->password) || (int) $distributor->status !== 1) {
+        if (!$distributor || !Hash::check($request->password, $distributor->password) || ! $distributor->canAccess()) {
             RateLimiter::hit($throttleKey, 60);
             return back()
                 ->withInput($request->only('email'))
@@ -139,22 +148,19 @@ class DistributorController extends Controller
         $data = $request->validate([
             'courier' => 'nullable|string|max:100',
             'tracking_no' => 'nullable|string|max:100',
-            'status_code' => 'nullable|string|in:' . implode(',', array_keys(OrderItemStatus::labels())),
+            'status_code' => 'nullable|string|in:ready_to_ship,shipping,delivered',
         ]);
 
-        $item = $this->orderItemQuery($distributor)->findOrFail($id);
-
-        $item->courier_name = $data['courier'] ?? $item->courier_name;
-        $item->tracking_number = $data['tracking_no'] ?? $item->tracking_number;
-
-        if (!empty($data['status_code'])) {
-            $item->setStatus($data['status_code']);
-        } elseif (!empty($item->courier_name) && !empty($item->tracking_number)) {
-            $item->setStatus(OrderItemStatus::SHIPPING);
-        }
-
-        $this->applyStatusTimestamps($item);
-        $item->save();
+        DB::transaction(function () use ($distributor, $id, $data) {
+            $item = $this->orderItemQuery($distributor)->lockForUpdate()->findOrFail($id);
+            $item->courier_name = $data['courier'] ?? $item->courier_name;
+            $item->tracking_number = $data['tracking_no'] ?? $item->tracking_number;
+            $status = $data['status_code'] ?? OrderItemStatus::SHIPPING;
+            if (! $item->courier_name || ! $item->tracking_number) {
+                throw ValidationException::withMessages(['tracking_no' => '택배사와 송장번호를 모두 입력해 주세요.']);
+            }
+            app(\App\Services\OrderFulfillmentService::class)->change($item, $status);
+        });
 
         return redirect()
             ->route('distributor.order.details', $id)
@@ -193,12 +199,17 @@ class DistributorController extends Controller
                 continue;
             }
 
-            $item->courier_name = $courier;
-            $item->tracking_number = $trackingNo;
-            $item->setStatus(OrderItemStatus::SHIPPING);
-            $this->applyStatusTimestamps($item);
-            $item->save();
-            $updated++;
+            $updated += DB::transaction(function () use ($distributor, $itemId, $courier, $trackingNo) {
+                $item = OrdersProduct::where('distributor_id', $distributor->id)->lockForUpdate()->find($itemId);
+                if (! $item || ! in_array($item->normalized_status, [OrderItemStatus::PAID, OrderItemStatus::READY_TO_SHIP, OrderItemStatus::SHIPPING], true)) {
+                    return 0;
+                }
+                $item->courier_name = $courier;
+                $item->tracking_number = $trackingNo;
+                app(\App\Services\OrderFulfillmentService::class)->change($item, OrderItemStatus::SHIPPING);
+
+                return 1;
+            });
         }
 
         if ($updated === 0) {
@@ -255,7 +266,7 @@ class DistributorController extends Controller
             'courier' => $item->courier_name ?: '-',
             'tracking_no' => $item->tracking_number ?: '-',
             'can_edit_shipping' => in_array($item->normalized_status, [OrderItemStatus::PAID, OrderItemStatus::READY_TO_SHIP], true),
-            'status_options' => OrderItemStatus::labels(),
+            'status_options' => array_intersect_key(OrderItemStatus::labels(), array_flip([OrderItemStatus::READY_TO_SHIP, OrderItemStatus::SHIPPING, OrderItemStatus::DELIVERED])),
         ];
     }
 

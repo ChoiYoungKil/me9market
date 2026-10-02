@@ -65,6 +65,34 @@ class ChannelProductTest extends TestCase
         return [$vendor, $admin, $shop, $product];
     }
 
+    public function test_base_product_option_validation_rolls_back_and_signed_prices_persist(): void
+    {
+        [, $admin] = $this->createSetup();
+        $section = \App\Models\Section::forceCreate(['name' => 'Section', 'status' => 1]);
+        $major = \App\Models\Category::forceCreate(['section_id' => $section->id, 'parent_id' => 0,
+            'category_name' => 'Major', 'category_image' => '', 'url' => 'major', 'status' => 1]);
+        $middle = \App\Models\Category::forceCreate(['section_id' => $section->id, 'parent_id' => $major->id,
+            'category_name' => 'Middle', 'category_image' => '', 'url' => 'middle', 'status' => 1]);
+        $brand = \App\Models\Brand::forceCreate(['name' => 'Brand', 'status' => 1]);
+        $payload = ['product_code' => 'SIGNED-BASE', 'product_name' => 'Signed base product',
+            'major_category_id' => $major->id, 'middle_category_id' => $middle->id, 'brand_id' => $brand->id,
+            'product_price' => 10000, 'sale_scope' => 'own', 'tax_type' => 'taxable',
+            'price_constraint_enabled' => 0, 'purchase_limit_enabled' => 0, 'stock_usage' => 'used',
+            'detail_display_type' => 'unused', 'order_manager_enabled' => 0,
+            'shipping_policy_type' => 'free', 'shipping_payment_type' => 'prepaid', 'status' => 1,
+            'option_values' => ['Plus', 'Minus'], 'option_names' => ['Size', 'Size'],
+            'option_types' => ['price', 'price'], 'option_prices' => [1500, -15000],
+            'option_stocks' => [10, 10], 'option_statuses' => [1, 1]];
+        $this->actingAs($admin, 'admin')->postJson(route('channel.product.base.store'), $payload)
+            ->assertUnprocessable()->assertJsonValidationErrors('option_prices.1');
+        $this->assertDatabaseMissing('products', ['product_code' => 'SIGNED-BASE']);
+        $this->assertDatabaseMissing('products_attributes', ['size' => 'Plus']);
+        $payload['option_prices'][1] = -500;
+        $this->post(route('channel.product.base.store'), $payload)->assertRedirect()->assertSessionHasNoErrors();
+        $product = Product::where('product_code', 'SIGNED-BASE')->firstOrFail();
+        $this->assertDatabaseHas('products_attributes', ['product_id' => $product->id, 'size' => 'Minus', 'price_adjustment' => -500, 'price' => 9500]);
+    }
+
     public function test_store_own_product()
     {
         list($vendor, $admin, $shop, $product) = $this->createSetup();

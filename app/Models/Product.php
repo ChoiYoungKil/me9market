@@ -68,6 +68,11 @@ class Product extends Model
     }
 
 
+    public function approvedRatings()
+    {
+        return $this->hasMany(Rating::class)->where('status', 1);
+    }
+
     protected $fillable = [
         'section_id', 'category_id', 'brand_id', 'vendor_id', 'admin_id', 'admin_type',
         'product_name', 'product_code', 'product_color', 'product_price', 'product_discount',

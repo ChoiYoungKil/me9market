@@ -20,7 +20,15 @@ class RatingController extends Controller
         }
 
         if ($request->isMethod('post')) {
-            $data = $request->all();
+            $data = $request->validate([
+                'product_id' => 'required|integer|exists:products,id',
+                'rating' => 'required|numeric|between:0.5,5|multiple_of:0.5',
+                'review' => 'nullable|string|max:2000',
+            ]);
+            $purchased = \App\Models\OrdersProduct::where('user_id', Auth::id())
+                ->where('product_id', $data['product_id'])
+                ->where('status_code', \App\Support\OrderItemStatus::CONFIRMED)->exists();
+            abort_unless($purchased, 403);
 
             // 사용자가 이전에 이 상품을 이미 평가했는지 확인
             $user_id = Auth::user()->id; 
@@ -44,7 +52,7 @@ class RatingController extends Controller
 
                     $rating->user_id    = $user_id;
                     $rating->product_id = $data['product_id'];
-                    $rating->review     = $data['review'];
+                    $rating->review     = $data['review'] ?? '';
                     $rating->rating     = $data['rating'];
                     $rating->status     = 0; // 관리자 승인 후 표시되도록 기본값을 0(비활성)으로 설정
 

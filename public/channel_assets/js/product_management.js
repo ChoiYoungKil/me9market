@@ -66,12 +66,54 @@ function submitProductForm(formId, url) {
     });
 }
 
+$(document).on('click', '.product-view-button', function () {
+    openProductViewModal(JSON.parse(this.dataset.product));
+});
+
+var baseProductRequest;
+$(document).on('click', '.base-product-view-button', function () {
+    var $modal = $(".popup_bx[data-id='base-product-detail']");
+    if (baseProductRequest) baseProductRequest.abort();
+    $modal.find('[data-product-content]').prop('hidden', true);
+    $modal.find('[data-product-status]').text('불러오는 중입니다.');
+    $modal.stop().fadeIn(300).scrollTop(0);
+    baseProductRequest = $.get(this.dataset.url).done(function (response) {
+        if (!response.status) {
+            $modal.find('[data-product-status]').text(response.message || '상품을 불러올 수 없습니다.');
+            return;
+        }
+        var product = response.product;
+        $modal.find('[data-field]').each(function () {
+            var value = this.dataset.field === 'category_path' ? response.category_path : product[this.dataset.field];
+            $(this).text(value || '-');
+        });
+        var $images = $modal.find('[data-product-images]').empty();
+        (product.image_urls || []).forEach(function (url) {
+            $('<img>').attr({src: url, alt: product.product_name}).css({maxWidth: '100%', maxHeight: '240px', objectFit: 'contain'}).appendTo($images);
+        });
+        var detail = new DOMParser().parseFromString(product.detail_html || '', 'text/html');
+        detail.querySelectorAll('script, style').forEach(function (element) { element.remove(); });
+        $modal.find('[data-product-description]').text(detail.body.textContent.trim());
+        var $detailImages = $modal.find('[data-product-detail-images]').empty();
+        if (product.detail_display_type === 'image') {
+            [product.detail_pc_image, product.detail_mobile_image].filter(Boolean).forEach(function (file) {
+                $('<img>').attr({src: '/front/images/product_detail_images/' + encodeURIComponent(file), alt: product.product_name}).css({maxWidth: '100%', height: 'auto'}).appendTo($detailImages);
+            });
+        }
+        $modal.find('[data-product-status]').empty();
+        $modal.find('[data-product-content]').prop('hidden', false);
+    }).fail(function (xhr, status) {
+        if (status !== 'abort') $modal.find('[data-product-status]').text('상품을 불러오지 못했습니다. 다시 시도해 주세요.');
+    });
+});
+
 function openProductViewModal(productData) {
     var $modal = $(".popup_bx[data-id='pop2']");
     if ($modal.length === 0) return;
 
     $modal.find(".ttl").text("판매 상품 정보 (" + productData.type_label + ")");
     $modal.find("#view_product_code").text(productData.code);
+    $modal.find("#view_product_link").attr('href', productData.edit_url);
     $modal.find("#view_product_img").css("background-image", "url(" + productData.img + ")");
     $modal.find("#view_product_category").text(productData.category);
     $modal.find("#view_product_name").text(productData.name);
@@ -115,4 +157,3 @@ function updateProductStatus(url, shopProductId, status, actionName) {
         }
     });
 }
-

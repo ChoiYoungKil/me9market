@@ -219,8 +219,8 @@
                                         <th>교환수량</th>
                                         <th>판매금액</th>
                                         <th>상품금액</th>
-                                        <th>이익금</th>
-                                        <th>판매이익</th>
+                                        <th>예상정산액</th>
+                                        <th>매출차익</th>
                                         <th>배송비</th>
                                         <th>사용포인트</th>
                                         <th>결제금액</th>
@@ -331,6 +331,7 @@
 @endsection
 
     @push('scripts')
+        <script>window.Me9ClaimActions = @json(\App\Support\OrderClaimActions::allowedStatuses());</script>
         <script src="/channel_assets/js/order_management.js?v={{ filemtime(public_path('channel_assets/js/order_management.js')) }}"></script>
         <script type="text/javascript">
             $(".btn01.arrow").click(function () {
