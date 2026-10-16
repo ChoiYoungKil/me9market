@@ -277,6 +277,7 @@
             gap: 10px;
         }
     </style>
+    <link rel="stylesheet" href="{{ asset('common/distributor.css') }}">
 </head>
 <body>
 

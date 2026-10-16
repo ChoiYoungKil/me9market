@@ -16,7 +16,7 @@ $(function(){
             $("#header .r_menu").stop().fadeToggle(300);
         }
     });
-    $("#header .l_menu_btn").click(function(){
+    $("#header .l_menu_btn:not(.portal-menu-toggle)").click(function(){
         $(this).toggleClass("on");
         $("#l_menu").stop().fadeToggle(300);
         setTimeout(function(){

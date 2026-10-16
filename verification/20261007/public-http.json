@@ -1,0 +1,26 @@
+[
+  {
+    "url": "http://admin.replyer.co.kr/admin/login",
+    "exit": 0,
+    "http_status": "200",
+    "error": ""
+  },
+  {
+    "url": "http://front.replyer.co.kr/",
+    "exit": 0,
+    "http_status": "200",
+    "error": ""
+  },
+  {
+    "url": "https://admin.replyer.co.kr/admin/login",
+    "exit": 7,
+    "http_status": "000",
+    "error": "curl: (7) Failed to connect to admin.replyer.co.kr port 443 after 17 ms: Couldn't connect to server"
+  },
+  {
+    "url": "https://front.replyer.co.kr/",
+    "exit": 7,
+    "http_status": "000",
+    "error": "curl: (7) Failed to connect to front.replyer.co.kr port 443 after 18 ms: Couldn't connect to server"
+  }
+]

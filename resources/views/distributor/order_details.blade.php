@@ -191,6 +191,7 @@
             background: rgba(255, 255, 255, 0.15);
         }
     </style>
+    <link rel="stylesheet" href="{{ asset('common/distributor.css') }}">
 </head>
 <body>
 

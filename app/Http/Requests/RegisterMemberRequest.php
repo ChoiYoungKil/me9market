@@ -47,9 +47,9 @@ class RegisterMemberRequest extends FormRequest
     {
         $rules = [
             'register_type' => 'required|in:general',
-            'agree_terms' => 'required',
-            'agree_privacy' => 'required',
-            'agree_third_party' => 'required',
+            'agree_terms' => 'accepted',
+            'agree_privacy' => 'accepted',
+            'agree_third_party' => 'accepted',
             'username' => [
                 'required',
                 'min:4',
@@ -77,6 +77,9 @@ class RegisterMemberRequest extends FormRequest
     public function messages()
     {
         return [
+            'agree_terms.accepted' => '이용약관에 동의해야 합니다.',
+            'agree_privacy.accepted' => '개인정보 수집 및 이용에 동의해야 합니다.',
+            'agree_third_party.accepted' => '제3자 정보제공에 동의해야 합니다.',
             'agree_terms.required' => '이용약관에 동의해야 합니다.',
             'agree_privacy.required' => '개인정보 수집 및 이용에 동의해야 합니다.',
             'agree_third_party.required' => '제3자 정보제공에 동의해야 합니다.',

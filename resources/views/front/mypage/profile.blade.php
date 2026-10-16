@@ -48,8 +48,7 @@
                             <div class="pop_w">
                                 <div class="pop_inner">
                                     <div class="pop_con w640">
-                                        <div class="close_btn close1"><img
-                                                src="{{ asset('frontend/images/btn/pop_close.png') }}" alt="닫기"></div>
+                                        <button class="close_btn close1" type="button" aria-label="닫기">닫기</button>
                                         <div class="page_info type2">
                                             <div class="ttl brb">비밀번호 변경</div>
                                         </div>
@@ -670,6 +669,7 @@
 
             </div>
         </div>
+    @include('partials.social_connections')
     </div><!-- //contents -->
 
 

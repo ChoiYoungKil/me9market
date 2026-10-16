@@ -17,13 +17,19 @@
                         </ul>
                     </li>
                     <li
-                        class="dep1 icon1_3 arrow @if(in_array(Session::get('page'), ['products', 'categories', 'sections', 'brands', 'filters', 'attributes'])) on @endif">
+                        class="dep1 icon1_3 arrow @if(in_array(Session::get('page'), ['products', 'categories', 'sections', 'brands', 'filters', 'attributes', 'banners', 'coupons', 'ratings'])) on @endif">
                         <a href="{{ url()->current() }}">상품관리</a>
                         <ul class="dep2_wrap">
                             <li @if(Session::get('page') == 'categories') class="on" @endif><a
                                     href="{{ url('admin/categories') }}">분류관리</a></li>
                             <li @if(Session::get('page') == 'products') class="on" @endif><a
                                     href="{{ url('admin/products') }}">상품 리스트</a></li>
+                            @if(Auth::guard('admin')->user()?->type !== 'vendor')
+                                @foreach(['sections' => '섹션 관리', 'brands' => '브랜드 관리', 'filters' => '필터 관리', 'banners' => '배너 관리', 'ratings' => '리뷰 관리'] as $path => $label)
+                                    <li @class(['on' => Session::get('page') === $path])><a href="{{ url('admin/'.$path) }}">{{ $label }}</a></li>
+                                @endforeach
+                            @endif
+                            <li @class(['on' => Session::get('page') === 'coupons'])><a href="{{ url('admin/coupons') }}">쿠폰 관리</a></li>
                         </ul>
                     </li>
                     <li
@@ -49,8 +55,8 @@
                     <li class="dep1 icon1_5 @if(Session::get('page') == 'channel_points') on @endif">
                         <a href="{{ route('admin.channel_points.index') }}">포인트관리</a>
                     </li>
-                    <li class="dep1 icon1_6">
-                        <a href="{{ url('admin/shipping-charges') }}">배송비설정</a>
+                    <li class="dep1 icon1_6 {{ Session::get('page') === 'shipping' ? 'on' : '' }}">
+                        <a href="{{ route('admin.shipping.index') }}">배송비설정</a>
                     </li>
                     <li class="dep1 icon1_6">
                         <a href="{{ route('admin.refund_policies') }}">취소/환불안내</a>

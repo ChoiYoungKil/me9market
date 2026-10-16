@@ -179,13 +179,26 @@ class ShopController extends Controller
         return view('front.shop.order_form', compact('shop', 'cartItems', 'totals', 'canCheckout', 'deliveryAddresses', 'pointBalances'));
     }
 
+    public function shippingQuote(Request $request, ShopChannelRuntime $runtime)
+    {
+        $data = $request->validate([
+            'address' => 'required|string|max:255',
+            'pincode' => ['required', 'regex:/^[0-9]{5}$/'],
+        ]);
+        $totals = app(\App\Services\ShopOrderTotals::class)->calculate($runtime->cartItems(), $data);
+        unset($totals['shipping_policies']);
+
+        return response()->json($totals);
+    }
+
     public function checkout(Request $request, ShopChannelRuntime $runtime)
     {
         $request->validate([
             'name' => 'required|string|max:100',
             'mobile' => 'required|string|max:30',
             'email' => 'required|email|max:150',
-            'pincode' => 'required|string|max:20',
+            'pincode' => ['required', 'regex:/^[0-9]{5}$/'],
+            'expected_total' => 'nullable|numeric|min:0',
             'address' => 'required|string|max:255',
             'city' => 'nullable|string|max:100',
             'state' => 'nullable|string|max:100',

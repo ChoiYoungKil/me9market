@@ -1,0 +1,152 @@
+[
+  {
+    "path": "/member/login",
+    "width": 1440,
+    "overflow": false,
+    "titleHidden": false,
+    "buttons": [
+      {
+        "text": "Google로 계속하기",
+        "width": 254,
+        "height": 44
+      },
+      {
+        "text": "네이버로 계속하기",
+        "width": 254,
+        "height": 44
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/shop-channel/login",
+    "width": 1440,
+    "overflow": false,
+    "titleHidden": false,
+    "buttons": [
+      {
+        "text": "Google로 계속하기",
+        "width": 254,
+        "height": 44
+      },
+      {
+        "text": "네이버로 계속하기",
+        "width": 254,
+        "height": 44
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/auth/social/signup",
+    "width": 1440,
+    "overflow": false,
+    "titleHidden": false,
+    "buttons": [
+      {
+        "text": "동의하고 가입하기",
+        "width": 536,
+        "height": 43
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/mypage/profile",
+    "width": 1440,
+    "overflow": false,
+    "titleHidden": false,
+    "buttons": [
+      {
+        "text": "계정 연결",
+        "width": 92.078125,
+        "height": 43
+      },
+      {
+        "text": "계정 연결",
+        "width": 92.078125,
+        "height": 43
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/member/login",
+    "width": 390,
+    "overflow": false,
+    "titleHidden": false,
+    "buttons": [
+      {
+        "text": "Google로 계속하기",
+        "width": 310,
+        "height": 44
+      },
+      {
+        "text": "네이버로 계속하기",
+        "width": 310,
+        "height": 44
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/shop-channel/login",
+    "width": 390,
+    "overflow": false,
+    "titleHidden": false,
+    "buttons": [
+      {
+        "text": "Google로 계속하기",
+        "width": 310,
+        "height": 44
+      },
+      {
+        "text": "네이버로 계속하기",
+        "width": 310,
+        "height": 44
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/auth/social/signup",
+    "width": 390,
+    "overflow": false,
+    "titleHidden": false,
+    "buttons": [
+      {
+        "text": "동의하고 가입하기",
+        "width": 318,
+        "height": 43
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/mypage/profile",
+    "width": 390,
+    "overflow": false,
+    "titleHidden": false,
+    "buttons": [
+      {
+        "text": "계정 연결",
+        "width": 92.078125,
+        "height": 43
+      },
+      {
+        "text": "계정 연결",
+        "width": 92.078125,
+        "height": 43
+      }
+    ],
+    "errors": [],
+    "missing": []
+  }
+]

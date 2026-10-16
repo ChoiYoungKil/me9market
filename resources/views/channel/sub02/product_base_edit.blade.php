@@ -658,7 +658,12 @@
 	                                                            <option value="{{ $value }}" {{ $shippingPolicyType === $value ? 'selected' : '' }}>{{ $label }}</option>
 	                                                        @endforeach
 	                                                    </select>
-	                                                    <input type="text" name="shipping_policy_name" value="{{ old('shipping_policy_name', $product->shipping_policy_name ?? '') }}" class="w160" placeholder="정책명">
+	                                                    <select name="shipping_policy_id" class="compact-select">
+                                                            <option value="">상품별 배송비 직접 설정</option>
+                                                            @foreach(\App\Models\ChannelDeliveryCharge::where('vendor_id', Auth::guard('admin')->user()->vendor_id)->where('status', 1)->get() as $deliveryPolicy)
+                                                                <option value="{{ $deliveryPolicy->id }}" {{ (string) old('shipping_policy_id', $product->shipping_policy_id ?? '') === (string) $deliveryPolicy->id ? 'selected' : '' }}>{{ $deliveryPolicy->name }}</option>
+                                                            @endforeach
+                                                        </select>shipping_policy_name ?? '') }}" class="w160" placeholder="정책명">
 	                                                </div>
 	                                            </td>
                                             <th>결제 방식</th>
@@ -708,7 +713,7 @@
                                     </tbody>
                                 </table>
                             </div>
-                            @foreach(['order_manager_enabled', 'distributor_id', 'shipping_policy_type', 'shipping_policy_name', 'shipping_payment_type', 'shipping_base_fee', 'shipping_free_threshold', 'cancel_refund_policy_id'] as $field)
+                            @foreach(['order_manager_enabled', 'distributor_id', 'shipping_policy_type', 'shipping_policy_name', 'shipping_policy_id', 'shipping_payment_type', 'shipping_base_fee', 'shipping_free_threshold', 'cancel_refund_policy_id'] as $field)
                                 @error($field)
                                     <p class="fcol1 mt10">{{ $message }}</p>
                                 @enderror

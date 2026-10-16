@@ -1,0 +1,15 @@
+.main-content { min-width: 0; }
+.table-card { overflow-x: auto; overscroll-behavior-x: contain; }
+.table-card table { min-width: 900px; }
+.header-bar, .actions-bar, .filter-bar { flex-wrap: wrap; gap: 16px; }
+@media (max-width: 900px) {
+    body { flex-direction: column; }
+    .sidebar { width: 100%; padding: 20px; }
+    .sidebar-logo { margin-bottom: 20px; }
+    .menu-list { flex-direction: row; flex-wrap: wrap; }
+    .main-content { width: 100%; padding: 24px 16px; }
+    .header-bar { align-items: flex-start; }
+    .stats-grid { grid-template-columns: 1fr; }
+    .detail-grid, .info-grid, .form-grid { grid-template-columns: 1fr; }
+    .modal-content { max-width: calc(100vw - 32px); box-sizing: border-box; }
+}

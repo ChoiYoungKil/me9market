@@ -85,7 +85,7 @@ class Product extends Model
         'price_max', 'price_fixed', 'profit_share_type', 'profit_share_value',
         'purchase_limit_enabled', 'purchase_min_qty', 'purchase_max_qty', 'stock_usage',
         'detail_display_type', 'detail_text', 'detail_pc_image', 'detail_mobile_image',
-        'order_manager_enabled', 'shipping_policy_type', 'shipping_policy_name',
+        'order_manager_enabled', 'shipping_policy_type', 'shipping_policy_name', 'shipping_policy_id',
         'shipping_payment_type', 'shipping_base_fee', 'shipping_free_threshold',
         'cancel_refund_policy_id'
     ];

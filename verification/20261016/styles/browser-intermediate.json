@@ -1,0 +1,451 @@
+[
+  {
+    "path": "/admin/dashboard",
+    "width": 1280,
+    "overflow": false,
+    "scrollWidth": 1280,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/sections",
+    "width": 1280,
+    "overflow": false,
+    "scrollWidth": 1280,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/notices",
+    "width": 1280,
+    "overflow": false,
+    "scrollWidth": 1280,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/faqs",
+    "width": 1280,
+    "overflow": false,
+    "scrollWidth": 1280,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/shipping-charges",
+    "width": 1280,
+    "overflow": false,
+    "scrollWidth": 1280,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/edit-shipping-charges/1",
+    "width": 1280,
+    "overflow": false,
+    "scrollWidth": 1280,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/channel",
+    "width": 1280,
+    "overflow": false,
+    "scrollWidth": 1280,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/channel/settings/delivery",
+    "width": 1280,
+    "overflow": false,
+    "scrollWidth": 1280,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/channel/product/base/edit/1",
+    "width": 1280,
+    "overflow": false,
+    "scrollWidth": 1280,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/mypage/points/status",
+    "width": 1280,
+    "overflow": false,
+    "scrollWidth": 1280,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/mypage/profile",
+    "width": 1280,
+    "overflow": false,
+    "scrollWidth": 1280,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/shop/order",
+    "width": 1280,
+    "overflow": false,
+    "scrollWidth": 1280,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/distributor/orders/pending",
+    "width": 1280,
+    "overflow": false,
+    "scrollWidth": 1280,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/dashboard",
+    "width": 1024,
+    "overflow": false,
+    "scrollWidth": 1024,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/sections",
+    "width": 1024,
+    "overflow": false,
+    "scrollWidth": 1024,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/notices",
+    "width": 1024,
+    "overflow": false,
+    "scrollWidth": 1024,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/faqs",
+    "width": 1024,
+    "overflow": false,
+    "scrollWidth": 1024,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/shipping-charges",
+    "width": 1024,
+    "overflow": false,
+    "scrollWidth": 1024,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/edit-shipping-charges/1",
+    "width": 1024,
+    "overflow": false,
+    "scrollWidth": 1024,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/channel",
+    "width": 1024,
+    "overflow": false,
+    "scrollWidth": 1024,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/channel/settings/delivery",
+    "width": 1024,
+    "overflow": false,
+    "scrollWidth": 1024,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/channel/product/base/edit/1",
+    "width": 1024,
+    "overflow": false,
+    "scrollWidth": 1024,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/mypage/points/status",
+    "width": 1024,
+    "overflow": false,
+    "scrollWidth": 1024,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/mypage/profile",
+    "width": 1024,
+    "overflow": false,
+    "scrollWidth": 1024,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/shop/order",
+    "width": 1024,
+    "overflow": false,
+    "scrollWidth": 1024,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/distributor/orders/pending",
+    "width": 1024,
+    "overflow": false,
+    "scrollWidth": 1024,
+    "offenders": [
+      {
+        "tag": "TABLE",
+        "id": "",
+        "cls": "",
+        "right": 1201
+      },
+      {
+        "tag": "THEAD",
+        "id": "",
+        "cls": "",
+        "right": 1201
+      },
+      {
+        "tag": "TR",
+        "id": "",
+        "cls": "",
+        "right": 1201
+      },
+      {
+        "tag": "TH",
+        "id": "",
+        "cls": "",
+        "right": 1060
+      },
+      {
+        "tag": "TH",
+        "id": "",
+        "cls": "",
+        "right": 1130
+      },
+      {
+        "tag": "TH",
+        "id": "",
+        "cls": "",
+        "right": 1201
+      },
+      {
+        "tag": "TBODY",
+        "id": "",
+        "cls": "",
+        "right": 1201
+      },
+      {
+        "tag": "TR",
+        "id": "",
+        "cls": "",
+        "right": 1201
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/dashboard",
+    "width": 768,
+    "overflow": false,
+    "scrollWidth": 768,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/sections",
+    "width": 768,
+    "overflow": false,
+    "scrollWidth": 768,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/notices",
+    "width": 768,
+    "overflow": false,
+    "scrollWidth": 768,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/faqs",
+    "width": 768,
+    "overflow": false,
+    "scrollWidth": 768,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/shipping-charges",
+    "width": 768,
+    "overflow": false,
+    "scrollWidth": 768,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/edit-shipping-charges/1",
+    "width": 768,
+    "overflow": false,
+    "scrollWidth": 768,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/channel",
+    "width": 768,
+    "overflow": false,
+    "scrollWidth": 768,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/channel/settings/delivery",
+    "width": 768,
+    "overflow": false,
+    "scrollWidth": 768,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/channel/product/base/edit/1",
+    "width": 768,
+    "overflow": false,
+    "scrollWidth": 768,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/mypage/points/status",
+    "width": 768,
+    "overflow": false,
+    "scrollWidth": 768,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/mypage/profile",
+    "width": 768,
+    "overflow": false,
+    "scrollWidth": 768,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/shop/order",
+    "width": 768,
+    "overflow": false,
+    "scrollWidth": 768,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/distributor/orders/pending",
+    "width": 768,
+    "overflow": false,
+    "scrollWidth": 768,
+    "offenders": [
+      {
+        "tag": "TABLE",
+        "id": "",
+        "cls": "",
+        "right": 917
+      },
+      {
+        "tag": "THEAD",
+        "id": "",
+        "cls": "",
+        "right": 917
+      },
+      {
+        "tag": "TR",
+        "id": "",
+        "cls": "",
+        "right": 917
+      },
+      {
+        "tag": "TH",
+        "id": "",
+        "cls": "",
+        "right": 776
+      },
+      {
+        "tag": "TH",
+        "id": "",
+        "cls": "",
+        "right": 846
+      },
+      {
+        "tag": "TH",
+        "id": "",
+        "cls": "",
+        "right": 917
+      },
+      {
+        "tag": "TBODY",
+        "id": "",
+        "cls": "",
+        "right": 917
+      },
+      {
+        "tag": "TR",
+        "id": "",
+        "cls": "",
+        "right": 917
+      }
+    ],
+    "errors": [],
+    "missing": []
+  }
+]

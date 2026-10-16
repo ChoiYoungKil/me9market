@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 @section('content')
-<div id="container"><div class="con_bx" style="padding:32px">
+<div id="contents"><div class="con_bx" style="padding:32px">
     <h1 style="font-size:24px;margin-bottom:24px">취소/환불안내</h1>
     <form method="GET" style="display:flex;gap:8px;margin-bottom:24px"><label>정책명 <input name="search" value="{{ request('search') }}" maxlength="200"></label><button type="submit">검색</button></form>
     @forelse($policies as $policy)

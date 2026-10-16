@@ -175,6 +175,7 @@
             background: var(--primary-hover);
         }
     </style>
+    <link rel="stylesheet" href="{{ asset('common/distributor.css') }}">
 </head>
 <body>
 

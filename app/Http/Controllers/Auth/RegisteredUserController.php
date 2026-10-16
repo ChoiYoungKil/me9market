@@ -39,7 +39,9 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        $user = User::create([
+        $consent = app(\App\Services\RegistrationConsent::class)->capture($request);
+
+        $user = User::create($consent + [
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
@@ -48,6 +50,7 @@ class RegisteredUserController extends Controller
         event(new Registered($user));
 
         Auth::login($user);
+        $request->session()->regenerate();
 
         return redirect(RouteServiceProvider::HOME);
     }

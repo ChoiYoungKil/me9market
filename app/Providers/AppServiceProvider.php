@@ -23,6 +23,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        \Illuminate\Support\Facades\View::composer('layouts.mypage', function ($view) {
+            $userId = \Illuminate\Support\Facades\Auth::id();
+            $vendorIds = \App\Models\VisitedChannel::where('user_id', $userId)->pluck('vendor_id');
+            $shopIds = \App\Models\PointTransaction::where('user_id', $userId)->whereNotNull('shop_channel_id')->pluck('shop_channel_id');
+            $channels = \App\Models\ShopChannel::where(function ($query) use ($vendorIds, $shopIds) {
+                $query->whereIn('vendor_id', $vendorIds)->orWhereIn('id', $shopIds);
+            })->orderByDesc('id')->get();
+            $view->with('mypageChannels', $channels)
+                ->with('mypagePointTotal', \App\Models\PointTransaction::where('user_id', $userId)->sum('points'));
+        });
+
         // Customizing The Pagination View Using Bootstrap
         \Illuminate\Pagination\Paginator::useBootstrap();
 

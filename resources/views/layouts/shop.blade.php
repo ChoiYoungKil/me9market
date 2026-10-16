@@ -15,6 +15,7 @@
     @endforeach
     <link rel="icon" type="image/png" href="{{ asset('shop/images/common/logo2.png') }}">
     @stack('styles')
+    <link rel="stylesheet" href="{{ asset('common/social.css').'?v='.filemtime(public_path('common/social.css')) }}">
 </head>
 <body id="@yield('page_type', 'sub')" class="shop-runtime">
 <div id="skipNavi"><a href="#container">본문 바로가기</a></div>

@@ -4,6 +4,7 @@
 <head>
     <title>Me9 market</title>
     <meta charset="utf-8" />
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="format-detection" content="telephone=no" />
     <meta name="description" content="" />
@@ -33,10 +34,12 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
     <script src="/master_assets/js/slick.min.js"></script>
     <script src="/master_assets/js/common.js"></script>
-    @stack('scripts')
+
+    @stack('styles')
+    <link href="{{ asset('common/portal.css').'?v='.filemtime(public_path('common/portal.css')) }}" rel="stylesheet">
 </head>
 
-<body id="@yield('page_type', 'main')">
+<body class="portal portal-admin" id="@yield('page_type', 'main')">
     <div id="skipNavi">
         <ul>
             <li>
@@ -48,20 +51,21 @@
 
     <div id="wrap" class="@yield('head_none')">
         <header id="header">
+            <button class="portal-menu-toggle" type="button" aria-controls="l_menu" aria-expanded="false">메뉴</button>
             <a href="{{ route('admin.dashboard') }}" class="logo">Me9 market</a>
 
             @php
                 $currentPage = Session::get('page');
                 $isUserManagement = in_array($currentPage, ['users', 'admins', 'add_edit_user', 'add_edit_admin', 'view_vendor_details']) || strpos($currentPage, 'view_') === 0;
                 $isSettings = in_array($currentPage, ['update_admin_password', 'update_admin_details', 'update_personal_details', 'update_business_details', 'update_bank_details']);
-                $isProductManagement = in_array($currentPage, ['products', 'categories', 'sections', 'brands', 'filters', 'attributes']);
+                $isProductManagement = in_array($currentPage, ['products', 'categories', 'sections', 'brands', 'filters', 'attributes', 'banners', 'coupons', 'ratings']);
                 $isSupport = in_array($currentPage, ['notices', 'faqs', 'contacts']);
                 $isSettlement = $currentPage === 'settlements';
                 $isOrderManagement = $currentPage === 'order_managers';
             @endphp
             <div class="t_menu">
                 <ul>
-                    <li><a href="{{ url()->current() }}" class="{{ $isSettings ? 'on' : '' }}">환경설정</a></li>
+                    <li><a href="{{ url('admin/update-admin-details') }}" class="{{ $isSettings ? 'on' : '' }}">환경설정</a></li>
                     <li><a href="{{ url('admin/users') }}" class="{{ $isUserManagement ? 'on' : '' }}">회원관리</a></li>
                 <li><a href="{{ url('admin/products') }}" class="{{ $isProductManagement ? 'on' : '' }}">상품관리</a>
                     </li>
@@ -87,7 +91,7 @@
             <!-- 왼쪽 메뉴 -->
             @include('layouts.inc.admin_sidebar')
 
-            <div id="container_w">
+            <div id="container_w" @class(['legacy-admin-content' => $legacyAdmin ?? false])>
                 @yield('content')
             </div>
         </div>
@@ -96,6 +100,8 @@
 
         </footer>
     </div><!-- //wrap -->
+    <script src="{{ asset('common/portal.js').'?v='.filemtime(public_path('common/portal.js')) }}"></script>
+    @stack('scripts')
 </body>
 
 </html>

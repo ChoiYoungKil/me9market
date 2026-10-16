@@ -153,6 +153,28 @@ class AdminRoutesTest extends TestCase
         return [$admin, $vendor, $section, $category, $brand, $product, $banner, $coupon, $user, $order, $subscriber, $vendorAdmin];
     }
 
+    public function test_admin_shipping_uses_current_vendor_policies_and_shared_validation(): void
+    {
+        [$admin, $vendor, , , , $product, , , , , , $vendorAdmin] = $this->createSetup();
+        $this->actingAs($admin, 'admin')->get('/admin/shipping-charges')->assertOk()
+            ->assertSee('배송비 설정')->assertSee('common/portal.css')->assertDontSee('Rate (0g to 500g)');
+        $payload = ['vendor_id' => $vendor->id, 'status' => 1, 'name' => '관리자 수량 정책', 'shipping_type' => 'conditional',
+            'payment_type' => 'prepaid', 'base_fee' => 3000, 'free_order_quantity' => 2];
+        $this->post('/admin/shipping-charges', $payload)->assertRedirect();
+        $charge = \App\Models\ChannelDeliveryCharge::where('name', $payload['name'])->firstOrFail();
+        $this->get('/admin/edit-shipping-charges/'.$charge->id)->assertOk()->assertSee('관리자 수량 정책')->assertSee('변동 배송비');
+        $product->update(['shipping_policy_id' => $charge->id]);
+        $totals = app(\App\Services\ShopOrderTotals::class)->calculate([['id'=>$product->id,'product'=>$product,'qty'=>2,'line_total'=>10000]]);
+        $this->assertEquals(0, $totals['shipping']);
+        $this->post('/admin/edit-shipping-charges/'.$charge->id, array_replace($payload, ['free_order_quantity'=>3]))->assertRedirect();
+        $totals = app(\App\Services\ShopOrderTotals::class)->calculate([['id'=>$product->id,'product'=>$product,'qty'=>2,'line_total'=>10000]]);
+        $this->assertEquals(3000, $totals['shipping']);
+        $this->postJson('/admin/edit-shipping-charges/'.$charge->id, array_replace($payload, ['base_fee'=>-1]))->assertUnprocessable();
+        $this->actingAs($vendorAdmin, 'admin')->get('/admin/shipping-charges')->assertForbidden();
+        $this->post('/admin/shipping-charges', $payload)->assertForbidden();
+        $this->actingAs($vendorAdmin, 'admin')->get('/channel/settings/delivery')->assertOk()->assertSee('관리자 수량 정책');
+    }
+
     public function test_guest_admin_routes_redirect_to_login()
     {
         $this->get('/admin/dashboard')->assertRedirect('/admin/login');

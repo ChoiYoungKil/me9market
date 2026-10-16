@@ -1,0 +1,2476 @@
+[
+  {
+    "path": "/admin/dashboard",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/users",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/admins",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/categories",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/products",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/add-edit-product/1",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/sections",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/brands",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/banners",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/coupons",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/orders",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/orders/1",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/order-managers",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/subscribers",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/notices",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/faqs",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/contacts",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/settlements",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/channel-points",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/refund-policies",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/shipping-charges",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/edit-shipping-charges/1",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/update-admin-details",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/update-admin-password",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/channel",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/channel/product/own",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/channel/shop/list",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/channel/settings/delivery",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/channel/settings/refund",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/channel/order/list",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/channel/settlement/list",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/channel/product/base/edit/1",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/channel/shop/register",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/channel/settings/points",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/channel/settings/order-manager",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/channel/settings/sub-accounts",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/mypage/main",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/mypage/points/status",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/mypage/delivery",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/mypage/profile",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/mypage/order/list",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/mypage/visited-channels",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/mypage/points/history",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/mypage/coupons",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/mypage/cart",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/mypage/wishlist",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/shop-channel/main",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/shop-channel/products",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/shop-channel/products/1",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/shop/cart",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/shop/order",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/distributor/orders/pending",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/distributor/orders/completed",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/service",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/features",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/subscription-information",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/member/login",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/register/member",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/channel/login",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/login",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/distributor/login",
+    "width": 1440,
+    "overflow": false,
+    "scrollWidth": 1440,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/dashboard",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 724
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 495
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 495
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 597
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 597
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 700
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 700
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/users",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 564
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/admins",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 564
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/categories",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 564
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/products",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 564
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/add-edit-product/1",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 564
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/sections",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 564
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/brands",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 564
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/banners",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 564
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/coupons",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 564
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/orders",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 564
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/orders/1",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 564
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/order-managers",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "on",
+        "right": 485
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 564
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/subscribers",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 564
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/notices",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 564
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/faqs",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 564
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/contacts",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 564
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/settlements",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "on",
+        "right": 564
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/channel-points",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 564
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/refund-policies",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 564
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/shipping-charges",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 564
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/edit-shipping-charges/1",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 564
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/update-admin-details",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 564
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/update-admin-password",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 407
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 485
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 564
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 564
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/channel",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 454
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 454
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 454
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/channel/product/own",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 454
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 454
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 454
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/channel/shop/list",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 454
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 454
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 454
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/channel/settings/delivery",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 454
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 454
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 454
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/channel/settings/refund",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 454
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 454
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 454
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/channel/order/list",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 454
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 454
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 454
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/channel/settlement/list",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 454
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 454
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "on",
+        "right": 454
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/channel/product/base/edit/1",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 454
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 454
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 454
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/channel/shop/register",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 454
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 454
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 454
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/channel/settings/points",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 454
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 454
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 454
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/channel/settings/order-manager",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 454
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 454
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 454
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/channel/settings/sub-accounts",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "UL",
+        "id": "",
+        "cls": "",
+        "right": 454
+      },
+      {
+        "tag": "LI",
+        "id": "",
+        "cls": "",
+        "right": 454
+      },
+      {
+        "tag": "A",
+        "id": "",
+        "cls": "",
+        "right": 454
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/mypage/main",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/mypage/points/status",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/mypage/delivery",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/mypage/profile",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/mypage/order/list",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/mypage/visited-channels",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/mypage/points/history",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/mypage/coupons",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/mypage/cart",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/mypage/wishlist",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/shop-channel/main",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/shop-channel/products",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/shop-channel/products/1",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/shop/cart",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/shop/order",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/distributor/orders/pending",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "TABLE",
+        "id": "",
+        "cls": "",
+        "right": 917
+      },
+      {
+        "tag": "THEAD",
+        "id": "",
+        "cls": "",
+        "right": 917
+      },
+      {
+        "tag": "TR",
+        "id": "",
+        "cls": "",
+        "right": 917
+      },
+      {
+        "tag": "TH",
+        "id": "",
+        "cls": "",
+        "right": 438
+      },
+      {
+        "tag": "TH",
+        "id": "",
+        "cls": "",
+        "right": 509
+      },
+      {
+        "tag": "TH",
+        "id": "",
+        "cls": "",
+        "right": 593
+      },
+      {
+        "tag": "TH",
+        "id": "",
+        "cls": "",
+        "right": 678
+      },
+      {
+        "tag": "TH",
+        "id": "",
+        "cls": "",
+        "right": 776
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/distributor/orders/completed",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [
+      {
+        "tag": "TABLE",
+        "id": "",
+        "cls": "",
+        "right": 917
+      },
+      {
+        "tag": "THEAD",
+        "id": "",
+        "cls": "",
+        "right": 917
+      },
+      {
+        "tag": "TR",
+        "id": "",
+        "cls": "",
+        "right": 917
+      },
+      {
+        "tag": "TH",
+        "id": "",
+        "cls": "",
+        "right": 397
+      },
+      {
+        "tag": "TH",
+        "id": "",
+        "cls": "",
+        "right": 461
+      },
+      {
+        "tag": "TH",
+        "id": "",
+        "cls": "",
+        "right": 537
+      },
+      {
+        "tag": "TH",
+        "id": "",
+        "cls": "",
+        "right": 613
+      },
+      {
+        "tag": "TH",
+        "id": "",
+        "cls": "",
+        "right": 701
+      }
+    ],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/service",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/features",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/subscription-information",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/member/login",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/register/member",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/channel/login",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/admin/login",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  },
+  {
+    "path": "/distributor/login",
+    "width": 390,
+    "overflow": false,
+    "scrollWidth": 390,
+    "offenders": [],
+    "errors": [],
+    "missing": []
+  }
+]

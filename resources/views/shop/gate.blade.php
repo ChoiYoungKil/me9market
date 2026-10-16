@@ -4,6 +4,7 @@
     <h1 class="ttl">입장코드</h1>
     <form action="{{ route('shop.gate.submit') }}" method="POST"><div class="f_bx">
         @csrf
+        <input type="hidden" name="product" value="{{ old('product', $productId ?? '') }}">
         <input type="text" class="mt0" name="entry_code" id="entry_code" value="{{ old('entry_code', $channelCode) }}" placeholder="채널 입장코드" aria-label="채널 입장코드" required maxlength="80">
         <input type="tel" name="phone" id="phone" value="{{ old('phone') }}" placeholder="휴대폰번호 (비공개 채널)" aria-label="휴대폰번호" autocomplete="tel" maxlength="30">
         <button type="button" id="requestOtp" class="shop-btn shop-otp" data-url="{{ route('shop.otp.request') }}">SMS 인증번호 받기</button>

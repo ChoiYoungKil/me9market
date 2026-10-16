@@ -1,0 +1,30 @@
+[
+  {
+    "check": "variable controls visible",
+    "passed": true
+  },
+  {
+    "check": "tiered hides variable-only controls",
+    "passed": true
+  },
+  {
+    "check": "tier add inserts exactly one row",
+    "passed": true
+  },
+  {
+    "check": "/admin/shipping-charges mobile menu",
+    "passed": true
+  },
+  {
+    "check": "/channel/settings/delivery mobile menu",
+    "passed": true
+  },
+  {
+    "check": "/mypage/points/status mobile menu",
+    "passed": true
+  },
+  {
+    "check": "channel shipping modal and tier controls",
+    "passed": true
+  }
+]

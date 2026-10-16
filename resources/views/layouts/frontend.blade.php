@@ -31,6 +31,7 @@
     <script src="/me9market/js/slick.min.js"></script>
     <script src="/me9market/js/common.js"></script>
     @stack('scripts')
+    <link rel="stylesheet" href="{{ asset('common/social.css').'?v='.filemtime(public_path('common/social.css')) }}">
 </head>
 
 <body id="@yield('page_type', 'main')">

@@ -1,115 +1,26 @@
-{{-- 이 파일은 Admin/ShippingController.php의 shippingCharges() 메서드에 의해 렌더링됩니다. --}}
-@extends('admin.layout.layout')
-
-
+@extends('layouts.admin')
 @section('content')
-    <div class="main-panel">
-        <div class="content-wrapper">
-            <div class="row">
-                <div class="col-lg-12 grid-margin stretch-card">
-                    <div class="card">
-                        <div class="card-body">
-                            <h4 class="card-title">Shipping Charges</h4>
-
-
-
-                            {{-- 유효성 검사 오류 표시:
-                            https://laravel.com/docs/9.x/validation#quick-displaying-the-validation-errors 및
-                            https://laravel.com/docs/9.x/blade#validation-errors --}}
-                            {{-- 세션에 항목이 존재하는지 확인(has() 메서드 사용):
-                            https://laravel.com/docs/9.x/session#determining-if-an-item-exists-in-the-session --}}
-                            {{-- 관리자 비밀번호 업데이트 성공 시 Bootstrap 성공 메시지: --}}
-                            @if (Session::has('success_message')) <!-- AdminController.php, updateAdminPassword() 메서드 확인 -->
-                                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                    <strong>Success:</strong> {{ Session::get('success_message') }}
-                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                        <span aria-hidden="true">&times;</span>
-                                    </button>
-                                </div>
-                            @endif
-
-
-                            <div class="table-responsive pt-3">
-                                {{-- DataTable --}}
-                                <table id="shipping" class="table table-bordered"> {{-- DataTable에 여기 id 사용 --}}
-                                    <thead>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>Country</th>
-                                            <th>Rate (0g to 500g)</th>
-                                            <th>Rate (501g to 1000g)</th>
-                                            <th>Rate (1001g to 2000g)</th>
-                                            <th>Rate (2001g to 5000g)</th>
-                                            <th>Rate (Above 5000g)</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-
-                                        @foreach ($shippingCharges as $shipping)
-                                            <tr>
-                                                <td>{{ $shipping['id'] }}</td>
-                                                <td>{{ $shipping['country'] }}</td>
-                                                <td>{{ $shipping['0_500g'] }}</td>
-                                                <td>{{ $shipping['501g_1000g'] }}</td>
-                                                <td>{{ $shipping['1001_2000g'] }}</td>
-                                                <td>{{ $shipping['2001g_5000g'] }}</td>
-                                                <td>{{ $shipping['above_5000g'] }}</td>
-                                                <td>
-                                                    @if ($shipping['status'] == 1)
-                                                        <a class="updateShippingStatus" id="shipping-{{ $shipping['id'] }}"
-                                                            shipping_id="{{ $shipping['id'] }}" href="javascript:void(0)"> {{-- HTML
-                                                            사용자 정의 속성 사용. admin/js/custom.js 확인 --}}
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-check"
-                                                                status="Active"></i> {{-- Skydash 관리자 패널 템플릿의 아이콘 --}}
-                                                        </a>
-                                                    @else {{-- 관리자 상태가 비활성인 경우 --}}
-                                                        <a class="updateShippingStatus" id="shipping-{{ $shipping['id'] }}"
-                                                            shipping_id="{{ $shipping['id'] }}" href="javascript:void(0)"> {{-- HTML
-                                                            사용자 정의 속성 사용. admin/js/custom.js 확인 --}}
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
-                                                                status="Inactive"></i> {{-- Skydash 관리자 패널 템플릿의 아이콘 --}}
-                                                        </a>
-                                                    @endif
-                                                </td>
-                                                <td>
-                                                    <a href="{{ url('admin/edit-shipping-charges/' . $shipping['id']) }}">
-                                                        <i style="font-size: 25px" class="mdi mdi-pencil-box"></i> {{-- Skydash
-                                                        관리자 패널 템플릿의 아이콘 --}}
-                                                    </a>
-
-                                                    {{-- Confirm Deletion JS alert and Sweet Alert --}}
-                                                    {{-- <a title="Shipping" class="confirmDelete"
-                                                        href="{{ url('admin/delete-shipping/' . $shipping['id']) }}"> --}}
-                                                        {{-- <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i> --}}
-                                                        {{-- Icons from Skydash Admin Panel Template --}}
-                                                        {{-- </a> --}}
-                                                    {{-- <a href="JavaScript:void(0)" class="confirmDelete" module="shipping"
-                                                        moduleid="{{ $shipping['id'] }}"> --}}
-                                                        {{-- <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i> --}}
-                                                        {{-- Icons from Skydash Admin Panel Template --}}
-                                                        {{-- </a> --}}
-                                                </td>
-                                            </tr>
-                                        @endforeach
-
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- content-wrapper ends -->
-        <!-- partial:../../partials/_footer.html -->
-        <footer class="footer">
-            <div class="d-sm-flex justify-content-center justify-content-sm-between">
-                <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © 2022. All rights
-                    reserved.</span>
-            </div>
-        </footer>
-        <!-- partial -->
-    </div>
+<div id="contents"><div class="row"><div class="box">
+    <div class="page_info"><h1 class="ttl">배송비 설정</h1><ul class="dep"><li>홈</li><li>배송비 설정</li></ul></div>
+    @include('partials.delivery_messages')
+    <p class="portal-description">판매자별 Shop 상품에 적용되는 배송비 정책을 관리합니다.</p>
+    <form method="GET" class="portal-filter">
+        <label>판매자 <select name="vendor_id"><option value="">전체 판매자</option>@foreach($vendors as $vendor)<option value="{{ $vendor->id }}" @selected((string) request('vendor_id') === (string) $vendor->id)>{{ $vendor->name }}</option>@endforeach</select></label>
+        <label>정책명 <input name="search" value="{{ request('search') }}" maxlength="100"></label><button class="btn02" type="submit">검색</button>
+    </form>
+    <div class="list_top1"><div class="count">총 <strong>{{ $charges->total() }}</strong> 건</div><a class="btn02" href="#new-delivery-policy">배송비 등록</a></div>
+    <div class="tb01 ovS"><table><thead><tr><th>판매자</th><th>정책명</th><th>유형</th><th>결제</th><th>기본 배송비</th><th>무료 조건</th><th>상태</th><th>관리</th></tr></thead><tbody>
+    @forelse($charges as $charge)
+        <tr><td>{{ $charge->vendor?->name }}</td><td>{{ $charge->name }}</td><td>{{ \App\Services\DeliveryPolicyRules::shippingTypes()[$charge->shipping_type] ?? $charge->shipping_type }}</td><td>{{ \App\Services\DeliveryPolicyRules::paymentTypes()[$charge->payment_type] ?? $charge->payment_type }}</td><td>{{ number_format($charge->base_fee) }}원</td><td>{{ $charge->free_order_amount ? number_format($charge->free_order_amount).'원 이상' : '' }} {{ $charge->free_order_quantity ? number_format($charge->free_order_quantity).'개 이상' : '' }}</td><td>{{ $charge->status ? '사용' : '중지' }}</td><td><a class="btn01" href="{{ route('admin.shipping.edit', $charge->id) }}">수정</a></td></tr>
+    @empty<tr><td colspan="8">등록된 배송비 정책이 없습니다.</td></tr>@endforelse
+    </tbody></table></div>
+    <div class="portal-pagination">{{ $charges->links() }}</div>
+    <section id="new-delivery-policy" class="delivery-editor"><h2>배송비 등록</h2>
+        <form method="POST" action="{{ route('admin.shipping.store') }}">@csrf
+            <label class="delivery-vendor">판매자 <select name="vendor_id" required><option value="">판매자를 선택하세요</option>@foreach($vendors as $vendor)<option value="{{ $vendor->id }}" @selected((string) old('vendor_id') === (string) $vendor->id)>{{ $vendor->name }}</option>@endforeach</select></label>
+            @include('channel.sub00.inc.delivery_charge_form', ['charge' => null, 'shippingTypes' => \App\Services\DeliveryPolicyRules::shippingTypes(), 'paymentTypes' => \App\Services\DeliveryPolicyRules::paymentTypes()])
+            <div class="btm_btn"><button class="btn02" type="submit">등록</button></div>
+        </form>
+    </section>
+</div></div></div>
 @endsection

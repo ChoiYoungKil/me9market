@@ -1,3 +1,10 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss" source(none);
+@config "../../tailwind.config.js";
+@source "../views";
+@source "../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views";
+
+/* Preserve the v3 defaults used by the existing authentication views. */
+@layer base {
+    *, ::before, ::after { border-color: var(--color-gray-200, currentColor); }
+    button, [role="button"] { cursor: pointer; }
+}

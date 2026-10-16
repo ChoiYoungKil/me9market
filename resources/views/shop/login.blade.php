@@ -10,6 +10,7 @@
         <button type="submit" class="btn">LOGIN</button>
         <a href="{{ url('/') }}" class="btn col3">Me9 Market 바로가기</a>
     </div></form>
+    @include('partials.social_login', ['socialContext' => 'shop'])
     <div class="shop-member-links"><a href="{{ route('shop.register') }}">간편회원가입</a><a href="{{ route('front.shop.order.confirm') }}">주문조회</a><a href="{{ route('shop.gate') }}">입장코드</a></div>
 </div></div></div></div>
 @endsection

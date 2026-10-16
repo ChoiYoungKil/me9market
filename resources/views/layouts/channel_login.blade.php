@@ -2,8 +2,9 @@
 <html lang="ko">
 
 <head>
-    <title>Me9 market - Channel Login</title>
+    <title>@yield('title', 'Me9 market - 채널 관리자')</title>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="format-detection" content="telephone=no" />
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" />
@@ -19,9 +20,10 @@
     <script src="{{ asset('channel_assets/js/slick.min.js') }}"></script>
     <script src="{{ asset('channel_assets/js/common.js') }}"></script>
     @yield('styles')
+    <link href="{{ asset('common/portal.css').'?v='.filemtime(public_path('common/portal.css')) }}" rel="stylesheet">
 </head>
 
-<body id="main">
+<body class="portal portal-login" id="main">
     @yield('content')
     @yield('scripts')
 </body>

@@ -171,6 +171,7 @@ class UserController extends Controller
             $user->password = Hash::make($data['password']);
 
             $user->status = 1;
+            $user->fill(app(\App\Services\RegistrationConsent::class)->capture($request, ['agree_terms', 'agree_privacy', 'agree_third_party']));
             $user->save();
 
             // 즉시 자동 로그인 처리
@@ -1724,7 +1725,7 @@ class UserController extends Controller
         })->all();
 
         $shopChannels = $shops->values()->map(function ($shop, $index) {
-            $url = route('shop.channel_main');
+            $url = route('shop.enter', ['channelCode' => $shop->channel_code]);
 
             return [
                 'no' => $index + 1,
@@ -1817,12 +1818,11 @@ class UserController extends Controller
             $query->where('description', 'like', '%'.$filters['detail'].'%');
         }
 
-        $pointHistory = $query->orderByDesc('created_at')
-            ->get()
-            ->values()
-            ->map(function ($transaction, $index) {
+        $pointHistory = $query->orderByDesc('created_at')->orderByDesc('id')->paginate(20)->withQueryString();
+        $first = $pointHistory->firstItem() ?? 1;
+        $pointHistory->through(function ($transaction, $index) use ($first) {
                 return [
-                    'no' => $index + 1,
+                    'no' => $first + $index,
                     'created_at' => optional($transaction->created_at)->format('Y-m-d'),
                     'channel_name' => $transaction->shopChannel?->channel_name ?? 'Me9 통합',
                     'channel_code' => $transaction->shopChannel?->channel_code ?? 'ME9',
@@ -1830,8 +1830,7 @@ class UserController extends Controller
                     'points' => $transaction->points,
                     'description' => $transaction->description ?: '포인트 이력',
                 ];
-            })
-            ->all();
+            });
 
         return view('front.mypage.sub01.point_history', compact('user', 'pointHistory', 'filters'));
     }
@@ -1910,16 +1909,18 @@ class UserController extends Controller
 
         $shopProduct = $shopProduct ?: ShopChannelProduct::with('shopChannel')
             ->where('product_id', $product->id)
+            ->where('status', 1)->where('approval_status', 'approved')
+            ->whereHas('shopChannel', fn ($query) => $query->where('status', 1)->where(fn ($q) => $q->whereNull('closure_status')->orWhere('closure_status', '!=', 'approved')))
             ->first();
         $shop = $shopProduct?->shopChannel;
-        $visitUrl = $shopProduct ? route('shop.product_details', ['id' => $shopProduct->id]) : route('shop.products_list');
+        $visitUrl = $shop ? route('shop.enter', ['channelCode' => $shop->channel_code, 'product' => $shopProduct->id]) : route('shop.gate');
         $price = $shopProduct?->selling_price ?: $product->product_price;
 
         return [
             'id' => $id,
             'image' => $product->product_image
                 ? asset('front/images/product_images/small/'.$product->product_image)
-                : 'https://api.qrserver.com/v1/create-qr-code/?size=100x100&data='.urlencode($product->product_code),
+                : asset('front/images/product_images/small/no-image.png'),
             'code' => $product->product_code,
             'name' => $product->product_name,
             'option' => $option ?: '기본옵션',
@@ -1951,9 +1952,12 @@ class UserController extends Controller
             $query->whereBetween('created_at', [$startDate, $endDate.' 23:59:59']);
         }
 
-        $coupons = $query->orderBy('expiry_date', 'asc')->get();
+        $query->where(function ($query) use ($user) {
+            $query->whereNull('users')->orWhere('users', '')->orWhereRaw("FIND_IN_SET(?, REPLACE(users, ' ', '')) > 0", [$user->email]);
+        });
+        $coupons = $query->orderBy('expiry_date')->orderBy('id')->paginate(20)->withQueryString();
 
-        $totalCount = $coupons->count();
+        $totalCount = $coupons->total();
 
         return view('front.mypage.sub01.coupon_list', compact('user', 'coupons', 'totalCount', 'startDate', 'endDate'));
     }

@@ -365,7 +365,8 @@ class FrontController extends Controller
 
     public function shopGate(Request $request)
     {
-        return view('shop.gate', ['channelCode' => (string) $request->query('channel', '')]);
+        $request->validate(['channel' => 'nullable|string|max:80', 'product' => 'nullable|integer|min:1']);
+        return view('shop.gate', ['channelCode' => (string) $request->query('channel', ''), 'productId' => $request->query('product')]);
     }
 
     public function shopGateSubmit(Request $request)
@@ -374,6 +375,7 @@ class FrontController extends Controller
             'entry_code' => 'required|string|max:80',
             'phone' => 'nullable|string|max:30',
             'otp' => 'nullable|digits:6',
+            'product' => 'nullable|integer|min:1',
         ]);
 
         $runtime = app(ShopChannelRuntime::class);
@@ -390,7 +392,7 @@ class FrontController extends Controller
             $shop = $runtime->enterChannel($request->entry_code);
         }
         if ($shop) {
-            return redirect()->route('shop.channel_main')->with('flash_message_success', $shop->channel_name.'에 입장했습니다.');
+            return $this->shopEntryDestination($request, $shop)->with('flash_message_success', $shop->channel_name.'에 입장했습니다.');
         }
 
         return redirect()->back()->with('flash_message_error', '입장 코드가 올바르지 않습니다.');
@@ -407,14 +409,27 @@ class FrontController extends Controller
         return response()->json(['status' => true, 'message' => '인증번호를 발송했습니다.']);
     }
 
-    public function shopEnter(string $channelCode)
+    public function shopEnter(Request $request, string $channelCode)
     {
+        $request->validate(['product' => 'nullable|integer|min:1']);
         $shop = app(ShopChannelRuntime::class)->enterChannel($channelCode);
         if (! $shop) {
-            return redirect()->route('shop.gate', ['channel' => $channelCode])->with('flash_message_error', '비공개 채널은 휴대폰 SMS 인증이 필요합니다.');
+            return redirect()->route('shop.gate', ['channel' => $channelCode, 'product' => $request->query('product')])->with('flash_message_error', '비공개 채널은 휴대폰 SMS 인증이 필요합니다.');
         }
 
-        return redirect()->route('shop.channel_main')->with('flash_message_success', $shop->channel_name.'에 입장했습니다.');
+        return $this->shopEntryDestination($request, $shop)->with('flash_message_success', $shop->channel_name.'에 입장했습니다.');
+    }
+
+    private function shopEntryDestination(Request $request, ShopChannel $shop)
+    {
+        if ($request->filled('product')) {
+            $product = ShopChannelProduct::where('shop_channel_id', $shop->id)
+                ->where('status', 1)->where('approval_status', 'approved')
+                ->whereHas('product', fn ($query) => $query->where('status', 1))
+                ->findOrFail($request->integer('product'));
+            return redirect()->route('shop.product_details', ['id' => $product->id]);
+        }
+        return redirect()->route('shop.channel_main');
     }
 
     public function shopRegister()
@@ -439,19 +454,11 @@ class FrontController extends Controller
             'terms_service' => 'accepted',
             'terms_privacy' => 'accepted',
             'terms_third_party' => 'accepted',
-            'marketing_opt_in' => 'nullable|boolean',
-            'notification_opt_in' => 'nullable|boolean',
         ]);
 
-        foreach (['marketing', 'notification'] as $optional) {
-            if (app()->environment('production') && $request->boolean($optional.'_opt_in')
-                && (! filter_var(config('shop_channel.'.$optional.'_url'), FILTER_VALIDATE_URL)
-                    || parse_url(config('shop_channel.'.$optional.'_url'), PHP_URL_SCHEME) !== 'https')) {
-                throw \Illuminate\Validation\ValidationException::withMessages([$optional.'_opt_in' => '선택 동의 안내 문서가 준비되지 않았습니다. 해당 동의를 해제해 주세요.']);
-            }
-        }
+        $consent = app(\App\Services\RegistrationConsent::class)->capture($request);
 
-        $user = User::create([
+        $user = User::create($consent + [
             'name' => $data['name'],
             'username' => $data['email'],
             'email' => $data['email'],
@@ -459,21 +466,6 @@ class FrontController extends Controller
             'password' => Hash::make($data['password']),
             'status' => 1,
             'type' => 'general',
-            'marketing_opt_in' => $request->boolean('marketing_opt_in'),
-            'terms_accepted_at' => now(),
-            'notification_opt_in' => $request->boolean('notification_opt_in'),
-            'terms_snapshot' => [
-                'version' => config('shop_channel.terms_version'),
-                'terms_url' => config('shop_channel.terms_url'),
-                'privacy_url' => config('shop_channel.privacy_url'),
-                'third_party_url' => config('shop_channel.third_party_url'),
-                'marketing_url' => $request->boolean('marketing_opt_in') ? config('shop_channel.marketing_url') : null,
-                'notification_url' => $request->boolean('notification_opt_in') ? config('shop_channel.notification_url') : null,
-                'terms_service' => true, 'terms_privacy' => true, 'terms_third_party' => true,
-                'marketing_opt_in' => $request->boolean('marketing_opt_in'),
-                'notification_opt_in' => $request->boolean('notification_opt_in'),
-                'accepted_at' => now()->toIso8601String(),
-            ],
         ]);
         Auth::login($user);
         $request->session()->regenerate();

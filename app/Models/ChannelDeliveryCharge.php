@@ -22,9 +22,16 @@ class ChannelDeliveryCharge extends Model
         'fixed_fee',
         'product_count',
         'memo',
+        'calculation_rules',
     ];
 
+    public function vendor()
+    {
+        return $this->belongsTo(Vendor::class);
+    }
+
     protected $casts = [
+        'calculation_rules' => 'array',
         'status' => 'integer',
         'base_fee' => 'integer',
         'free_order_amount' => 'integer',

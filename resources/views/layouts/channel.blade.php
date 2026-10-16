@@ -2,6 +2,7 @@
 <html lang="ko">
 
 	<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 		<title>Me9 market</title>
 		<meta charset="utf-8" />
 		<meta name="csrf-token" content="{{ csrf_token() }}">
@@ -32,9 +33,11 @@
 	<script src="/channel_assets/js/slick.min.js"></script>
 	<script src="/channel_assets/js/common.js"></script>
 
+    @stack('styles')
+    <link href="{{ asset('common/portal.css').'?v='.filemtime(public_path('common/portal.css')) }}" rel="stylesheet">
 </head>
 
-<body id="@yield('page_type', 'main')">
+<body class="portal portal-channel" id="@yield('page_type', 'main')">
 	<div id="skipNavi">
 		<ul>
 			<li>
@@ -46,6 +49,7 @@
 
 	<div id="wrap" class="@yield('head_none')">
 		<header id="header">
+            <button class="portal-menu-toggle" type="button" aria-controls="l_menu" aria-expanded="false">메뉴</button>
 			<a href="/" class="logo">Me9 market</a>
 
 			<div class="t_menu">
@@ -60,7 +64,7 @@
 
 			<div class="r_bx">
 				<div class="name">[상호명] {{ Auth::guard('admin')->user()->name ?? 'Seller' }}</div>
-				<a href="{{ url()->current() }}" class="btn icon1"></a>
+				<a href="{{ route('channel.complete_profile') }}" class="btn icon1" title="내 정보" aria-label="내 정보"></a>
 				<a href="{{ route('channel.logout') }}" class="btn icon2" title="로그아웃"></a>
 				<div class="r_menu">
 					<div class="r_menu_btn"><span>채널목록{{ isset($headerChannels) && $headerChannels->count() ? ' (' . $headerChannels->count() . ')' : '' }}</span></div>
@@ -106,7 +110,9 @@
 
 		</footer>
 	</div><!-- //wrap -->
-	@stack('scripts')
+
+    <script src="{{ asset('common/portal.js').'?v='.filemtime(public_path('common/portal.js')) }}"></script>
+    @stack('scripts')
 </body>
 
 </html>

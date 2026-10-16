@@ -1,0 +1,14 @@
+[
+  {
+    "url": "https://admin.replyer.co.kr/admin/login",
+    "exit_code": 7,
+    "http_code": "000",
+    "error": "curl: (7) Failed to connect to admin.replyer.co.kr port 443 after 7 ms: Couldn't connect to server"
+  },
+  {
+    "url": "https://front.replyer.co.kr/",
+    "exit_code": 7,
+    "http_code": "000",
+    "error": "curl: (7) Failed to connect to front.replyer.co.kr port 443 after 7 ms: Couldn't connect to server"
+  }
+]

@@ -56,4 +56,12 @@ class DeploymentCheckTest extends TestCase
         $this->assertSame(1, Artisan::call('deployment:check', ['--restricted' => true]));
         $this->assertStringContainsString('FAIL', Artisan::output());
     }
+
+    public function test_enabled_social_login_with_missing_credentials_blocks_deployment(): void
+    {
+        $this->configureRestrictedRelease();
+        config(['social_login.google.enabled' => true, 'social_login.google.client_secret' => '']);
+        $this->assertSame(1, Artisan::call('deployment:check', ['--restricted' => true]));
+        $this->assertStringContainsString('Valid google OAuth configuration', Artisan::output());
+    }
 }

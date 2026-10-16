@@ -1032,6 +1032,7 @@ class ChannelProductController extends Controller
             'distributor_id' => ['nullable', 'required_if:order_manager_enabled,1', $distributorRule],
             'shipping_policy_type' => 'required|in:free,free_conditional,paid',
             'shipping_policy_name' => 'nullable|string|max:120',
+            'shipping_policy_id' => ['nullable', \Illuminate\Validation\Rule::exists('channel_delivery_charges', 'id')->where('vendor_id', Auth::guard('admin')->user()->vendor_id)->where('status', 1)],
             'shipping_payment_type' => 'required|in:prepaid,collect',
             'shipping_base_fee' => 'nullable|required_unless:shipping_policy_type,free|numeric|min:0',
             'shipping_free_threshold' => 'nullable|required_if:shipping_policy_type,free_conditional|numeric|min:0',
@@ -1661,6 +1662,7 @@ class ChannelProductController extends Controller
             $shippingPolicyType = $data['shipping_policy_type'] ?? 'free_conditional';
             $product->shipping_policy_type = $shippingPolicyType;
             $product->shipping_policy_name = $data['shipping_policy_name'] ?? null;
+            $product->shipping_policy_id = $data['shipping_policy_id'] ?? null;
             $product->shipping_payment_type = $data['shipping_payment_type'] ?? 'prepaid';
             $product->shipping_base_fee = $shippingPolicyType !== 'free' ? ($data['shipping_base_fee'] ?? null) : null;
             $product->shipping_free_threshold = $shippingPolicyType === 'free_conditional'

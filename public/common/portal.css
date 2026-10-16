@@ -1,0 +1,126 @@
+/* Shared layout constraints for admin, channel and member portals. */
+body.portal { min-width: 0; }
+.portal #wrap { min-height: 100vh; height: auto; }
+.portal #container_w, .portal #contents, .portal .row, .portal .box, .portal .conbx, .portal .con_w { min-width: 0; max-width: 100%; box-sizing: border-box; }
+.portal #contents { width: 100%; }
+.portal #container_w > #container { min-height: auto; width: 100%; padding: 0; margin: 0; }
+.portal .tb01, .portal .table-responsive, .portal .portal-table-scroll { max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; }
+.portal table { overflow-wrap: anywhere; }
+.portal .tb01 table:has(thead) { min-width: 640px; }
+.portal .tb01 table:has(colgroup) { table-layout: auto; }
+.portal input, .portal select, .portal textarea { max-width: 100%; box-sizing: border-box; }
+.portal input[type=number] { border: 1px solid #ddd; border-radius: 4px; padding: 8px; min-height: 36px; background: #fff; color: #333; }
+.portal textarea { width: 100%; }
+.portal .btm_btn { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.portal .btm_btn > * { margin: 0; }
+.portal .popup_bx { padding: 24px 0; }
+.portal .popup_bx .pop_w { min-width: 0; }
+.portal .popup_bx .pop_con { max-width: 1260px; width: calc(100% - 32px); }
+.portal-menu-toggle { display: none; }
+.portal-admin #header, .portal-channel #header { display: flex; align-items: center; gap: 24px; padding: 12px 24px; min-height: 64px; height: auto; }
+.portal-admin #header .logo, .portal-channel #header .logo { position: static; flex: 0 0 155px; }
+.portal-admin #header .t_menu, .portal-channel #header .t_menu { flex: 1; min-width: 0; height: auto; padding: 0; overflow-x: auto; }
+.portal-admin #header .t_menu > ul, .portal-channel #header .t_menu > ul { display: flex; align-items: center; gap: 24px; white-space: nowrap; }
+.portal-admin #header .t_menu > ul > li, .portal-channel #header .t_menu > ul > li { flex-shrink: 0; margin: 0; }
+.portal-admin #header .t_menu > ul > li::before, .portal-channel #header .t_menu > ul > li::before { display: none; }
+.portal-admin #header .r_bx, .portal-channel #header .r_bx { position: static; flex-shrink: 0; }
+.portal-channel #header .r_bx .r_menu .r_menu_btn span { line-height: 40px; }
+.portal-channel #header .r_bx .r_menu .menu_w { top: 40px; left: auto; right: 0; min-width: 220px; }
+.portal-filter { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin: 20px 0; }
+.portal-filter label { display: flex; align-items: center; gap: 8px; }
+.portal-filter input, .portal-filter select, .delivery-vendor select { border: 1px solid #ddd; min-height: 38px; padding: 8px; border-radius: 4px; }
+.portal-description { margin: 16px 0; color: #555; line-height: 1.7; }
+.portal-pagination { margin: 24px 0; }
+.portal-message { margin: 16px 0; padding: 14px 18px; border-radius: 6px; line-height: 1.7; }
+.portal-message.success { background: #eaf6ef; color: #165534; }
+.portal-message.error { background: #fff0f0; color: #952525; }
+.delivery-editor { margin-top: 32px; }
+.delivery-editor h2 { font-size: 20px; margin-bottom: 20px; }
+.delivery-vendor { display: flex; gap: 12px; align-items: center; margin: 20px 0; }
+.portal .delivery-policy-form input[type=number] { width: 140px; }
+.portal .delivery-policy-form p, .portal .delivery-policy-form label { line-height: 1.8; }
+.portal .delivery-policy-form p { margin: 8px 0; }
+.portal .delivery-policy-form [data-shipping-tier] { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 12px 0; }
+.portal .delivery-policy-form [data-shipping-tier] input { width: 120px; }
+.portal .delivery-policy-form button { padding: 8px 12px; border: 1px solid #cbd3df; border-radius: 4px; background: #f7f9fc; color: #333; cursor: pointer; }
+.portal .delivery-policy-form textarea { display: block; margin: 8px 0; border: 1px solid #ddd; padding: 10px; }
+.portal [hidden] { display: none !important; }
+/* Older content keeps Bootstrap form utilities, scoped to this content area. */
+#container .legacy-admin-content .main-panel { width: 100%; min-height: 0; }
+#container .legacy-admin-content .content-wrapper { padding: 0; background: transparent; }
+#container .legacy-admin-content .row { display: flex; flex-wrap: wrap; width: auto; margin: 0 -12px 20px; }
+#container .legacy-admin-content .card { border: 0; border-radius: 10px; background: #fff; }
+#container .legacy-admin-content .card-body { padding: 28px; }
+#container .legacy-admin-content .card-title { font-size: 20px; font-weight: 700; margin-bottom: 24px; text-transform: none; }
+#container .legacy-admin-content .table { min-width: 640px; }
+#container .legacy-admin-content .footer { display: none; }
+#container .legacy-admin-content .dataTables_wrapper > .row { margin: 0; }
+#container .legacy-admin-content .grid-margin { margin-bottom: 20px; }
+@media (max-width: 1100px) {
+    .portal-admin #header, .portal-channel #header { flex-wrap: wrap; gap: 12px; }
+    .portal-admin #header .t_menu, .portal-channel #header .t_menu { flex-basis: 100%; order: 4; }
+    .portal-admin #header .r_bx, .portal-channel #header .r_bx { margin-left: auto; }
+}
+@media (max-width: 1024px) {
+    .portal #container { width: 100%; padding: 0; }
+    .portal #container #container_w { width: 100%; padding: 20px 16px; }
+    .portal #container #l_menu { display: none; width: 100%; margin: 0; padding: 0 20px; }
+    .portal.portal-menu-open #container #l_menu { display: block; }
+    .portal #l_menu .con1, .portal #l_menu .con3 { padding: 24px 0; }
+    .portal-menu-toggle { display: inline-flex; align-items: center; justify-content: center; padding: 8px 12px; border: 1px solid #b7c3d4; border-radius: 4px; background: #fff; color: #1b2431; font-size: 14px; cursor: pointer; }
+    .portal #container .box, .portal #container_w .box { padding: 20px; }
+    .portal #container .page_info { left: -20px; width: calc(100% + 40px); padding: 0 20px 20px; }
+    .portal #container .page_info .dep { float: none; margin-top: 12px; }
+    .portal #container .row.col2, .portal #container .row.col3, .portal #container .row.col2-1, .portal #container .row.col1-2, .portal #container_w .box.col2 { width: 100%; margin-right: 0; }
+    .portal .popup_bx .pop_con { padding: 20px 16px; }
+    .portal .delivery-policy-form .tb01 table, .portal .delivery-policy-form .tb01 tbody, .portal .delivery-policy-form .tb01 tr, .portal .delivery-policy-form .tb01 th, .portal .delivery-policy-form .tb01 td { display: block; width: 100% !important; box-sizing: border-box; }
+    .portal .delivery-policy-form colgroup { display: none; }
+    .portal .delivery-policy-form .tb01 tbody.textL th, .portal .delivery-policy-form .tb01 tbody.textL td { padding: 12px; }
+    .portal-mypage #header .h_inner { width: 100%; padding: 16px; box-sizing: border-box; display: flex; flex-wrap: wrap; gap: 12px; }
+    .portal-mypage #header .logo { position: static; flex-shrink: 0; }
+    .portal-mypage #header .t_menu { width: 100%; display: flex; flex-wrap: wrap; gap: 12px; }
+    .portal-mypage #header .t_menu > ul { display: flex; flex-wrap: wrap; gap: 12px; }
+    .portal-mypage #header .t_menu > ul > li { margin: 0; }
+    .portal-mypage #header .t_menu > ul > li::before { display: none; }
+    .portal-mypage #header .l_menu_btn { position: static; width: 36px; height: 36px; }
+}
+.portal .tb01 table:has(thead) th, .portal .tb01 table:has(thead) td { min-width: 80px; }
+.portal .list_top1 { flex-wrap: wrap; gap: 12px; }
+.portal .list-top-actions, .portal .list-inline-search { flex-wrap: wrap; min-width: 0; max-width: 100%; }
+.portal .list-inline-search { margin-left: 0; }
+.portal-mypage .tb01.type2 table:has(thead) tbody { display: table-row-group; }
+.portal-mypage .tb01.type2 table:has(thead) tbody tr { display: table-row; }
+.portal-mypage .tb01.type2 table:has(thead) tbody td, .portal-mypage .tb01.type2 table:has(thead) tbody th { display: table-cell; width: auto; padding: 12px 10px; }
+@media (max-width: 1024px) {
+    .portal-mypage #header { position: relative; height: auto; }
+    .portal-mypage #header .h_inner { width: 100%; padding: 16px; display: flex; flex-wrap: wrap; gap: 16px; }
+    .portal-mypage #header .logo { position: static; }
+    .portal-mypage #header .t_menu { display: flex; flex-wrap: wrap; gap: 14px; width: 100%; }
+    .portal-mypage #header .t_menu > ul { display: flex; flex-wrap: wrap; gap: 12px; width: 100%; }
+    .portal-mypage #header .t_menu > ul > li { margin: 0; }
+    .portal-mypage #header .t_menu > ul > li > a { color: #fff; font-size: 13px; }
+    .portal-mypage #header .r_menu_btn { position: static; background: none; width: auto; height: auto; font-size: 13px; color: #fff; padding: 8px 12px; border: 1px solid #9bbaff; border-radius: 4px; }
+    .portal-mypage #header .l_menu_btn { position: relative; margin-left: auto; padding: 0; width: 32px; height: 30px; background: transparent; border: 0; }
+    .portal-mypage #header .l_menu_btn span { left: 0; width: 30px; }
+    .portal-mypage #header .r_menu, .portal-mypage #header .r_menu .menu_w { position: absolute; height: auto; max-height: 70vh; top: 100%; background: #fff; }
+    .portal-mypage #header .r_menu .menu_w { position: static; width: 100%; }
+    .portal-mypage #container #l_menu { position: static; height: auto; overflow: visible; z-index: auto; }
+    .portal-mypage #l_menu .con_bx { padding-top: 0; }
+    .portal-mypage .filter_bx .date_wrap { min-width: 0; width: 100%; }
+    .portal-mypage .filter_bx .date_wrap input { min-width: 0; width: 0; }
+}
+.portal .tab_bx ul { flex-wrap: wrap; gap: 8px; }
+.portal-mypage .list_top1 .searh_bx .btn { background-image: url(/me9market/images/icon/search1.png); }
+.portal-mypage .tb01 table tbody td input.datepicker { background-image: url(/master_assets/images/icon/calendar.png); }
+.portal-login #login { min-height: 100vh; height: auto !important; padding: 48px 16px; width: 100%; }
+.portal-login #login .box1 { width: 100%; max-width: 620px; box-sizing: border-box; border-radius: 16px; background: #fff; }
+.portal-login #login .inner_bx { width: 100%; min-width: 0; }
+.portal-login #login .logo { max-width: 100%; height: auto; }
+@media (max-width: 640px) {
+    .portal-login #login .box1 { padding: 40px 24px; }
+    .portal-login #login .logo { margin-bottom: 36px; }
+}
+.portal-login #login .inner_bx { box-sizing: border-box; padding: 0; border-radius: 0; box-shadow: none; background: transparent; }
+.portal .popup_bx { z-index: 200000; }
+.portal .tb01 th em { font-size: 0; font-style: normal; }
+.portal .tb01 th em::before { content: '*'; font-size: 14px; color: #d93232; margin-left: 4px; }

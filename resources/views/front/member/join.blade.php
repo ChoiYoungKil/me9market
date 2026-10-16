@@ -9,6 +9,7 @@
                 <div class="box box1">
                     <div class="inner_bx">
                         <div class="top_ttl">회원가입</div>
+                        @unless(app(\App\Services\ShopChannelRuntime::class)->canRegister())<p role="status">회원가입 약관을 준비 중입니다. 판매자에게 문의해 주세요.</p>@endunless
                         <form name="joinForm" method="POST" action="{{ route('front.member.register.submit') }}">
                             @csrf
                             <input type="hidden" name="register_type" value="{{ $type ?? 'general' }}">
@@ -111,7 +112,7 @@
                                                                         id="password" required="required">
                                                                     <p class="txt_guide"
                                                                         style="margin-top:5px; color:#888; font-size:12px;">
-                                                                        ※ 비밀번호는 영문 대문자, 소문자, 특수문자(!@#$%^&*)를 포함하여 6자 이상이어야 합니다.
+                                                                        ※ 비밀번호는 영문 대문자, 소문자, 특수문자(!@#$%^&*)를 포함하여 12자 이상이어야 합니다.
                                                                     </p>
                                                                 </td>
                                                             </tr>
@@ -141,78 +142,77 @@
                                                     </li>
                                                     <li>
                                                         <div class="s_txt">
-                                                            <input type="checkbox" id="agree1" name="agree_terms">
+                                                            <input type="checkbox" id="agree1" name="agree_terms" value="1" required>
                                                             <label for="agree1">이용약관 동의 <span
                                                                     class="col2">(필수)</span></label>
                                                             <div class="btn">전문보기</div>
                                                         </div>
                                                         <div class="h_txt">
-                                                            이용약관 내용입니다.<br>
-                                                            이용약관 내용입니다. 이용약관 내용입니다.<br><br>
-                                                            이용약관 내용입니다. 이용약관 내용입니다. 이용약관 내용입니다.<br>
-                                                            이용약관 내용입니다.<br>
-                                                            이용약관 내용입니다.<br>
-                                                            이용약관 내용입니다. 이용약관 내용입니다.<br><br>
-                                                            이용약관 내용입니다. 이용약관 내용입니다. 이용약관 내용입니다.<br>
-                                                            이용약관 내용입니다.
+                                                            @if(config('shop_channel.terms_url'))
+                                                                <a href="{{ config('shop_channel.terms_url') }}" target="_blank" rel="noopener">승인 문서 전문 보기</a>
+                                                            @else
+                                                                안내 문서를 준비 중입니다.
+                                                            @endif
                                                         </div>
                                                     </li>
                                                     <li>
                                                         <div class="s_txt">
-                                                            <input type="checkbox" id="agree2" name="agree_privacy">
+                                                            <input type="checkbox" id="agree2" name="agree_privacy" value="1" required>
                                                             <label for="agree2">개인정보 수집 및 이용에 관한 안내 <span
                                                                     class="col2">(필수)</span></label>
                                                             <div class="btn">전문보기</div>
                                                         </div>
                                                         <div class="h_txt">
-                                                            개인정보 수집 및 이용에 관한 안내입니다.<br>
-                                                            개인정보 수집 및 이용에 관한 안내입니다. 개인정보 수집 및 이용에 관한 안내입니다.<br><br>
-                                                            개인정보 수집 및 이용에 관한 안내입니다. 개인정보 수집 및 이용에 관한 안내입니다. 개인정보 수집 및 이용에 관한
-                                                            안내입니다.<br>
-                                                            개인정보 수집 및 이용에 관한 안내입니다.
+                                                            @if(config('shop_channel.privacy_url'))
+                                                                <a href="{{ config('shop_channel.privacy_url') }}" target="_blank" rel="noopener">승인 문서 전문 보기</a>
+                                                            @else
+                                                                안내 문서를 준비 중입니다.
+                                                            @endif
                                                         </div>
                                                     </li>
                                                     <li>
                                                         <div class="s_txt">
-                                                            <input type="checkbox" id="agree3" name="agree_third_party">
+                                                            <input type="checkbox" id="agree3" name="agree_third_party" value="1" required>
                                                             <label for="agree3">제3자 정보제공 동의 <span
                                                                     class="col2">(필수)</span></label>
                                                             <div class="btn">전문보기</div>
                                                         </div>
                                                         <div class="h_txt">
-                                                            제3자 정보제공 동의에 관한 안내입니다.<br>
-                                                            제3자 정보제공 동의에 관한 안내입니다. 제3자 정보제공 동의에 관한 안내입니다.<br><br>
-                                                            제3자 정보제공 동의에 관한 안내입니다. 제3자 정보제공 동의에 관한 안내입니다. 제3자 정보제공 동의에 관한
-                                                            안내입니다.<br>
-                                                            제3자 정보제공 동의에 관한 안내입니다.
+                                                            @if(config('shop_channel.third_party_url'))
+                                                                <a href="{{ config('shop_channel.third_party_url') }}" target="_blank" rel="noopener">승인 문서 전문 보기</a>
+                                                            @else
+                                                                안내 문서를 준비 중입니다.
+                                                            @endif
                                                         </div>
                                                     </li>
                                                     <li>
                                                         <div class="s_txt">
-                                                            <input type="checkbox" id="agree4" name="agree_marketing">
+                                                            <input type="checkbox" id="agree4" name="marketing_opt_in" value="1">
                                                             <label for="agree4">마케팅활용동의 <span
                                                                     class="col3">(선택)</span></label>
                                                             <div class="btn">전문보기</div>
                                                         </div>
                                                         <div class="h_txt">
-                                                            마케팅활용동의 내용입니다.<br>
-                                                            마케팅활용동의 내용입니다. 마케팅활용동의 내용입니다.<br><br>
-                                                            마케팅활용동의 내용입니다. 마케팅활용동의 내용입니다. 마케팅활용동의 내용입니다.<br>
-                                                            마케팅활용동의 내용입니다.
+                                                            @if(config('shop_channel.marketing_url'))
+                                                                <a href="{{ config('shop_channel.marketing_url') }}" target="_blank" rel="noopener">승인 문서 전문 보기</a>
+                                                            @else
+                                                                안내 문서를 준비 중입니다.
+                                                            @endif
                                                         </div>
                                                     </li>
                                                     <li>
                                                         <div class="s_txt">
-                                                            <input type="checkbox" id="agree5" name="agree_notification">
+                                                            <input type="checkbox" id="agree5" name="notification_opt_in" value="1">
                                                             <label for="agree5">알림정보수신동의 <span
                                                                     class="col3">(선택)</span></label>
                                                             <div class="btn">전문보기</div>
                                                         </div>
                                                         <div class="h_txt">
-                                                            알림정보수신동의 내용입니다.<br>
-                                                            알림정보수신동의 내용입니다. 알림정보수신동의 내용입니다.<br><br>
-                                                            알림정보수신동의 내용입니다. 알림정보수신동의 내용입니다. 알림정보수신동의 내용입니다.<br>
-                                                            알림정보수신동의 내용입니다.
+                                                            @if(config('shop_channel.notification_url'))
+                                                                <a href="{{ config('shop_channel.notification_url') }}" target="_blank" rel="noopener">승인 문서 전문 보기</a>
+                                                            @else
+                                                                안내 문서를 준비 중입니다.
+                                                            @endif
                                                         </div>
                                                     </li>
                                                 </ul>
@@ -222,7 +222,7 @@
 
                                 </div>
                                 <div class="btm_btn type2">
-                                    <a href="javascript:;" onclick="checkForm();" class="col2">가입완료</a>
+                                    @if(app(\App\Services\ShopChannelRuntime::class)->canRegister())<a href="javascript:;" onclick="checkForm();" class="col2">가입완료</a>@endif
                                 </div>
                             </div>
                         </form>
@@ -332,9 +332,9 @@
                     }
 
                     // Password Rules: Upper, Lower, Special, Min 6
-                    var regExp = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*])[a-zA-Z\d!@#$%^&*]{6,}$/;
+                    var regExp = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#$%^&*])[a-zA-Z\d!@#$%^&*]{12,}$/;
                     if (!regExp.test(pwd)) {
-                        alert('비밀번호는 영문 대문자, 소문자, 특수문자(!@#$%^&*)를 포함하여 6자 이상이어야 합니다.');
+                        alert('비밀번호는 영문 대문자, 소문자, 특수문자(!@#$%^&*)를 포함하여 12자 이상이어야 합니다.');
                         $('#password').focus();
                         return;
                     }

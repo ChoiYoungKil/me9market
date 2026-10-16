@@ -115,16 +115,7 @@
                                 </table>
                             </div>
 
-                            <!-- 페이징 -->
-                            <div class="page_bx1 text-center mt30">
-                                <a href="javascript:void(0);" class="page_prev dimmed">prev</a>
-                                <a href="{{ url()->current() }}" class="num on">1</a>
-                                <a href="{{ url()->current() }}" class="num">2</a>
-                                <a href="{{ url()->current() }}" class="num">3</a>
-                                <a href="{{ url()->current() }}" class="num">4</a>
-                                <a href="{{ url()->current() }}" class="num">5</a>
-                                <a href="javascript:void(0);" class="page_next dimmed">next</a>
-                            </div>
+
                         </div>
                     </div>
                 </div>

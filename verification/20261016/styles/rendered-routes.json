@@ -1,0 +1,312 @@
+[
+  {
+    "role": "admin",
+    "path": "/admin/dashboard",
+    "status": 200
+  },
+  {
+    "role": "admin",
+    "path": "/admin/users",
+    "status": 200
+  },
+  {
+    "role": "admin",
+    "path": "/admin/admins",
+    "status": 200
+  },
+  {
+    "role": "admin",
+    "path": "/admin/categories",
+    "status": 200
+  },
+  {
+    "role": "admin",
+    "path": "/admin/products",
+    "status": 200
+  },
+  {
+    "role": "admin",
+    "path": "/admin/add-edit-product/1",
+    "status": 200
+  },
+  {
+    "role": "admin",
+    "path": "/admin/sections",
+    "status": 200
+  },
+  {
+    "role": "admin",
+    "path": "/admin/brands",
+    "status": 200
+  },
+  {
+    "role": "admin",
+    "path": "/admin/banners",
+    "status": 200
+  },
+  {
+    "role": "admin",
+    "path": "/admin/coupons",
+    "status": 200
+  },
+  {
+    "role": "admin",
+    "path": "/admin/orders",
+    "status": 200
+  },
+  {
+    "role": "admin",
+    "path": "/admin/orders/1",
+    "status": 200
+  },
+  {
+    "role": "admin",
+    "path": "/admin/order-managers",
+    "status": 200
+  },
+  {
+    "role": "admin",
+    "path": "/admin/subscribers",
+    "status": 200
+  },
+  {
+    "role": "admin",
+    "path": "/admin/notices",
+    "status": 200
+  },
+  {
+    "role": "admin",
+    "path": "/admin/faqs",
+    "status": 200
+  },
+  {
+    "role": "admin",
+    "path": "/admin/contacts",
+    "status": 200
+  },
+  {
+    "role": "admin",
+    "path": "/admin/settlements",
+    "status": 200
+  },
+  {
+    "role": "admin",
+    "path": "/admin/channel-points",
+    "status": 200
+  },
+  {
+    "role": "admin",
+    "path": "/admin/refund-policies",
+    "status": 200
+  },
+  {
+    "role": "admin",
+    "path": "/admin/shipping-charges",
+    "status": 200
+  },
+  {
+    "role": "admin",
+    "path": "/admin/edit-shipping-charges/1",
+    "status": 200
+  },
+  {
+    "role": "admin",
+    "path": "/admin/update-admin-details",
+    "status": 200
+  },
+  {
+    "role": "admin",
+    "path": "/admin/update-admin-password",
+    "status": 200
+  },
+  {
+    "role": "channel",
+    "path": "/channel",
+    "status": 200
+  },
+  {
+    "role": "channel",
+    "path": "/channel/product/own",
+    "status": 200
+  },
+  {
+    "role": "channel",
+    "path": "/channel/shop/list",
+    "status": 200
+  },
+  {
+    "role": "channel",
+    "path": "/channel/settings/delivery",
+    "status": 200
+  },
+  {
+    "role": "channel",
+    "path": "/channel/settings/refund",
+    "status": 200
+  },
+  {
+    "role": "channel",
+    "path": "/channel/order/list",
+    "status": 200
+  },
+  {
+    "role": "channel",
+    "path": "/channel/settlement/list",
+    "status": 200
+  },
+  {
+    "role": "channel",
+    "path": "/channel/product/base/edit/1",
+    "status": 200
+  },
+  {
+    "role": "channel",
+    "path": "/channel/shop/register",
+    "status": 200
+  },
+  {
+    "role": "channel",
+    "path": "/channel/settings/points",
+    "status": 200
+  },
+  {
+    "role": "channel",
+    "path": "/channel/settings/order-manager",
+    "status": 200
+  },
+  {
+    "role": "channel",
+    "path": "/channel/settings/sub-accounts",
+    "status": 200
+  },
+  {
+    "role": "member",
+    "path": "/mypage/main",
+    "status": 200
+  },
+  {
+    "role": "member",
+    "path": "/mypage/points/status",
+    "status": 200
+  },
+  {
+    "role": "member",
+    "path": "/mypage/delivery",
+    "status": 200
+  },
+  {
+    "role": "member",
+    "path": "/mypage/profile",
+    "status": 200
+  },
+  {
+    "role": "member",
+    "path": "/mypage/order/list",
+    "status": 200
+  },
+  {
+    "role": "member",
+    "path": "/mypage/visited-channels",
+    "status": 200
+  },
+  {
+    "role": "member",
+    "path": "/mypage/points/history",
+    "status": 200
+  },
+  {
+    "role": "member",
+    "path": "/mypage/coupons",
+    "status": 200
+  },
+  {
+    "role": "member",
+    "path": "/mypage/cart",
+    "status": 200
+  },
+  {
+    "role": "member",
+    "path": "/mypage/wishlist",
+    "status": 200
+  },
+  {
+    "role": "shop",
+    "path": "/shop-channel/main",
+    "status": 200
+  },
+  {
+    "role": "shop",
+    "path": "/shop-channel/products",
+    "status": 200
+  },
+  {
+    "role": "shop",
+    "path": "/shop-channel/products/1",
+    "status": 200
+  },
+  {
+    "role": "shop",
+    "path": "/shop/cart",
+    "status": 200
+  },
+  {
+    "role": "shop",
+    "path": "/shop/order",
+    "status": 200
+  },
+  {
+    "role": "distributor",
+    "path": "/distributor/orders/pending",
+    "status": 200
+  },
+  {
+    "role": "distributor",
+    "path": "/distributor/orders/completed",
+    "status": 200
+  },
+  {
+    "role": "public",
+    "path": "/",
+    "status": 200
+  },
+  {
+    "role": "public",
+    "path": "/service",
+    "status": 200
+  },
+  {
+    "role": "public",
+    "path": "/features",
+    "status": 200
+  },
+  {
+    "role": "public",
+    "path": "/subscription-information",
+    "status": 200
+  },
+  {
+    "role": "public",
+    "path": "/member/login",
+    "status": 200
+  },
+  {
+    "role": "public",
+    "path": "/register/member",
+    "status": 200
+  },
+  {
+    "role": "public",
+    "path": "/channel/login",
+    "status": 200
+  },
+  {
+    "role": "public",
+    "path": "/admin/login",
+    "status": 200
+  },
+  {
+    "role": "public",
+    "path": "/distributor/login",
+    "status": 200
+  }
+]

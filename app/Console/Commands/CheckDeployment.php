@@ -40,8 +40,17 @@ class CheckDeployment extends Command
         foreach (['storage', 'storage/framework/views', 'storage/framework/sessions', 'storage/framework/cache/data', 'storage/logs', 'bootstrap/cache'] as $directory) {
             $check('Writable '.$directory, is_dir(base_path($directory)) && is_writable(base_path($directory)));
         }
-        foreach (['shop/css/runtime.css', 'shop/js/runtime.js', 'shop/js/rating.js', 'shop/images/common/logo2.png', 'master_assets/css/font/NanumGothic-Regular.ttf', 'mypage_assets/css/font/NanumGothic-Bold.ttf', 'build/manifest.json'] as $asset) {
+        foreach (['shop/css/runtime.css', 'shop/js/runtime.js', 'shop/js/rating.js', 'shop/images/common/logo2.png', 'master_assets/css/font/NanumGothic-Regular.ttf', 'mypage_assets/css/font/NanumGothic-Bold.ttf', 'build/manifest.json', 'common/portal.css', 'common/portal.js', 'common/social.css', 'common/admin-compat.css', 'common/bootstrap-legacy.js', 'common/distributor.css'] as $asset) {
             $check('Readable public/'.$asset, is_file(public_path($asset)) && is_readable(public_path($asset)));
+        }
+        $manifest = json_decode(@file_get_contents(public_path('build/manifest.json')), true);
+        $assets = is_array($manifest) ? collect($manifest)->flatMap(fn ($entry) => array_merge([$entry['file'] ?? ''], $entry['css'] ?? []))->unique() : collect();
+        $check('Vite manifest entries and referenced files exist', isset($manifest['resources/css/app.css'], $manifest['resources/js/app.js'])
+            && $assets->isNotEmpty() && $assets->every(fn ($file) => is_string($file) && $file !== '' && ! str_contains($file, '..') && is_file(public_path('build/'.$file))));
+        foreach (['google', 'naver'] as $provider) {
+            if (config('social_login.'.$provider.'.enabled')) {
+                $check('Valid '.$provider.' OAuth configuration', app(\App\Services\SocialLoginProvider::class)->ready($provider));
+            }
         }
         $check('Public storage points to the configured disk', realpath(public_path('storage')) !== false
             && realpath(public_path('storage')) === realpath(config('filesystems.disks.public.root')));
@@ -63,6 +72,9 @@ class CheckDeployment extends Command
                 'point_transactions' => ['reference_key'],
                 'products_attributes' => ['price_adjustment'],
                 'distributors' => ['access_started_at', 'access_ended_at'],
+                'products' => ['shipping_policy_id'],
+                'channel_delivery_charges' => ['calculation_rules'],
+                'social_accounts' => ['user_id', 'provider', 'provider_user_id'],
             ] as $table => $columns) {
                 $check('Required columns in '.$table, Schema::hasColumns($table, $columns));
             }

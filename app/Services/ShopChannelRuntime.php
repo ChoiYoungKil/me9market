@@ -408,7 +408,10 @@ class ShopChannelRuntime
             }
             unset($item);
 
-            $totals = app(ShopOrderTotals::class)->calculate($items);
+            $totals = app(ShopOrderTotals::class)->calculate($items, $request->only('address', 'pincode'));
+            if ($request->filled('expected_total') && abs((float) $request->input('expected_total') - $totals['total']) > 0.01) {
+                throw ValidationException::withMessages(['shipping' => '배송비 또는 상품금액이 변경되었습니다. 최종 금액을 다시 확인해 주세요.']);
+            }
             $pointAllocations = app(CustomerPointService::class)->allocateForCheckout(
                 (int) Auth::id(), (int) $shop->id,
                 (int) $request->input('channel_points', 0), (int) $request->input('me9_points', 0), $items, $totals
@@ -448,6 +451,7 @@ class ShopChannelRuntime
                 $originalPrice = (float) ($shopProduct->selling_price ?: $shopProduct->product_price) + $item['option_price_adjustment'];
                 $isJointPurchase = ! empty($item['joint_purchase']);
                 $policy = app(OrderSettlementPolicy::class)->capture($shop, $shopProduct, $product);
+                $policy['shipping_policy'] = $totals['shipping_policies'][$item['id']] ?? null;
                 $stockAttribute = $product->stock_usage === 'used' ? $product->attributes->firstWhere('size', $item['option']) : null;
                 $orderItem = OrdersProduct::create([
                     'order_id' => $order->id,

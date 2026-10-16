@@ -125,6 +125,16 @@
                                                             <tr><th class="w160"><span>배송비 결제</span></th><td>{{ $paymentTypes[$charge->payment_type] ?? $charge->payment_type }}</td></tr>
                                                             <tr><th class="w160"><span>기본 배송비</span></th><td>{{ number_format($charge->base_fee) }} 원</td></tr>
                                                             <tr><th class="w160"><span>무료 조건</span></th><td>{{ $charge->free_order_amount ? number_format($charge->free_order_amount) . ' 원 이상' : '-' }} / {{ $charge->free_order_quantity ? number_format($charge->free_order_quantity) . ' 개 이상' : '-' }}</td></tr>
+                                                            @php($rules = $charge->calculation_rules ?? [])
+                                                            @if($charge->shipping_type === 'variable')
+                                                                <tr><th>반복 조건</th><td>{{ $rules['repeat_every'] ?? '' }} {{ ($rules['basis'] ?? 'quantity') === 'amount' ? '원' : '개' }}마다 {{ number_format($rules['repeat_fee'] ?? 0) }}원 / {{ !empty($rules['start_at_one']) ? '1부터 시작' : '기준값부터 시작' }}</td></tr>
+                                                            @endif
+                                                            @if($charge->shipping_type === 'tiered')
+                                                                <tr><th>구간</th><td>@foreach($rules['tiers'] ?? [] as $tier)<p>{{ number_format($tier['min']) }} 이상 {{ $tier['max'] !== null ? number_format($tier['max']).' 미만' : '' }}: {{ number_format($tier['fee']) }}원</p>@endforeach</td></tr>
+                                                            @endif
+                                                            <tr><th>지역 배송</th><td>권역: {{ ['none' => '추가금 없음', 'two' => '2권역', 'three' => '3권역'][$rules['region_mode'] ?? 'none'] }} / 제주 {{ !empty($rules['block_jeju']) ? '제한' : '가능' }} / 도서산간 {{ !empty($rules['block_remote']) ? '제한' : '가능' }}</td></tr>
+                                                            @if(($rules['region_mode'] ?? 'none') !== 'none')<tr><th>지역 추가금</th><td>제주 {{ number_format($rules['jeju_fee'] ?? 0) }}원 / 도서산간 {{ number_format(($rules['region_mode'] ?? '') === 'two' ? ($rules['jeju_fee'] ?? 0) : ($rules['remote_fee'] ?? 0)) }}원 / 그 외 {{ number_format($rules['mainland_fee'] ?? 0) }}원</td></tr>@endif
+
                                                             <tr><th class="w160"><span>메모</span></th><td>{!! nl2br(e($charge->memo ?: '-')) !!}</td></tr>
                                                         </tbody>
                                                     </table>

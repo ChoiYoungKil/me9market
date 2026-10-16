@@ -34,6 +34,31 @@ class ShopRuntimeTest extends TestCase
         config(['shop_channel.seed_demo_data' => false]);
     }
 
+    public function test_product_links_enter_correct_channel_and_reject_other_channel_products(): void
+    {
+        [, , $shop, , $product] = $this->createShopProduct('LINK-TARGET', 'LINK-TARGET', 'LinkTarget');
+        $shop->update(['is_public' => 1]);
+        [, , $other, , $otherProduct] = $this->createShopProduct('OTHER-LINK', 'OTHER-LINK', 'OtherLink');
+        $this->get(route('shop.enter', ['channelCode' => $shop->channel_code, 'product' => $product->id]))
+            ->assertRedirect(route('shop.product_details', $product->id))->assertSessionHas('shop_channel_id', $shop->id);
+        $this->get(route('shop.enter', ['channelCode' => $shop->channel_code, 'product' => $otherProduct->id]))->assertNotFound();
+        $product->update(['status' => 0]);
+        $this->get(route('shop.enter', ['channelCode' => $shop->channel_code, 'product' => $product->id]))->assertNotFound();
+        $this->post(route('shop.gate.submit'), ['entry_code' => $shop->channel_code, 'product' => $otherProduct->id])->assertNotFound();
+    }
+
+    public function test_private_product_link_preserves_product_until_access_is_verified(): void
+    {
+        [, , $shop, , $product] = $this->createShopProduct('PRIVATE-LINK', 'PRIVATE-LINK', 'PrivateLink');
+        $shop->update(['is_public' => 0]);
+        $this->get(route('shop.enter', ['channelCode' => $shop->channel_code, 'product' => $product->id]))
+            ->assertRedirect(route('shop.gate', ['channel' => $shop->channel_code, 'product' => $product->id]));
+        $this->get(route('shop.gate', ['channel' => $shop->channel_code, 'product' => $product->id]))
+            ->assertOk()->assertSee('name="product" value="'.$product->id.'"', false);
+        $this->post(route('shop.gate.submit'), ['entry_code' => $shop->channel_code, 'product' => $product->id])->assertSessionHasErrors(['phone', 'otp']);
+        $this->assertNull(session('shop_channel_id'));
+    }
+
     public function test_signed_option_deltas_are_charged_and_frozen_per_order_line(): void
     {
         Mail::fake();
@@ -1465,6 +1490,31 @@ class ShopRuntimeTest extends TestCase
             ->assertUnprocessable()->assertJsonValidationErrors('qty');
         $this->assertDatabaseCount('orders', 0);
         $this->assertEquals(10, $shopProduct->fresh()->stock);
+    }
+
+    public function test_regional_policy_quote_checkout_restriction_and_snapshot(): void
+    {
+        Mail::fake();
+        [$vendor, , $shop, $product, $shopProduct] = $this->createShopProduct('regional', 'REGIONAL', 'Regional');
+        $policy = \App\Models\ChannelDeliveryCharge::create(['vendor_id' => $vendor->id, 'status' => 1, 'name' => '지역정책',
+            'shipping_type' => 'conditional', 'payment_type' => 'prepaid', 'base_fee' => 3000, 'free_order_quantity' => 2,
+            'calculation_rules' => ['region_mode' => 'three', 'jeju_fee' => 1500, 'remote_fee' => 2000, 'remote_postcodes' => ['12345'], 'block_remote' => true]]);
+        $product->update(['shipping_policy_id' => $policy->id]);
+        $this->withSession(['shop_channel_id' => $shop->id, 'shop_channel_cart' => [$shopProduct->id => ['qty' => 2]]]);
+        $this->postJson(route('front.shop.order.shipping_quote'), ['address' => '제주특별자치도', 'pincode' => '63000'])
+            ->assertOk()->assertJsonPath('shipping', 1500)->assertJsonPath('total', 25500);
+        $this->postJson(route('front.shop.order.checkout'), array_replace($this->checkoutPayload(), ['pincode' => '12345']))
+            ->assertUnprocessable()->assertJsonValidationErrors('address');
+        $this->assertDatabaseCount('orders', 0);
+        $this->postJson(route('front.shop.order.checkout'), array_replace($this->checkoutPayload(), ['address' => '제주특별자치도', 'pincode' => '63000', 'expected_total' => 24000]))
+            ->assertUnprocessable()->assertJsonValidationErrors('shipping');
+        $this->post(route('front.shop.order.checkout'), array_replace($this->checkoutPayload(), ['address' => '제주특별자치도', 'pincode' => '63000', 'expected_total' => 25500]))->assertRedirect();
+        $item = OrdersProduct::firstOrFail();
+        $this->assertEquals(1500, $item->shipping_amount_snapshot);
+        $this->assertEquals(25500, $item->order->grand_total);
+        $this->assertSame($policy->id, $item->settlement_policy_snapshot['shipping_policy']['id']);
+        $policy->update(['base_fee' => 9999]);
+        $this->assertEquals(3000, $item->fresh()->settlement_policy_snapshot['shipping_policy']['base_fee']);
     }
 
     public function test_order_shipping_matches_preview_and_is_preserved_for_settlement(): void

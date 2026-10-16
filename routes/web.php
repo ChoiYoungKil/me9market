@@ -15,6 +15,15 @@ use Illuminate\Support\Facades\Route;
 
 require __DIR__ . '/auth.php';
 
+Route::prefix('auth/social')->where(['provider' => 'google|naver'])->group(function () {
+    Route::get('{provider}/redirect', [\App\Http\Controllers\Auth\SocialLoginController::class, 'start'])->middleware('throttle:10,1')->name('social.start');
+    Route::get('{provider}/callback', [\App\Http\Controllers\Auth\SocialLoginController::class, 'callback'])->middleware('throttle:30,1')->name('social.callback');
+    Route::get('signup', [\App\Http\Controllers\Auth\SocialLoginController::class, 'signup'])->middleware('guest')->name('social.signup');
+    Route::post('signup', [\App\Http\Controllers\Auth\SocialLoginController::class, 'register'])->middleware(['guest', 'throttle:10,1'])->name('social.register');
+    Route::post('{provider}/connect', [\App\Http\Controllers\Auth\SocialLoginController::class, 'connect'])->middleware(['auth', 'throttle:10,1'])->name('social.connect');
+    Route::delete('{provider}/connect', [\App\Http\Controllers\Auth\SocialLoginController::class, 'disconnect'])->middleware('auth')->name('social.disconnect');
+});
+
 // 수정: 기본 /login 경로를 새로운 /member/login 페이지로 리다이렉트
 Route::redirect('/login', '/member/login');
 
@@ -243,14 +252,15 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
 
         // 배송비 관리 모듈 (Shipping Charges module)
         // 배송비 관리 페이지 (admin/shipping/shipping_charges.blade.php) 렌더링 (관리자 전용)
-        Route::get('shipping-charges', 'ShippingController@shippingCharges');
+        Route::get('shipping-charges', 'ShippingController@shippingCharges')->name('admin.shipping.index');
+        Route::post('shipping-charges', 'ShippingController@store')->name('admin.shipping.store');
         Route::get('refund-policies', 'AdminController@refundPolicies')->name('admin.refund_policies');
 
         // AJAX를 사용한 배송비 상태 업데이트 (active/inactive)
         Route::post('update-shipping-status', 'ShippingController@updateShippingStatus');
 
         // 배송비 수정 페이지 (edit_shipping_charges.blade.php) 렌더링 (GET) 및 폼 제출 (POST)
-        Route::match(['get', 'post'], 'edit-shipping-charges/{id}', 'ShippingController@editShippingCharges');
+        Route::match(['get', 'post'], 'edit-shipping-charges/{id}', 'ShippingController@editShippingCharges')->whereNumber('id')->name('admin.shipping.edit');
 
 
 
@@ -376,6 +386,7 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
         Route::post('/cart/update', 'ShopController@updateCart')->name('cart.update');
         Route::post('/cart/remove', 'ShopController@removeFromCart')->name('cart.remove');
         Route::get('/order', 'ShopController@order')->name('order.form');
+        Route::post('/order/shipping-quote', 'ShopController@shippingQuote')->name('order.shipping_quote');
         Route::post('/order', 'ShopController@checkout')->name('order.checkout');
         Route::get('/order/complete', 'ShopController@orderComplete')->name('order.complete');
         Route::get('/order/confirm', 'ShopController@orderConfirm')->name('order.confirm');

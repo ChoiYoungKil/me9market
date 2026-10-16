@@ -1,0 +1,37 @@
+{
+  "results": [
+    {
+      "path": "/register",
+      "width": 1440,
+      "status": 200,
+      "overflow": false,
+      "checkboxes": 3,
+      "bodyWidth": 1440
+    },
+    {
+      "path": "/register/member",
+      "width": 1440,
+      "status": 200,
+      "overflow": false,
+      "checkboxes": 6,
+      "bodyWidth": 1440
+    },
+    {
+      "path": "/register",
+      "width": 390,
+      "status": 200,
+      "overflow": false,
+      "checkboxes": 3,
+      "bodyWidth": 390
+    },
+    {
+      "path": "/register/member",
+      "width": 390,
+      "status": 200,
+      "overflow": false,
+      "checkboxes": 6,
+      "bodyWidth": 390
+    }
+  ],
+  "errors": []
+}

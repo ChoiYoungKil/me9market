@@ -65,7 +65,7 @@
                                 <tbody class="textC">
                                     @forelse($coupons as $index => $coupon)
                                         <tr>
-                                            <td>{{ $index + 1 }}</td>
+                                            <td>{{ $coupons->firstItem() + $index }}</td>
                                             <td style="font-weight: 700; color: #333;">{{ $coupon->coupon_code }}</td>
                                             <td>
                                                 @if($coupon->amount_type === 'Percentage')
@@ -101,14 +101,7 @@
                             </table>
                         </div>
 
-                        {{-- 페이지네이션 --}}
-                        <div class="btm_btn">
-                            <div class="page_bx1 text-center">
-                                <a href="{{ url()->current() }}" class="page_prev dimmed">prev</a>
-                                <a href="{{ url()->current() }}" class="num on">1</a>
-                                <a href="{{ url()->current() }}" class="page_next dimmed">next</a>
-                            </div>
-                        </div>
+                        <div class="portal-pagination">{{ $coupons->links() }}</div>
                     </div>
                 </div>
             </div>

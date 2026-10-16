@@ -198,6 +198,7 @@ document.addEventListener('DOMContentLoaded', function () {
             var form = select.closest('form');
             Object.keys(address).forEach(function (key) { form.elements[key].value = address[key] || ''; });
             form.querySelector('[data-copy-buyer]').checked = false;
+            form.dispatchEvent(new Event('shipping-address-change'));
         });
     });
     document.querySelectorAll('[data-postcode]').forEach(function (button) {
@@ -216,6 +217,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         form.elements.address.value = data.userSelectedType === 'R' ? data.roadAddress : data.jibunAddress;
                         form.elements.state.value = data.sido || '';
                         form.elements.city.value = data.sigungu || '';
+                        form.dispatchEvent(new Event('shipping-address-change'));
                         dialog.close();
                         form.elements.address.focus();
                     }
@@ -240,6 +242,51 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         inputs.forEach(function (input) { input.addEventListener('input', updatePayment); });
         updatePayment();
+        if (form.dataset.shippingQuote) {
+            var version = 0, pendingQuote = null;
+            var submit = form.querySelector('button[type="submit"]');
+            var checkoutDisabled = submit.disabled;
+            var message = form.querySelector('[data-shipping-message]');
+            async function quote() {
+                var current = ++version;
+                submit.disabled = true;
+                form.elements.order_confirmed.checked = false;
+                if (!form.elements.address.value.trim() || !/^[0-9]{5}$/.test(form.elements.pincode.value)) {
+                    message.textContent = '배송주소와 5자리 우편번호를 입력해 주세요.';
+                    return;
+                }
+                message.textContent = '배송비를 확인하고 있습니다.';
+                try {
+                    var response = await fetch(form.dataset.shippingQuote, {
+                        method: 'POST', headers: {'Accept':'application/json', 'X-CSRF-TOKEN':form.elements._token.value},
+                        body: new FormData(form)
+                    });
+                    var data = await response.json();
+                    if (current !== version) return;
+                    if (!response.ok) throw new Error(Object.values(data.errors || {}).flat().join(' ') || '배송비를 확인할 수 없습니다.');
+                    form.dataset.checkoutTotal = data.total;
+                    form.elements.expected_total.value = data.total;
+                    form.querySelector('[data-shipping-total]').textContent = Number(data.shipping).toLocaleString('ko-KR') + '원';
+                    form.querySelectorAll('[data-item-shipping]').forEach(function (element) {
+                        element.textContent = Number(data.shipping_by_item[element.dataset.itemShipping] || 0).toLocaleString('ko-KR') + '원';
+                    });
+                    updatePayment();
+                    message.textContent = '배송비를 반영했습니다. 최종 결제금액을 확인해 주세요.';
+                    submit.disabled = checkoutDisabled;
+                } catch (error) {
+                    if (current === version) message.textContent = error.message;
+                }
+            }
+            function scheduleQuote() {
+                ++version;
+                submit.disabled = true;
+                clearTimeout(pendingQuote);
+                pendingQuote = setTimeout(quote, 300);
+            }
+            ['address','pincode'].forEach(function (name) { form.elements[name].addEventListener('input', scheduleQuote); });
+            form.addEventListener('shipping-address-change', scheduleQuote);
+            quote();
+        }
     });
     var otpButton = document.getElementById('requestOtp');
     if (otpButton) {

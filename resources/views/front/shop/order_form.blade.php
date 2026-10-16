@@ -6,8 +6,10 @@
         @if(empty($cartItems))
             <div class="shop-empty">장바구니가 비어 있습니다.<div class="shop-actions"><a class="shop-btn primary" href="{{ route('shop.products_list') }}">상품 보러가기</a></div></div>
         @else
-        <form action="{{ route('front.shop.order.checkout') }}" method="POST" data-checkout-total="{{ $totals['total'] }}">
+        <form action="{{ route('front.shop.order.checkout') }}" method="POST" data-shipping-quote="{{ route('front.shop.order.shipping_quote') }}" data-checkout-total="{{ $totals['total'] }}">
             @csrf
+            <input type="hidden" name="expected_total" value="{{ $totals['total'] }}">
+            <p data-shipping-message role="status">배송주소를 입력하면 지역 배송비가 반영됩니다.</p>
             <section class="shop-form-section"><h2>주문자 정보</h2><div class="shop-form-grid shop-table-form">
                 <label>주문자 이름<input class="shop-control" name="buyer_name" value="{{ old('buyer_name', auth()->user()?->name) }}" required maxlength="100" autocomplete="billing name"></label>
                 <label>연락처<input class="shop-control" type="tel" name="buyer_mobile" value="{{ old('buyer_mobile', auth()->user()?->mobile) }}" required maxlength="30" autocomplete="billing tel"></label>
@@ -31,7 +33,7 @@
                     @php($image = $item['product']->product_image ?: $item['product']->images->first()?->image)
                     <div class="shop-item">
                         <img src="{{ $image ? asset('front/images/product_images/small/'.$image) : asset('front/images/product_images/small/no-image.png') }}" alt="{{ $item['product']->product_name }}">
-                        <div><strong>{{ $item['product']->product_name }}</strong><p>{{ $item['option'] }} / {{ $item['qty'] }}개</p><p>배송비: {{ $item['product']->shipping_payment_type === 'collect' ? '착불' : number_format($totals['shipping_by_item'][$item['key']]).'원' }}</p></div>
+                        <div><strong>{{ $item['product']->product_name }}</strong><p>{{ $item['option'] }} / {{ $item['qty'] }}개</p><p>배송비: <span data-item-shipping="{{ $item['key'] }}">{{ number_format($totals['shipping_by_item'][$item['key']]) }}원</span> / {{ app(\App\Services\ShopOrderTotals::class)->shippingLabel($item['product']) }}</p></div>
                         <div class="shop-item-side"><strong>{{ number_format($item['line_total']) }}원</strong></div>
                     </div>
                 @endforeach
@@ -50,7 +52,7 @@
                 <div class="shop-order-consent"><label class="shop-check"><input type="checkbox" name="order_confirmed" value="1" required @checked(old('order_confirmed'))>주문 상품과 최종 결제금액을 확인했습니다. (필수)</label></div>
             </section>
             <section class="shop-form-section">
-                <div class="shop-summary"><div><span>상품금액</span><strong>{{ number_format($totals['subtotal']) }}원</strong></div><div><span>배송비</span><strong>{{ number_format($totals['shipping']) }}원</strong></div><div><span>사용 포인트</span><strong data-used-points>0P</strong></div><div class="total"><span>최종 결제금액</span><strong data-checkout-payable>{{ number_format($totals['total']) }}원</strong></div></div>
+                <div class="shop-summary"><div><span>상품금액</span><strong>{{ number_format($totals['subtotal']) }}원</strong></div><div><span>배송비</span><strong data-shipping-total>{{ number_format($totals['shipping']) }}원</strong></div><div><span>사용 포인트</span><strong data-used-points>0P</strong></div><div class="total"><span>최종 결제금액</span><strong data-checkout-payable>{{ number_format($totals['total']) }}원</strong></div></div>
                 @unless($canCheckout)<p class="shop-payment-unavailable" role="status">현재 결제를 이용할 수 없습니다. 판매자에게 문의해 주세요.</p>@endunless
                 <div class="shop-actions"><a class="shop-btn dark" href="{{ route('front.shop.cart.index') }}">취소</a><button class="shop-btn primary" type="submit" @disabled(!$canCheckout)>주문하기</button></div>
             </section></div>

@@ -201,20 +201,7 @@
                             </div>
 
                             <!-- 페이징 -->
-                            <div class="page_bx1 text-center mt30">
-                                <a href="{{ url()->current() }}" class="page_prev dimmed">prev</a>
-                                <a href="{{ url()->current() }}" class="num on">1</a>
-                                <a href="{{ url()->current() }}" class="num">2</a>
-                                <a href="{{ url()->current() }}" class="num">3</a>
-                                <a href="{{ url()->current() }}" class="num">4</a>
-                                <a href="{{ url()->current() }}" class="num">5</a>
-                                <a href="{{ url()->current() }}" class="num">6</a>
-                                <a href="{{ url()->current() }}" class="num">7</a>
-                                <a href="{{ url()->current() }}" class="num">8</a>
-                                <a href="{{ url()->current() }}" class="num">9</a>
-                                <a href="{{ url()->current() }}" class="num">10</a>
-                                <a href="{{ url()->current() }}" class="page_next dimmed">next</a>
-                            </div>
+
                         </div>
                     </div>
                 </div>

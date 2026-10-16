@@ -2317,47 +2317,21 @@ class ChannelController extends Controller
         }
 
         $admin = Auth::guard('admin')->user();
-        \App\Models\ChannelDeliveryCharge::where('vendor_id', (int) $admin->vendor_id)->findOrFail($id)->delete();
+        $charge = \App\Models\ChannelDeliveryCharge::where('vendor_id', (int) $admin->vendor_id)->findOrFail($id);
+        if (\App\Models\Product::where('vendor_id', $admin->vendor_id)->where(function ($query) use ($charge) {
+            $query->where('shipping_policy_id', $charge->id)
+                ->orWhere(fn ($legacy) => $legacy->whereNull('shipping_policy_id')->where('shipping_policy_name', $charge->name));
+        })->exists()) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['shipping' => '상품에서 사용 중인 배송비 정책은 삭제할 수 없습니다.']);
+        }
+        $charge->delete();
 
         return redirect()->route('channel.delivery.list')->with('flash_message_success', '배송비가 삭제되었습니다.');
     }
 
     private function deliveryChargePayload(Request $request, int $vendorId): array
     {
-        $data = $request->validate([
-            'status' => 'required|in:0,1',
-            'name' => 'required|string|max:100',
-            'courier' => 'nullable|string|max:100',
-            'shipping_type' => 'required|in:free,conditional,fixed',
-            'payment_type' => 'required|in:prepaid,cod',
-            'base_fee' => 'nullable|integer|min:0|max:99999999',
-            'free_order_amount' => 'nullable|integer|min:0|max:99999999',
-            'free_order_quantity' => 'nullable|integer|min:0|max:999999',
-            'fixed_fee' => 'nullable|integer|min:0|max:99999999',
-            'memo' => 'nullable|string|max:1000',
-        ]);
-
-        $data['vendor_id'] = $vendorId;
-        $data['base_fee'] = (int) ($data['base_fee'] ?? 0);
-        $data['free_order_amount'] = $data['free_order_amount'] ?? null;
-        $data['free_order_quantity'] = $data['free_order_quantity'] ?? null;
-        $data['fixed_fee'] = $data['fixed_fee'] ?? null;
-
-        if ($data['shipping_type'] === 'free') {
-            $data['base_fee'] = 0;
-            $data['free_order_amount'] = null;
-            $data['free_order_quantity'] = null;
-            $data['fixed_fee'] = null;
-        }
-
-        if ($data['shipping_type'] === 'fixed') {
-            $data['fixed_fee'] = (int) ($data['fixed_fee'] ?? $data['base_fee']);
-            $data['base_fee'] = $data['fixed_fee'];
-            $data['free_order_amount'] = null;
-            $data['free_order_quantity'] = null;
-        }
-
-        return $data;
+        return app(\App\Services\DeliveryPolicyRules::class)->payload($request, $vendorId);
     }
 
     private function channelDeliveryShippingTypes(): array
@@ -2366,6 +2340,8 @@ class ChannelController extends Controller
             'free' => '무료배송',
             'conditional' => '무료배송(조건부)',
             'fixed' => '고정 배송비',
+            'variable' => '변동 배송비',
+            'tiered' => '구간별 배송비',
         ];
     }
 

@@ -12,6 +12,8 @@
         <form method="POST" action="{{ route('register') }}">
             @csrf
 
+            @unless(app(\App\Services\ShopChannelRuntime::class)->canRegister())<p role="status">회원가입 약관을 준비 중입니다. 판매자에게 문의해 주세요.</p>@endunless
+
             <!-- Name -->
             <div>
                 <x-label for="name" :value="__('Name')" />
@@ -36,6 +38,11 @@
                                 required autocomplete="new-password" />
             </div>
 
+            @foreach(['terms_service' => ['terms_url', '이용약관'], 'terms_privacy' => ['privacy_url', '개인정보 수집 및 이용'], 'terms_third_party' => ['third_party_url', '제3자 정보제공']] as $field => [$urlKey, $label])
+                <div class="mt-4"><label><input type="checkbox" name="{{ $field }}" value="1" required> {{ $label }} 동의 (필수)</label>
+                @if(config('shop_channel.'.$urlKey))<a href="{{ config('shop_channel.'.$urlKey) }}" target="_blank" rel="noopener">문서 보기</a>@endif</div>
+            @endforeach
+
             <!-- Confirm Password -->
             <div class="mt-4">
                 <x-label for="password_confirmation" :value="__('Confirm Password')" />
@@ -50,7 +57,7 @@
                     {{ __('Already registered?') }}
                 </a>
 
-                <x-button class="ml-4">
+                <x-button class="ml-4" :disabled="!app(\App\Services\ShopChannelRuntime::class)->canRegister()">
                     {{ __('Register') }}
                 </x-button>
             </div>

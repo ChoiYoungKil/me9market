@@ -260,6 +260,37 @@ class ChannelRoutesTest extends TestCase
         ]);
     }
 
+    public function test_advanced_delivery_rules_validate_ranges_and_save_postcodes(): void
+    {
+        [$vendor, $admin] = $this->createSetup();
+        $payload = ['status' => 1, 'name' => '구간 정책', 'shipping_type' => 'tiered', 'payment_type' => 'prepaid', 'base_fee' => 3000,
+            'calculation_rules' => ['basis' => 'quantity', 'region_mode' => 'three', 'jeju_fee' => 2000, 'remote_fee' => 3000,
+                'tiers' => [['min' => 0, 'max' => 2, 'fee' => 3000], ['min' => 2, 'max' => null, 'fee' => 0]]],
+            'remote_postcodes_text' => "12340-12349\n23456", 'jeju_postcodes_text' => '63000-63644'];
+        $this->actingAs($admin, 'admin')->post('/channel/settings/delivery/store', $payload)->assertRedirect(route('channel.delivery.list'));
+        $policy = ChannelDeliveryCharge::where('vendor_id', $vendor->id)->firstOrFail();
+        $this->assertSame(['12340-12349', '23456'], $policy->calculation_rules['remote_postcodes']);
+        $this->assertNull($policy->calculation_rules['tiers'][1]['max']);
+        $payload['calculation_rules']['tiers'][1]['min'] = 1;
+        $this->postJson('/channel/settings/delivery/store', $payload)->assertUnprocessable()->assertJsonValidationErrors('calculation_rules.tiers');
+        $payload['calculation_rules']['tiers'][1]['min'] = 3;
+        $this->postJson('/channel/settings/delivery/store', $payload)->assertUnprocessable()->assertJsonValidationErrors('calculation_rules.tiers');
+        $payload['shipping_type'] = 'variable';
+        $payload['calculation_rules']['repeat_every'] = 0;
+        $payload['calculation_rules']['repeat_fee'] = 500;
+        $this->postJson('/channel/settings/delivery/store', $payload)->assertUnprocessable()->assertJsonValidationErrors('calculation_rules.repeat_every');
+        $payload['calculation_rules']['repeat_every'] = 2;
+        $payload['remote_postcodes_text'] = '';
+        $this->postJson('/channel/settings/delivery/store', $payload)->assertUnprocessable()->assertJsonValidationErrors('calculation_rules.remote_postcodes');
+        $payload['remote_postcodes_text'] = '12345';
+        $this->post('/channel/settings/delivery/store', $payload)->assertRedirect(route('channel.delivery.list'));
+        $this->get(route('channel.delivery.list'))->assertOk()->assertSee('구간별 배송비')->assertSee('반복 부과 기준을 1부터 시작');
+        $product = Product::where('vendor_id', $vendor->id)->firstOrFail();
+        $product->update(['shipping_policy_id' => $policy->id]);
+        $this->postJson(route('channel.delivery.delete', $policy->id))->assertUnprocessable()->assertJsonValidationErrors('shipping');
+        $this->assertDatabaseHas('channel_delivery_charges', ['id' => $policy->id]);
+    }
+
     public function test_channel_delivery_charge_crud_is_scoped_to_current_vendor()
     {
         list($vendor, $admin) = $this->createSetup();

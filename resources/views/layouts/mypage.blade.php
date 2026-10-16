@@ -31,11 +31,14 @@
     <!-- JS -->
     <script src="/mypage_assets/js/jquery-3.7.0.min.js"></script>
     <script src="/mypage_assets/js/slick.min.js"></script>
-    <script src="/mypage_assets/js/common.js"></script>
-    @stack('scripts')
+    <script src="{{ asset('mypage_assets/js/common.js').'?v='.filemtime(public_path('mypage_assets/js/common.js')) }}"></script>
+
+    @stack('styles')
+    <link href="{{ asset('common/portal.css').'?v='.filemtime(public_path('common/portal.css')) }}" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('common/social.css').'?v='.filemtime(public_path('common/social.css')) }}">
 </head>
 
-<body id="@yield('page_type', 'main')">
+<body class="portal portal-mypage" id="@yield('page_type', 'main')">
     <div id="skipNavi">
         <ul>
             <li>
@@ -53,8 +56,8 @@
                 <div class="t_menu">
                     <ul>
                         <li><a href="{{ route('channel.index') }}">채널관리자</a></li>
-                        <li><a href="{{ url()->current() }}">{{ Auth::user()->name ?? 'User' }}</a></li>
-                        <li><a href="{{ url()->current() }}">총 포인트 ({{ Auth::user()->point ?? 0 }})</a></li>
+                        <li><a href="{{ route('mypage.profile') }}">{{ Auth::user()->name ?? 'User' }}</a></li>
+                        <li><a href="{{ url('/mypage/points/status') }}">총 포인트 ({{ number_format($mypagePointTotal) }})</a></li>
                         <li>
                             <a href="{{ route('logout') }}"
                                 onclick="event.preventDefault(); document.getElementById('logout-form').submit();">로그아웃</a>
@@ -66,28 +69,22 @@
 
                     <div class="r_menu_btn"><span>채널목록</span></div>
 
-                    <div class="l_menu_btn">
+                    <button class="l_menu_btn portal-menu-toggle" type="button" aria-label="메뉴" aria-controls="l_menu" aria-expanded="false">
                         <span></span>
                         <span></span>
                         <span></span>
-                    </div>
+                    </button>
                 </div>
 
                 <!-- 채널목록 메뉴 -->
                 <div class="r_menu">
                     <div class="menu_w">
                         <ul class="con1">
-                            <li><a href="{{ url()->current() }}"><span>A채널명채널명</span></a></li>
-                            <li><a href="{{ url()->current() }}"><span>A채널명</span></a></li>
-                            <li><a href="{{ url()->current() }}"><span>A채널명</span></a></li>
-                        </ul>
-                        <ul class="con2">
-                            <li><a href="{{ url()->current() }}"><span>B채널명채널명</span></a></li>
-                            <li><a href="{{ url()->current() }}"><span>B채널명</span></a></li>
-                            <li><a href="{{ url()->current() }}"><span>B채널명</span></a></li>
-                            <li><a href="{{ url()->current() }}"><span>B채널명채널명</span></a></li>
-                            <li><a href="{{ url()->current() }}"><span>B채널명</span></a></li>
-                            <li><a href="{{ url()->current() }}"><span>B채널명</span></a></li>
+                            @forelse($mypageChannels as $channel)
+                                <li><a href="{{ route('shop.enter', ['channelCode' => $channel->channel_code]) }}"><span>{{ $channel->channel_name }}</span></a></li>
+                            @empty
+                                <li>방문한 채널이 없습니다.</li>
+                            @endforelse
                         </ul>
                     </div>
                 </div>
@@ -107,22 +104,21 @@
             <div class="f_inner">
                 <img src="/me9market/images/common/f_logo.png" class="logo">
                 <ul class="info_bx">
-                    <li><span>상호명</span>&nbsp;&nbsp;&nbsp;&nbsp;스카이테크</li>
-                    <li><span>대표자</span>&nbsp;&nbsp;&nbsp;&nbsp;홍길동</li>
-                    <li><span>사업자등록번호</span>&nbsp;&nbsp;&nbsp;&nbsp;123-45-67890</li>
-                    <li><span>통신판매업신고번호</span>&nbsp;&nbsp;&nbsp;&nbsp;0000-1234-567호</li>
-                    <li><span>주소</span>&nbsp;&nbsp;&nbsp;&nbsp;사업자주소영역입니다 도로명 주소 자료수급 요청드립니다</li>
-                    <li><span>E-mail</span>&nbsp;&nbsp;&nbsp;&nbsp;abc1234@email.com</li>
+                    @foreach(['company_name' => '상호명', 'representative' => '대표자', 'business_number' => '사업자등록번호', 'commerce_number' => '통신판매업신고번호', 'address' => '주소', 'email' => 'E-mail'] as $key => $label)
+                        @if(config('storefront.'.$key))<li><span>{{ $label }}</span> {{ config('storefront.'.$key) }}</li>@endif
+                    @endforeach
                 </ul>
                 <ul class="link_bx">
-                    <li><a href="{{ url()->current() }}">이용약관</a></li>
-                    <li><a class="bold" href="{{ url()->current() }}">개인정보취급방침</a></li>
+                    @if(config('shop_channel.terms_url'))<li><a href="{{ config('shop_channel.terms_url') }}" rel="noopener">이용약관</a></li>@endif
+                    @if(config('shop_channel.privacy_url'))<li><a class="bold" href="{{ config('shop_channel.privacy_url') }}" rel="noopener">개인정보처리방침</a></li>@endif
                 </ul>
-                <div class="btm_txt">ⓒ Skytech Co., Ltd</div>
+                <div class="btm_txt">© {{ date('Y') }} {{ config('storefront.company_name') ?: 'Me9 market' }}</div>
                 <div class="top_btn">TOP</div>
             </div>
         </footer>
     </div><!-- //wrap -->
+    <script src="{{ asset('common/portal.js').'?v='.filemtime(public_path('common/portal.js')) }}"></script>
+    @stack('scripts')
 </body>
 
 </html>

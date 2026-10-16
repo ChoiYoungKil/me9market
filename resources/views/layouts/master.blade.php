@@ -22,9 +22,11 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
     <script src="{{ asset('master_assets/js/slick.min.js') }}"></script>
     <script src="{{ asset('master_assets/js/common.js') }}"></script>
+    @stack('styles')
+    <link href="{{ asset('common/portal.css').'?v='.filemtime(public_path('common/portal.css')) }}" rel="stylesheet">
 </head>
 
-<body id="@yield('page_type', 'main')">
+<body class="portal portal-master" id="@yield('page_type', 'main')">
     <div id="skipNavi">
         <ul>
             <li>
@@ -36,6 +38,7 @@
 
     <div id="wrap">
         @include('layouts.inc.master_header')
+        <button class="portal-menu-toggle" type="button" aria-controls="l_menu" aria-expanded="false">메뉴</button>
 
         <div id="container">
             @include('layouts.inc.master_sidebar')
@@ -46,6 +49,8 @@
         </div>
     </div>
 
+
+    <script src="{{ asset('common/portal.js').'?v='.filemtime(public_path('common/portal.js')) }}"></script>
     @stack('scripts')
 </body>
 
