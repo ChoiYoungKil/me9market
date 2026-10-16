@@ -180,6 +180,33 @@ class SocialLoginTest extends TestCase
         $this->assertDatabaseCount('social_accounts', 1);
     }
 
+    public function test_production_signup_can_temporarily_allow_missing_documents_but_still_requires_checkboxes(): void
+    {
+        $this->app->instance('env', 'production');
+        config(['shop_channel.require_published_terms' => false, 'shop_channel.terms_url' => null,
+            'shop_channel.privacy_url' => null, 'shop_channel.third_party_url' => null, 'shop_channel.terms_version' => null]);
+        $this->fakeProfile('naver');
+        $state = $this->begin('naver');
+        $this->get(route('social.callback', ['provider' => 'naver', 'state' => $state, 'code' => 'test-code']))
+            ->assertRedirect(route('social.signup'));
+        $this->get(route('social.signup'))->assertOk()->assertSee('동의하고 가입하기')
+            ->assertDontSee('social-registration-unavailable')->assertDontSee('약관 준비 중');
+        $this->post(route('social.register'), ['name' => 'Social member'])
+            ->assertSessionHasErrors(['terms_service', 'terms_privacy', 'terms_third_party']);
+        $this->assertDatabaseCount('social_accounts', 0);
+        $this->post(route('social.register'), ['name' => 'Social member', 'terms_service' => 1,
+            'terms_privacy' => 1, 'terms_third_party' => 1])->assertRedirect(route('mypage.dashboard'));
+        $user = User::where('email', 'social@example.com')->firstOrFail();
+        $this->assertAuthenticatedAs($user);
+        $this->assertFalse($user->terms_snapshot['documents_published']);
+        $this->assertFalse($user->terms_snapshot['published_documents_required']);
+        $this->assertNull($user->terms_snapshot['version']);
+        $this->assertTrue($user->terms_snapshot['terms_service']);
+        $this->assertDatabaseHas('social_accounts', ['user_id' => $user->id, 'provider' => 'naver']);
+        config(['shop_channel.require_published_terms' => true]);
+        $this->assertFalse(app(\App\Services\ShopChannelRuntime::class)->canRegister());
+    }
+
     public function test_existing_email_is_never_automatically_linked(): void
     {
         $user = User::factory()->create(['email' => 'social@example.com']);

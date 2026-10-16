@@ -323,9 +323,12 @@ class ShopChannelRuntime
 
     public function canRegister(): bool
     {
-        if (! app()->environment('production')) {
-            return true;
-        }
+        return ! app()->environment('production') || ! config('shop_channel.require_published_terms', true)
+            || $this->hasPublishedRegistrationPolicies();
+    }
+
+    public function hasPublishedRegistrationPolicies(): bool
+    {
         foreach (['terms_url', 'privacy_url', 'third_party_url'] as $document) {
             $url = config('shop_channel.'.$document);
             if (! filter_var($url, FILTER_VALIDATE_URL) || parse_url($url, PHP_URL_SCHEME) !== 'https') {

@@ -28,6 +28,8 @@ class RegistrationConsent
             'notification_opt_in' => $request->boolean('notification_opt_in'),
             'terms_snapshot' => [
                 'version' => config('shop_channel.terms_version'),
+                'documents_published' => app(ShopChannelRuntime::class)->hasPublishedRegistrationPolicies(),
+                'published_documents_required' => (bool) config('shop_channel.require_published_terms', true),
                 'terms_url' => config('shop_channel.terms_url'),
                 'privacy_url' => config('shop_channel.privacy_url'),
                 'third_party_url' => config('shop_channel.third_party_url'),
