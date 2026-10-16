@@ -66,6 +66,52 @@ class SocialLoginTest extends TestCase
         Http::assertNothingSent();
     }
 
+    public function test_production_http_naver_can_authenticate_a_linked_member(): void
+    {
+        $this->app->instance('env', 'production');
+        config(['app.url' => 'http://front.example.com',
+            'social_login.naver.redirect_uri' => 'http://front.example.com/auth/social/naver/callback']);
+        $user = User::factory()->create(['status' => 1]);
+        SocialAccount::create(['user_id' => $user->id, 'provider' => 'naver', 'provider_user_id' => 'provider-123']);
+        $this->fakeProfile('naver');
+        $response = $this->get('http://front.example.com/auth/social/naver/redirect');
+        $response->assertRedirect();
+        parse_str(parse_url($response->headers->get('Location'), PHP_URL_QUERY), $query);
+        $this->assertSame('http://front.example.com/auth/social/naver/callback', $query['redirect_uri']);
+        $this->get('http://front.example.com/auth/social/naver/callback?'.http_build_query(['state' => $query['state'], 'code' => 'test-code']))
+            ->assertRedirect(route('mypage.dashboard'));
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_public_http_shows_google_notice_and_naver_link_without_starting_google_oauth(): void
+    {
+        $this->app->instance('env', 'production');
+        config(['app.url' => 'http://front.example.com',
+            'social_login.google.redirect_uri' => 'https://front.example.com/auth/social/google/callback',
+            'social_login.naver.redirect_uri' => 'http://front.example.com/auth/social/naver/callback']);
+        $this->get('http://front.example.com/member/login')->assertOk()
+            ->assertSee('Google로 계속하기')->assertSee('네이버로 계속하기')
+            ->assertSee('onclick="alert(', false)->assertSee('social-login-google')
+            ->assertSee('http://front.example.com/auth/social/naver/redirect', false)
+            ->assertDontSee('href="http://front.example.com/auth/social/google/redirect', false);
+        $this->get('http://front.example.com/auth/social/google/redirect')
+            ->assertRedirect(route('front.member.login'))->assertSessionHas('error_message', \App\Services\SocialLoginProvider::GOOGLE_HTTPS_NOTICE);
+        $this->assertNull(session('social_oauth.google'));
+        Http::assertNothingSent();
+    }
+
+    public function test_https_google_login_remains_available_without_http_notice(): void
+    {
+        $this->app->instance('env', 'production');
+        config(['app.url' => 'https://front.example.com',
+            'social_login.google.redirect_uri' => 'https://front.example.com/auth/social/google/callback']);
+        $this->get('https://front.example.com/member/login')->assertOk()
+            ->assertSee('href="https://front.example.com/auth/social/google/redirect', false)
+            ->assertDontSee('onclick="alert(', false);
+        $this->get('https://front.example.com/auth/social/google/redirect')
+            ->assertRedirectContains('https://accounts.google.com/o/oauth2/v2/auth?');
+    }
+
     public function test_masked_console_value_is_not_treated_as_a_configured_secret(): void
     {
         foreach (['[redacted]', '[REDACTED]', '[masked]', '********', '••••••'] as $masked) {

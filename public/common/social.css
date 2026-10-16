@@ -1,5 +1,5 @@
 .social-login-options { display: flex; flex-wrap: wrap; gap: 12px; margin: 24px 0; }
-.social-login-options .social-login-button { display: flex; align-items: center; justify-content: center; flex: 1 1 180px; min-height: 44px; padding: 10px 16px; border: 1px solid #aeb8c8; border-radius: 6px; box-sizing: border-box; text-align: center; font-size: 15px; font-weight: 700; text-decoration: none; color: #202532; background: #fff; }
+.social-login-options .social-login-button { display: flex; align-items: center; justify-content: center; flex: 1 1 180px; min-height: 44px; padding: 10px 16px; border: 1px solid #aeb8c8; border-radius: 6px; box-sizing: border-box; text-align: center; font-size: 15px; font-weight: 700; cursor: pointer; text-decoration: none; color: #202532; background: #fff; }
 .social-login-options .social-login-naver { border-color: #087a37; color: #087a37; }
 .social-signup-page { padding-top: 101px; display: flow-root; }
 .social-signup-card { max-width: 600px; margin: 48px auto; padding: 32px; background: #fff; border-radius: 12px; box-sizing: border-box; font-size: 15px; line-height: 1.8; }

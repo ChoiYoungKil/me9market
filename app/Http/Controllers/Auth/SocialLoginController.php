@@ -36,6 +36,9 @@ class SocialLoginController extends Controller
     private function authorizeProvider(Request $request, string $provider, SocialLoginProvider $service, ?int $userId = null)
     {
         $service->requireReady($provider);
+        if ($service->blockedOnHttp($provider)) {
+            return $this->failed(SocialLoginProvider::GOOGLE_HTTPS_NOTICE);
+        }
         $state = Str::random(64);
         $verifier = Str::random(80);
         $runtime = app(ShopChannelRuntime::class);

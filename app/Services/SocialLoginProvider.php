@@ -10,6 +10,14 @@ class SocialLoginProvider
 {
     public const LABELS = ['google' => 'Google', 'naver' => '네이버'];
 
+    public const GOOGLE_HTTPS_NOTICE = 'Google 로그인은 정책상 HTTP 환경에서 인증 결과를 받는 콜백을 사용할 수 없습니다. HTTPS 적용 후 이용해 주세요.';
+
+    public function blockedOnHttp(string $provider): bool
+    {
+        return $provider === 'google' && ! request()->isSecure()
+            && ! in_array(request()->getHost(), ['localhost', '127.0.0.1', '[::1]'], true);
+    }
+
     private const ENDPOINTS = [
         'google' => ['authorize' => 'https://accounts.google.com/o/oauth2/v2/auth', 'token' => 'https://oauth2.googleapis.com/token', 'profile' => 'https://openidconnect.googleapis.com/v1/userinfo'],
         'naver' => ['authorize' => 'https://nid.naver.com/oauth2.0/authorize', 'token' => 'https://nid.naver.com/oauth2.0/token', 'profile' => 'https://openapi.naver.com/v1/nid/me'],
@@ -26,7 +34,7 @@ class SocialLoginProvider
         return ($config['enabled'] ?? false) && filled($config['client_id'] ?? null) && filled($config['client_secret'] ?? null)
             && !preg_match('/^(?:\[(?:redacted|masked)\]|\*+|[•●]+)$/iu', trim((string) $config['client_secret']))
             && filter_var($uri, FILTER_VALIDATE_URL) !== false
-            && in_array($scheme, app()->environment('production') ? ['https'] : ['http', 'https'], true)
+            && in_array($scheme, app()->environment('production') && $provider === 'google' ? ['https'] : ['http', 'https'], true)
             && parse_url($uri, PHP_URL_HOST) === parse_url(config('app.url'), PHP_URL_HOST)
             && parse_url($uri, PHP_URL_PORT) === parse_url(config('app.url'), PHP_URL_PORT)
             && parse_url($uri, PHP_URL_PATH) === '/auth/social/'.$provider.'/callback'

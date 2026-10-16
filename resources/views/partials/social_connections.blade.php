@@ -8,7 +8,7 @@
         @if(isset($connectedSocial[$provider]))
             <form method="POST" action="{{ route('social.disconnect', $provider) }}">@csrf @method('DELETE')<span>{{ $label }} 연결됨</span><button type="submit">연결 해제</button></form>
         @elseif(app(\App\Services\SocialLoginProvider::class)->ready($provider))
-            <form method="POST" action="{{ route('social.connect', $provider) }}">@csrf<span>{{ $label }}</span><button type="submit">계정 연결</button></form>
+            <form method="POST" action="{{ route('social.connect', $provider) }}">@csrf<span>{{ $label }}</span>@if(app(\App\Services\SocialLoginProvider::class)->blockedOnHttp($provider))<button type="button" onclick="alert(@js(\App\Services\SocialLoginProvider::GOOGLE_HTTPS_NOTICE))">계정 연결</button>@else<button type="submit">계정 연결</button>@endif</form>
         @endif
     @endforeach
 </section>
