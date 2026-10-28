@@ -36,9 +36,11 @@
     @stack('styles')
     <link href="{{ asset('common/portal.css').'?v='.filemtime(public_path('common/portal.css')) }}" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('common/social.css').'?v='.filemtime(public_path('common/social.css')) }}">
+    <link rel="stylesheet" href="{{ asset('mypage_assets/css/market-mypage.css').'?v='.filemtime(public_path('mypage_assets/css/market-mypage.css')) }}">
+    @env('local')<script src="{{ asset('me9market/js/preview-live.js') }}" defer></script>@endenv
 </head>
 
-<body class="portal portal-mypage" id="@yield('page_type', 'main')">
+<body class="portal portal-mypage" id="@yield('page_type', 'main')" data-mypage-user-id="{{ Auth::id() }}" @if(request()->isMethod('post')) data-preview-preserve="true" @endif>
     <div id="skipNavi">
         <ul>
             <li>
@@ -51,11 +53,11 @@
     <div id="wrap">
         <header id="header">
             <div class="h_inner">
-                <a href="/" class="logo">Me9 market</a>
+                <a href="/" class="logo" aria-label="Me9 market 홈"><img src="{{ asset('me9market/images/common/logo.png') }}" alt="Me9 market" width="157" height="37"></a>
 
                 <div class="t_menu">
                     <ul>
-                        <li><a href="{{ route('channel.index') }}">채널관리자</a></li>
+                        <li><form class="mypage-channel-launch" action="{{ route('mypage.channel_admin') }}" method="post">@csrf<button type="submit">채널관리자</button></form></li>
                         <li><a href="{{ route('mypage.profile') }}">{{ Auth::user()->name ?? 'User' }}</a></li>
                         <li><a href="{{ url('/mypage/points/status') }}">총 포인트 ({{ number_format($mypagePointTotal) }})</a></li>
                         <li>
@@ -80,10 +82,10 @@
                 <div class="r_menu">
                     <div class="menu_w">
                         <ul class="con1">
-                            @forelse($mypageChannels as $channel)
-                                <li><a href="{{ route('shop.enter', ['channelCode' => $channel->channel_code]) }}"><span>{{ $channel->channel_name }}</span></a></li>
+                            @forelse($mypageSubAccounts as $account)
+                                <li><form action="{{ route('mypage.channel_admin') }}" method="post">@csrf<input type="hidden" name="sub_account_id" value="{{ $account->id }}"><button type="submit">{{ $account->vendor?->vendorbusinessdetails?->shop_name ?? '배정된 회원사' }}</button></form></li>
                             @empty
-                                <li>방문한 채널이 없습니다.</li>
+                                <li>배정된 관리채널이 없습니다.</li>
                             @endforelse
                         </ul>
                     </div>
@@ -96,6 +98,9 @@
             @include('layouts.inc.mypage_sidebar')
 
             <div id="container_w">
+                @if(session('success_message'))<p class="portal-message" role="status">{{ session('success_message') }}</p>@endif
+                @if(session('error_message'))<p class="portal-message error" role="alert">{{ session('error_message') }}</p>@endif
+                @if($errors->any())<div class="portal-message error" role="alert">@foreach($errors->all() as $error)<p>{{ $error }}</p>@endforeach</div>@endif
                 @yield('content')
             </div>
         </div>

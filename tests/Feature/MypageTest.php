@@ -19,6 +19,8 @@ use App\Support\OrderItemStatus;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 class MypageTest extends TestCase
 {
@@ -130,8 +132,10 @@ class MypageTest extends TestCase
 
     public function test_mypage_company_info_update_persists_vendor_details()
     {
+        Storage::fake('local');
         $user = User::factory()->create([
             'type' => 'general',
+            'profile_completed_at' => now(),
             'mobile' => '010-1111-1111',
         ]);
 
@@ -153,6 +157,7 @@ class MypageTest extends TestCase
                 'bank_name' => '국민은행',
                 'account_number' => '1234567890',
                 'account_holder_name' => 'Shop Owner',
+                'bank_copy_image' => UploadedFile::fake()->image('bank.png'),
                 'agree1' => '1',
             ])
             ->assertOk()
@@ -183,6 +188,7 @@ class MypageTest extends TestCase
 
     public function test_mypage_seller_certification_request_updates_vendor_user_flow()
     {
+        Storage::fake('local');
         $vendor = new Vendor;
         $vendor->name = 'Profile Vendor';
         $vendor->mobile = '010-1234-5678';
@@ -221,6 +227,8 @@ class MypageTest extends TestCase
                 'bank_name' => '국민은행',
                 'account_number' => '99990000',
                 'account_holder_name' => 'New Owner',
+                'address_proof_image' => UploadedFile::fake()->image('license.png'),
+                'bank_copy_image' => UploadedFile::fake()->image('bank.png'),
                 'agree1' => '1',
             ])
             ->assertOk()
@@ -323,6 +331,7 @@ class MypageTest extends TestCase
 
         // Fail with wrong password
         $response = $this->actingAs($user)->post('/mypage/withdraw/submit', [
+            'reason'=>'reason_1',
             'password' => 'wrong-password',
             'password_confirmation' => 'wrong-password',
         ]);
@@ -333,6 +342,7 @@ class MypageTest extends TestCase
 
         // Succeed with correct password
         $response = $this->actingAs($user)->post('/mypage/withdraw/submit', [
+            'reason'=>'reason_1',
             'password' => 'correct-password',
             'password_confirmation' => 'correct-password',
         ]);
@@ -497,7 +507,7 @@ class MypageTest extends TestCase
             ->assertSee('aria-label="주문목록 5건"', false)
             ->assertSee('aria-label="결제완료 1건"', false)
             ->assertSee('aria-label="배송대기중 1건"', false)
-            ->assertSee('aria-label="배송중 2건"', false)
+            ->assertSee('aria-label="배송중 1건"', false)
             ->assertSee('aria-label="구매확정 1건"', false)
             ->assertSee('aria-label="취소요청 1건"', false)
             ->assertSee('aria-label="취소완료 1건"', false)

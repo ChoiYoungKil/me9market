@@ -20,26 +20,6 @@
                         </ul>
                     </div>
 
-                    @if(Session::has('error_message'))
-                        <div class="alert alert-danger" style="color:red; margin-bottom:10px;">
-                            <strong>Error:</strong> {{ Session::get('error_message') }}
-                        </div>
-                    @endif
-                    @if(Session::has('success_message'))
-                        <div class="alert alert-success" style="color:green; margin-bottom:10px;">
-                            <strong>Success:</strong> {{ Session::get('success_message') }}
-                        </div>
-                    @endif
-                    @if($errors->any())
-                        <div class="alert alert-danger" style="color:red; margin-bottom:10px;">
-                            <ul>
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
-                        </div>
-                    @endif
-
                     <div class="ttl01">탈퇴 정보 확인</div>
 
                     <div class="conbx">
@@ -61,7 +41,7 @@
                                         </tr>
                                         <tr>
                                             <th class="w160"><span>보유 포인트</span></th>
-                                            <td>{{ number_format($user->point ?? 0) }}point</td>
+                                            <td>{{ number_format($pointBalance) }}point</td>
                                         </tr>
                                         <tr>
                                             <th class="w160"><span>판매 중 내역</span></th>
@@ -94,14 +74,14 @@
                                                             <li @if ($isOther) class="dotTop" @endif>
                                                                 <input type="radio" name="reason" value="{{ $key }}"
                                                                     id="radio1_{{ $loop->iteration }}"
-                                                                    @if ($loop->first) checked="" @endif>
+                                                                    @checked(old('reason', 'reason_1') === $key)>
                                                                 <label @if ($isOther) class="w100p" @endif
                                                                     for="radio1_{{ $loop->iteration }}">
                                                                     {{ $reason }}
-                                                                    @if ($isOther)
-                                                                        <textarea class="mt5" name="reason_detail"></textarea>
-                                                                    @endif
                                                                 </label>
+                                                                    @if ($isOther)
+                                                                        <textarea class="mt5" name="reason_detail" aria-label="기타 탈퇴 사유" maxlength="2000" placeholder="사유를 입력해 주세요.">{{ old('reason_detail') }}</textarea>
+                                                                    @endif
                                                             </li>
                                                         @endforeach
                                                     </ul>
@@ -125,14 +105,14 @@
                                             <tr>
                                                 <th class="w160"><span>비밀번호</span></th>
                                                 <td>
-                                                    <input class="w200" type="password" name="password" required="required">
+                                                    <input class="w200" type="password" name="password" aria-label="비밀번호" autocomplete="current-password" required="required">
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <th class="w160"><span>비밀번호 확인</span></th>
                                                 <td>
-                                                    <input class="w200" type="password" name="password_confirmation"
-                                                        required="required">
+                                                    <input class="w200" type="password" name="password_confirmation" aria-label="비밀번호 확인"
+                                                        autocomplete="current-password" required="required">
                                                 </td>
                                             </tr>
                                         </tbody>
@@ -144,7 +124,7 @@
                         <!-- 하단버튼 -->
                         <div class="btm_btn right mt10">
                             <div class="page_bx1"></div>
-                            <a href="{{ url()->current() }}" class="pop_btn" data-pop="pop1_1">회원 탈퇴 신청하기</a>
+                            <button type="button" class="pop_btn btn_submit" data-pop="pop1_1">회원 탈퇴 신청하기</button>
                         </div>
                     </div>
                 </form>
@@ -154,7 +134,7 @@
                     <div class="pop_w">
                         <div class="pop_inner">
                             <div class="pop_con w560">
-                                <div class="close_btn close1">닫기</div>
+                                <button type="button" class="close_btn close1" aria-label="닫기">닫기</button>
                                 <div class="conbx">
                                     <div class="con_w">
                                         <div class="imp_bx01 bN">
@@ -166,9 +146,8 @@
 
                                 <!-- 하단버튼 -->
                                 <div class="btm_btn mt10">
-                                    <a href="javascript:;"
-                                        onclick="document.getElementById('withdrawForm').submit();">확인</a>
-                                    <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
+                                    <button type="submit" form="withdrawForm" class="btn_submit">확인</button>
+                                    <a href="{{ url()->current() }}" class="col5 close_btn">취소</a>
                                 </div>
                             </div>
                         </div>
@@ -179,23 +158,18 @@
     </div><!-- //contents -->
 
     <script type="text/javascript">
+        $("#withdrawForm input[name=password_confirmation], #withdrawForm input[name=password]").on('input', function () {
+            document.querySelector('#withdrawForm input[name=password_confirmation]').setCustomValidity('');
+        });
         /* 팝업 */
         $(".pop_btn").click(function () {
-            // 유효성 검사 추가
-            var pw = $('input[name="password"]').val();
-            var pwConf = $('input[name="password_confirmation"]').val();
-
-            if (!pw) {
-                alert('비밀번호를 입력해주세요.');
-                $('input[name="password"]').focus();
-                return false;
-            }
-
-            if (pw !== pwConf) {
-                alert('비밀번호가 일치하지 않습니다.');
-                $('input[name="password_confirmation"]').focus();
-                return false;
-            }
+            var form = document.getElementById('withdrawForm');
+            var other = form.querySelector('input[name="reason"][value="reason_other"]');
+            var detail = form.querySelector('textarea[name="reason_detail"]');
+            detail.required = other.checked;
+            var pwConf = form.querySelector('input[name="password_confirmation"]');
+            pwConf.setCustomValidity(pwConf.value !== form.querySelector('input[name="password"]').value ? '비밀번호 확인이 일치하지 않습니다.' : '');
+            if (!form.reportValidity()) return false;
 
             var popId = $(this).attr("data-pop");
             $(".popup_bx[data-id='" + popId + "']").stop().fadeIn(300);

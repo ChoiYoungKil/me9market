@@ -372,12 +372,13 @@
                             <div class="inner">
                                 <div class="left_bx">
                                     <select
-                                        onchange="location.href='{{ route('mypage.order.list', ['tab' => $tab]) }}&status=' + this.value">
+                                        aria-label="주문 상태" onchange="const target = new window.URL(location.href); target.searchParams.set('status', this.value); location.href=target.href;">
                                         <option value="all" {{ $status == 'all' ? 'selected' : '' }}>전체</option>
                                         @if($tab == 'order')
                                             <option value="payment_completed" {{ $status == 'payment_completed' ? 'selected' : '' }}>결제완료</option>
                                             <option value="preparing_shipment" {{ $status == 'preparing_shipment' ? 'selected' : '' }}>배송대기중</option>
                                             <option value="shipping" {{ $status == 'shipping' ? 'selected' : '' }}>배송중</option>
+                                            <option value="delivered" {{ $status == 'delivered' ? 'selected' : '' }}>배송완료</option>
                                             <option value="purchase_confirmed" {{ $status == 'purchase_confirmed' ? 'selected' : '' }}>구매확정</option>
                                         @elseif($tab == 'cancel')
                                             <option value="cancel_request" {{ $status == 'cancel_request' ? 'selected' : '' }}>
@@ -401,9 +402,9 @@
                                         <a href="javascript:void(0);" class="btn02" data-period="12">1년</a>
                                     </div>
                                     <div class="date_wrap">
-                                        <input type="text" class="datepicker" id="start_date" value="{{ $startDate ?? '' }}">
+                                        <input type="date" class="member-date-control" id="start_date" aria-label="주문 시작일" value="{{ $startDate ?? '' }}">
                                         <span>~</span>
-                                        <input type="text" class="datepicker" id="end_date" value="{{ $endDate ?? '' }}">
+                                        <input type="date" class="member-date-control" id="end_date" aria-label="주문 종료일" value="{{ $endDate ?? '' }}">
                                     </div>
                                     <button type="button" class="btn_search">조회</button>
                                 </div>
@@ -523,7 +524,7 @@
                                             <strong>{{ $order['items'][0]['shipping_fee'] ?? '무료배송' }}</strong>
                                             <span style="color:#ddd; margin:0 10px;">|</span>
                                             <a href="javascript:void(0);"
-                                                onclick="openQnaPopup('{{ $order['items'][0]['product_name'] }}', '{{ $order['items'][0]['product_image'] }}')"
+                                                class="js-member-qna" data-order-item-id="{{ $order['items'][0]['order_item_id'] }}" data-name="{{ $order['items'][0]['product_name'] }}" data-image="{{ $order['items'][0]['product_image'] }}" data-category="{{ $order['items'][0]['category_path'] }}"
                                                 style="font-weight: 700; color: #444; text-decoration: none;">판매자 문의하기 ></a>
                                         </div>
                                     @endif
@@ -536,18 +537,7 @@
                             @endforelse
                         </div>
 
-                        <!-- 페이지네이션 (common footer style) -->
-                        <div class="btm_btn">
-                            <div class="page_bx1 text-center">
-                                <a href="{{ url()->current() }}" class="page_prev dimmed">prev</a>
-                                <a href="{{ url()->current() }}" class="num on">1</a>
-                                <a href="{{ url()->current() }}" class="num">2</a>
-                                <a href="{{ url()->current() }}" class="num">3</a>
-                                <a href="{{ url()->current() }}" class="num">4</a>
-                                <a href="{{ url()->current() }}" class="num">5</a>
-                                <a href="{{ url()->current() }}" class="page_next dimmed">next</a>
-                            </div>
-                        </div>
+                        @if($orders->lastPage()>1)<div class="portal-pagination">{{ $orders->links() }}</div>@endif
 
                     </div>
                 </div>
@@ -572,7 +562,7 @@
                             style="width: 80px; height: 80px; background: #f5f5f5; border: 1px solid #eee; background-size: cover; background-position: center;"
                             id="qna_prd_img"></div>
                         <div class="txt">
-                            <div style="font-size: 13px; color: #888; margin-bottom: 5px;">대분류 > 중분류 > 소분류</div>
+                            <div style="font-size: 13px; color: #888; margin-bottom: 5px;" id="qna_prd_category">상품 정보</div>
                             <div style="font-size: 15px; font-weight: 700; color: #333;" id="qna_prd_name">상품명</div>
                         </div>
                     </div>
@@ -581,6 +571,8 @@
                     <div style="font-size: 13px; color: #666; margin-bottom: 15px;">판매자에게 상품, 배송, 취소, 교환, 반품 등 궁금한 내용을
                         문의하세요.</div>
 
+                    <form id="memberOrderInquiry" action="{{ route('mypage.order.inquiry') }}" method="post">
+                    @csrf<input type="hidden" name="order_item_id" id="qna_order_item_id">
                     <div class="qna_form"
                         style="border-top: 1px solid #ddd; border-bottom: 1px solid #ddd; margin-bottom: 20px;">
                         <table style="width: 100%; border-collapse: collapse;">
@@ -594,7 +586,7 @@
                                         style="background: #f9f9f9; padding: 10px; text-align: left; font-weight: 400; color: #333; font-size: 13px;">
                                         질문 제목</th>
                                     <td style="padding: 10px;">
-                                        <input type="text"
+                                        <input type="text" name="subject" aria-label="질문 제목" required maxlength="255"
                                             style="width: 100%; height: 34px; border: 1px solid #ddd; padding: 0 10px; font-size: 13px;"
                                             placeholder="질문 제목입니다">
                                     </td>
@@ -604,7 +596,7 @@
                                         style="background: #f9f9f9; padding: 10px; text-align: left; font-weight: 400; color: #333; font-size: 13px; vertical-align: top;">
                                         질문 내용</th>
                                     <td style="padding: 10px;">
-                                        <textarea
+                                        <textarea name="message" aria-label="질문 내용" required maxlength="3000"
                                             style="width: 100%; height: 200px; border: 1px solid #ddd; padding: 10px; font-size: 13px; resize: none;"
                                             placeholder="내용입니다"></textarea>
                                     </td>
@@ -614,321 +606,18 @@
                     </div>
 
                     <div class="btm_btn">
-                        <a href="javascript:void(0);" class="col2" style="width: 120px;">문의하기</a>
+                        <button type="submit" class="btn_submit" style="width:120px;">문의하기</button>
                         <a href="javascript:void(0);" onclick="closeQnaPopup()" class="col5" style="width: 120px;">창닫기</a>
                     </div>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- 취소신청 팝업 -->
-    <div id="pop_cancel" class="popup_bx">
-        <div class="pop_w">
-            <div class="pop_inner">
-                <div class="pop_con" style="max-width: 600px;">
-                    <a href="javascript:void(0);" onclick="closeCancelPopup()" class="close1">닫기</a>
-
-                    <div class="ttl01 brb">
-                        <strong>취소신청하기</strong>
-                    </div>
-
-                    <div class="conbx">
-                        <div class="con" style="margin-bottom: 20px;">
-                            <div class="product01" style="display: flex; align-items: center;">
-                                <div class="img_bx" id="cancel_prd_img"
-                                    style="width: 80px; height: 80px; background: #f5f5f5; border: 1px solid #eee; background-size: cover; background-position: center; border-radius: 5px; margin-right: 15px;">
-                                </div>
-                                <div class="txt_bx">
-                                    <div class="txt_w">
-                                        <div class="txt1" id="cancel_prd_shop" style="font-size: 13px; color: #888;"></div>
-                                        <strong class="txt2" id="cancel_prd_name"
-                                            style="font-size: 16px; color: #333; display: block; margin: 5px 0;"></strong>
-                                        <div class="txt3" id="cancel_prd_option" style="font-size: 13px; color: #666;">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <form id="cancel_form">
-                            <input type="hidden" name="order_item_id" id="cancel_order_item_id">
-
-                            <div class="con">
-                                <div class="c_ttl" style="font-size: 15px; font-weight: 700; margin-bottom: 10px;">취소사유
-                                </div>
-                                <div class="f_con">
-                                    <div class="f_bx" style="margin-bottom: 10px;">
-                                        <div class="f_w w100">
-                                            <select name="reason" id="cancel_reason_select"
-                                                style="width: 100%; height: 40px; padding: 0 10px; border: 1px solid #ddd; border-radius: 5px;">
-                                                <option value="">취소사유 선택</option>
-                                                @foreach(config('array.order_cancel_reasons') as $key => $reason)
-                                                    <option value="{{ $key }}">{{ $reason }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="f_bx" id="cancel_detail_reason_bx" style="display: none;">
-                                        <div class="f_w w100">
-                                            <textarea name="detail_reason" id="cancel_detail_reason"
-                                                placeholder="기타 내용을 입력해 주세요"
-                                                style="width: 100%; height: 100px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; resize: none;"></textarea>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="btm_btn" style="margin-top: 20px; text-align: center;">
-                                <a href="javascript:void(0);" class="col5"
-                                    style="display: inline-block; width: 120px; text-align: center;">취소신청</a>
-                                <a href="javascript:void(0);" onclick="closeCancelPopup()" class="close_btn"
-                                    style="display: inline-block; width: 120px; text-align: center;">창닫기</a>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    </div>
-
-    <!-- 반품신청 팝업 -->
-    <div id="pop_return" class="popup_bx">
-        <div class="pop_w">
-            <div class="pop_inner">
-                <div class="pop_con" style="max-width: 600px;">
-                    <a href="javascript:void(0);" onclick="closeReturnPopup()" class="close1">닫기</a>
-
-                    <div class="ttl01 brb">
-                        <strong>반품신청하기</strong>
-                    </div>
-
-                    <div class="conbx">
-                        <div class="con" style="margin-bottom: 20px;">
-                            <div class="product01" style="display: flex; align-items: center;">
-                                <div class="img_bx" id="return_prd_img"
-                                    style="width: 80px; height: 80px; background: #f5f5f5; border: 1px solid #eee; background-size: cover; background-position: center; border-radius: 5px; margin-right: 15px;">
-                                </div>
-                                <div class="txt_bx">
-                                    <div class="txt_w">
-                                        <div class="txt1" id="return_prd_shop" style="font-size: 13px; color: #888;"></div>
-                                        <strong class="txt2" id="return_prd_name"
-                                            style="font-size: 16px; color: #333; display: block; margin: 5px 0;"></strong>
-                                        <div class="txt3" id="return_prd_option" style="font-size: 13px; color: #666;">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <form id="return_form">
-                            <input type="hidden" name="order_item_id" id="return_order_item_id">
-
-                            <div class="con">
-                                <div class="c_ttl" style="font-size: 15px; font-weight: 700; margin-bottom: 10px;">반품사유
-                                </div>
-                                <div class="f_con">
-                                    <div class="f_bx" style="margin-bottom: 10px;">
-                                        <div class="f_w w100">
-                                            <select name="reason" id="return_reason_select"
-                                                style="width: 100%; height: 40px; padding: 0 10px; border: 1px solid #ddd; border-radius: 5px;">
-                                                <option value="">반품사유 선택</option>
-                                                @foreach(config('array.order_return_reasons') as $key => $reason)
-                                                    <option value="{{ $key }}">{{ $reason }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="f_bx" id="return_detail_reason_bx" style="display: none;">
-                                        <div class="f_w w100">
-                                            <textarea name="detail_reason" id="return_detail_reason"
-                                                placeholder="기타 내용을 입력해 주세요"
-                                                style="width: 100%; height: 100px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; resize: none;"></textarea>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="con">
-                                <div class="c_ttl" style="font-size: 15px; font-weight: 700; margin-bottom: 10px;">상품회수방법
-                                </div>
-                                <div class="f_con">
-                                    <div class="f_bx" style="margin-bottom: 15px;">
-                                        <div class="f_w w100">
-                                            <ul class="chk01 mdipi" style="display: flex; gap: 20px;">
-                                                <li>
-                                                    <input type="radio" id="return_method_auto" name="return_method"
-                                                        value="auto" checked>
-                                                    <label for="return_method_auto" style="cursor: pointer;">자동회수</label>
-                                                </li>
-                                                <li>
-                                                    <input type="radio" id="return_method_manual" name="return_method"
-                                                        value="manual">
-                                                    <label for="return_method_manual" style="cursor: pointer;">수동회수</label>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-
-                                    <div class="f_bx">
-                                        <div class="f_w w100">
-                                            <!-- 자동회수 선택시 표시 -->
-                                            <div id="return_method_text_auto" class="imp_txt"
-                                                style="background: #f9f9f9; padding: 15px; border-radius: 5px; font-size: 13px; line-height: 1.5; color: #666;">
-                                                <p class="txt1">※ 반품이라고 표기해서 문 앞에 두시면 “한진택배”에서 회수합니다. <br>물품에 문제가 없을 경우 택배비가
-                                                    발생합니다.</p>
-                                            </div>
-
-                                            <!-- 수동회수 선택시 표시 -->
-                                            <div id="return_method_text_manual" class="addr_bx"
-                                                style="display: none; border: 1px solid #ddd; padding: 15px; border-radius: 5px;">
-                                                <div style="font-size: 13px; font-weight: 700; margin-bottom: 5px;">상품회수주소
-                                                </div>
-                                                <div style="font-size: 13px; color: #444; line-height: 1.5;">
-                                                    <span id="return_pickup_address">반송지 정보를 불러오는 중입니다.</span>
-                                                </div>
-                                                <input type="text" name="customer_courier_name" maxlength="100" placeholder="택배사 (나중에 등록 가능)" style="width:100%; margin-top:10px; height:36px; border:1px solid #ddd; padding:0 8px; box-sizing:border-box;">
-                                                <input type="text" name="customer_tracking_number" maxlength="100" placeholder="송장번호 (나중에 등록 가능)" style="width:100%; margin-top:6px; height:36px; border:1px solid #ddd; padding:0 8px; box-sizing:border-box;">
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="btm_btn" style="margin-top: 20px; text-align: center;">
-                                <a href="javascript:void(0);" class="col4"
-                                    style="display: inline-block; width: 120px; text-align: center;">반품신청</a>
-                                <a href="javascript:void(0);" onclick="closeReturnPopup()" class="close_btn"
-                                    style="display: inline-block; width: 120px; text-align: center;">창닫기</a>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    </div>
-
-    <!-- 교환신청 팝업 -->
-    <div id="pop_exchange" class="popup_bx">
-        <div class="pop_w">
-            <div class="pop_inner">
-                <div class="pop_con" style="max-width: 600px;">
-                    <a href="javascript:void(0);" onclick="closeExchangePopup()" class="close1">닫기</a>
-
-                    <div class="ttl01 brb">
-                        <strong>교환신청하기</strong>
-                    </div>
-
-                    <div class="conbx">
-                        <div class="con" style="margin-bottom: 20px;">
-                            <div class="product01" style="display: flex; align-items: center;">
-                                <div class="img_bx" id="exchange_prd_img"
-                                    style="width: 80px; height: 80px; background: #f5f5f5; border: 1px solid #eee; background-size: cover; background-position: center; border-radius: 5px; margin-right: 15px;">
-                                </div>
-                                <div class="txt_bx">
-                                    <div class="txt_w">
-                                        <div class="txt1" id="exchange_prd_shop" style="font-size: 13px; color: #888;">
-                                        </div>
-                                        <strong class="txt2" id="exchange_prd_name"
-                                            style="font-size: 16px; color: #333; display: block; margin: 5px 0;"></strong>
-                                        <div class="txt3" id="exchange_prd_option" style="font-size: 13px; color: #666;">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <form id="exchange_form">
-                            <input type="hidden" name="order_item_id" id="exchange_order_item_id">
-
-                            <div class="con">
-                                <div class="c_ttl" style="font-size: 15px; font-weight: 700; margin-bottom: 10px;">교환사유
-                                </div>
-                                <div class="f_con">
-                                    <div class="f_bx" style="margin-bottom: 10px;">
-                                        <div class="f_w w100">
-                                            <select name="reason" id="exchange_reason_select"
-                                                style="width: 100%; height: 40px; padding: 0 10px; border: 1px solid #ddd; border-radius: 5px;">
-                                                <option value="">교환사유 선택</option>
-                                                @foreach(config('array.order_exchange_reasons') as $key => $reason)
-                                                    <option value="{{ $key }}">{{ $reason }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="f_bx" id="exchange_detail_reason_bx" style="display: none;">
-                                        <div class="f_w w100">
-                                            <textarea name="detail_reason" id="exchange_detail_reason"
-                                                placeholder="기타 내용을 입력해 주세요"
-                                                style="width: 100%; height: 100px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; resize: none;"></textarea>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="con">
-                                <div class="c_ttl" style="font-size: 15px; font-weight: 700; margin-bottom: 10px;">상품회수방법
-                                </div>
-                                <div class="f_con">
-                                    <div class="f_bx" style="margin-bottom: 15px;">
-                                        <div class="f_w w100">
-                                            <ul class="chk01 mdipi" style="display: flex; gap: 20px;">
-                                                <li>
-                                                    <input type="radio" id="exchange_method_auto" name="exchange_method"
-                                                        value="auto" checked>
-                                                    <label for="exchange_method_auto" style="cursor: pointer;">자동회수</label>
-                                                </li>
-                                                <li>
-                                                    <input type="radio" id="exchange_method_manual" name="exchange_method"
-                                                        value="manual">
-                                                    <label for="exchange_method_manual"
-                                                        style="cursor: pointer;">수동회수</label>
-                                                </li>
-                                            </ul>
-                                        </div>
-                                    </div>
-
-                                    <div class="f_bx">
-                                        <div class="f_w w100">
-                                            <!-- 자동회수 선택시 표시 -->
-                                            <div id="exchange_method_text_auto" class="imp_txt"
-                                                style="background: #f9f9f9; padding: 15px; border-radius: 5px; font-size: 13px; line-height: 1.5; color: #666;">
-                                                <p class="txt1">※ 교환이라고 표기해서 문 앞에 두시면 “한진택배”에서 회수합니다. <br>물품에 문제가 없을 경우 택배비가
-                                                    발생합니다.</p>
-                                            </div>
-
-                                            <!-- 수동회수 선택시 표시 -->
-                                            <div id="exchange_method_text_manual" class="addr_bx"
-                                                style="display: none; border: 1px solid #ddd; padding: 15px; border-radius: 5px;">
-                                                <div style="font-size: 13px; font-weight: 700; margin-bottom: 5px;">상품회수주소
-                                                </div>
-                                                <div style="font-size: 13px; color: #444; line-height: 1.5;">
-                                                    <span id="exchange_pickup_address">반송지 정보를 불러오는 중입니다.</span>
-                                                </div>
-                                                <input type="text" name="customer_courier_name" maxlength="100" placeholder="택배사 (나중에 등록 가능)" style="width:100%; margin-top:10px; height:36px; border:1px solid #ddd; padding:0 8px; box-sizing:border-box;">
-                                                <input type="text" name="customer_tracking_number" maxlength="100" placeholder="송장번호 (나중에 등록 가능)" style="width:100%; margin-top:6px; height:36px; border:1px solid #ddd; padding:0 8px; box-sizing:border-box;">
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="btm_btn" style="margin-top: 20px; text-align: center;">
-                                <a href="javascript:void(0);" class="col3"
-                                    style="display: inline-block; width: 120px; text-align: center; background-color: #ff0000; color: #fff; border: 1px solid #ff0000;">교환신청</a>
-                                <a href="javascript:void(0);" onclick="closeExchangePopup()" class="close_btn"
-                                    style="display: inline-block; width: 120px; text-align: center;">창닫기</a>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+    @foreach(['cancel' => '취소', 'return' => '반품', 'exchange' => '교환'] as $claimType => $claimLabel)
+        @include('front.mypage.order.partials.claim_popup', ['type' => $claimType, 'label' => $claimLabel])
+    @endforeach
 
     <!-- 구매확정 팝업 -->
     <div id="pop_confirm" class="popup_bx">
@@ -1042,8 +731,6 @@
 </style>
 
 @push('scripts')
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
             // Popup Event Listeners (Delegation) - Moved to top to ensure binding
@@ -1073,9 +760,14 @@
             });
 
             // Cancel Submit
-            $("#cancel_form .col5").on("click", function (e) {
+            $("#cancel_form").on("submit", function (e) {
                 e.preventDefault();
                 var reason = $("#cancel_reason_select").val();
+                if (reason === 'other' && !$("#cancel_detail_reason").val().trim()) {
+                    alert("기타 사유를 입력해 주세요.");
+                    $("#cancel_detail_reason").trigger('focus');
+                    return;
+                }
                 if (!reason) {
                     alert("취소 사유를 선택해 주세요.");
                     return;
@@ -1108,9 +800,14 @@
             });
 
             // Return Submit
-            $("#return_form .col4").on("click", function (e) {
+            $("#return_form").on("submit", function (e) {
                 e.preventDefault();
                 var reason = $("#return_reason_select").val();
+                if (reason === 'other' && !$("#return_detail_reason").val().trim()) {
+                    alert("기타 사유를 입력해 주세요.");
+                    $("#return_detail_reason").trigger('focus');
+                    return;
+                }
                 if (!reason) {
                     alert("반품 사유를 선택해 주세요.");
                     return;
@@ -1146,9 +843,14 @@
             });
 
             // Exchange Submit
-            $("#exchange_form .col3").on("click", function (e) {
+            $("#exchange_form").on("submit", function (e) {
                 e.preventDefault();
                 var reason = $("#exchange_reason_select").val();
+                if (reason === 'other' && !$("#exchange_detail_reason").val().trim()) {
+                    alert("기타 사유를 입력해 주세요.");
+                    $("#exchange_detail_reason").trigger('focus');
+                    return;
+                }
                 if (!reason) {
                     alert("교환 사유를 선택해 주세요.");
                     return;
@@ -1247,12 +949,12 @@
                 var startDate = new Date();
                 startDate.setMonth(startDate.getMonth() - months);
 
-                $("#start_date").datepicker("setDate", formatDate(startDate));
-                $("#end_date").datepicker("setDate", formatDate(endDate));
+                $("#start_date").val(formatDate(startDate));
+                $("#end_date").val(formatDate(endDate));
             }
 
             // Initialize with 1 month default
-            setDateRange(1);
+            if (!$("#start_date").val() && !$("#end_date").val()) setDateRange(1);
 
             $(".period_btn_wrap .btn02").click(function (e) {
                 e.preventDefault();
@@ -1264,7 +966,7 @@
             });
 
             $(".btn_search").click(function () {
-                var url = new URL("{{ route('mypage.order.list') }}", window.location.origin);
+                var url = new window.URL("{{ route('mypage.order.list') }}", window.location.origin);
                 url.searchParams.set("tab", "{{ $tab }}");
                 url.searchParams.set("status", "{{ $status }}");
 
@@ -1342,6 +1044,12 @@
         });
 
         // Popup Functions
+        document.querySelectorAll('.js-member-qna').forEach(button => button.addEventListener('click', () => {
+            const data = button.dataset;
+            document.getElementById('qna_order_item_id').value = data.orderItemId;
+            document.getElementById('qna_prd_category').textContent = data.category;
+            openQnaPopup(data.name, data.image);
+        }));
         function openQnaPopup(name, image) {
             $("#qna_prd_name").text(name);
             $("#qna_prd_img").css("background-image", "url('" + image + "')");

@@ -1,60 +1,20 @@
-@extends('layouts.frontend')
-
-@section('page_type', 'sub')
-
+@extends('layouts.market-sub')
+@section('page_title', '가입안내')
 @section('content')
-<div id="container">
-    <div id="contents">
-        <div class="row">
-            <div class="box box1">
-                <div class="page_info" style="padding: 40px 0; border-bottom: 1px solid #eee; margin-bottom: 45px;">
-                    <h2 class="ttl" style="font-size: 32px; font-weight: 700; color: #111;">가입 안내</h2>
-                    <ul class="dep" style="display: flex; gap: 8px; font-size: 14px; color: #777; list-style: none; padding: 0; margin: 10px 0 0 0;">
-                        <li>HOME</li>
-                        <li>&gt;</li>
-                        <li>가입 안내</li>
-                    </ul>
-                </div>
-
-                <div class="conbx" style="max-width: 800px; margin: 0 auto; padding: 40px 20px;">
-                    <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 20px; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                        <div style="background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); padding: 30px; text-align: center; color: white;">
-                            <h3 style="font-size: 24px; font-weight: 700; margin: 0 0 10px 0;">간편 채널 분양 파트너 모집</h3>
-                            <p style="margin: 0; font-size: 15px; opacity: 0.9;">미구마켓과 함께 성장할 판매자를 모십니다.</p>
-                        </div>
-                        <div style="padding: 40px;">
-                            <h4 style="font-size: 18px; font-weight: 700; color: #111; margin: 0 0 20px 0; border-left: 4px solid #6366f1; padding-left: 10px;">가입 절차 안내</h4>
-                            <div style="display: flex; flex-direction: column; gap: 15px;">
-                                <div style="display: flex; gap: 15px; align-items: flex-start;">
-                                    <div style="background: #f1f5f9; color: #6366f1; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; margin-top: 3px;">1</div>
-                                    <div>
-                                        <h5 style="font-size: 16px; font-weight: 700; color: #333; margin: 0 0 5px 0;">회원가입 및 로그인</h5>
-                                        <p style="font-size: 14px; color: #666; margin: 0;">기본 이메일 또는 휴대폰 번호 기반 가입을 진행합니다.</p>
-                                    </div>
-                                </div>
-                                <div style="display: flex; gap: 15px; align-items: flex-start;">
-                                    <div style="background: #f1f5f9; color: #6366f1; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; margin-top: 3px;">2</div>
-                                    <div>
-                                        <h5 style="font-size: 16px; font-weight: 700; color: #333; margin: 0 0 5px 0;">판매자 정보 작성 및 심사 요청</h5>
-                                        <p style="font-size: 14px; color: #666; margin: 0;">상호명, 사업자 번호, 정산용 통장 사본을 등록하여 어드민 승인을 요청합니다.</p>
-                                    </div>
-                                </div>
-                                <div style="display: flex; gap: 15px; align-items: flex-start;">
-                                    <div style="background: #f1f5f9; color: #6366f1; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; flex-shrink: 0; margin-top: 3px;">3</div>
-                                    <div>
-                                        <h5 style="font-size: 16px; font-weight: 700; color: #333; margin: 0 0 5px 0;">채널 분양 완료 및 상품 판매 개시</h5>
-                                        <p style="font-size: 14px; color: #666; margin: 0;">승인 완료와 함께 본인의 전용 입장코드 및 Shop채널이 분양되어 판매가 개시됩니다.</p>
-                                    </div>
-                                </div>
-                            </div>
-                            <div style="margin-top: 40px; text-align: center;">
-                                <a href="/seller/register" style="background: #6366f1; color: white; padding: 12px 30px; border-radius: 8px; font-size: 16px; font-weight: 600; text-decoration: none; display: inline-block; transition: background 0.2s;">판매자 가입하러 가기</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="market-shell">
+    <header class="market-page-head">
+        <nav class="market-breadcrumb" aria-label="현재 위치"><a href="{{ route('home') }}">HOME</a><span aria-hidden="true">/</span><span>가입안내</span></nav>
+        <p class="home-eyebrow">START YOUR MARKET</p><h1>나만의 시작을,<br><em>미구마켓과 함께.</em></h1>
+        <p class="market-page-description">회원으로 쇼핑을 시작하거나, 판매자로 나만의 Shop 채널을 운영하세요.</p>
+    </header>
+    <section class="market-onboarding" aria-labelledby="member-guide">
+        <div class="onboarding-heading"><span>FOR MEMBERS</span><h2 id="member-guide">미구마켓을<br>이용하고 싶다면.</h2><a class="market-button" href="{{ route('front.member.register.member') }}">일반 회원가입 <span aria-hidden="true">↗</span></a></div>
+        <ol><li><span>01</span><div><h3>회원가입</h3><p>아이디·이메일·비밀번호를 입력하고 필요한 약관에 동의합니다.</p></div></li><li><span>02</span><div><h3>로그인 및 정보 관리</h3><p>마이페이지에서 회원정보와 배송지를 관리합니다.</p></div></li><li><span>03</span><div><h3>Shop 채널 이용</h3><p>전달받은 채널 주소나 입장코드로 방문하고 주문내역을 확인하세요.</p></div></li></ol>
+    </section>
+    <section class="market-onboarding" aria-labelledby="seller-guide">
+        <div class="onboarding-heading"><span>FOR SELLERS</span><h2 id="seller-guide">나만의 Shop을<br>운영하고 싶다면.</h2><a class="market-button market-button-outline" href="{{ route('front.seller.register') }}">판매자 등록 <span aria-hidden="true">↗</span></a></div>
+        <ol><li><span>01</span><div><h3>판매자 정보 등록</h3><p>회원 로그인 후 판매자 등록을 진행하고 필요한 운영정보를 준비합니다.</p></div></li><li><span>02</span><div><h3>채널 운영정보 확인</h3><p>승인 상태와 채널 정보를 확인하고 판매·정산에 필요한 정보를 등록합니다.</p></div></li><li><span>03</span><div><h3>Shop 생성 및 상품 연결</h3><p>채널관리자에서 Shop을 등록하고 판매상품과 공개 범위를 구성하세요.</p></div></li></ol>
+    </section>
+    <aside class="market-next-banner"><div><p class="home-eyebrow">NEED HELP?</p><h2>시작하기 전, 궁금한 점이 있나요?</h2></div><a class="home-text-link" href="{{ route('cs.faq') }}">자주 묻는 질문 <span class="home-link-arrow" aria-hidden="true">↗</span></a></aside>
 </div>
 @endsection

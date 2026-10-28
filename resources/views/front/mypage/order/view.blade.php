@@ -8,8 +8,14 @@
             \App\Support\OrderItemStatus::CANCELLED,
             \App\Support\OrderItemStatus::CANCEL_REQUESTED,
             \App\Support\OrderItemStatus::RETURN_REQUESTED,
+            \App\Support\OrderItemStatus::RETURN_RECEIVED,
+            \App\Support\OrderItemStatus::RETURN_HOLD,
             \App\Support\OrderItemStatus::RETURNED,
             \App\Support\OrderItemStatus::EXCHANGE_REQUESTED,
+            \App\Support\OrderItemStatus::EXCHANGE_APPROVED,
+            \App\Support\OrderItemStatus::EXCHANGE_HOLD_BEFORE,
+            \App\Support\OrderItemStatus::EXCHANGE_RECEIVED,
+            \App\Support\OrderItemStatus::EXCHANGE_HOLD_AFTER,
             \App\Support\OrderItemStatus::EXCHANGED,
         ], true);
     });
@@ -24,6 +30,8 @@
     $returnedItems = $order->orders_products->filter(function($p) {
         return in_array($p->normalized_status, [
             \App\Support\OrderItemStatus::RETURN_REQUESTED,
+            \App\Support\OrderItemStatus::RETURN_RECEIVED,
+            \App\Support\OrderItemStatus::RETURN_HOLD,
             \App\Support\OrderItemStatus::RETURNED,
         ], true);
     });
@@ -31,6 +39,10 @@
     $exchangedItems = $order->orders_products->filter(function($p) {
         return in_array($p->normalized_status, [
             \App\Support\OrderItemStatus::EXCHANGE_REQUESTED,
+            \App\Support\OrderItemStatus::EXCHANGE_APPROVED,
+            \App\Support\OrderItemStatus::EXCHANGE_HOLD_BEFORE,
+            \App\Support\OrderItemStatus::EXCHANGE_RECEIVED,
+            \App\Support\OrderItemStatus::EXCHANGE_HOLD_AFTER,
             \App\Support\OrderItemStatus::EXCHANGED,
         ], true);
     });
@@ -57,11 +69,11 @@
                             <tbody class="textL">
                                 <tr>
                                     <th class="w160">주문자 이름</th>
-                                    <td>{{ $order->name }}</td>
+                                    <td>{{ $order->buyer_name ?: $order->name }}</td>
                                 </tr>
                                 <tr>
                                     <th class="w160">휴대폰 번호</th>
-                                    <td>{{ $order->mobile }}</td>
+                                    <td>{{ $order->buyer_mobile ?: $order->mobile }}</td>
                                 </tr>
                                 <tr>
                                     <th class="w160">이메일 주소</th>
@@ -92,7 +104,7 @@
                                 </tr>
                                 <tr>
                                     <th class="w160">배송메모</th>
-                                    <td>{{ $order->delivery_instruction ?? '-' }}</td>
+                                    <td>{{ $order->delivery_memo ?: $order->delivery_instruction ?: '-' }}</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -113,28 +125,27 @@
                             <tbody>
                                 @forelse($purchasedItems as $item)
                                     @php
-                                        $shopName = \Illuminate\Support\Facades\DB::table('vendors_business_details')
-                                            ->where('vendor_id', $item->vendor_id)
-                                            ->value('shop_name') ?? 'Me9 브랜드 전용관';
+                                        $shopName = $item->shopChannel?->channel_name ?: $item->vendor?->vendorbusinessdetails?->shop_name ?: '판매처 정보 없음';
                                     @endphp
                                     <tr>
                                         <td class="status col1">{{ $item->status_label }}</td>
                                         <td class="info">
                                             <div class="con_w">
                                                 <div class="img_bx"
-                                                    style="background-image: url('{{ $item->product && !empty($item->product->product_image) ? asset('front/images/product_images/small/' . $item->product->product_image) : 'https://placehold.co/100' }}'); background-size: cover; background-position: center; width: 70px; height: 70px; border: 1px solid #eee;">
+                                                    style="background-image: url('{{ $item->product && !empty($item->product->product_image) ? asset('front/images/product_images/small/' . $item->product->product_image) : asset('front/images/product_images/small/no-image.png') }}'); background-size: cover; background-position: center; width: 70px; height: 70px; border: 1px solid #eee;">
                                                 </div>
                                                 <div class="txt_w">
                                                     <div style="font-size: 11px; color: #888; margin-bottom: 3px;">{{ $shopName }}</div>
                                                     <strong class="subject">{{ $item->product_name }}</strong>
                                                     <p>옵션: {{ $item->product_size }} / {{ $item->product_qty }}개</p>
+                                                    @include('front.mypage.order.partials.item_metadata', ['item' => $item])
                                                 </div>
                                             </div>
                                         </td>
                                         <td class="price t_r">{{ number_format($item->product_price * $item->product_qty) }} 원</td>
                                         <td class="t_r">
                                             @if($item->normalized_status === \App\Support\OrderItemStatus::CONFIRMED)
-                                                구매확정일<br> {{ $item->updated_at->format('Y.m.d') }}
+                                                구매확정일<br> {{ ($item->confirmed_at ?: $item->updated_at)->format('Y.m.d') }}
                                             @else
                                                 -
                                             @endif
@@ -167,7 +178,7 @@
                                     </tr>
                                     <tr>
                                         <th>적립포인트</th>
-                                        <td>+ 0 point</td>
+                                        <td>{{ number_format($order->orders_products->reject(fn($item) => $item->is_exchange_replacement)->sum(fn($item) => app(\App\Services\SettlementCalculator::class)->paymentAmounts($item)['reward'])) }} P</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -177,12 +188,14 @@
                                 <tbody>
                                     <tr>
                                         <th>총 상품금액</th>
-                                        <td>{{ number_format($order->grand_total - $order->shipping_charges) }} 원</td>
+                                        <td>{{ number_format($paymentTotals['paid_line_total']) }} 원</td>
                                     </tr>
                                     <tr>
                                         <th>배송비</th>
                                         <td>+ {{ number_format($order->shipping_charges) }} 원</td>
                                     </tr>
+                                    <tr><th>쿠폰 할인</th><td>− {{ number_format($paymentTotals['coupon']) }} 원</td></tr>
+                                    <tr><th>사용 포인트</th><td>− {{ number_format($paymentTotals['points']) }} P</td></tr>
                                     <tr class="last">
                                         <th>최종 결제금액</th>
                                         <td><strong>{{ number_format($order->grand_total) }}</strong> 원</td>
@@ -197,9 +210,7 @@
                 @if($cancelledItems->count() > 0)
                     @foreach($cancelledItems as $item)
                         @php
-                            $shopName = \Illuminate\Support\Facades\DB::table('vendors_business_details')
-                                ->where('vendor_id', $item->vendor_id)
-                                ->value('shop_name') ?? 'Me9 브랜드 전용관';
+                            $shopName = $item->shopChannel?->channel_name ?: $item->vendor?->vendorbusinessdetails?->shop_name ?: '판매처 정보 없음';
                             $claim = $order->claims->where('order_product_id', $item->id)->where('type', 'cancel')->first();
                         @endphp
                         <div class="box box5">
@@ -218,11 +229,12 @@
                                             <td class="info">
                                                 <div class="con_w">
                                                     <div class="img_bx"
-                                                        style="background-image: url('{{ $item->product && !empty($item->product->product_image) ? asset('front/images/product_images/small/' . $item->product->product_image) : 'https://placehold.co/100' }}'); background-size: cover; background-position: center; width: 70px; height: 70px; border: 1px solid #eee;">
+                                                        style="background-image: url('{{ $item->product && !empty($item->product->product_image) ? asset('front/images/product_images/small/' . $item->product->product_image) : asset('front/images/product_images/small/no-image.png') }}'); background-size: cover; background-position: center; width: 70px; height: 70px; border: 1px solid #eee;">
                                                     </div>
                                                     <div class="txt_w">
                                                         <strong class="subject">{{ $item->product_name }}</strong>
                                                         <p>옵션: {{ $item->product_size }} / {{ $item->product_qty }}개</p>
+                                                    @include('front.mypage.order.partials.item_metadata', ['item' => $item])
                                                     </div>
                                                 </div>
                                             </td>
@@ -241,8 +253,9 @@
                                         </tr>
                                         <tr>
                                             <th>처리 상태</th>
-                                            <td>{{ $claim ? $claim->status : '완료' }}</td>
+                                            <td>{{ $item->status_label }}</td>
                                         </tr>
+                                        @include('front.mypage.order.partials.claim_metadata', ['item' => $item, 'claim' => $claim])
                                     </tbody>
                                 </table>
                             </div>
@@ -253,9 +266,7 @@
                 @if($returnedItems->count() > 0)
                     @foreach($returnedItems as $item)
                         @php
-                            $shopName = \Illuminate\Support\Facades\DB::table('vendors_business_details')
-                                ->where('vendor_id', $item->vendor_id)
-                                ->value('shop_name') ?? 'Me9 브랜드 전용관';
+                            $shopName = $item->shopChannel?->channel_name ?: $item->vendor?->vendorbusinessdetails?->shop_name ?: '판매처 정보 없음';
                             $claim = $order->claims->where('order_product_id', $item->id)->where('type', 'return')->first();
                         @endphp
                         <div class="box box6">
@@ -274,11 +285,12 @@
                                             <td class="info">
                                                 <div class="con_w">
                                                     <div class="img_bx"
-                                                        style="background-image: url('{{ $item->product && !empty($item->product->product_image) ? asset('front/images/product_images/small/' . $item->product->product_image) : 'https://placehold.co/100' }}'); background-size: cover; background-position: center; width: 70px; height: 70px; border: 1px solid #eee;">
+                                                        style="background-image: url('{{ $item->product && !empty($item->product->product_image) ? asset('front/images/product_images/small/' . $item->product->product_image) : asset('front/images/product_images/small/no-image.png') }}'); background-size: cover; background-position: center; width: 70px; height: 70px; border: 1px solid #eee;">
                                                     </div>
                                                     <div class="txt_w">
                                                         <strong class="subject">{{ $item->product_name }}</strong>
                                                         <p>옵션: {{ $item->product_size }} / {{ $item->product_qty }}개</p>
+                                                    @include('front.mypage.order.partials.item_metadata', ['item' => $item])
                                                     </div>
                                                 </div>
                                             </td>
@@ -297,8 +309,9 @@
                                         </tr>
                                         <tr>
                                             <th>처리 상태</th>
-                                            <td>{{ $claim ? $claim->status : '완료' }}</td>
+                                            <td>{{ $item->status_label }}</td>
                                         </tr>
+                                        @include('front.mypage.order.partials.claim_metadata', ['item' => $item, 'claim' => $claim])
                                     </tbody>
                                 </table>
                             </div>
@@ -309,9 +322,7 @@
                 @if($exchangedItems->count() > 0)
                     @foreach($exchangedItems as $item)
                         @php
-                            $shopName = \Illuminate\Support\Facades\DB::table('vendors_business_details')
-                                ->where('vendor_id', $item->vendor_id)
-                                ->value('shop_name') ?? 'Me9 브랜드 전용관';
+                            $shopName = $item->shopChannel?->channel_name ?: $item->vendor?->vendorbusinessdetails?->shop_name ?: '판매처 정보 없음';
                             $claim = $order->claims->where('order_product_id', $item->id)->where('type', 'exchange')->first();
                         @endphp
                         <div class="box box7">
@@ -330,7 +341,7 @@
                                             <td class="info">
                                                 <div class="con_w">
                                                     <div class="img_bx"
-                                                        style="background-image: url('{{ $item->product && !empty($item->product->product_image) ? asset('front/images/product_images/small/' . $item->product->product_image) : 'https://placehold.co/100' }}'); background-size: cover; background-position: center; width: 70px; height: 70px; border: 1px solid #eee;">
+                                                        style="background-image: url('{{ $item->product && !empty($item->product->product_image) ? asset('front/images/product_images/small/' . $item->product->product_image) : asset('front/images/product_images/small/no-image.png') }}'); background-size: cover; background-position: center; width: 70px; height: 70px; border: 1px solid #eee;">
                                                     </div>
                                                     <div class="txt_w">
                                                         @if($claim)
@@ -338,6 +349,7 @@
                                                         @endif
                                                         <strong class="subject">{{ $item->product_name }}</strong>
                                                         <p>옵션: {{ $item->product_size }} / {{ $item->product_qty }}개</p>
+                                                    @include('front.mypage.order.partials.item_metadata', ['item' => $item])
                                                     </div>
                                                 </div>
                                             </td>
@@ -352,18 +364,20 @@
                                     <tbody>
                                         <tr>
                                             <th>교환 사유</th>
-                                            <td>{{ $claim ? config('array.order_return_reasons.' . $claim->reason, $claim->reason) : '정보 없음' }}@if($claim && $claim->detail_reason) ({{ $claim->detail_reason }})@endif</td>
+                                            <td>{{ $claim ? config('array.order_exchange_reasons.' . $claim->reason, $claim->reason) : '정보 없음' }}@if($claim && $claim->detail_reason) ({{ $claim->detail_reason }})@endif</td>
                                         </tr>
                                         <tr>
                                             <th>처리 상태</th>
-                                            <td>{{ $claim ? $claim->status : '완료' }}</td>
+                                            <td>{{ $item->status_label }}</td>
                                         </tr>
+                                        @include('front.mypage.order.partials.claim_metadata', ['item' => $item, 'claim' => $claim])
                                     </tbody>
                                 </table>
                             </div>
                         </div>
                     @endforeach
                 @endif
+                <div class="box"><a class="btn02" href="{{ route('mypage.order.list') }}">주문목록으로 돌아가기</a></div>
             </div>
         </div>
     </div>

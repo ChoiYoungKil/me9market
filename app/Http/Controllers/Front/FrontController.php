@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Front;
 
 use App\Http\Controllers\Controller;
 use App\Models\Faq;
+use App\Models\Contact;
 use App\Models\Notice;
 use App\Models\Order;
 use App\Models\OrderClaim;
@@ -23,6 +24,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class FrontController extends Controller
 {
@@ -130,34 +133,40 @@ class FrontController extends Controller
 
     public function nonmemberOrderCheckSubmit(Request $request)
     {
-        $request->validate([
-            'order_id' => 'required',
-            'phone' => 'required',
+        // A failed new lookup must not retain access granted by an earlier lookup.
+        $request->session()->forget('nonmember_order_id');
+
+        $splitPhone = $request->hasAny(['phone_prefix', 'phone_middle', 'phone_last']);
+        $phoneRules = $splitPhone ? [
+            'phone_prefix' => ['required', 'string', 'in:010,011,016,017,018,019'],
+            'phone_middle' => ['required', 'string', $request->input('phone_prefix') === '010' ? 'regex:/^[0-9]{4}$/D' : 'regex:/^[0-9]{3,4}$/D'],
+            'phone_last' => ['required', 'string', 'regex:/^[0-9]{4}$/D'],
+        ] : [
+            // Preserve compatibility with existing forms posting a single phone value.
+            'phone' => ['required', 'string', 'max:30', 'regex:/^01[016789][\s-]?[0-9]{3,4}[\s-]?[0-9]{4}$/D'],
+        ];
+        $data = $request->validate(array_merge([
+            'order_id' => ['required', 'string', 'max:27', 'regex:/^(?:Me9-(?:Shop-)?)?[0-9]{1,18}$/iD'],
+        ], $phoneRules), [
+            'order_id.required' => '주문코드를 입력해 주세요.',
+            'order_id.*' => '주문 완료 시 안내받은 주문코드를 정확히 입력해 주세요.',
+            'phone_prefix.*' => '주문자 연락처 앞자리를 선택해 주세요.',
+            'phone_middle.*' => '주문자 연락처 중간자리를 숫자로 정확히 입력해 주세요.',
+            'phone_last.*' => '주문자 연락처 끝자리 숫자 4자리를 입력해 주세요.',
+            'phone.*' => '주문자 연락처를 정확히 입력해 주세요.',
         ]);
 
-        // Clean values
-        $cleanPhone = str_replace('-', '', $request->phone);
-        $orderIdInput = trim($request->order_id);
-        $cleanOrderId = $orderIdInput;
-        if (str_contains($cleanOrderId, '-')) {
-            $parts = explode('-', $cleanOrderId);
-            $cleanOrderId = end($parts);
-        }
-        $cleanOrderId = preg_replace('/[^0-9]/', '', $cleanOrderId);
-        $id = intval($cleanOrderId);
+        $id = (int) preg_replace('/^Me9-(?:Shop-)?/i', '', $data['order_id']);
+        $phone = $splitPhone
+            ? $data['phone_prefix'].$data['phone_middle'].$data['phone_last']
+            : preg_replace('/[\s-]+/', '', $data['phone']);
+        $order = Order::find($id);
+        $orderPhone = $order ? preg_replace('/[\s-]+/', '', $order->buyer_mobile ?: $order->mobile) : null;
 
-        $order = Order::where('id', $id)->first();
-        if (! $order) {
-            $order = Order::where('id', $request->order_id)->first();
-        }
-
-        if (! $order) {
-            return redirect()->back()->with('flash_message_error', '입력하신 주문 정보와 일치하는 주문을 찾을 수 없습니다.');
-        }
-
-        $orderPhone = str_replace('-', '', $order->mobile);
-        if ($orderPhone !== $cleanPhone) {
-            return redirect()->back()->with('flash_message_error', '주문번호와 연락처가 일치하지 않습니다.');
+        if (! $order || $orderPhone !== $phone) {
+            throw ValidationException::withMessages([
+                'order_id' => '주문코드와 주문자 연락처가 일치하지 않습니다. 입력한 정보를 확인해 주세요.',
+            ]);
         }
 
         Session::put('nonmember_order_id', $order->id);
@@ -172,15 +181,23 @@ class FrontController extends Controller
             return redirect()->route('front.nonmember.order_check')->with('flash_message_error', '주문 조회를 먼저 완료해 주세요.');
         }
 
-        $order = Order::with(['orders_products.claims', 'orders_products.distributor', 'orders_products.product.distributor', 'claims'])->find($orderId);
+        $order = Order::with(['orders_products.claims', 'orders_products.distributor', 'orders_products.product.distributor',
+            'orders_products.product.images', 'orders_products.product.category', 'orders_products.shopChannel.vendor',
+            'orders_products.exchangeReplacement', 'orders_products.replacementFor', 'claims'])->find($orderId);
         if (! $order) {
+            Session::forget('nonmember_order_id');
             return redirect()->route('front.nonmember.order_check')->with('flash_message_error', '해당 주문을 찾을 수 없습니다.');
         }
         $order->orders_products->each(function (OrdersProduct $item) {
             $item->setAttribute('manual_return_address', app(ReturnAddressResolver::class)->forOrderItem($item));
         });
 
-        return view('front.pages.nonmember_order_details', compact('order'));
+        $inquiries = Contact::where('order_id', $order->id)->where('type', 'inquiry')
+            ->whereIn('order_product_id', $order->orders_products->pluck('id'))->latest('id')->get();
+        $earnedPoints = \App\Models\PointTransaction::where('order_id', $order->id)->where('type', 'earn')->sum('points');
+
+        return response()->view('front.pages.nonmember_order_details', compact('order', 'inquiries', 'earnedPoints'))
+            ->header('Cache-Control', 'no-store, private');
     }
 
     public function downloadOrderInvoice($id)
@@ -206,15 +223,23 @@ class FrontController extends Controller
     public function nonmemberOrderClaimSubmit(Request $request)
     {
         $data = $request->validate([
-            'order_id' => 'required',
-            'order_product_id' => 'required',
+            'order_id' => 'required|integer',
+            'order_product_id' => 'required|integer',
             'type' => 'required|in:cancel,return,exchange,confirm',
-            'reason' => 'required_unless:type,confirm',
+            'reason' => ['required_unless:type,confirm', 'nullable', 'string', 'max:100',
+                Rule::when($request->input('type') === 'cancel', Rule::in(['고객 단순 변심', '배송 지연', '기타']))],
+            'detail_reason' => ['nullable', 'string', 'max:2000',
+                Rule::requiredIf(in_array($request->input('type'), ['cancel', 'return', 'exchange'], true) && $request->input('reason') === '기타')],
             'recovery_method' => 'required_if:type,return,exchange|nullable|in:자동회수,수동회수,automatic,manual',
             'customer_courier_name' => 'nullable|string|max:100',
             'customer_tracking_number' => 'nullable|string|max:100',
             'rating' => 'nullable|numeric|between:0.5,5|multiple_of:0.5|required_with:review',
             'review' => 'nullable|string|max:2000',
+        ], [
+            'reason.*' => '신청 사유를 선택해 주세요.',
+            'detail_reason.required' => $request->input('type') === 'cancel' ? '기타 취소 사유를 입력해 주세요.' : '기타 신청 사유를 입력해 주세요.',
+            'detail_reason.string' => '상세 사유를 올바르게 입력해 주세요.',
+            'detail_reason.max' => '상세 사유는 2,000자 이내로 입력해 주세요.',
         ]);
 
         return DB::transaction(function () use ($request, $data) {
@@ -232,7 +257,8 @@ class FrontController extends Controller
             abort(404);
         }
 
-        if (! OrderItemStatus::customerActionAllowed($data['type'], $ordersProduct->normalized_status)) {
+        if (! OrderItemStatus::customerActionAllowed($data['type'], $ordersProduct->normalized_status)
+            || ($data['type'] === 'exchange' && $ordersProduct->normalized_status !== OrderItemStatus::DELIVERED)) {
             return back()->withErrors(['action' => '현재 주문 상태에서는 요청한 처리를 진행할 수 없습니다.']);
         }
 
@@ -252,9 +278,9 @@ class FrontController extends Controller
             }
 
             // Save rating and review to ratings table
-            if (! empty($data['rating']) && $order->user_id && User::whereKey($order->user_id)->exists()) {
+            if (! empty($data['rating'])) {
                 DB::table('ratings')->insert([
-                    'user_id' => $order->user_id,
+                    'user_id' => $order->user_id ?: 0,
                     'product_id' => $ordersProduct->product_id,
                     'rating' => $data['rating'],
                     'review' => $data['review'] ?? '',
@@ -276,7 +302,10 @@ class FrontController extends Controller
             $ordersProduct->setStatus($statusCodeMap[$claimType]);
             $ordersProduct->save();
 
-            $detailReason = $request->detail_reason ?? '';
+            $detailReason = $data['detail_reason'] ?? '';
+            if ($claimType === 'cancel' && $data['reason'] !== '기타') {
+                $detailReason = '';
+            }
             $pickupMethod = null;
             $returnAddress = null;
             if ($claimType == 'return' || $claimType == 'exchange') {
@@ -314,11 +343,11 @@ class FrontController extends Controller
     public function nonmemberOrderInquirySubmit(Request $request)
     {
         $data = $request->validate([
-            'order_id' => 'required',
-            'order_product_id' => 'required',
+            'order_id' => 'required|integer',
+            'order_product_id' => 'required|integer',
             'inquiry_category' => 'required|in:delivery,claim,product,payment,other',
             'subject' => 'required|string|max:255',
-            'message' => 'required|string',
+            'message' => 'required|string|max:3000',
         ]);
 
         $order = Order::find($request->order_id);
@@ -348,9 +377,9 @@ class FrontController extends Controller
             'order_id' => $order->id,
             'order_product_id' => $ordersProduct->id,
             'product_id' => $ordersProduct->product_id,
-            'name' => $order->name,
+            'name' => $order->buyer_name ?: $order->name,
             'email' => $order->email,
-            'phone' => $order->mobile,
+            'phone' => $order->buyer_mobile ?: $order->mobile,
             'inquiry_category' => $data['inquiry_category'],
             'subject' => '[상품문의] '.$request->subject.' (상품: '.$ordersProduct->product_name.')',
             'message' => $request->message,

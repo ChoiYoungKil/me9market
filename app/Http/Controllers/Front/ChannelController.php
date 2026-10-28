@@ -1896,7 +1896,7 @@ class ChannelController extends Controller
         $query = \App\Models\Order::with([
             'orders_products' => function($q) use ($itemFilter) {
                 $itemFilter($q);
-                $q->with(['shopChannel', 'shopChannelProduct']);
+                $q->with(['shopChannel', 'shopChannelProduct', 'product.attributes']);
             },
             'user',
             'claims',
@@ -1986,6 +1986,7 @@ class ChannelController extends Controller
         }
 
         $orders = $query->orderBy('created_at', 'desc')->paginate($filters['per_page'] ?? 20);
+        $orders->getCollection()->loadMissing('orders_products.exchangeReplacement');
 
         $productIds = $orders->getCollection()
             ->flatMap(fn ($order) => $order->orders_products->pluck('product_id'))
@@ -2004,7 +2005,8 @@ class ChannelController extends Controller
         $orders->getCollection()->transform(function($order) use ($jointProductIds) {
             $order->order_no = 'Me9-' . str_pad($order->id, 8, '0', STR_PAD_LEFT); 
             $order->user_name = $order->buyer_name ?: $order->name;
-            $order->claims_data = $order->claims; 
+            $order->setRelation('claims', $order->claims->whereIn('order_product_id', $order->orders_products->pluck('id'))->values());
+            $order->claims_data = $order->claims;
             
             $vendorItems = $order->orders_products;
             $firstItem = $vendorItems->first();
@@ -2020,13 +2022,20 @@ class ChannelController extends Controller
 
                 return [
                     'id' => $item->id,
-                    'status' => $item->status_code ?: $item->item_status,
+                    'status' => $item->normalized_status,
+                    'replacement' => $item->exchangeReplacement ? [
+                        'id' => $item->exchangeReplacement->id,
+                        'status_label' => $item->exchangeReplacement->status_label,
+                        'courier_name' => $item->exchangeReplacement->courier_name,
+                        'tracking_number' => $item->exchangeReplacement->tracking_number,
+                    ] : null,
                     'status_label' => $item->status_label,
                     'order_type' => $isJointPurchase ? 'joint' : 'normal',
                     'order_type_label' => $isJointPurchase ? '공동구매' : '일반',
                     'product_name' => $item->product_name,
                     'product_code' => $item->product_code,
                     'option_name' => trim(($item->product_color ?: '-') . '/' . ($item->product_size ?: '-'), '/'),
+                    'exchange_options' => ($item->product?->attributes ?? collect())->filter(fn ($attribute) => (int) $attribute->status === 1 && abs((float) $attribute->price_delta - (float) $item->option_price_adjustment) < 0.001)->pluck('size')->values()->all(),
                     'qty' => $item->product_qty,
                     'price' => $item->selling_price ?: $item->product_price,
                     'line_total' => $lineTotal,

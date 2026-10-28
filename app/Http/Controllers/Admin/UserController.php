@@ -13,6 +13,30 @@ use App\Models\VendorsBankDetail;
 
 class UserController extends Controller
 {
+    public function sellerReview(int $id)
+    {
+        Session::put('page', 'users');
+        $user = User::findOrFail($id);
+        $details = app(\App\Services\MemberRegistration::class)->details($user);
+        $issues = app(\App\Services\SellerApproval::class)->issues($user, $details['vendorDetails'], $details['businessDetails']);
+        $approvedBy = $details['vendorDetails']?->seller_approved_by
+            ? \App\Models\Admin::find($details['vendorDetails']->seller_approved_by) : null;
+        return view('admin.users.seller_review', $details + compact('issues', 'approvedBy'));
+    }
+
+    public function approveSeller(Request $request, int $id)
+    {
+        $request->validate(['review_confirmed' => 'accepted']);
+        app(\App\Services\SellerApproval::class)->approve(User::findOrFail($id), auth('admin')->user());
+        return redirect()->route('admin.users.seller_review', $id)->with('success_message', '판매자 승인이 완료되었습니다. 회원 화면에 인증완료로 반영됩니다.');
+    }
+
+    public function registrationDocument(int $vendor, string $kind)
+    {
+        Vendor::findOrFail($vendor);
+        return app(\App\Services\MemberRegistration::class)->document($vendor, $kind);
+    }
+
     // 관리자 패널의 회원 목록 페이지(admin/users/users.blade.php) 렌더링
     public function users(Request $request) {
         // 사이드바 '회원 관리' 탭 활성화
@@ -56,8 +80,9 @@ class UserController extends Controller
         }
 
         $users = $query->orderBy('id', 'desc')->paginate(10);
+        $sellerApprovals = Vendor::whereIn('id', $users->pluck('vendor_id')->filter())->get()->keyBy('id');
         
-        return view('admin.users.users')->with(compact('users'));
+        return view('admin.users.users')->with(compact('users', 'sellerApprovals'));
     }
 
 
@@ -133,6 +158,13 @@ public function addEditUser(Request $request, $id = null)
 
         $this->validate($request, $rules);
 
+        if ($vendorDetails?->seller_requested_at && $request->has('seller_status')
+            && (int) $request->input('seller_status') !== (int) $vendorDetails->status) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'seller_status' => '판매자 승인 검토 화면에서 인증 상태를 변경해 주세요.',
+            ]);
+        }
+
         // Basic Info
         $user->name = $data['name'];
         $user->email = $data['email'];
@@ -146,6 +178,8 @@ public function addEditUser(Request $request, $id = null)
         $user->city = $data['address2'] ?? null; // Detailed address
         
         if (!empty($data['password'])) {
+             $user->temporary_password_issued_at = null;
+             $user->temporary_password_expires_at = null;
              $user->password = bcrypt($data['password']);
         }
         
@@ -171,7 +205,7 @@ public function addEditUser(Request $request, $id = null)
                     $user->save();
                 } else {
                     \App\Models\Vendor::where('id', $user->vendor_id)->update([
-                        'status' => $data['seller_status'] ?? 0,
+                        'status' => $data['seller_status'] ?? ($vendorDetails->status ?? 0),
                         'name' => $user->name,
                         'mobile' => $user->mobile
                     ]);

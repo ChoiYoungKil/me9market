@@ -62,12 +62,16 @@ class SecondaryVerificationRegressionTest extends TestCase
 
         $response = $this->actingAs($user)->get('/mypage/points/status');
         $response->assertOk();
-        $channels = $response->viewData('shopChannels');
+        $channels = $response->viewData('shopChannelsByVendor')->flatten(1)->values();
         $this->assertCount(2, $channels);
         $this->assertNotSame($channels[0]['url'], $channels[1]['url']);
+        $this->assertNotSame($channels[0]['qr'], $channels[1]['qr']);
         foreach ($channels as $channel) {
-            $this->assertStringContainsString($channel['info'], $channel['url']);
-            $this->assertStringContainsString(urlencode($channel['url']), $channel['qr']);
+            $this->assertStringContainsString($channel['code'], $channel['url']);
+            $this->assertStringStartsWith('data:image/png;base64,', $channel['qr']);
+            $png = base64_decode(substr($channel['qr'], strlen('data:image/png;base64,')), true);
+            $this->assertNotFalse($png);
+            $this->assertSame(IMAGETYPE_PNG, getimagesizefromstring($png)[2]);
         }
         $response->assertSee('총 포인트 (200)')->assertDontSee('123-45-67890')->assertDontSee('A채널명');
         $this->assertSame(200.0, (float) $response->viewData('channelPoints'));

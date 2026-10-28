@@ -7,7 +7,7 @@
 
 @section('content')
     <div id="contents">
-        <div id="">
+        <div id="delivery-settings">
             <div class="box_w">
                 <div class="box box1">
                     <!-- 페이지 정보 -->
@@ -30,7 +30,7 @@
                                     <tr>
                                         <th class="w160"><span>배송지 명</span></th>
                                         <td>
-                                            <input type="text" name="name" value="{{ $defaultDelivery->name ?? '' }}">
+                                            <input type="text" name="name" aria-label="기본 배송지 명" required value="{{ $defaultDelivery->name ?? '' }}">
                                         </td>
                                     </tr>
                                     <tr>
@@ -56,9 +56,7 @@
 
                         <!-- 하단버튼 -->
                         <div class="btm_btn mt10 right">
-                            <button type="submit" class="btn01_b"
-                                style="padding:10px 20px; border:1px solid #ddd; background:#fff; cursor:pointer;">기본 배송지
-                                수정</button>
+                            <button type="submit" class="btn_submit">기본 배송지 수정</button>
                         </div>
                     </form>
                 </div>
@@ -125,7 +123,7 @@
                         </div>
 
                         <!-- 하단버튼 -->
-                        <a href="{{ url()->current() }}" class="pop_btn" data-pop="pop1_1">배송지 추가하기</a>
+                        <a href="{{ url()->current() }}" class="pop_btn btn_submit" data-pop="pop1_1">배송지 추가하기</a>
                     </div>
 
                     <!-- 배송지 추가하기 팝업 -->
@@ -133,7 +131,7 @@
                         <div class="pop_w">
                             <div class="pop_inner">
                                 <div class="pop_con w640">
-                                    <div class="close_btn close1">닫기</div>
+                                    <button type="button" class="close_btn close1" aria-label="창닫기">닫기</button>
                                     <div class="page_info type2">
                                         <div class="ttl">배송지 추가하기</div>
                                     </div>
@@ -148,7 +146,7 @@
                                                             <tr>
                                                                 <th class="w160">배송지 명</th>
                                                                 <td>
-                                                                    <input type="text" name="name" required="required">
+                                                                    <input type="text" name="name" aria-label="추가 배송지 명" required="required">
                                                                 </td>
                                                             </tr>
                                                             <tr>
@@ -176,12 +174,12 @@
                                                                     <ul class="chk01">
                                                                         <li>
                                                                             <input type="radio" name="is_default" value="1"
-                                                                                id="pop1_1_radio1_1" checked="">
+                                                                                id="pop1_1_radio1_1">
                                                                             <label for="pop1_1_radio1_1">기본</label>
                                                                         </li>
                                                                         <li>
                                                                             <input type="radio" name="is_default" value="0"
-                                                                                id="pop1_1_radio1_2">
+                                                                                id="pop1_1_radio1_2" checked>
                                                                             <label for="pop1_1_radio1_2">추가</label>
                                                                         </li>
                                                                     </ul>
@@ -195,7 +193,7 @@
 
                                         <!-- 하단버튼 -->
                                         <div class="btm_btn mt10">
-                                            <a href="javascript:;" onclick="submitAddDelivery()">배송지 추가하기</a>
+                                            <button type="submit" class="btn_submit">배송지 추가하기</button>
                                             <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                                         </div>
                                     </form>
@@ -212,7 +210,7 @@
                                     @csrf
                                     <input type="hidden" name="id" id="edit_id">
                                     <div class="pop_con w640">
-                                        <div class="close_btn close1">닫기</div>
+                                        <button type="button" class="close_btn close1" aria-label="창닫기">닫기</button>
                                         <div class="page_info type2">
                                             <div class="ttl">배송지 수정하기</div>
                                         </div>
@@ -223,7 +221,7 @@
                                                         <tbody class="textL">
                                                             <tr>
                                                                 <th class="w160">배송지 명</th>
-                                                                <td><input type="text" name="name" id="edit_name"
+                                                                <td><input type="text" name="name" id="edit_name" aria-label="수정 배송지 명"
                                                                         required="required"></td>
                                                             </tr>
                                                             <tr>
@@ -268,8 +266,7 @@
                                             </div>
                                         </div>
                                         <div class="btm_btn mt10">
-                                            <a href="javascript:;"
-                                                onclick="document.getElementById('editDeliveryForm').submit();">배송지 수정하기</a>
+                                            <button type="submit" class="btn_submit">배송지 수정하기</button>
                                             <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                                         </div>
                                     </div>
@@ -283,7 +280,7 @@
                         <div class="pop_w">
                             <div class="pop_inner">
                                 <div class="pop_con w560">
-                                    <div class="close_btn close1">닫기</div>
+                                    <button type="button" class="close_btn close1" aria-label="창닫기">닫기</button>
                                     <div class="conbx">
                                         <div class="con_w">
                                             <div class="imp_bx01 bN">
@@ -319,18 +316,15 @@
         var element_layer = document.getElementById('daumPostcodeLayer');
         var hasDefaultDelivery = {{ $defaultDelivery ? 'true' : 'false' }};
 
-        function submitAddDelivery() {
-            var form = document.getElementById('addDeliveryForm');
-            var isDefaultInput = form.querySelector('input[name="is_default"][value="1"]');
-
-            if (isDefaultInput && isDefaultInput.checked && hasDefaultDelivery) {
-                if (confirm("기본 배송지로 변경하시겠습니까? 기존 기본 배송지는 추가 배송지로 변경됩니다.")) {
-                    form.submit();
+        ["addDeliveryForm", "editDeliveryForm"].forEach(function (id) {
+            document.getElementById(id).addEventListener('submit', function (event) {
+                if (!this.reportValidity()) { event.preventDefault(); return; }
+                if (this.querySelector('input[name="is_default"][value="1"]').checked && hasDefaultDelivery &&
+                    !confirm("기본 배송지로 변경하시겠습니까? 기존 기본 배송지는 추가 배송지로 변경됩니다.")) {
+                    event.preventDefault();
                 }
-            } else {
-                form.submit();
-            }
-        }
+            });
+        });
 
         function closeDaumPostcode() {
             element_layer.style.display = 'none';
@@ -375,8 +369,8 @@
         }
 
         function initLayerPosition() {
-            var width = 400;
-            var height = 500;
+            var width = Math.min(400, window.innerWidth - 24);
+            var height = Math.min(500, window.innerHeight - 48);
             var borderWidth = 1;
 
             element_layer.style.width = width + 'px';

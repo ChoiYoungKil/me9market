@@ -169,7 +169,7 @@ class ShopChannelRuntime
     public function cartItems(): array
     {
         $shop = $this->currentChannel();
-        $cart = Session::get(self::CART_KEY, []);
+        $cart = app(MemberCart::class)->read($this->currentChannel());
         $ids = array_unique(array_map('intval', array_keys($cart)));
         $products = ShopChannelProduct::with(['product.images', 'product.attributes', 'shopChannel'])
             ->whereIn('id', $ids)
@@ -232,6 +232,11 @@ class ShopChannelRuntime
 
     public function addOptionsToCart(int $shopProductId, array $selections): void
     {
+        app(MemberCart::class)->mutate(fn () => $this->addOptionsToCartUnlocked($shopProductId, $selections));
+    }
+
+    private function addOptionsToCartUnlocked(int $shopProductId, array $selections): void
+    {
         $shop = $this->currentChannel();
 
         $shopProduct = ShopChannelProduct::where('id', $shopProductId)
@@ -241,7 +246,7 @@ class ShopChannelRuntime
             ->whereHas('product', fn ($query) => $query->where('status', 1))
             ->firstOrFail();
 
-        $cart = Session::get(self::CART_KEY, []);
+        $cart = app(MemberCart::class)->read($this->currentChannel());
         foreach ($selections as $selection) {
             $option = trim($selection['option'] ?? '') ?: '기본옵션';
             $this->validateOption($shopProduct, $option);
@@ -271,17 +276,27 @@ class ShopChannelRuntime
             }
         }
 
-        Session::put(self::CART_KEY, $cart);
+        app(MemberCart::class)->save($this->currentChannel(), $cart);
     }
 
     public function removeFromCart(int|string $cartKey): void
     {
-        $cart = Session::get(self::CART_KEY, []);
+        app(MemberCart::class)->mutate(fn () => $this->removeFromCartUnlocked($cartKey));
+    }
+
+    private function removeFromCartUnlocked(int|string $cartKey): void
+    {
+        $cart = app(MemberCart::class)->read($this->currentChannel());
         unset($cart[$cartKey]);
-        Session::put(self::CART_KEY, $cart);
+        app(MemberCart::class)->save($this->currentChannel(), $cart);
     }
 
     public function updateCart(int $shopProductId, int $qty, string $option, ?string $cartKey = null): void
+    {
+        app(MemberCart::class)->mutate(fn () => $this->updateCartUnlocked($shopProductId, $qty, $option, $cartKey));
+    }
+
+    private function updateCartUnlocked(int $shopProductId, int $qty, string $option, ?string $cartKey = null): void
     {
         $shop = $this->currentChannel();
         $shopProduct = ShopChannelProduct::whereKey($shopProductId)
@@ -291,7 +306,7 @@ class ShopChannelRuntime
             ->whereHas('product', fn ($query) => $query->where('status', 1))
             ->firstOrFail();
 
-        $cart = Session::get(self::CART_KEY, []);
+        $cart = app(MemberCart::class)->read($this->currentChannel());
         $key = $cartKey ?? (string) $shopProductId;
         abort_unless((int) $key === $shopProductId && isset($cart[$key]), 404);
         $option = trim($option) ?: '기본옵션';
@@ -313,7 +328,7 @@ class ShopChannelRuntime
                 $this->validateOption($shopProduct, $row['option'], $row['qty']);
             }
         }
-        Session::put(self::CART_KEY, $cart);
+        app(MemberCart::class)->save($this->currentChannel(), $cart);
     }
 
     public function canCheckout(): bool
@@ -543,7 +558,7 @@ class ShopChannelRuntime
                 }
             });
 
-            Session::forget(self::CART_KEY);
+            app(MemberCart::class)->clear($shop);
             Session::put('last_shop_order_id', $order->id);
             Session::put('nonmember_order_id', $order->id);
 

@@ -24,6 +24,9 @@ class CustomerPointService
 
     public function allocateForCheckout(int $userId, int $shopId, int $channelPoints, int $me9Points, array $items, array $totals): array
     {
+        if ($channelPoints + $me9Points > 0 && ShopChannel::find($shopId)?->use_own_pg) {
+            throw ValidationException::withMessages(['channel_points'=>'자사 PG를 사용하는 채널에서는 포인트를 사용할 수 없습니다.']);
+        }
         if (min($channelPoints, $me9Points) < 0 || $channelPoints + $me9Points > floor($totals['total'])) {
             throw ValidationException::withMessages(['channel_points' => '사용 포인트는 결제금액을 초과할 수 없습니다.']);
         }

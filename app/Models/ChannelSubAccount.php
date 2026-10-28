@@ -28,4 +28,9 @@ class ChannelSubAccount extends Model
     {
         return $this->belongsTo(Admin::class);
     }
+
+    public function vendor()
+    {
+        return $this->belongsTo(Vendor::class);
+    }
 }

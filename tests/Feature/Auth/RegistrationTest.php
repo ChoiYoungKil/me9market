@@ -8,6 +8,8 @@ use App\Models\VendorsBusinessDetail;
 use App\Models\VendorsBankDetail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 
 class RegistrationTest extends TestCase
 {
@@ -61,6 +63,8 @@ class RegistrationTest extends TestCase
 
         $response = $this->actingAs($user)->post('/register/step1/update', [
             'name' => 'Updated Name',
+            'agree_terms' => 1, 'agree_privacy' => 1, 'agree_third_party' => 1,
+            'birth_date' => '1990-01-01',
             'gender' => 'Male',
             'mobile_1' => '010',
             'mobile_2' => '1234',
@@ -91,8 +95,10 @@ class RegistrationTest extends TestCase
 
     public function test_register_step2_can_be_updated()
     {
+        Storage::fake('local');
         $user = User::factory()->create([
             'mobile' => '010-1234-5678',
+            'profile_completed_at' => now(),
         ]);
 
         $response = $this->actingAs($user)->post('/register/step2/update', [
@@ -110,8 +116,9 @@ class RegistrationTest extends TestCase
             'address1' => 'Seoul',
             'address2' => 'Gangnam-gu',
             'bank_name' => 'Kookmin Bank',
-            'account_number' => '123456-78-901234',
+            'account_number' => '12345678901234',
             'account_holder_name' => 'Owner Name',
+            'bank_copy_image' => UploadedFile::fake()->image('bank.png'),
             'agree1' => '1',
         ]);
 
@@ -132,7 +139,7 @@ class RegistrationTest extends TestCase
         $this->assertDatabaseHas('vendors_bank_details', [
             'vendor_id' => $user->vendor_id,
             'bank_name' => 'Kookmin Bank',
-            'account_number' => '123456-78-901234',
+            'account_number' => '12345678901234',
         ]);
     }
 
@@ -147,6 +154,7 @@ class RegistrationTest extends TestCase
 
     public function test_register_step3_can_be_updated()
     {
+        Storage::fake('local');
         $vendor = new Vendor;
         $vendor->name = 'Test Vendor';
         $vendor->mobile = '010-1234-5678';
@@ -176,10 +184,14 @@ class RegistrationTest extends TestCase
             'vendor_id' => $vendor->id,
             'type' => 'company',
             'mobile' => '010-1234-5678',
+            'profile_completed_at' => now(),
         ]);
 
         $response = $this->actingAs($user)->post('/register/step3/update', [
             'agree1' => '1',
+            'bank_name' => '국민은행', 'account_number' => '1234567890', 'account_holder_name' => 'Test Owner',
+            'address_proof_image' => UploadedFile::fake()->image('license.png'),
+            'bank_copy_image' => UploadedFile::fake()->image('bank.png'),
         ]);
 
         $response->assertJson([

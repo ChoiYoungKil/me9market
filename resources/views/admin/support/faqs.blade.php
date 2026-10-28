@@ -137,6 +137,7 @@
                                 <li class="{{ request('category') == '상품' ? 'on' : '' }}">
                                     <a href="{{ url('admin/faqs') }}?category=상품">상품</a>
                                 </li>
+                                <li class="{{ request('category') == '포인트' ? 'on' : '' }}"><a href="{{ url('admin/faqs') }}?category=포인트">포인트</a></li>
                                 <li class="{{ request('category') == '기타' ? 'on' : '' }}">
                                     <a href="{{ url('admin/faqs') }}?category=기타">기타</a>
                                 </li>

@@ -3,10 +3,10 @@
 return [
     // 회원 탈퇴 사유
     'withdraw_reasons' => [
-        'reason_1' => '이유 1111',
-        'reason_2' => '이유 2',
-        'reason_3' => '이유 3',
-        'reason_4' => '이유 4',
+        'reason_1' => '이용 빈도가 낮아서',
+        'reason_2' => '원하는 상품이나 서비스가 없어서',
+        'reason_3' => '서비스 이용이 불편해서',
+        'reason_4' => '개인정보 보호를 위해',
         'reason_other' => '기타',
     ],
 

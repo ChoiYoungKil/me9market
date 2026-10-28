@@ -1,4 +1,5 @@
-@extends('layouts.frontend')
+@extends('layouts.market-sub')
+@section('page_title', '고객센터 · 제휴문의')
 
 @section('page_type', 'sub')
 
@@ -8,13 +9,7 @@
 @endphp
 
 @section('content')
-@include('layouts.inc.sub_header', [
-    'dep1_id' => $dep1_id,
-    'dep2_id' => '03',
-    'dep1_tit' => $dep1_tit,
-    'dep2_tit' => '제휴/문의',
-    'dep2_sub' => '미구마켓의 다양한 소식을 안내해 드립니다.'
-])
+@include('partials.market-support-heading')
 
 <div id="container">
     <div id="contents">
@@ -87,16 +82,7 @@
                                                 <label for="agree1">이용약관 동의 <span class="col2">(필수)</span></label>
                                                 <div class="btn">전문보기</div>
                                             </div>
-                                            <div class="h_txt">
-                                                이용약관 내용입니다.<br>
-                                                이용약관 내용입니다. 이용약관 내용입니다.<br><br>
-                                                이용약관 내용입니다. 이용약관 내용입니다. 이용약관 내용입니다.<br>
-                                                이용약관 내용입니다.<br>
-                                                이용약관 내용입니다.<br>
-                                                이용약관 내용입니다. 이용약관 내용입니다.<br><br>
-                                                이용약관 내용입니다. 이용약관 내용입니다. 이용약관 내용입니다.<br>
-                                                이용약관 내용입니다.
-                                            </div>
+                                            <div class="h_txt">@if(config('shop_channel.terms_url'))<a href="{{ config('shop_channel.terms_url') }}" target="_blank" rel="noopener">이용약관 전문 보기</a>@else안내 문서를 준비 중입니다.@endif</div>
                                         </li>
                                         <li>
                                             <div class="s_txt">
@@ -104,12 +90,7 @@
                                                 <label for="agree2">개인정보 수집 및 이용에 관한 안내 <span class="col2">(필수)</span></label>
                                                 <div class="btn">전문보기</div>
                                             </div>
-                                            <div class="h_txt">
-                                                개인정보 수집 및 이용에 관한 안내입니다.<br>
-                                                개인정보 수집 및 이용에 관한 안내입니다. 개인정보 수집 및 이용에 관한 안내입니다.<br><br>
-                                                개인정보 수집 및 이용에 관한 안내입니다. 개인정보 수집 및 이용에 관한 안내입니다. 개인정보 수집 및 이용에 관한 안내입니다.<br>
-                                                개인정보 수집 및 이용에 관한 안내입니다.
-                                            </div>
+                                            <div class="h_txt">@if(config('shop_channel.privacy_url'))<a href="{{ config('shop_channel.privacy_url') }}" target="_blank" rel="noopener">개인정보 수집·이용 안내 전문 보기</a>@else안내 문서를 준비 중입니다.@endif</div>
                                         </li>
                                         <li>
                                             <div class="s_txt">
@@ -117,12 +98,7 @@
                                                 <label for="agree3">마케팅활용동의 <span class="col3">(선택)</span></label>
                                                 <div class="btn">전문보기</div>
                                             </div>
-                                            <div class="h_txt">
-                                                마케팅활용동의 내용입니다.<br>
-                                                마케팅활용동의 내용입니다. 마케팅활용동의 내용입니다.<br><br>
-                                                마케팅활용동의 내용입니다. 마케팅활용동의 내용입니다. 마케팅활용동의 내용입니다.<br>
-                                                마케팅활용동의 내용입니다.
-                                            </div>
+                                            <div class="h_txt">@if(config('shop_channel.marketing_url'))<a href="{{ config('shop_channel.marketing_url') }}" target="_blank" rel="noopener">마케팅 활용 안내 전문 보기</a>@else안내 문서를 준비 중입니다.@endif</div>
                                         </li>
                                     </ul>
                                 </div>

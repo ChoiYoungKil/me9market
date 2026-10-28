@@ -15,6 +15,7 @@
   </source>
   <php>
     <env name="APP_ENV" value="testing"/>
+    <env name="STORYBOARD_TEST_ENABLED" value="false" force="true"/>
     <env name="SHOP_PAYMENT_DRIVER" value="mock" force="true"/>
     <env name="GOOGLE_LOGIN_ENABLED" value="false" force="true"/>
     <env name="NAVER_LOGIN_ENABLED" value="false" force="true"/>

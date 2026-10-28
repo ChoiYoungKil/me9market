@@ -102,6 +102,11 @@ class OrdersProduct extends Model
         return $this->belongsTo(ShopChannel::class, 'shop_channel_id');
     }
 
+    public function vendor()
+    {
+        return $this->belongsTo(Vendor::class, 'vendor_id');
+    }
+
     public function shopChannelProduct()
     {
         return $this->belongsTo(ShopChannelProduct::class, 'shop_channel_product_id');

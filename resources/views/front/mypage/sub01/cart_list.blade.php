@@ -134,7 +134,7 @@
                                         <tr>
                                             <th class="w160"><span>채널명</span></th>
                                             <td>
-                                                <input type="text" name="channel_name" value="{{ $channelName ?? '' }}"
+                                                <input type="text" aria-label="채널명" name="channel_name" value="{{ $channelName ?? '' }}"
                                                     style="width: 100%; height: 42px; border: 1px solid #ddd; padding: 0 10px;">
                                             </td>
                                             <td class="search_btn_cell">
@@ -179,22 +179,21 @@
                                                         </div>
                                                         <div class="info">
                                                             <div class="code">[{{ $item['code'] }}]</div>
-                                                            <div class="name">{{ $item['name'] }}</div>
+                                                            <div class="name"><a href="{{ $item['product_url'] }}">{{ $item['name'] }}</a></div>
                                                             <div class="option">{{ $item['option'] }}</div>
                                                         </div>
                                                     </div>
                                                 </td>
                                                 <td>{{ $item['quantity'] }}</td>
-                                                <td class="bold">{{ number_format($item['price']) }}원</td>
+                                                <td class="bold">{{ number_format($item['line_total']) }}원</td>
                                                 <td>
-                                                    <img src="{{ $item['qr_code'] }}" class="w40 cursor-pointer pop_btn"
-                                                        data-pop="pop_qr_zoom" data-img="{{ $item['qr_code'] }}" alt="QR">
+                                                    <button type="button" class="member-qr-open pop_btn" data-pop="pop_qr_zoom" data-img="{{ $item['qr_code'] }}" aria-label="{{ $item['shop_channel'] }} QR 확대"><img src="{{ $item['qr_code'] }}" alt="{{ $item['shop_channel'] }} QR" width="72" height="72"></button>
                                                 </td>
                                                 <td>{{ $item['shop_channel'] }}</td>
                                                 <td>
                                                     <div class="btn_group">
-                                                        <a href="{{ $item['visit_url'] }}" class="btn01 btn_green">방문</a>
-                                                        <form action="{{ route('mypage.cart.delete', ['id' => $item['id']]) }}" method="POST">
+                                                        <a href="{{ $item['channel_url'] }}" class="btn01 btn_green">방문</a>
+                                                        <form action="{{ $item['delete_url'] }}" method="POST">
                                                             @csrf
                                                             <button type="submit" class="btn01 btn_red" style="border:0;">비우기</button>
                                                         </form>
@@ -224,10 +223,10 @@
     <div class="popup_bx" data-id="pop_qr_zoom">
         <div class="pop_w">
             <div class="pop_inner">
-                <div class="pop_con" style="width: 520px;">
-                    <div class="close_btn close1">닫기</div>
+                <div class="pop_con" style="max-width:520px;">
+                    <button type="button" class="close_btn close1" aria-label="QR 닫기">닫기</button>
                     <div class="conbx t_c" style="padding: 20px;">
-                        <img id="qr_zoom_img" src="" alt="QR Zoom" style="width: 100%; display: block;">
+                        <img id="qr_zoom_img" src="" alt="확대 QR 코드" style="width:240px;max-width:100%;height:auto;display:block;margin:0 auto;">
                     </div>
                 </div>
             </div>

@@ -283,3 +283,7 @@ textarea.shop-control {min-height:100px; resize:vertical;}
     .shop-order-heading span {font-size:12px; overflow-wrap:anywhere;}
     .shop-runtime .shop-dialog-head, .shop-runtime .shop-dialog-body {padding:18px;}
 }
+/* Keep the default and merchant logos proportional within the header. */
+.shop-runtime #header .logo{width:157px;max-width:157px}
+.shop-runtime #header .logo img{display:block;width:auto;height:auto;max-width:100%;max-height:44px;object-fit:contain}
+@media(max-width:768px){.shop-runtime #header .logo{width:120px;max-width:120px}.shop-runtime #header .logo img{max-height:28px}}

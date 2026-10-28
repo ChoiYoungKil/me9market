@@ -145,4 +145,33 @@ class CustomerCenterIntegrationTest extends TestCase
         ]);
         $this->assertNotNull($contact->fresh()->replied_at);
     }
+
+    public function test_faq_visibility_and_deletion_follow_admin_form_values()
+    {
+        $admin = $this->admin();
+        $this->actingAs($admin, 'admin')->post('/admin/add-edit-faq', [
+            'category' => '회원',
+            'question' => '비노출 FAQ 저장 검증',
+            'answer' => '활성화 후에만 표시할 답변',
+            'order' => 1,
+            'status' => '0',
+        ])->assertRedirect('admin/faqs');
+
+        $faq = Faq::where('question', '비노출 FAQ 저장 검증')->firstOrFail();
+        $this->assertFalse($faq->status);
+        $this->get('/faq')->assertOk()->assertDontSee($faq->question);
+
+        $this->post('/admin/add-edit-faq/'.$faq->id, [
+            'category' => '회원',
+            'question' => '수정 후 노출 FAQ',
+            'answer' => '수정 후 공개 답변',
+            'order' => 1,
+            'status' => '1',
+        ])->assertRedirect('admin/faqs');
+        $this->get('/faq')->assertOk()->assertSee('수정 후 노출 FAQ')->assertSee('수정 후 공개 답변');
+
+        $this->post('/admin/delete-faq/'.$faq->id)->assertRedirect();
+        $this->assertDatabaseMissing('faqs', ['id' => $faq->id]);
+        $this->get('/faq')->assertOk()->assertDontSee('수정 후 노출 FAQ');
+    }
 }

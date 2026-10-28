@@ -36,52 +36,52 @@
                                                 <th class="w160"><span>등록 기간</span></th>
                                                 <td colspan="3">
                                                     <div class="date_bx">
-                                                        <input class="datepicker" type="text" name="start_date" value="{{ $filters['start_date'] ?? '' }}" readonly="">
+                                                        <input class="member-date-control" type="date" aria-label="등록 시작일" name="start_date" value="{{ $filters['start_date'] ?? '' }}">
                                                         <span>~</span>
-                                                        <input class="datepicker" type="text" name="end_date" value="{{ $filters['end_date'] ?? '' }}" readonly="">
+                                                        <input class="member-date-control" type="date" aria-label="등록 종료일" name="end_date" value="{{ $filters['end_date'] ?? '' }}">
                                                     </div>
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <th class="w160"><span>Shop 채널</span></th>
                                                 <td>
-                                                    <input type="text" name="shop_channel" value="{{ $filters['shop_channel'] ?? '' }}">
+                                                    <input type="text" aria-label="Shop 채널" name="shop_channel" value="{{ $filters['shop_channel'] ?? '' }}">
                                                 </td>
                                                 <th class="w160"><span>채널 코드</span></th>
                                                 <td>
-                                                    <input type="text" name="channel_code" value="{{ $filters['channel_code'] ?? '' }}">
+                                                    <input type="text" aria-label="채널 코드" name="channel_code" value="{{ $filters['channel_code'] ?? '' }}">
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <th class="w160"><span>포인트 구분</span></th>
                                                 <td>
-                                                    <input type="text" name="point_type" value="{{ $filters['point_type'] ?? '' }}" placeholder="적립 또는 소진">
+                                                    <select name="point_type" aria-label="포인트 구분"><option value="">전체</option><option value="earn" @selected(in_array($filters['point_type'] ?? '', ['적립','earn','in']))>적립</option><option value="use" @selected(in_array($filters['point_type'] ?? '', ['소진','use','out']))>소진</option></select>
                                                 </td>
                                                 <th class="w160"><span>포인트 범위</span></th>
                                                 <td>
                                                     <div class="scope01">
-                                                        <input type="text" name="point_min" value="{{ $filters['point_min'] ?? '' }}">
+                                                        <input type="number" aria-label="최소 포인트" name="point_min" value="{{ $filters['point_min'] ?? '' }}">
                                                         <span class="mid">~</span>
-                                                        <input type="text" name="point_max" value="{{ $filters['point_max'] ?? '' }}">
+                                                        <input type="number" aria-label="최대 포인트" name="point_max" value="{{ $filters['point_max'] ?? '' }}">
                                                     </div>
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <th class="w160"><span>상세 내용</span></th>
                                                 <td colspan="3">
-                                                    <input type="text" name="detail" value="{{ $filters['detail'] ?? '' }}">
+                                                    <input type="text" aria-label="상세 내용" name="detail" value="{{ $filters['detail'] ?? '' }}">
                                                 </td>
                                             </tr>
                                         </tbody>
                                     </table>
                                 </div>
                                 <div class="btm_btn right mt10">
-                                    <button type="submit" class="btn01" style="background-color: #000; border-color: #000; color:#fff; border:0; cursor:pointer;">검색</button>
+                                    <button type="submit" class="btn_submit">검색</button><a href="{{ route('mypage.point.history') }}" class="col3">초기화</a>
                                 </div>
                             </form>
                         </div>
 
-                        <div class="con_w mt40">
+                        <div class="con_w mt40"><p class="member-help-text">총 {{ $pointHistory->total() }}건</p>
                             <div class="tb01 type2">
                                 <table>
                                     <colgroup>
@@ -134,27 +134,3 @@
         </div>
     </div><!-- //contents -->
 @endsection
-
-@push('scripts')
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
-    <script type="text/javascript">
-        $(document).ready(function() {
-            /* 달력 */
-            $(".datepicker").datepicker({
-                dateFormat: 'yy-mm-dd', //달력 날짜 형태
-                showOtherMonths: true, //빈 공간에 현재월의 앞뒤월의 날짜를 표시
-                showMonthAfterYear: true, // 월- 년 순서가아닌 년도 - 월 순서
-                changeYear: true, //option값 년 선택 가능
-                changeMonth: true, //option값  월 선택 가능                      
-                yearSuffix: "년", //달력의 년도 부분 뒤 텍스트
-                monthNamesShort: ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'], //달력의 월 부분 텍스트
-                monthNames: ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'], //달력의 월 부분 Tooltip
-                dayNamesMin: ['일', '월', '화', '수', '목', '금', '토'], //달력의 요일 텍스트
-                dayNames: ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'], //달력의 요일 Tooltip
-                minDate: "-5y", //최소 선택일자(-1D:하루전, -1M:한달전, -1Y:일년전)
-                maxDate: "+5y", //최대 선택일자(+1D:하루후, -1M:한달후, -1Y:일년후)  
-            });
-        });
-    </script>
-@endpush

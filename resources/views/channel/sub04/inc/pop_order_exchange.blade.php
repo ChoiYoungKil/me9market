@@ -34,8 +34,8 @@
                                         <td id="pop_exchange_claim_no">Me9-12222112121</td>
                                     </tr>
                                     <tr>
-                                        <th class="w160"><span>신규 교환 주문번호</span></th>
-                                        <td colspan="3">* 교환 확정 처리 시 신규 교환 주문이 [배송 대기] 상태로 생성됩니다.</td>
+                                        <th class="w160"><span>교환 재발송 상품</span></th>
+                                        <td colspan="3" id="pop_exchange_replacement">교환 확정 시 원 주문에 재발송 상품이 배송 대기로 추가됩니다.</td>
                                     </tr>
                                     <tr>
                                         <th class="w160"><span>판매처</span></th>
@@ -499,19 +499,19 @@
                                 <tbody class="textL">
                                     <tr>
                                         <th class="w160"><span>주문번호</span></th>
-                                        <td>Me9-000939393</td>
+                                        <td data-exchange-option-order></td>
                                         <th class="w160"><span>주문일시</span></th>
-                                        <td>2024-10-01 09:02:12</td>
+                                        <td data-exchange-option-date></td>
                                     </tr>
                                     <tr>
                                         <th class="w160"><span>교환 주문번호</span></th>
-                                        <td>Me9-12222112121</td>
+                                        <td data-exchange-option-claim></td>
                                         <th class="w160"><span>교환 요청일시</span></th>
-                                        <td>2024-10-01 09:02:12</td>
+                                        <td data-exchange-option-date></td>
                                     </tr>
                                     <tr>
                                         <th class="w160"><span>판매처</span></th>
-                                        <td colspan="3">Shop채널명</td>
+                                        <td colspan="3" data-exchange-option-shop></td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -536,21 +536,7 @@
                                         <th></th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>배송중</td>
-                                        <td class="t_l"><span class="fcol2">BlueViolet a omnis</span></td>
-                                        <td>a0029</td>
-                                        <td>RD/S</td>
-                                        <td>2</td>
-                                        <td>
-                                            <select name="option" required="required">
-                                                <option value="" disabled="" selected="">변경 옵션 선택</option>
-                                                <option value="변경 옵션1">변경 옵션1</option>
-                                            </select>
-                                        </td>
-                                    </tr>
-                                </tbody>
+                                <tbody id="exchange_option_items"></tbody>
                             </table>
                         </div>
                     </div>

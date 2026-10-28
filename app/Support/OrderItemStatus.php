@@ -38,6 +38,16 @@ class OrderItemStatus
 
     public const EXCHANGED = 'exchanged';
 
+    public static function pendingReturnStatuses(): array
+    {
+        return [self::RETURN_REQUESTED, self::RETURN_RECEIVED, self::RETURN_HOLD];
+    }
+
+    public static function pendingExchangeStatuses(): array
+    {
+        return [self::EXCHANGE_REQUESTED, self::EXCHANGE_APPROVED, self::EXCHANGE_HOLD_BEFORE, self::EXCHANGE_RECEIVED, self::EXCHANGE_HOLD_AFTER];
+    }
+
     public static function label(?string $status): string
     {
         return self::labels()[$status] ?? ($status ?: '상태없음');

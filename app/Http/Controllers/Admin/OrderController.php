@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 
 use App\Models\User;
 use App\Models\Order;
+use App\Models\OrderClaim;
 use App\Models\OrdersProduct;
 use App\Models\OrdersLog;
 use App\Models\OrderStatus;
@@ -91,9 +92,17 @@ class OrderController extends Controller
         }
 
         $orderDetails = $order->toArray();
+        $cancellationClaims = OrderClaim::with('product:id,product_name,item_status,status_code')
+            ->where('order_id', $order->id)
+            ->whereIn('order_product_id', $order->orders_products->pluck('id'))
+            ->where('type', 'cancel')->latest('id')->get();
 
         $user = User::where('id', $orderDetails['user_id'])->first();
-        $userDetails = $user ? $user->toArray() : [];
+        $userDetails = $user ? $user->toArray() : [
+            'name' => $order->buyer_name ?: $order->name,
+            'mobile' => $order->buyer_mobile ?: $order->mobile,
+            'email' => $order->email,
+        ];
 
         // `order_statuses` 테이블에서 활성화된 주문 상태 가져오기 (관리자만 변경 가능)
         $orderStatuses = OrderStatus::where('status', 1)->get()->toArray();
@@ -124,7 +133,7 @@ class OrderController extends Controller
         }
 
 
-        return view('admin.orders.order_details')->with(compact('orderDetails', 'userDetails', 'orderStatuses', 'orderItemStatuses', 'orderLog', 'item_discount'));
+        return view('admin.orders.order_details')->with(compact('orderDetails', 'userDetails', 'orderStatuses', 'orderItemStatuses', 'orderLog', 'item_discount', 'cancellationClaims'));
     }
 
     // 주문 상태 업데이트 (관리자 전용: 대기, 배송 중, 진행 중, 취소 등)

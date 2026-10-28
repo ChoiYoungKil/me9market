@@ -6,6 +6,9 @@
 @section('dep3_id', '01')
 
 @section('content')
+    @php
+        $companyOpen = (bool) $vendor?->company_terms_accepted_at;
+    @endphp
     <div id="contents">
         <div id="modify">
             <form id="profileForm" action="{{ route('mypage.profile.update') }}" method="post">
@@ -64,7 +67,7 @@
                                                                     <th class="w160">현재 비밀번호</th>
                                                                     <td>
                                                                         <input class="w100p" type="password"
-                                                                            name="current_password" required="required">
+                                                                            name="current_password" aria-label="현재 비밀번호" autocomplete="current-password">
                                                                         <p id="password-current_password" style="color:red">
                                                                         </p>
                                                                     </td>
@@ -73,7 +76,7 @@
                                                                     <th class="w160">새로운 비밀번호</th>
                                                                     <td>
                                                                         <input class="w100p" type="password"
-                                                                            name="new_password" required="required">
+                                                                            name="new_password" aria-label="새로운 비밀번호" autocomplete="new-password">
                                                                         <p id="password-new_password" style="color:red"></p>
                                                                     </td>
                                                                 </tr>
@@ -81,7 +84,7 @@
                                                                     <th class="w160">비밀번호 확인</th>
                                                                     <td>
                                                                         <input class="w100p" type="password"
-                                                                            name="confirm_password" required="required">
+                                                                            name="confirm_password" aria-label="비밀번호 확인" autocomplete="new-password">
                                                                         <p id="password-confirm_password" style="color:red">
                                                                         </p>
                                                                     </td>
@@ -109,14 +112,14 @@
                     </div>
 
                     <div class="box box2">
-                        <div class="ttl01">기본정보</div>
+                        <div class="ttl01">기본정보 <button type="button" class="btn_toggle" aria-label="기본정보 펼치기">{{ $companyOpen ? "▼" : "▲" }}</button></div>
 
-                        <div class="tb01 type2">
+                        <div class="tb01 type2" @if($companyOpen) style="display:none;" @endif>
                             <table class="two">
                                 <tbody class="textL">
                                     <tr>
                                         <th class="w160"><span>이름</span></th>
-                                        <td><input type="text" name="name" value="{{ Auth::user()->name }}"
+                                        <td><input type="text" name="name" aria-label="이름" value="{{ old('name', $user->name) }}"
                                                 required="required"></td>
                                         <th class="w160"><span>성별</span></th>
                                         <td>
@@ -133,6 +136,10 @@
                                                 </li>
                                             </ul>
                                         </td>
+                                    </tr>
+                                    <tr>
+                                        <th class="w160"><label for="profile_birth_date">생년월일</label></th>
+                                        <td colspan="3"><input id="profile_birth_date" type="date" name="birth_date" value="{{ old('birth_date', $user->birth_date?->format('Y-m-d')) }}" max="{{ now()->format('Y-m-d') }}"></td>
                                     </tr>
                                     <tr>
                                         <th class="w160"><span>연락처</span></th>
@@ -171,9 +178,9 @@
                                                 <span>@</span>
                                                 <input type="text" class="email2" name="email_2" required="required"
                                                     value="{{ $userEmail[1] ?? '' }}">
-                                                <select class="off">
+                                                <select class="off" aria-label="이메일 도메인 선택" onchange="this.closest('.email_bx').querySelector('[name=email_2]').value=this.value;">
                                                     <option value="">직접입력</option>
-                                                    <option value="naver.com">naver.com</option>
+                                                    <option value="naver.com">naver.com</option><option value="gmail.com">gmail.com</option><option value="daum.net">daum.net</option>
                                                 </select>
                                             </div>
                                         </td>
@@ -212,10 +219,10 @@
                     <div class="box box3">
                         <div class="ttl01">
                             회원사 정보
-                            <button type="button" class="btn_toggle" style="float:right; cursor:pointer; border:none; background:none; font-size:16px;">▼</button>
+                            <button type="button" class="btn_toggle" aria-label="상세정보 펼치기" style="float:right; cursor:pointer; border:none; background:none; font-size:16px;">{{ $companyOpen ? "▲" : "▼" }}</button>
                         </div>
 
-                        <div class="tb01 type2" style="display:none;">
+                        <div class="tb01 type2" @if(!$companyOpen) style="display:none;" @endif>
                             <table class="two">
                                 <colgroup>
                                     <col width="160px">
@@ -354,7 +361,7 @@
                                 </tbody>
                             </table>
                         </div>
-                        <div class="btm_btn t_r pt10" style="display:none;">
+                        <div class="btm_btn t_r pt10" @if(!$companyOpen) style="display:none;" @endif>
                             <button type="submit" class="btn_submit">회원사 정보 저장</button>
                         </div>
                     </div>
@@ -380,7 +387,7 @@
                         <div class="box box6">
                             <div class="ttl01">
                                 회원사 판매권한 정보 <span class="col2">( M9 Market 의 Shop 채널에서 공유 및 공동구매 상품을 판매하기 위해서는 판매인증이 필요합니다. )</span>
-                                <button type="button" class="btn_toggle" style="float:right; cursor:pointer; border:none; background:none; font-size:16px;">▼</button>
+                                <button type="button" class="btn_toggle" aria-label="상세정보 펼치기" style="float:right; cursor:pointer; border:none; background:none; font-size:16px;">▼</button>
                             </div>
 
                             <div class="tb01 type2" style="display:none;">
@@ -388,14 +395,14 @@
                                     <tbody class="textL">
                                         <tr>
                                             <th class="w160">판매인증</th>
-                                            <td><strong class="fcol2">인증완료 ( 인증완료일 : {{ $vendor->updated_at->format('Y-m-d') }} )</strong></td>
+                                            <td><strong class="fcol2">인증완료 ( 인증완료일 : {{ ($vendor->seller_approved_at ?? $vendor->updated_at)->format('Y-m-d') }} )</strong></td>
                                         </tr>
                                         <tr>
                                             <th class="w160">사업자등록증</th>
                                             <td>
                                                 <div class="f_img">
                                                     @if(!empty($business->address_proof_image))
-                                                    <div class="img_w" style="background-image:url({{ asset('front/images/bank_copies/' . $business->address_proof_image) }})"></div>
+                                                    @if(str_starts_with($business->address_proof_image, 'member-documents/'))<a href="{{ route('front.member.register.document', 'license') }}">저장된 사업자등록증 내려받기</a>@else<div class="img_w" style="background-image:url({{ asset('front/images/bank_copies/' . $business->address_proof_image) }})"></div>@endif
                                                     @endif
                                                     <span class="f_txt">사업자등록번호 / {{ $business->business_license_number ?? '' }}</span>
                                                 </div>
@@ -406,6 +413,7 @@
                                             <td>
                                                 <div class="f_down">
                                                     <div class="f_name">{{ $business->bank_name ?? '' }} / {{ $business->bank_account_number ?? '' }} / {{ $business->bank_account_holder_name ?? '' }} </div>
+                                                    @if(!empty($business->bank_copy_image))<a class="btn01" href="{{ route('front.member.register.document', 'bankbook') }}">통장사본 내려받기</a>@endif
                                                 </div>
                                             </td>
                                         </tr>
@@ -419,7 +427,7 @@
                         <div class="box box5">
                             <div class="ttl01">
                                 회원사 판매권한 정보 <span class="col2">( M9 Market 의 Shop 채널에서 공유 및 공동구매 상품을 판매하기 위해서는 판매인증이 필요합니다. )</span>
-                                <button type="button" class="btn_toggle" style="float:right; cursor:pointer; border:none; background:none; font-size:16px;">▼</button>
+                                <button type="button" class="btn_toggle" aria-label="상세정보 펼치기" style="float:right; cursor:pointer; border:none; background:none; font-size:16px;">▼</button>
                             </div>
 
                             <div class="tb01 type2" style="display:none;">
@@ -434,7 +442,7 @@
                                             <td>
                                                 <div class="f_img">
                                                     @if(!empty($business->address_proof_image))
-                                                    <div class="img_w" style="background-image:url({{ asset('front/images/bank_copies/' . $business->address_proof_image) }})"></div>
+                                                    @if(str_starts_with($business->address_proof_image, 'member-documents/'))<a href="{{ route('front.member.register.document', 'license') }}">저장된 사업자등록증 내려받기</a>@else<div class="img_w" style="background-image:url({{ asset('front/images/bank_copies/' . $business->address_proof_image) }})"></div>@endif
                                                     @endif
                                                 </div>
                                                 <div class="fileBox">
@@ -462,7 +470,7 @@
                                             <td>
                                                 <div class="f_img">
                                                     @if(!empty($business->bank_copy_image))
-                                                    <div class="img_w" style="background-image:url({{ asset('front/images/bank_copies/' . $business->bank_copy_image) }})"></div>
+                                                    @if(str_starts_with($business->bank_copy_image, 'member-documents/'))<a href="{{ route('front.member.register.document', 'bankbook') }}">저장된 통장사본 내려받기</a>@else<div class="img_w" style="background-image:url({{ asset('front/images/bank_copies/' . $business->bank_copy_image) }})"></div>@endif
                                                     @endif
                                                 </div>
                                                 <div class="fileBox">
@@ -486,7 +494,7 @@
                         <div class="box box4">
                             <div class="ttl01">
                                 회원사 판매권한 정보 <span class="col2">( M9 Market 의 Shop 채널에서 공유 및 공동구매 상품을 판매하기 위해서는 판매인증이 필요합니다. )</span>
-                                <button type="button" class="btn_toggle" style="float:right; cursor:pointer; border:none; background:none; font-size:16px;">▼</button>
+                                <button type="button" class="btn_toggle" aria-label="상세정보 펼치기" style="float:right; cursor:pointer; border:none; background:none; font-size:16px;">▼</button>
                             </div>
 
                             <div class="tb01 type2" style="display:none;">
@@ -541,81 +549,77 @@
                 </div>
             </form>
 
+
+            @if($vendorStatus == 1)
+            <form id="memberPgForm" action="{{ route('mypage.pg.update') }}" method="post" class="box_w">
+                @csrf
+                <div class="box member-pg"><div class="ttl01">자사 PG 설정</div>
+                    <div class="tb01 type2 member-pg-mode"><table><tbody class="textL"><tr>
+                        <th class="w160" scope="row">자사 PG 모듈 사용여부</th>
+                        <td><div class="member-pg-options" role="group" aria-label="자사 PG 모듈 사용여부">
+                            <input id="member-pg-off" type="radio" name="use_own_pg" value="0" @checked(!old('use_own_pg', $vendor->use_own_pg))><label for="member-pg-off">미사용</label>
+                            <input id="member-pg-on" type="radio" name="use_own_pg" value="1" @checked(old('use_own_pg', $vendor->use_own_pg))><label for="member-pg-on">사용</label>
+                        </div></td>
+                    </tr></tbody></table></div>
+                    <div id="member-pg-fields" class="tb01 type2" @if(!old('use_own_pg', $vendor->use_own_pg)) hidden @endif>
+                        <table><tbody class="textL"><tr><th class="w160" scope="row"><label for="member-pg-provider">자사 PG 모듈</label></th><td><select id="member-pg-provider" name="pg_provider"><option value="">PG사를 선택해 주세요</option>@foreach(['inicis'=>'KG 이니시스','kcp'=>'NHN KCP','toss'=>'토스페이먼츠'] as $value=>$label)<option value="{{ $value }}" @selected(old('pg_provider',$vendor->pg_provider)===$value)>{{ $label }}</option>@endforeach</select></td></tr>
+                        @foreach(['pg_merchant_id'=>'상점 ID','pg_site_code'=>'사이트코드','pg_client_key'=>'Client Key','pg_secret_key'=>'Secret Key'] as $field=>$label)
+                        <tr><th class="w160" scope="row"><label for="member-{{ $field }}">{{ $label }}</label></th><td><input id="member-{{ $field }}" type="password" name="{{ $field }}" autocomplete="off" placeholder="{{ $vendor->$field ? '저장됨 · 변경할 때만 입력' : $label.' 입력' }}"></td></tr>
+                        @endforeach
+                        </tbody></table>
+                        <p>자사 PG 사용 채널에서는 방문 포인트 적립과 포인트 사용을 지원하지 않습니다.</p>
+                    </div>
+                    <div class="btm_btn t_r pt10"><button type="submit" class="btn_submit">PG 설정 저장</button></div>
+                </div>
+            </form>
+            @endif
+
             <div class="box_w">
                     <div class="box box7">
                         <div class="ttl01 brb">약관동의</div>
                         <div class="agree01">
                             <div class="c_w">
-                                <div class="c_ttl">회원 권한 약관</div>
+                                <div class="c_ttl">회원 권한 약관</div><p>선택 약관 변경 후 상단의 정보수정 버튼으로 저장해 주세요.</p>
                                 <ul class="con_bx">
                                     <li>
                                         <div class="s_txt">
-                                            <input type="checkbox" id="agree1_1" checked>
+                                            <input type="checkbox" id="agree1_1" disabled @checked($user->terms_accepted_at)>
                                             <label for="agree1_1">이용약관 동의 <span class="col2">(필수)</span></label>
                                             <div class="btn">전문보기</div>
                                         </div>
-                                        <div class="h_txt">
-                                            이용약관 내용입니다.<br>
-                                            이용약관 내용입니다. 이용약관 내용입니다.<br><br>
-                                            이용약관 내용입니다. 이용약관 내용입니다. 이용약관 내용입니다.<br>
-                                            이용약관 내용입니다.<br>
-                                            이용약관 내용입니다.<br>
-                                            이용약관 내용입니다. 이용약관 내용입니다.<br><br>
-                                            이용약관 내용입니다. 이용약관 내용입니다. 이용약관 내용입니다.<br>
-                                            이용약관 내용입니다.
-                                        </div>
+                                        <div class="h_txt">@if(config('shop_channel.terms_url'))<a href="{{ config('shop_channel.terms_url') }}" target="_blank" rel="noopener">약관 원문 열기</a>@else<p>약관 원문이 아직 등록되지 않았습니다.</p>@endif</div>
                                     </li>
                                     <li>
                                         <div class="s_txt">
-                                            <input type="checkbox" id="agree1_2" checked>
+                                            <input type="checkbox" id="agree1_2" disabled @checked($user->terms_accepted_at)>
                                             <label for="agree1_2">개인정보 수집 및 이용에 관한 안내 <span class="col2">(필수)</span></label>
                                             <div class="btn">전문보기</div>
                                         </div>
-                                        <div class="h_txt">
-                                            개인정보 수집 및 이용에 관한 안내입니다.<br>
-                                            개인정보 수집 및 이용에 관한 안내입니다. 개인정보 수집 및 이용에 관한 안내입니다.<br><br>
-                                            개인정보 수집 및 이용에 관한 안내입니다. 개인정보 수집 및 이용에 관한 안내입니다. 개인정보 수집 및 이용에 관한 안내입니다.<br>
-                                            개인정보 수집 및 이용에 관한 안내입니다.
-                                        </div>
+                                        <div class="h_txt">@if(config('shop_channel.privacy_url'))<a href="{{ config('shop_channel.privacy_url') }}" target="_blank" rel="noopener">약관 원문 열기</a>@else<p>약관 원문이 아직 등록되지 않았습니다.</p>@endif</div>
                                     </li>
                                     <li>
                                         <div class="s_txt">
-                                            <input type="checkbox" id="agree1_3" checked>
+                                            <input type="checkbox" id="agree1_3" disabled @checked($user->terms_accepted_at)>
                                             <label for="agree1_3">제3자 정보제공 동의 <span class="col2">(필수)</span></label>
                                             <div class="btn">전문보기</div>
                                         </div>
-                                        <div class="h_txt">
-                                            제3자 정보제공 동의 내용입니다.<br>
-                                            제3자 정보제공 동의 내용입니다. 제3자 정보제공 동의 내용입니다.<br><br>
-                                            제3자 정보제공 동의 내용입니다. 제3자 정보제공 동의 내용입니다. 제3자 정보제공 동의 내용입니다.<br>
-                                            제3자 정보제공 동의 내용입니다.
-                                        </div>
+                                        <div class="h_txt">@if(config('shop_channel.third_party_url'))<a href="{{ config('shop_channel.third_party_url') }}" target="_blank" rel="noopener">약관 원문 열기</a>@else<p>약관 원문이 아직 등록되지 않았습니다.</p>@endif</div>
                                     </li>
                                     <li>
                                         <div class="s_txt">
-                                            <input type="checkbox" id="agree1_4">
+                                            <input type="hidden" name="marketing_opt_in" value="0" form="profileForm"><input type="checkbox" id="agree1_4" name="marketing_opt_in" value="1" form="profileForm" @checked(old('marketing_opt_in', $user->marketing_opt_in))>
                                             <label for="agree1_4">마케팅활용동의 <span class="col3">(선택)</span></label>
                                             <div class="btn">전문보기</div>
                                         </div>
-                                        <div class="h_txt">
-                                            마케팅활용동의 내용입니다.<br>
-                                            마케팅활용동의 내용입니다. 마케팅활용동의 내용입니다.<br><br>
-                                            마케팅활용동의 내용입니다. 마케팅활용동의 내용입니다. 마케팅활용동의 내용입니다.<br>
-                                            마케팅활용동의 내용입니다.
-                                        </div>
+                                        <div class="h_txt">@if(config('shop_channel.marketing_url'))<a href="{{ config('shop_channel.marketing_url') }}" target="_blank" rel="noopener">약관 원문 열기</a>@else<p>약관 원문이 아직 등록되지 않았습니다.</p>@endif</div>
                                     </li>
                                     <li>
                                         <div class="s_txt">
-                                            <input type="checkbox" id="agree1_5">
+                                            <input type="hidden" name="notification_opt_in" value="0" form="profileForm"><input type="checkbox" id="agree1_5" name="notification_opt_in" value="1" form="profileForm" @checked(old('notification_opt_in', $user->notification_opt_in))>
                                             <label for="agree1_5">알림정보수신동의 <span class="col3">(선택)</span></label>
                                             <div class="btn">전문보기</div>
                                         </div>
-                                        <div class="h_txt">
-                                            알림정보수신동의 내용입니다.<br>
-                                            알림정보수신동의 내용입니다. 알림정보수신동의 내용입니다.<br><br>
-                                            알림정보수신동의 내용입니다. 알림정보수신동의 내용입니다. 알림정보수신동의 내용입니다.<br>
-                                            알림정보수신동의 내용입니다.
-                                        </div>
+                                        <div class="h_txt">@if(config('shop_channel.notification_url'))<a href="{{ config('shop_channel.notification_url') }}" target="_blank" rel="noopener">약관 원문 열기</a>@else<p>약관 원문이 아직 등록되지 않았습니다.</p>@endif</div>
                                     </li>
                                 </ul>
                             </div>
@@ -624,20 +628,11 @@
                                 <ul class="con_bx">
                                     <li>
                                         <div class="s_txt">
-                                            <input type="checkbox" id="agree2_1" checked>
+                                            <input type="checkbox" id="agree2_1" disabled @checked($vendor?->company_terms_accepted_at)>
                                             <label for="agree2_1">상품 판매시 약관 동의 <span class="col2">(필수)</span></label>
                                             <div class="btn">전문보기</div>
                                         </div>
-                                        <div class="h_txt">
-                                            상품 판매시 약관 내용입니다.<br>
-                                            상품 판매시 약관 내용입니다. 상품 판매시 약관 내용입니다.<br><br>
-                                            상품 판매시 약관 내용입니다. 상품 판매시 약관 내용입니다. 상품 판매시 약관 내용입니다.<br>
-                                            상품 판매시 약관 내용입니다.<br>
-                                            상품 판매시 약관 내용입니다.<br>
-                                            상품 판매시 약관 내용입니다. 상품 판매시 약관 내용입니다.<br><br>
-                                            상품 판매시 약관 내용입니다. 상품 판매시 약관 내용입니다. 상품 판매시 약관 내용입니다.<br>
-                                            상품 판매시 약관 내용입니다.
-                                        </div>
+                                        <div class="h_txt">@if(config('shop_channel.company_terms_url'))<a href="{{ config('shop_channel.company_terms_url') }}" target="_blank" rel="noopener">약관 원문 열기</a>@else<p>약관 원문이 아직 등록되지 않았습니다.</p>@endif</div>
                                     </li>
                                 </ul>
                             </div>
@@ -646,20 +641,11 @@
                                 <ul class="con_bx">
                                     <li>
                                         <div class="s_txt">
-                                            <input type="checkbox" id="agree3_1" checked>
+                                            <input type="checkbox" id="agree3_1" disabled @checked($vendor?->seller_terms_accepted_at)>
                                             <label for="agree3_1">판매권한 약관 동의 <span class="col2">(필수)</span></label>
                                             <div class="btn">전문보기</div>
                                         </div>
-                                        <div class="h_txt">
-                                            판매권한 약관 내용입니다.<br>
-                                            판매권한 약관 내용입니다. 판매권한 약관 내용입니다.<br><br>
-                                            판매권한 약관 내용입니다. 판매권한 약관 내용입니다. 판매권한 약관 내용입니다.<br>
-                                            판매권한 약관 내용입니다.<br>
-                                            판매권한 약관 내용입니다.<br>
-                                            판매권한 약관 내용입니다. 판매권한 약관 내용입니다.<br><br>
-                                            판매권한 약관 내용입니다. 판매권한 약관 내용입니다. 판매권한 약관 내용입니다.<br>
-                                            판매권한 약관 내용입니다.
-                                        </div>
+                                        <div class="h_txt">@if(config('shop_channel.seller_terms_url'))<a href="{{ config('shop_channel.seller_terms_url') }}" target="_blank" rel="noopener">약관 원문 열기</a>@else<p>약관 원문이 아직 등록되지 않았습니다.</p>@endif</div>
                                     </li>
                                 </ul>
                             </div>
@@ -751,6 +737,10 @@
             $(this).parents(".popup_bx").stop().fadeOut(300);
 
             return false;
+        });
+
+        $("#memberPgForm input[name=use_own_pg]").on('change', function () {
+            document.getElementById('member-pg-fields').hidden = this.value !== '1';
         });
 
         /* 아코디언 토글 */

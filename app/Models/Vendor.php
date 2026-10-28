@@ -29,6 +29,10 @@ class Vendor extends Model
     ];
 
     protected $casts = [
+        'company_terms_accepted_at' => 'datetime',
+        'seller_terms_accepted_at' => 'datetime',
+        'seller_requested_at' => 'datetime',
+        'seller_approved_at' => 'datetime',
         'use_own_pg' => 'boolean',
         'pg_merchant_id' => 'encrypted',
         'pg_site_code' => 'encrypted',

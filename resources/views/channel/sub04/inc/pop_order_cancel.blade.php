@@ -42,7 +42,7 @@
                                     <tr>
                                         <th class="w160"><span>환불 금액</span></th>
                                         <td id="pop_cancel_refund_amount">90,000 원</td>
-                                        <th class="w160"><span>환불 계좌 정보</span></th>
+                                        <th class="w160"><span>상세 사유</span></th>
                                         <td id="pop_cancel_refund_account">카카오뱅크 / 33333333301222 / 홍길동</td>
                                     </tr>
                                     <tr>

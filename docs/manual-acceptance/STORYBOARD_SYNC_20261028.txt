@@ -1,0 +1,31 @@
+PPT1~64 검수 내용 및 storyboard-test 동기화 (2026-10-28)
+
+반영 내용
+- PPT Ver3.0.0 실제 슬라이드 번호 1~64를 각 행으로 구성.
+- 문서/영역구분, 시연 확인 기록, 실제 변경 보류(39), 추가 확인(60) 구분.
+- 검색·상태 필터·0건 표시·초기화, 실제 진입 링크 및 모달/로그인 선행 절차 안내.
+- 다음 검수는 65번 채널관리자부터 번호별 안내 후 수동 진행.
+- 계정은 접속한 서버 DB의 기존 활성 레코드만 조회. 생성·비밀번호 초기화 없음.
+- 일반 회원: 소셜 연결 없는 회원. 소셜 회원: social_accounts에 실제 연결된 회원.
+- 채널 관리자(회원 연결): 회원사 약관 수락 및 활성 회원사·기존 채널 관리자 연결이 있는 회원.
+- 이름/이메일 검색 및 역할별 기존 DB 계정 선택. 선택은 조회에만 사용하며 로그인 세션 전환 없음.
+- 사용자의 최종 요청에 따라 기존 아이디/비밀번호 표시 형식 복원.
+  기존 STORYBOARD_TEST_PASSWORD 설정 또는 역할별 검수 비밀번호 설정을 해당 DB 해시와 대조하고,
+  일치할 때만 표시. 소셜은 해당 제공자 인증을 사용. DB 비밀번호 및 소셜 연결 변경 없음.
+- 현재 서버에 계정·공지·주문이 없을 때는 미등록/목록 진입 안내. 테스트 데이터 자동 생성 없음.
+- 전체 관리자(admin/superadmin)만 조회. vendor/subadmin/비회원 접근 제한. 응답 private,no-store.
+
+운영 반영시
+- 이 Git 변경은 소스·테스트·마이그레이션 파일이다. 로컬 검수 DB/업로드·.env는 복사하지 않는다.
+- 운영 DB의 기존 회원·소셜 연결·회원사·관리자 데이터가 그대로 표시된다.
+- 배포 절차에서 기존 DB 백업 후 php artisan migrate --force 등 프로젝트 배포 절차 적용 필요.
+- 검수 화면 활성화는 기존 STORYBOARD_TEST_ENABLED 설정 사용. 기본값 비활성 유지.
+- 기존 STORYBOARD_FRONT_URL / STORYBOARD_ADMIN_URL은 해당 서버 도메인 설정 사용.
+- 검수 비밀번호는 서버 .env에만 저장하며 Git에 실제 값을 넣지 않는다.
+  공통 STORYBOARD_TEST_PASSWORD 또는 STORYBOARD_MEMBER_PASSWORD,
+  STORYBOARD_CHANNEL_MEMBER_PASSWORD, STORYBOARD_DISTRIBUTOR_PASSWORD, STORYBOARD_ADMIN_PASSWORD.
+- 잘못된 설정 비밀번호는 표시하지 않고 선택 계정과 불일치라고 표시한다.
+- 이번 작업은 운영서버 배포를 수행하지 않음.
+
+최종 검증: 전체 PHPUnit 335 tests / 3,989 assertions 통과.
+Chrome: DB 계정 선택 적용, 64개 페이지 검색/보류/추가확인/0건/초기화, 아이디·비밀번호 표시와 일치 상태 확인.

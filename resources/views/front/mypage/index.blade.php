@@ -1,100 +1,20 @@
 @extends('layouts.mypage')
-
 @section('page_type', 'main')
-
 @section('content')
-    <div id="dashboard">
-        <div class="box_w">
-            <div class="box box1">
-                <ul class="order_list01">
-                    <li class="icon0">
-                        <div class="txt_w">
-                            <div class="txt1">전체 주문</div>
-                            <div class="txt2"><strong>{{ $ordersCount }}</strong> 건</div>
-                        </div>
-                    </li>
-                    <li class="icon4">
-                        <div class="txt_w">
-                            <div class="txt1">구매확정</div>
-                            <div class="txt2"><strong>{{ $confirmedCount }}</strong> 건</div>
-                        </div>
-                    </li>
-                    <li class="icon5">
-                        <div class="txt_w">
-                            <div class="txt1">취소요청</div>
-                            <div class="txt2"><strong>{{ $cancelCount }}</strong> 건</div>
-                        </div>
-                    </li>
-                    <li class="icon6">
-                        <div class="txt_w">
-                            <div class="txt1">반품신청</div>
-                            <div class="txt2"><strong>{{ $returnCount }}</strong> 건</div>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-            
-            <!-- 나의 제휴 및 상품 문의 내역 -->
-            <div class="box box3 col2" style="width: 100%; float: none; margin-top: 20px; box-sizing: border-box; background: #fff; padding: 25px; border-radius: 12px; border: 1px solid #e2e8f0; display: block;">
-                <div class="ttl01 brb" style="font-size: 18px; font-weight: bold; border-bottom: 2px solid #6366f1; padding-bottom: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; width: 100%;">
-                    <span>💬 나의 제휴 및 상품 문의 내역</span>
-                    <a href="/contact" style="font-size: 13px; color: #6366f1; text-decoration: none; font-weight: normal;">+ 신규 제휴/문의 작성</a>
-                </div>
-                <div style="overflow-x: auto;">
-                    <table style="width: 100%; border-collapse: collapse; text-align: left;">
-                        <thead>
-                            <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0; font-size: 13px; color: #475569; font-weight: 600;">
-                                <th style="padding: 12px; width: 120px;">등록일시</th>
-                                <th style="padding: 12px; width: 100px;">유형</th>
-                                <th style="padding: 12px;">제목 / 문의내용</th>
-                                <th style="padding: 12px; text-align: center; width: 100px;">답변상태</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($inquiries as $inq)
-                            <tr style="border-bottom: 1px solid #eee;">
-                                <td style="padding: 15px 12px; font-size: 13px; color: #64748b;">
-                                    {{ $inq->created_at->format('Y-m-d') }}
-                                </td>
-                                <td style="padding: 15px 12px;">
-                                    @if($inq->type == 'partnership')
-                                        <span style="background: rgba(99, 102, 241, 0.1); color: #6366f1; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;">제휴/문의</span>
-                                    @else
-                                        <span style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;">상품문의</span>
-                                    @endif
-                                </td>
-                                <td style="padding: 15px 12px; text-align: left;">
-                                    <div style="font-weight: 600; color: #1e293b; font-size: 14px;">{{ $inq->subject }}</div>
-                                    <div style="font-size: 13px; color: #475569; margin-top: 4px; line-height: 1.4;">{{ $inq->message }}</div>
-                                    @if($inq->admin_reply)
-                                        <div style="background: #ecfdf5; border-left: 3px solid #10b981; padding: 10px 15px; margin-top: 10px; font-size: 13px; color: #065f46; border-radius: 0 8px 8px 0; border-top: 1px solid #d1fae5; border-right: 1px solid #d1fae5; border-bottom: 1px solid #d1fae5;">
-                                            <strong style="color: #047857;">↳ 답변:</strong> {{ $inq->admin_reply }} 
-                                            @if($inq->replied_at)
-                                                <span style="font-size: 11px; color: #6b7280; margin-left: 10px;">({{ $inq->replied_at->format('Y-m-d H:i') }})</span>
-                                            @endif
-                                        </div>
-                                    @endif
-                                </td>
-                                <td style="padding: 15px 12px; text-align: center;">
-                                    @if($inq->status == 'completed')
-                                        <span style="background: rgba(16, 185, 129, 0.1); color: #10b981; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;">답변완료</span>
-                                    @elseif($inq->status == 'processing')
-                                        <span style="background: rgba(245, 158, 11, 0.1); color: #f59e0b; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;">처리중</span>
-                                    @else
-                                        <span style="background: rgba(148, 163, 184, 0.1); color: #64748b; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;">접수대기</span>
-                                    @endif
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="4" style="padding: 40px; text-align: center; color: #888; font-size: 13px;">등록된 문의사항이 없습니다.</td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            
-        </div>
-    </div>
+<div id="contents" data-member-id="{{ $user->id }}">
+<header class="mypage-heading"><p class="eyebrow">MY ME9 MARKET</p><h1>{{ $user->name }}님의 마이페이지</h1><p>주문과 문의, 나의 채널을 한곳에서 확인하세요.</p></header>
+<nav class="member-dashboard-stats" aria-label="주문 단계">
+@foreach([['결제완료',\App\Support\OrderItemStatus::PAID,'payment_completed'],['배송대기',\App\Support\OrderItemStatus::READY_TO_SHIP,'preparing_shipment'],['배송중',\App\Support\OrderItemStatus::SHIPPING,'shipping'],['구매확정',\App\Support\OrderItemStatus::CONFIRMED,'purchase_confirmed'],['취소요청',\App\Support\OrderItemStatus::CANCEL_REQUESTED,'cancel_request'],['반품신청',\App\Support\OrderItemStatus::RETURN_REQUESTED,'return_request']] as [$label,$status,$filter])
+<a href="{{ route('mypage.order.list', ['status'=>$filter,'tab'=>str_starts_with($filter,'cancel')?'cancel':(str_starts_with($filter,'return')?'return':'order')]) }}"><span>{{ $label }}</span><strong>{{ collect($status === \App\Support\OrderItemStatus::RETURN_REQUESTED ? \App\Support\OrderItemStatus::pendingReturnStatuses() : [$status])->sum(fn($key) => $statusCounts[$key] ?? 0) }}</strong></a>
+@endforeach
+</nav>
+<div class="member-dashboard-grid">
+<section class="member-panel"><header><h2>나의 회원정보</h2><a href="{{ route('mypage.profile') }}">정보 수정 ↗</a></header>
+<dl><div><dt>회원번호</dt><dd>{{ $user->member_number }}</dd></div><div><dt>이름 / 성별</dt><dd>{{ $user->name }} / {{ $user->gender==='Male'?'남성':($user->gender==='Female'?'여성':'미입력') }}</dd></div><div><dt>연락처</dt><dd>{{ $user->mobile }}</dd></div><div><dt>이메일</dt><dd>{{ $user->email }}</dd></div><div><dt>채널관리자</dt><dd>@if($user->vendor_id)<form action="{{ route('mypage.channel_admin') }}" method="post">@csrf<button type="submit">채널관리자로 이동 ↗</button></form>@else회원사 등록 후 이용할 수 있습니다.@endif</dd></div></dl></section>
+<section class="member-panel"><header><h2>나의 바로가기</h2></header><nav class="member-quicklinks" aria-label="나의 바로가기">@forelse($selectedShortcuts as $key)@if(isset($shortcuts[$key]))<a href="{{ route($shortcuts[$key][1]) }}">{{ $shortcuts[$key][0] }}</a>@endif @empty<p class="member-empty">등록한 바로가기가 없습니다.</p>@endforelse</nav><button type="button" aria-expanded="false" aria-controls="shortcut-settings" onclick="const panel=document.getElementById('shortcut-settings');panel.hidden=!panel.hidden;this.setAttribute('aria-expanded',String(!panel.hidden));">바로가기 관리</button><div id="shortcut-settings" hidden><form class="member-shortcut-form" method="post" action="{{ route('mypage.shortcuts') }}">@csrf @foreach($shortcuts as $key=>[$label,$route])<label><input type="checkbox" name="shortcuts[]" value="{{ $key }}" @checked(in_array($key,$selectedShortcuts,true))>{{ $label }}</label>@endforeach<button type="submit">바로가기 저장</button></form></div></section>
+<section class="member-panel member-panel-wide"><header><h2>최근 주문</h2><a href="{{ route('mypage.order.list') }}">전체 주문 ↗</a></header><div class="portal-table-scroll"><table><thead><tr><th>주문일</th><th>주문번호</th><th>상품</th><th>결제금액</th></tr></thead><tbody>@forelse($recentOrders as $order)<tr><td>{{ $order->created_at->format('Y-m-d') }}</td><td><a href="{{ route('mypage.order.view',['id'=>$order->id]) }}">{{ 'Me9-'.str_pad($order->id,8,'0',STR_PAD_LEFT) }}</a></td><td>{{ $order->orders_products->first()?->product_name ?? '-' }}</td><td>{{ number_format($order->grand_total) }}원</td></tr>@empty<tr><td colspan="4" class="member-empty">등록된 주문 내역이 없습니다.</td></tr>@endforelse</tbody></table></div></section>
+<section class="member-panel"><header><h2>나의 문의</h2><a href="{{ route('cs.contact') }}">제휴·문의 작성 ↗</a></header>@forelse($inquiries->take(5) as $inquiry)<article class="member-inquiry"><time>{{ $inquiry->created_at->format('Y-m-d') }}</time><p>{{ $inquiry->subject }} · {{ $inquiry->status==='completed'?'답변완료':'답변 대기' }}</p><details><summary>내용 보기</summary><p>{{ $inquiry->message }}</p>@if($inquiry->admin_reply)<blockquote>{{ $inquiry->admin_reply }}</blockquote>@endif</details></article>@empty<p class="member-empty">등록된 문의사항이 없습니다.</p>@endforelse</section>
+<section class="member-panel"><header><h2>방문한 채널</h2><a href="{{ route('mypage.visited_channels') }}">전체 보기 ↗</a></header><ul class="member-channel-list">@forelse($visited as $visit)<li><div>{{ $visit->shopChannel?->channel_name ?? '이전 방문 채널' }}<small>{{ $visit->updated_at->format('Y-m-d') }}</small></div><a href="{{ route('mypage.visited_channels') }}">보기 ↗</a></li>@empty<li class="member-empty">방문한 채널이 없습니다.</li>@endforelse</ul></section>
+<section class="member-panel member-panel-wide"><header><h2>서브관리 채널목록</h2></header><ul class="member-channel-list">@forelse($subAccounts as $account)<li><span>{{ $account->vendor?->vendorbusinessdetails?->shop_name ?? '배정된 회원사' }}</span><form action="{{ route('mypage.channel_admin') }}" method="post">@csrf<input type="hidden" name="sub_account_id" value="{{ $account->id }}"><button type="submit">관리자로 이동</button></form></li>@empty<li class="member-empty">배정된 관리채널이 없습니다.</li>@endforelse</ul></section>
+</div></div>
 @endsection

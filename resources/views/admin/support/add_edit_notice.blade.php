@@ -98,7 +98,7 @@
                                                             <th class="w160"><span>첨부파일</span></th>
                                                             <td colspan="3">
                                                                 <div style="display: flex; align-items: center; gap: 10px;">
-                                                                    <input type="file" id="attachment" name="attachment"
+                                                                    <input type="file" id="attachment" name="attachment" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.jpg,.jpeg,.png"
                                                                         style="flex: 1;">
                                                                     @if (!empty($notice['attachment']))
                                                                         <div
@@ -116,7 +116,7 @@
                                                                     @endif
                                                                 </div>
                                                                 <p style="margin-top: 5px; font-size: 12px; color: #666;">※
-                                                                    파일 형식: PDF, DOC, DOCX, XLS, XLSX, ZIP, JPG, PNG (최대
+                                                                    파일 형식: PDF, DOC, DOCX, XLS, XLSX, CSV, TXT, JPG, JPEG, PNG (최대
                                                                     10MB)</p>
                                                             </td>
                                                         </tr>
@@ -176,7 +176,7 @@
     <script>
         $(document).ready(function () {
             // CKEditor 초기화
-            CKEDITOR.replace('content', {
+            var supportEditor = CKEDITOR.replace('content', {
                 height: 400,
                 language: 'ko',
                 versionCheck: false, // 보안 경고 메시지 비활성화
@@ -194,6 +194,7 @@
                     { name: 'tools', items: ['Maximize'] }
                 ]
             });
+            supportEditor.on('change', function () { supportEditor.updateElement(); });
 
             // Confirm Delete
             $(".confirmDelete").click(function (e) {

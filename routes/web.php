@@ -14,6 +14,12 @@ use Illuminate\Support\Facades\Route;
 */
 
 require __DIR__ . '/auth.php';
+Route::get('/__preview/account-recovery-mail/{id}', [\App\Http\Controllers\Dev\PreviewController::class, 'recoveryMail'])
+    ->whereUuid('id')->name('local.preview.recovery_mail');
+
+Route::get('/__preview/version', [\App\Http\Controllers\Dev\PreviewController::class, 'version'])
+    ->withoutMiddleware([\Illuminate\Session\Middleware\StartSession::class, \Illuminate\View\Middleware\ShareErrorsFromSession::class, \App\Http\Middleware\VerifyCsrfToken::class])
+    ->name('local.preview.version');
 
 Route::prefix('auth/social')->where(['provider' => 'google|naver'])->group(function () {
     Route::get('{provider}/redirect', [\App\Http\Controllers\Auth\SocialLoginController::class, 'start'])->middleware('throttle:10,1')->name('social.start');
@@ -88,7 +94,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::get('dashboard', 'AdminController@dashboard')->name('admin.dashboard'); // 관리자 로그인
         if (config('storyboard.enabled')) {
             Route::get('storyboard-test', 'AdminController@storyboardTestbed')
-                ->middleware('admin.role:superadmin')
+                ->middleware('admin.role:superadmin,admin')
                 ->name('admin.storyboard_testbed');
         }
         Route::match(['get', 'post'], 'logout', 'AdminController@logout'); // 관리자 로그아웃
@@ -193,6 +199,9 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
 
         // 사용자 (Users)
         Route::get('users', 'UserController@users')->name('admin.users'); // admin/users/users.blade.php 렌더링
+        Route::get('users/{id}/seller-review', 'UserController@sellerReview')->middleware('admin.role:superadmin,admin')->name('admin.users.seller_review');
+        Route::post('users/{id}/seller-approval', 'UserController@approveSeller')->middleware('admin.role:superadmin,admin')->name('admin.users.seller_approval');
+        Route::get('member-document/{vendor}/{kind}', 'UserController@registrationDocument')->middleware('admin.role:superadmin,admin')->whereIn('kind', ['license', 'bankbook'])->name('admin.member.document');
         Route::post('update-user-status', 'UserController@updateUserStatus'); // AJAX를 사용한 사용자 상태 업데이트
         Route::match(['get', 'post'], 'add-edit-user/{id?}', 'UserController@addEditUser'); // 사용자 추가 및 수정
         Route::post('delete-user/{id}', 'UserController@deleteUser'); // 사용자 삭제
@@ -330,10 +339,14 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
     Route::post('/register/step2/update', 'UserController@updateMemberStep2')->name('front.member.register.step2.update'); // 새로운 라우트
     Route::get('/register/step3', 'UserController@registerStep3')->name('front.member.register.step3');
     Route::post('/register/step3/update', 'UserController@updateMemberStep3')->name('front.member.register.step3.update'); // 새로운 라우트
+    Route::get('/register/complete', 'UserController@registrationComplete')->middleware('auth')->name('front.member.register.complete');
+    Route::get('/register/document/{kind}', 'UserController@registrationDocument')->middleware('auth')->whereIn('kind', ['license', 'bankbook'])->name('front.member.register.document');
     // 아이디 찾기 (GET: 폼 표시, POST: 검색 처리)
-    Route::match(['get', 'post'], '/find/id', 'UserController@findId')->name('front.member.find_id');
+    Route::get('/find/id', 'UserController@findId')->name('front.member.find_id');
+    Route::post('/find/id', 'UserController@findId')->middleware('throttle:6,1,find-id');
     // 비밀번호 찾기 (GET: 폼 표시, POST: 임시비밀번호 발급)
-    Route::match(['get', 'post'], '/find/pw', 'UserController@findPw')->name('front.member.find_pw');
+    Route::get('/find/pw', 'UserController@findPw')->name('front.member.find_pw');
+    Route::post('/find/pw', 'UserController@findPw')->middleware('throttle:6,1,find-password');
 
     // 판매자 등록
     Route::get('/seller/register', 'UserController@vendorRegisterPage')->name('front.seller.register');
@@ -370,6 +383,7 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
             Route::get('/main', 'FrontController@shopMain')->name('shop.channel_main');
             Route::get('/products', 'FrontController@shopProducts')->name('shop.products_list');
             Route::get('/products/{id}', 'FrontController@shopProductDetails')->name('shop.product_details');
+            Route::post('/products/{id}/wishlist', 'ShopController@toggleWishlist')->middleware('auth')->name('shop.wishlist.toggle');
             Route::get('/joint-purchases', 'FrontController@shopJointPurchases')->name('shop.joint_purchases_list');
             Route::get('/joint-purchases/{id}', 'FrontController@shopJointPurchaseDetails')->name('shop.joint_purchase_details');
             Route::get('/notices', 'FrontController@shopNotices')->name('shop.notices');
@@ -546,17 +560,23 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
         });
     });
 
+    Route::get('/mypage/withdraw/success', 'UserController@withdrawSuccess')->name('mypage.withdraw.success');
+
     // Mypage Routes (Protected by auth)
     Route::group(['middleware' => ['auth'], 'prefix' => 'mypage'], function () {
         Route::get('/main', 'UserController@dashboard')->name('mypage.dashboard');
+        Route::post('/shortcuts', 'UserController@saveMypageShortcuts')->name('mypage.shortcuts');
+        Route::post('/channel-admin', 'UserController@openMemberChannel')->name('mypage.channel_admin');
         
         // Order Management
         Route::get('/order/list', 'UserController@orderList')->name('mypage.order.list'); // Check list of orders
         Route::get('/order/view', 'UserController@orderView')->name('mypage.order.view'); // Check specific order details
         Route::post('/order/claim', 'UserController@orderClaimSubmit')->name('mypage.order.claim.submit'); // Submit cancel/return/exchange/confirm claims
+        Route::post('/order/inquiry', 'UserController@orderInquirySubmit')->name('mypage.order.inquiry');
 
         Route::get('/profile', 'UserController@profileEdit')->name('mypage.profile');
         Route::post('/profile', 'UserController@profileUpdate')->name('mypage.profile.update');
+        Route::post('/profile/pg', 'UserController@updateMemberPg')->name('mypage.pg.update');
         Route::get('/order/cancel-return-list', 'UserController@cancelReturnList')->name('mypage.order.cancel_return_list');
         Route::get('/delivery', 'UserController@delivery')->name('mypage.delivery');
             Route::post('/delivery/add', 'UserController@addDelivery')->name('mypage.delivery.add');
@@ -565,7 +585,6 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
             Route::post('/delivery/delete', 'UserController@deleteDelivery')->name('mypage.delivery.delete');
         Route::get('/withdraw', 'UserController@withdraw')->name('mypage.withdraw');
         Route::post('/withdraw/submit', 'UserController@withdrawSubmit')->name('mypage.withdraw.submit');
-        Route::get('/withdraw/success', 'UserController@withdrawSuccess')->name('mypage.withdraw.success');
         Route::get('/withdraw/logout', 'UserController@withdrawLogout')->name('mypage.withdraw.logout');
         Route::get('/visited-channels', 'UserController@visitedChannels')->name('mypage.visited_channels');
         Route::post('/visited-channels/delete-all', 'UserController@deleteAllVisitedChannels')->name('mypage.visited_channels.delete_all');
@@ -582,6 +601,7 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
         Route::post('/cart/delete/{id}', 'UserController@deleteCartItem')->name('mypage.cart.delete');
 
         // 찜한 상품 목록
+        Route::post('/shop-cart/delete/{id}', 'UserController@deleteShopCartItem')->name('mypage.shop_cart.delete');
         Route::get('/wishlist', 'UserController@wishlist')->name('mypage.wishlist');
         Route::post('/wishlist/delete/{id}', 'UserController@deleteWishlistItem')->name('mypage.wishlist.delete');
 

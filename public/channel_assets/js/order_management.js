@@ -114,6 +114,7 @@ function openOrderModal(modalId, orderData) {
         $tbody.empty();
 
         var modalItems = orderItemsArray(orderData);
+        if (prefix === 'shipping') modalItems = orderItemsByStatus(modalItems, ['paid', 'ready_to_ship', 'shipping']);
         if (modalItems.length > 0) {
             modalItems.forEach(function (item) {
                 var row = `
@@ -170,6 +171,11 @@ function populateAllDetailPopups(orderData) {
     $("#pop_info_shop_name").text(orderData.shop_name);
     $("#pop_info_payment_date").text(orderData.payment_date || orderData.created_at);
     $("#pop_info_orig_order_no").text(orderData.order_no);
+    var history = orderClaimsArray(orderData).map(function (claim) {
+        var type = {cancel:'취소 신청',return:'반품 신청',exchange:'교환 신청'}[claim.type] || '신청';
+        return String(claim.created_at || '') + ' ' + type + '\n' + String(claim.admin_comment || '');
+    });
+    $("#pop_info_status_history").text(history.join('\n').trim() || '등록된 처리 이력이 없습니다.');
     
     // User Email / Info
     $("#pop_info_user_email").html(`<a class="fcol2 link" href="mailto:${escapeOrderHtml(orderData.user?.email || '')}">${escapeOrderHtml(orderData.user?.email || '')}</a> (${escapeOrderHtml(orderData.user_id || '비회원')})`);
@@ -313,9 +319,9 @@ function populateAllDetailPopups(orderData) {
     $("#pop_return_claim_no").text(returnClaim ? 'R-' + returnClaim.id : '-');
     $("#pop_return_shop_name").text(orderData.shop_name);
     $("#pop_return_request_date").text(returnClaim ? returnClaim.created_at : '-');
-    $("#pop_return_method").text(returnClaim && returnClaim.detail_reason && returnClaim.detail_reason.includes('회수방법') ? returnClaim.detail_reason.split(']')[0].replace('[회수방법: ', '') : '자동 회수');
+    $("#pop_return_method").text(returnClaim && returnClaim.pickup_method === 'manual' ? '수동회수' : '자동회수');
     $("#pop_return_reason").text(returnClaim ? returnClaim.reason : '-');
-    $("#pop_return_address").text(returnClaim && returnClaim.detail_reason && returnClaim.detail_reason.includes('주소:') ? returnClaim.detail_reason.split('주소:')[1].split('|')[0].trim() : '-');
+    $("#pop_return_address").text(returnClaim && returnClaim.return_address || '-');
     var returnItems = orderItemsByStatus(orderItems, ["return_requested", "return_received", "return_hold", "returned"]);
     $("#pop_return_payment_amount").text(numberFormat(returnItems.reduce(function (sum, item) { return sum + Number(item.paid_cash_amount || 0); }, 0)) + " 원");
     $("#pop_return_deduction").text(numberFormat(returnItems.reduce(function (sum, item) { return sum + Number(item.return_shipping_fee || 0); }, 0)) + " 원");
@@ -353,10 +359,16 @@ function populateAllDetailPopups(orderData) {
     var exchangeClaim = orderClaims.find(c => c.type === 'exchange') || null;
     $("#pop_exchange_order_no").text(orderData.order_no);
     $("#pop_exchange_claim_no").text(exchangeClaim ? 'E-' + exchangeClaim.id : '-');
+    var replacements = orderItems.filter(item => item.replacement).map(function (item) {
+        var replacement = item.replacement;
+        return orderData.order_no + ' / 상품 #' + replacement.id + ' · ' + replacement.status_label
+            + (replacement.tracking_number ? ' · ' + replacement.courier_name + ' ' + replacement.tracking_number : '');
+    });
+    $("#pop_exchange_replacement").text(replacements.length ? replacements.join('\n') : '교환 확정 시 원 주문에 재발송 상품이 배송 대기로 추가됩니다.');
     $("#pop_exchange_shop_name").text(orderData.shop_name);
     $("#pop_exchange_request_date").text(exchangeClaim ? exchangeClaim.created_at : '-');
     $("#pop_exchange_reason").text(exchangeClaim ? exchangeClaim.reason : '-');
-    $("#pop_exchange_address").text(exchangeClaim && exchangeClaim.detail_reason && exchangeClaim.detail_reason.includes('주소:') ? exchangeClaim.detail_reason.split('주소:')[1].split('|')[0].trim() : '-');
+    $("#pop_exchange_address").text(exchangeClaim && exchangeClaim.return_address || '-');
     $("#pop_exchange_recipient_name").text(orderData.recipient_name || orderData.name);
     $("#pop_exchange_recipient_mobile").text(orderData.recipient_mobile || orderData.mobile);
     $("#pop_exchange_recipient_address").text('[' + (orderData.recipient_zipcode || orderData.pincode || '') + '] ' + (orderData.recipient_address || orderData.address || '') + ' ' + (orderData.recipient_address_detail || ''));
@@ -529,6 +541,27 @@ $(document).on('click', '[data-release-claim]', function () {
     var action = this.dataset.releaseClaim;
     submitClaimAction(action, action.indexOf('return_') === 0 ? 'pop1_4' : 'pop1_5', '보류를 해제하고 이전 처리 단계로 돌아가시겠습니까?');
 });
+
+document.addEventListener('click', function (event) {
+    if (!event.target.closest('[data-pop="pop1_5_9"]')) return;
+    if (!window.currentOrder) return;
+    var ids = claimActionItemIds('exchange_option').map(String);
+    var items = orderItemsArray(window.currentOrder).filter(function (item) { return ids.indexOf(String(item.id)) !== -1; });
+    var choices = items.length ? (items[0].exchange_options || []) : [];
+    items.slice(1).forEach(function (item) { choices = choices.filter(function (option) { return (item.exchange_options || []).indexOf(option) !== -1; }); });
+    var claim = orderClaimsArray(window.currentOrder).find(function (item) { return item.type === 'exchange'; });
+    var popup = $('.popup_bx[data-id="pop1_5_9"]');
+    popup.find('[data-exchange-option-order]').text(window.currentOrder.order_no);
+    popup.find('[data-exchange-option-date]').text(window.currentOrder.created_at);
+    popup.find('[data-exchange-option-claim]').text(claim ? 'E-' + claim.id : '-');
+    popup.find('[data-exchange-option-shop]').text(window.currentOrder.shop_name);
+    var body = $('#exchange_option_items').empty();
+    items.forEach(function (item, index) {
+        var select = index === 0 ? '<select name="option" required><option value="">변경 옵션 선택</option>' + choices.map(function (option) { return '<option value="' + escapeOrderHtml(option) + '">' + escapeOrderHtml(option) + '</option>'; }).join('') + '</select>' : '선택한 옵션으로 함께 변경';
+        body.append('<tr><td>' + escapeOrderHtml(item.status_label) + '</td><td>' + escapeOrderHtml(item.product_name) + '</td><td>' + escapeOrderHtml(item.product_code) + '</td><td>' + escapeOrderHtml(item.option_name) + '</td><td>' + escapeOrderHtml(item.qty) + '</td><td>' + select + '</td></tr>');
+    });
+    if (!items.length) appendEmptyOrderItemsRow(body, 6);
+}, true);
 
 // Bind confirmation listeners
 $(document).ready(function() {

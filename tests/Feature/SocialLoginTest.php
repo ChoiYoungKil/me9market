@@ -143,7 +143,7 @@ class SocialLoginTest extends TestCase
         $this->post(route('social.register'), ['name' => 'Social member'])->assertSessionHasErrors(['terms_service', 'terms_privacy', 'terms_third_party']);
         $this->assertDatabaseCount('social_accounts', 0);
         $this->post(route('social.register'), ['name' => 'Social member', 'email' => 'attacker@example.com',
-            'terms_service' => 1, 'terms_privacy' => 1, 'terms_third_party' => 1])->assertRedirect(route('mypage.dashboard'));
+            'terms_service' => 1, 'terms_privacy' => 1, 'terms_third_party' => 1])->assertRedirect(route('front.member.register.step1'));
         $user = User::where('email', 'social@example.com')->firstOrFail();
         $this->assertAuthenticatedAs($user);
         $this->assertNotNull($user->email_verified_at);
@@ -175,7 +175,7 @@ class SocialLoginTest extends TestCase
             'shop_channel.third_party_url' => 'https://example.test/third-party', 'shop_channel.terms_version' => 'test-v1']);
         $this->get(route('social.signup'))->assertOk()->assertSee('동의하고 가입하기')
             ->assertDontSee('social-registration-unavailable')->assertSee('https://example.test/terms');
-        $this->post(route('social.register'), $data)->assertRedirect(route('mypage.dashboard'));
+        $this->post(route('social.register'), $data)->assertRedirect(route('front.member.register.step1'));
         $this->assertAuthenticated();
         $this->assertDatabaseCount('social_accounts', 1);
     }
@@ -195,7 +195,7 @@ class SocialLoginTest extends TestCase
             ->assertSessionHasErrors(['terms_service', 'terms_privacy', 'terms_third_party']);
         $this->assertDatabaseCount('social_accounts', 0);
         $this->post(route('social.register'), ['name' => 'Social member', 'terms_service' => 1,
-            'terms_privacy' => 1, 'terms_third_party' => 1])->assertRedirect(route('mypage.dashboard'));
+            'terms_privacy' => 1, 'terms_third_party' => 1])->assertRedirect(route('front.member.register.step1'));
         $user = User::where('email', 'social@example.com')->firstOrFail();
         $this->assertAuthenticatedAs($user);
         $this->assertFalse($user->terms_snapshot['documents_published']);
@@ -313,5 +313,42 @@ class SocialLoginTest extends TestCase
         $this->get(route('social.callback', ['provider' => 'google', 'state' => $query['state'], 'code' => 'code']))
             ->assertRedirect(route('shop.channel_main'))->assertSessionHas('shop_channel_id', $shop->id);
         $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_general_registration_does_not_consume_or_link_a_social_identity(): void
+    {
+        $this->fakeProfile();
+        $state = $this->begin();
+        $this->get(route('social.callback',['provider'=>'google','state'=>$state,'code'=>'code']))->assertRedirect(route('social.signup'));
+        $this->get('/register/member')->assertOk()->assertDontSee('social@example.com');
+        $this->postJson('/register/member',[
+            'register_type'=>'general','username'=>'separatemember','email_prefix'=>'separate','email_domain'=>'example.test',
+            'password'=>'Password123!','password_confirmation'=>'Password123!',
+            'agree_terms'=>1,'agree_privacy'=>1,'agree_third_party'=>1,
+        ])->assertOk()->assertJson(['redirect_url'=>route('front.member.register.step1')]);
+        $this->assertAuthenticatedAs(User::where('email','separate@example.test')->firstOrFail());
+        $this->assertDatabaseCount('social_accounts',0);
+        $this->assertNull(session('social_signup'));
+    }
+
+    public function test_social_and_general_signup_create_distinct_members_and_both_finish_at_step1(): void
+    {
+        $this->fakeProfile();
+        $state = $this->begin();
+        $this->get(route('social.callback',['provider'=>'google','state'=>$state,'code'=>'code']))->assertRedirect(route('social.signup'));
+        $this->post(route('social.register'),['name'=>'Social member','terms_service'=>1,'terms_privacy'=>1,'terms_third_party'=>1])
+            ->assertRedirect(route('front.member.register.step1'));
+        $social = User::where('email','social@example.com')->firstOrFail();
+        $this->post('/logout');
+        $this->postJson('/register/member',[
+            'register_type'=>'general','username'=>'separatemember','email_prefix'=>'separate','email_domain'=>'example.test',
+            'password'=>'Password123!','password_confirmation'=>'Password123!',
+            'agree_terms'=>1,'agree_privacy'=>1,'agree_third_party'=>1,
+        ])->assertOk()->assertJson(['redirect_url'=>route('front.member.register.step1')]);
+        $general = User::where('email','separate@example.test')->firstOrFail();
+        $this->assertNotSame($social->id,$general->id);
+        $this->assertDatabaseHas('social_accounts',['user_id'=>$social->id,'provider'=>'google']);
+        $this->assertFalse(SocialAccount::where('user_id',$general->id)->exists());
+        $this->assertAuthenticatedAs($general);
     }
 }

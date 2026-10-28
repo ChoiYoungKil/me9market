@@ -141,7 +141,7 @@ class SocialLoginController extends Controller
         $request->session()->forget('social_signup');
         Auth::login($user);
         $request->session()->regenerate();
-        return $this->destination($pending);
+        return redirect()->route('front.member.register.step1');
     }
 
     public function disconnect(Request $request, string $provider)

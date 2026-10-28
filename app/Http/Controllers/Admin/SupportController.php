@@ -211,7 +211,7 @@ class SupportController extends Controller
             $faq->question = $data['question'];
             $faq->answer = $data['answer'];
             $faq->order = $data['order'] ?? 0;
-            $faq->status = isset($data['status']) ? 1 : 0;
+            $faq->status = (string) ($data['status'] ?? '0') === '1' ? 1 : 0;
             $faq->save();
 
             $message = $id == "" ? "FAQ가 추가되었습니다." : "FAQ가 수정되었습니다.";

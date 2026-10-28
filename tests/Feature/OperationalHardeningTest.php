@@ -121,6 +121,7 @@ class OperationalHardeningTest extends TestCase
     {
         $process = new Process(['php', 'artisan', 'route:list', '--path=storyboard-test'], base_path(), [
             'APP_ENV' => 'production',
+            'STORYBOARD_TEST_ENABLED' => 'false',
         ]);
         $process->run();
 

@@ -11,6 +11,11 @@ class VisitedChannel extends Model
 
     protected $guarded = [];
 
+    public function shopChannel()
+    {
+        return $this->belongsTo(ShopChannel::class);
+    }
+
     // Relationship with User
     public function user() {
         return $this->belongsTo('App\Models\User');

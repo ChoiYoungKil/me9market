@@ -31,6 +31,7 @@ class AppServiceProvider extends ServiceProvider
                 $query->whereIn('vendor_id', $vendorIds)->orWhereIn('id', $shopIds);
             })->orderByDesc('id')->get();
             $view->with('mypageChannels', $channels)
+                ->with('mypageSubAccounts', $userId ? app(\App\Services\MemberPortal::class)->subAccounts(\App\Models\User::findOrFail($userId)) : collect())
                 ->with('mypagePointTotal', \App\Models\PointTransaction::where('user_id', $userId)->sum('points'));
         });
 

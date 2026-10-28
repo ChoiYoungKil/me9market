@@ -9,4 +9,6 @@ return [
     'terms_version' => env('SHOP_TERMS_VERSION'),
     'marketing_url' => env('SHOP_MARKETING_URL'),
     'notification_url' => env('SHOP_NOTIFICATION_URL'),
+    'company_terms_url' => env('SHOP_COMPANY_TERMS_URL'),
+    'seller_terms_url' => env('SHOP_SELLER_TERMS_URL'),
 ];

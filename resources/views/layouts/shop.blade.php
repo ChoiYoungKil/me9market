@@ -9,21 +9,22 @@
     <meta name="description" content="{{ $shop->og_description ?? '' }}">
     <meta property="og:title" content="{{ $shop->og_title ?? $shop->channel_name ?? 'Me9 Market' }}">
     <meta property="og:description" content="{{ $shop->og_description ?? '' }}">
-    <meta property="og:image" content="{{ asset($shop->og_image ?? 'shop/images/common/logo.png') }}">
+    <meta property="og:image" content="{{ asset($shop->og_image ?? 'me9market/images/common/logo.png') }}">
     @foreach(['base', 'common', 'main', 'sub', 'board', 'runtime'] as $stylesheet)
         <link rel="stylesheet" href="{{ asset('shop/css/'.$stylesheet.'.css') }}?v={{ filemtime(public_path('shop/css/'.$stylesheet.'.css')) }}">
     @endforeach
-    <link rel="icon" type="image/png" href="{{ asset('shop/images/common/logo2.png') }}">
+    <link rel="icon" href="{{ asset('me9market/images/icon/favicon.ico') }}">
     @stack('styles')
     <link rel="stylesheet" href="{{ asset('common/social.css').'?v='.filemtime(public_path('common/social.css')) }}">
+    @env('local')<script src="{{ asset('me9market/js/preview-live.js') }}" defer></script>@endenv
 </head>
-<body id="@yield('page_type', 'sub')" class="shop-runtime">
+<body id="@yield('page_type', 'sub')" class="shop-runtime" @if(request()->isMethod('post')) data-preview-preserve="true" @endif>
 <div id="skipNavi"><a href="#container">본문 바로가기</a></div>
 <div id="wrap">
     <header id="header">
         <div class="h_inner">
             <a href="{{ route('shop.channel_main') }}" class="logo" aria-label="{{ $shop->channel_name ?? 'Me9 Market' }} 홈">
-                <img src="{{ asset(($shop->use_logo ?? false) && ($shop->logo_image ?? null) ? $shop->logo_image : 'shop/images/common/logo2.png') }}" alt="{{ $shop->channel_name ?? 'Me9 Market' }}">
+                <img src="{{ asset(($shop->use_logo ?? false) && ($shop->logo_image ?? null) ? $shop->logo_image : 'me9market/images/common/logo.png') }}" alt="{{ ($shop->use_logo ?? false) && ($shop->logo_image ?? null) ? $shop->channel_name : 'Me9 market' }}">
             </a>
             <button type="button" class="search_btn" aria-label="검색 열기" aria-expanded="false" aria-controls="shop-search"><span></span><span></span></button>
             <form id="shop-search" class="search_bx" action="{{ route('shop.products_list') }}" method="GET" role="search">

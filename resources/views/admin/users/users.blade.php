@@ -173,6 +173,9 @@
                                                 </td>
                                                 <td>{{ date('Y-m-d', strtotime($user['created_at'])) }}</td>
                                                 <td>
+                                                    @if($user->vendor_id && ($sellerApprovals[$user->vendor_id] ?? null)?->seller_requested_at)
+                                                        <a href="{{ route('admin.users.seller_review', $user->id) }}" class="btn02">{{ ($sellerApprovals[$user->vendor_id]->status ?? 0) == 1 ? '승인완료 확인' : '판매자 승인 검토' }}</a>
+                                                    @endif
                                                     <a href="{{ url('admin/add-edit-user/' . $user['id']) }}" class="btn02">수정</a>
                                                     <a href="{{ url('admin/delete-user/' . $user['id']) }}"
                                                         class="btn02 confirmDelete" module="user" moduleid="{{ $user['id'] }}"

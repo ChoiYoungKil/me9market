@@ -38,7 +38,7 @@ class ShopController extends Controller
             'password' => 'required|string',
         ]);
         foreach (['username', 'email'] as $field) {
-            if (Auth::attempt([$field => $data['login_id'], 'password' => $data['password'], 'status' => 1], $request->boolean('remember'))) {
+            if (Auth::attemptWhen([$field => $data['login_id'], 'password' => $data['password'], 'status' => 1], fn ($user) => ! $user->temporaryPasswordIsExpired(), $request->boolean('remember'))) {
                 $request->session()->regenerate();
                 if ($runtime->hasActiveChannelAccess()) {
                     $runtime->recordAuthenticatedVisit();
@@ -110,6 +110,22 @@ class ShopController extends Controller
         $totals = $runtime->totals();
 
         return view('front.shop.cart', compact('shop', 'cartItems', 'totals'));
+    }
+
+    public function toggleWishlist(int $id, ShopChannelRuntime $runtime)
+    {
+        $shop = $runtime->currentChannel();
+        $product = ShopChannelProduct::where('shop_channel_id', $shop->id)->where('status', 1)
+            ->where('approval_status', 'approved')->whereHas('product', fn ($query) => $query->where('status', 1))->findOrFail($id);
+        $added = \Illuminate\Support\Facades\DB::transaction(function () use ($product) {
+            \App\Models\User::whereKey(auth()->id())->lockForUpdate()->firstOrFail();
+            $entry = \App\Models\Wishlist::where('user_id', auth()->id())->where('shop_channel_product_id', $product->id)->first();
+            if ($entry) { $entry->delete(); return false; }
+            \App\Models\Wishlist::create(['user_id'=>auth()->id(),'shop_channel_product_id'=>$product->id]);
+            return true;
+        });
+
+        return back()->with('flash_message_success', $added ? '찜한 상품에 등록했습니다.' : '찜한 상품에서 삭제했습니다.');
     }
 
     public function addToCart(Request $request, ShopChannelRuntime $runtime)

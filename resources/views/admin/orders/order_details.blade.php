@@ -63,6 +63,11 @@
                     </div>
                 </div>
             </div>
+            @if($cancellationClaims->isNotEmpty())
+                <div class="row"><div class="col-md-12"><div class="card"><div class="card-body">
+                    @include('admin.orders.partials.cancellation_requests')
+                </div></div></div></div>
+            @endif
             <div class="row">
                 <div class="col-md-6 grid-margin stretch-card">
                     <div class="card">

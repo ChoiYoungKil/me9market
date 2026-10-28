@@ -314,6 +314,10 @@
                                                             <tr>
                                                                 <th class="w160"><span>판매인증</span></th>
                                                                 <td colspan="3">
+                                                                    @if($vendorDetails?->seller_requested_at)
+                                                                        <p>{{ $vendorDetails->status == 1 ? '인증완료' : '인증 요청 접수 · 심사 대기' }}</p>
+                                                                        <a href="{{ route('admin.users.seller_review', $user->id) }}" class="btn01">판매자 승인 검토</a>
+                                                                    @else
                                                                     <ul class="chk01">
                                                                         @php $sellerStatus = $vendorDetails->status ?? 0; @endphp
                                                                         <li>
@@ -325,6 +329,7 @@
                                                                             <label for="seller_status_0">미인증</label>
                                                                         </li>
                                                                     </ul>
+                                                                    @endif
                                                                 </td>
                                                             </tr>
                                                             <tr>
@@ -337,7 +342,7 @@
                                                                     </div>
                                                                     @if(!empty($businessDetails->address_proof_image))
                                                                         <div style="margin-top: 10px;">
-                                                                            <a target="_blank" href="{{ asset('front/images/bank_copies/' . $businessDetails->address_proof_image) }}" style="color:blue; text-decoration:underline;">[기존 등록증 보기]</a>
+                                                                            <a target="_blank" href="{{ route('admin.member.document', ['vendor'=>$businessDetails->vendor_id, 'kind'=>'license']) }}" style="color:blue; text-decoration:underline;">[기존 등록증 보기]</a>
                                                                         </div>
                                                                     @endif
                                                                 </td>
@@ -373,7 +378,7 @@
                                                                     </div>
                                                                     @if(!empty($businessDetails->bank_copy_image) || !empty($bankDetails->bank_copy_image))
                                                                         <div style="margin-top: 10px;">
-                                                                            <a target="_blank" href="{{ asset('front/images/bank_copies/' . ($businessDetails->bank_copy_image ?? $bankDetails->bank_copy_image)) }}" style="color:blue; text-decoration:underline;">[기존 통장사본 보기]</a>
+                                                                            <a target="_blank" href="{{ route('admin.member.document', ['vendor'=>$businessDetails->vendor_id ?? $bankDetails->vendor_id, 'kind'=>'bankbook']) }}" style="color:blue; text-decoration:underline;">[기존 통장사본 보기]</a>
                                                                         </div>
                                                                     @endif
                                                                 </td>

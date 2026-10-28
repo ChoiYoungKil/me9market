@@ -253,7 +253,7 @@
                                                                     </div>
                                                                     @if(!empty($admin->vendorBusiness->address_proof_image))
                                                                         <div style="margin-top: 10px;">
-                                                                            <a target="_blank" href="{{ asset('front/images/bank_copies/' . $admin->vendorBusiness->address_proof_image) }}" style="color:blue; text-decoration:underline;">[기존 등록증 보기]</a>
+                                                                            <a target="_blank" href="{{ route('admin.member.document', ['vendor'=>$admin->vendor_id, 'kind'=>'license']) }}" style="color:blue; text-decoration:underline;">[기존 등록증 보기]</a>
                                                                         </div>
                                                                     @endif
                                                                 </td>
@@ -284,7 +284,7 @@
                                                                     </div>
                                                                     @if(!empty($admin->vendorBank->bank_copy_image))
                                                                         <div style="margin-top: 10px;">
-                                                                            <a target="_blank" href="{{ asset('front/images/bank_copies/' . $admin->vendorBank->bank_copy_image) }}" style="color:blue; text-decoration:underline;">[기존 통장사본 보기]</a>
+                                                                            <a target="_blank" href="{{ route('admin.member.document', ['vendor'=>$admin->vendor_id, 'kind'=>'bankbook']) }}" style="color:blue; text-decoration:underline;">[기존 통장사본 보기]</a>
                                                                         </div>
                                                                     @endif
                                                                 </td>

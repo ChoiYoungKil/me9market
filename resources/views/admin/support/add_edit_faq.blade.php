@@ -86,6 +86,7 @@
                                                                     <option value="결제" @if (!empty($faq['category']) && $faq['category'] == '결제') selected @endif>결제</option>
                                                                     <option value="회원" @if (!empty($faq['category']) && $faq['category'] == '회원') selected @endif>회원</option>
                                                                     <option value="상품" @if (!empty($faq['category']) && $faq['category'] == '상품') selected @endif>상품</option>
+                                                                    <option value="포인트" @if (!empty($faq['category']) && $faq['category'] == '포인트') selected @endif>포인트</option>
                                                                     <option value="기타" @if (!empty($faq['category']) && $faq['category'] == '기타') selected @endif>기타</option>
                                                                 </select>
                                                             </td>
@@ -164,7 +165,7 @@
     <script>
         $(document).ready(function () {
             // CKEditor 초기화
-            CKEDITOR.replace('answer', {
+            var supportEditor = CKEDITOR.replace('answer', {
                 height: 400,
                 language: 'ko',
                 versionCheck: false, // 보안 경고 메시지 비활성화
@@ -182,6 +183,7 @@
                     { name: 'tools', items: ['Maximize'] }
                 ]
             });
+            supportEditor.on('change', function () { supportEditor.updateElement(); });
         });
     </script>
 @endsection

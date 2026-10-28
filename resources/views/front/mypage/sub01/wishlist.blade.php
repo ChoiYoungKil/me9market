@@ -134,7 +134,7 @@
                                         <tr>
                                             <th class="w160"><span>채널명</span></th>
                                             <td>
-                                                <input type="text" name="channel_name" value="{{ $channelName ?? '' }}"
+                                                <input type="text" aria-label="채널명" name="channel_name" value="{{ $channelName ?? '' }}"
                                                     style="width: 100%; height: 42px; border: 1px solid #ddd; padding: 0 10px;">
                                             </td>
                                             <td class="search_btn_cell">
@@ -174,7 +174,7 @@
                                                         </div>
                                                         <div class="info">
                                                             <div class="code">[{{ $item['code'] }}]</div>
-                                                            <div class="name">{{ $item['name'] }}</div>
+                                                            <div class="name"><a href="{{ $item['product_url'] }}">{{ $item['name'] }}</a></div>
                                                             <div class="option">{{ $item['option'] }}</div>
                                                         </div>
                                                     </div>
@@ -183,7 +183,7 @@
                                                 <td>{{ $item['shop_channel'] }}</td>
                                                 <td>
                                                     <div class="btn_group">
-                                                        <a href="{{ $item['visit_url'] }}" class="btn01 btn_green">방문</a>
+                                                        <a href="{{ $item['channel_url'] }}" class="btn01 btn_green">방문</a>
                                                         <form action="{{ route('mypage.wishlist.delete', ['id' => $item['id']]) }}" method="POST">
                                                             @csrf
                                                             <button type="submit" class="btn01 btn_red" style="border:0;">삭제</button>

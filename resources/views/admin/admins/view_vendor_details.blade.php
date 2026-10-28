@@ -167,8 +167,8 @@
                                                         <th class="w160"><span>정산용 통장사본</span></th>
                                                         <td>
                                                             @if (!empty($vendorDetails['vendor_business']['bank_copy_image']))
-                                                                <a href="{{ url('front/images/bank_copies/' . $vendorDetails['vendor_business']['bank_copy_image']) }}" target="_blank">
-                                                                    <img style="width: 200px" src="{{ url('front/images/bank_copies/' . $vendorDetails['vendor_business']['bank_copy_image']) }}">
+                                                                <a href="{{ route('admin.member.document', ['vendor'=>$vendorDetails['vendor_business']['vendor_id'], 'kind'=>'bankbook']) }}" target="_blank">
+                                                                    통장사본 내려받기
                                                                 </a>
                                                             @else
                                                                 등록된 이미지가 없습니다.

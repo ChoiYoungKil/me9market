@@ -89,66 +89,20 @@ class AdminController extends Controller
         return view('admin.dashboard', compact('counts', 'totalItems', 'periodStart', 'periodEnd', 'topProducts', 'topCategories', 'recentOrders', 'recentPoints', 'charts'));
     }
 
-    public function storyboardTestbed()
+    public function storyboardTestbed(Request $request)
     {
-        $testPassword = (string) config('storyboard.test_password');
-        $definitions = [
-            [
-                'key' => 'member',
-                'title' => '일반 회원',
-                'login_id' => 'user@user.com',
-                'login_url' => rtrim(config('storyboard.front_url'), '/') . '/member/login',
-                'model' => User::where('email', 'user@user.com')->first(),
-            ],
-            [
-                'key' => 'channel',
-                'title' => '채널 관리자',
-                'login_id' => 'john@admin.com',
-                'login_url' => rtrim(config('storyboard.front_url'), '/') . '/channel/login',
-                'model' => Admin::where('email', 'john@admin.com')->where('type', 'vendor')->first(),
-            ],
-            [
-                'key' => 'distributor',
-                'title' => '발주사',
-                'login_id' => 'partner@main.com',
-                'login_url' => rtrim(config('storyboard.front_url'), '/') . '/distributor/login',
-                'model' => Distributor::where('email', 'partner@main.com')->first(),
-            ],
-            [
-                'key' => 'superadmin',
-                'title' => '전체 관리자',
-                'login_id' => 'admin@admin.com',
-                'login_url' => rtrim(config('storyboard.admin_url'), '/') . '/admin/login',
-                'model' => Admin::where('email', 'admin@admin.com')->where('type', 'superadmin')->first(),
-            ],
-        ];
-
-        $accounts = collect($definitions)->map(function (array $definition) use ($testPassword) {
-            $account = $definition['model'];
-            $active = $account && (string) ($account->status ?? '1') === '1';
-
-            if ($account instanceof Admin && $account->type === 'vendor') {
-                $active = $active && (string) $account->confirm !== 'No';
-            }
-
-            unset($definition['model']);
-
-            return $definition + [
-                'exists' => (bool) $account,
-                'active' => (bool) $active,
-                'password' => $testPassword,
-                'password_matches' => $account
-                    && $testPassword !== ''
-                    && Hash::check($testPassword, $account->password),
-            ];
-        });
-
-        $shopChannel = ShopChannel::query()
-            ->where('status', 1)
-            ->orderBy('id')
-            ->first(['id', 'channel_name', 'channel_code', 'is_public', 'is_member_only']);
-
-        return view('admin.storyboard_testbed', compact('accounts', 'shopChannel'));
+        $frontUrl = app()->environment('local') ? $request->getSchemeAndHttpHost() : rtrim(config('storyboard.front_url'), '/');
+        $adminUrl = app()->environment('local') ? $request->getSchemeAndHttpHost() : rtrim(config('storyboard.admin_url'), '/');
+        $selection = app(\App\Services\StoryboardAccounts::class)->forRequest($request, $frontUrl, $adminUrl);
+        $accounts = $selection['accounts'];
+        $member = $selection['member'];
+        $channelMember = $selection['channelMember'];
+        $shopChannel = $channelMember ? ShopChannel::where('status', 1)->where('vendor_id', $channelMember->vendor_id)
+            ->orderBy('id')->first(['id', 'channel_name', 'channel_code', 'is_public', 'is_member_only']) : null;
+        $pages = app(\App\Services\StoryboardReview::class)->pages($member);
+        $reviewedAt = \App\Services\StoryboardReview::REVIEWED_AT;
+        return response()->view('admin.storyboard_testbed', compact('accounts', 'shopChannel', 'frontUrl', 'adminUrl', 'pages', 'reviewedAt'))
+            ->header('Cache-Control', 'private, no-store')->header('Referrer-Policy', 'no-referrer');
     }
 
     public function login(Request $request) { // 'admin' 가드를 사용한 로그인 (판매자 또는 관리자)

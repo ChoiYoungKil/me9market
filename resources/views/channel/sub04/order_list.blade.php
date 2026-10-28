@@ -267,10 +267,9 @@
                                                         {{ $item['qty'] }}<br>
                                                     @endforeach
                                                 </td>
-                                                <td>0</td>
-                                                <td>0</td>
-                                                <td>0</td>
-                                                <td>0</td>
+                                                <td>{{ $order->items->where('status', \App\Support\OrderItemStatus::CANCELLED)->sum('qty') }}</td>
+                                                <td>{{ $order->items->where('status', \App\Support\OrderItemStatus::RETURNED)->sum('qty') }}</td>
+                                                <td>{{ $order->items->where('status', \App\Support\OrderItemStatus::EXCHANGED)->sum('qty') }}</td>
                                                 <td class="t_r">{{ number_format($order->total_sale_price) }} 원</td>
                                                 <td class="t_r">{{ number_format($order->total_product_price) }} 원</td>
                                                 <td class="t_r">{{ number_format($order->total_profit) }} 원</td>

@@ -1,275 +1,50 @@
 @extends('layouts.mypage')
-
 @section('page_type', 'sub')
 @section('dep1_id', '02')
-
 @section('content')
-    <div id="contents">
-        <div id="">
-            <div class="box_w">
-                <div class="box box1">
-                    <!-- 페이지 정보 -->
-                    <div class="page_info">
-                        <div class="ttl">방문한 채널</div>
-                        <ul class="dep">
-                            <li>HOME</li>
-                            <li>방문한 채널</li>
-                        </ul>
-                    </div>
-
-                    <style>
-                        .tb01.type3 thead th {
-                            background-color: #f8f8f8 !important;
-                            color: #333 !important;
-                            border-bottom: 2px solid #333;
-                            border-right: 1px solid #ddd;
-                        }
-
-                        .tb01.type3 thead th:last-child {
-                            border-right: none;
-                        }
-
-                        .tb01.type3 tbody td {
-                            padding: 20px 10px !important;
-                            vertical-align: middle;
-                        }
-
-                        .tb01.type3 .shop_info_cell {
-                            line-height: 1.4;
-                        }
-
-                        .tb01.type3 .shop_code {
-                            font-weight: 700;
-                            color: #333;
-                            margin-bottom: 5px;
-                        }
-
-                        .tb01.type3 .shop_name {
-                            font-weight: 500;
-                            margin-bottom: 15px;
-                        }
-
-                        .tb01.type3 .shop_desc {
-                            color: #888;
-                            font-size: 13px;
-                        }
-
-                        .btn_visit {
-                            display: inline-block;
-                            padding: 5px 15px;
-                            border: 1px solid #333;
-                            background: #fff;
-                            color: #333;
-                            border-radius: 3px;
-                            font-size: 13px;
-                        }
-
-                        /* 검색 버튼 스타일 보완 */
-                        .list_top1 .searh_bx .btn {
-                            font-size: 14px !important;
-                            color: #fff !important;
-                            background-color: #3470f7 !important;
-                            border-radius: 0 5px 5px 0 !important;
-                            width: 60px !important;
-                            height: 40px !important;
-                            line-height: 40px !important;
-                            text-align: center !important;
-                            border: none !important;
-                            cursor: pointer !important;
-                            position: absolute !important;
-                            right: 0 !important;
-                            top: 0 !important;
-                            font-weight: 700 !important;
-                        }
-
-                        .list_top1 .searh_bx input[type=text] {
-                            padding-right: 65px !important;
-                        }
-                    </style>
-
-                    <div class="conbx">
-                        <!-- 검색 바 -->
-                        <div class="list_top1">
-                            <div class="count">
-                                총 <strong>{{ $visitedChannels->total() }}</strong> 건
-                            </div>
-                            <div class="searh_bx">
-                                <form method="GET" action="{{ route('mypage.visited_channels') }}">
-                                    <input type="text" name="search" value="{{ request('search') }}"
-                                        placeholder="채널명을 입력해주세요">
-                                    <button type="submit" class="btn">검색</button>
-                                </form>
-                            </div>
-                        </div>
-
-                        <!-- 전체 삭제 버튼 (검색창 바로 아래) -->
-                        <div class="textR" style="margin-bottom: 15px;">
-                            @if($visitedChannels->total() > 0)
-                                <a href="javascript:void(0);" onclick="deleteAllVisitedChannels()" class="btn02 col7"
-                                    style="padding: 10px 40px; font-size: 14px;">전체삭제</a>
-                            @endif
-                        </div>
-
-                        <div class="con_w">
-                            <div class="tb01 type3">
-                                <table>
-                                    <colgroup>
-                                        <col style="width:15%;">
-                                        <col style="width:10%;">
-                                        <col style="width:auto%;">
-                                        <col style="width:20%;">
-                                        <col style="width:10%;">
-                                    </colgroup>
-                                    <thead>
-                                        <tr>
-                                            <th>방문 일자</th>
-                                            <th>QR 코드</th>
-                                            <th>Shop 채널명</th>
-                                            <th>Shop 채널 주소</th>
-                                            <th>관리</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @forelse($visitedChannels as $visit)
-                                            <tr>
-                                                <td class="textC">
-                                                    {{ $visit->updated_at->format('Y.m.d') }}
-                                                </td>
-                                                <td class="textC">
-                                                    @php
-                                                        $qr_data = '#';
-                                                        if ($visit->vendor && $visit->vendor->vendorbusinessdetails && $visit->vendor->vendorbusinessdetails->shop_website) {
-                                                            $qr_data = $visit->vendor->vendorbusinessdetails->shop_website;
-                                                            if (!Str::startsWith($qr_data, ['http://', 'https://', '//'])) {
-                                                                $qr_data = 'http://' . $qr_data;
-                                                            }
-                                                        }
-                                                    @endphp
-                                                    @if($qr_data !== '#')
-                                                        @php
-                                                            $shopName = $visit->vendor && $visit->vendor->vendorbusinessdetails ? $visit->vendor->vendorbusinessdetails->shop_name : '알 수 없음';
-                                                            $qrImageSrc = "data:image/png;base64," . DNS2D::getBarcodePNG($qr_data, 'QRCODE', 4, 4);
-                                                            $largeQrImageSrc = "data:image/png;base64," . DNS2D::getBarcodePNG($qr_data, 'QRCODE', 10, 10);
-                                                        @endphp
-                                                        <img src="{{ $qrImageSrc }}" alt="QR Code" 
-                                                             class="js-qr-click"
-                                                             data-shop="{{ $shopName }}"
-                                                             data-url="{{ $qr_data }}"
-                                                             data-large-qr="{{ $largeQrImageSrc }}"
-                                                             style="width: 50px; height: 50px; border: 1px solid #ddd; padding: 2px; background: white; display: inline-block; cursor: pointer;"
-                                                             title="클릭하여 크게 보기">
-                                                    @else
-                                                        -
-                                                    @endif
-                                                </td>
-                                                <td class="textL">
-                                                    <div class="shop_info_cell">
-                                                        <div class="shop_code">[a{{ $visit->vendor_id }}]</div>
-                                                        <div class="shop_name">
-                                                            {{ $visit->vendor && $visit->vendor->vendorbusinessdetails ? $visit->vendor->vendorbusinessdetails->shop_name : '알 수 없음' }}
-                                                        </div>
-                                                        <div class="shop_desc">
-                                                            {{ $visit->vendor && $visit->vendor->vendorbusinessdetails && $visit->vendor->vendorbusinessdetails->shop_address ? $visit->vendor->vendorbusinessdetails->shop_address : '미구마켓 공식 파트너 브랜드 채널입니다.' }}
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td class="textL">
-                                                    @if ($visit->vendor && $visit->vendor->vendorbusinessdetails && $visit->vendor->vendorbusinessdetails->shop_website)
-                                                        <a href="{{ $visit->vendor->vendorbusinessdetails->shop_website }}" target="_blank" style="color: #6366f1; text-decoration: underline;">
-                                                            {{ $visit->vendor->vendorbusinessdetails->shop_website }}
-                                                        </a>
-                                                    @else
-                                                        -
-                                                    @endif
-                                                </td>
-                                                <td class="textC">
-                                                    @php
-                                                        $visit_url = '#';
-                                                        if ($visit->vendor && $visit->vendor->vendorbusinessdetails && $visit->vendor->vendorbusinessdetails->shop_website) {
-                                                            $visit_url = $visit->vendor->vendorbusinessdetails->shop_website;
-                                                            if (!Str::startsWith($visit_url, ['http://', 'https://', '//'])) {
-                                                                $visit_url = '//' . $visit_url;
-                                                            }
-                                                        }
-                                                    @endphp
-                                                    <div style="display: flex; flex-direction: column; gap: 6px; align-items: center; justify-content: center;">
-                                                        <a href="{{ $visit_url }}" class="btn_visit" style="width: 90px; text-align: center; padding: 4px 0; display: block; box-sizing: border-box;">방문하기</a>
-                                                        <a href="{{ route('mypage.order.list', ['vendor_id' => $visit->vendor_id]) }}" class="btn_visit" style="width: 90px; text-align: center; padding: 4px 0; display: block; box-sizing: border-box; background: #6366f1; color: white; border-color: #6366f1; font-weight: bold;">주문내역 ({{ $visit->orders_count }})</a>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        @empty
-                                            <tr>
-                                                <td colspan="5" class="no_data">
-                                                    방문한 채널 내역이 없습니다.
-                                                </td>
-                                            </tr>
-                                        @endforelse
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <!-- 페이징 -->
-                            <div class="paging">
-                                {{ $visitedChannels->appends(request()->input())->links() }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div><!-- //contents -->
-
-    <!-- QR Code Modal Popup Layer -->
-    <div id="qrModal" class="modal_bg" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:9999; backdrop-filter: blur(4px); transition: all 0.3s ease;">
-        <div class="modal_content" style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:#fff; padding:30px; border-radius:16px; text-align:center; min-width:280px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid #eee; box-sizing: border-box;">
-            <div style="font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 8px;" id="qrModalShopName">Shop Name</div>
-            <div style="font-size: 13px; color: #64748b; margin-bottom: 20px; word-break: break-all;" id="qrModalShopUrl">Shop Url</div>
-            
-            <div style="display: inline-block; padding: 15px; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-                <img id="qrModalImage" src="" alt="QR Code" style="width: 200px; height: 200px; display: block;">
-            </div>
-            
-            <button onclick="closeQrModal()" style="display: block; width: 100%; padding: 12px 0; background:#3470f7; color:#fff; border:none; border-radius:8px; cursor:pointer; font-size: 14px; font-weight: 700; transition: background 0.2s; box-shadow: 0 4px 6px -1px rgba(52, 112, 247, 0.2);" onmouseover="this.style.background='#1e56d4'" onmouseout="this.style.background='#3470f7'">닫기</button>
-        </div>
+<div id="contents"><div class="box_w"><section class="box member-visits">
+    <div class="page_info"><div class="ttl">방문한 채널</div><ul class="dep"><li>HOME</li><li>방문한 채널</li></ul></div>
+    <div class="member-list-toolbar">
+        <p>총 <strong>{{ number_format($visitedChannels->total()) }}</strong>건</p>
+        <form method="get" action="{{ route('mypage.visited_channels') }}" class="member-list-search">
+            <label for="visited-channel-search">채널명</label><input id="visited-channel-search" type="search" name="search" value="{{ request('search') }}" maxlength="100" placeholder="채널명 또는 채널코드"><button type="submit">검색</button>
+        </form>
+        <form method="post" action="{{ route('mypage.visited_channels.delete_all') }}" onsubmit="return confirm('모든 방문 기록을 삭제하시겠습니까?');">@csrf<button type="submit" class="member-list-outline">전체 삭제</button></form>
     </div>
+    <div class="member-table-scroll"><div class="tb01"><table><thead><tr><th>방문 일자</th><th>QR 코드</th><th>Shop 채널명</th><th>Shop 채널 주소</th><th>관리</th></tr></thead><tbody>
+    @forelse($visitedChannels as $visit)
+        @php
+            $shop = $visit->shopChannel;
+            $visitUrl = $shop ? route('shop.enter', $shop->channel_code) : null;
+            $channelName = $shop?->channel_name ?: '이전 방문 · '.($visit->vendor?->vendorbusinessdetails?->shop_name ?: '채널 정보 없음');
+        @endphp
+        <tr><td>{{ $visit->updated_at->format('Y-m-d') }}</td><td>
+        @if($visitUrl)
+            @php
+                $qrImage = 'data:image/png;base64,'.DNS2D::getBarcodePNG($visitUrl, 'QRCODE', 4, 4);
+                $largeQrImage = 'data:image/png;base64,'.DNS2D::getBarcodePNG($visitUrl, 'QRCODE', 10, 10);
+            @endphp
+            <button type="button" class="member-qr-open" aria-label="{{ $channelName }} QR 확대" data-name="{{ $channelName }}" data-url="{{ $visitUrl }}" data-image="{{ $largeQrImage }}"><img src="{{ $qrImage }}" alt="{{ $channelName }} QR 코드" width="72" height="72"></button>
+        @else — @endif
+        </td><td class="member-channel-name">@if($shop)<small>[{{ $shop->channel_code }}]</small>@endif<strong>{{ $channelName }}</strong>@if($shop?->og_description)<p>{{ $shop->og_description }}</p>@endif</td>
+        <td>@if($visitUrl)<a href="{{ $visitUrl }}" class="member-channel-url">{{ $visitUrl }}</a>@else<span>채널 주소 확인 불가</span>@endif</td>
+        <td><div class="member-row-actions">@if($visitUrl)<a href="{{ $visitUrl }}" class="member-list-primary">방문</a>@endif<form method="post" action="{{ route('mypage.visited_channels.delete', $visit->id) }}" onsubmit="return confirm('이 방문 기록을 삭제하시겠습니까?');">@csrf<button type="submit" class="member-list-outline">삭제</button></form></div></td></tr>
+    @empty<tr><td colspan="5">{{ request('search') ? '검색된 방문 채널이 없습니다.' : '방문한 채널 내역이 없습니다.' }}</td></tr>@endforelse
+    </tbody></table></div></div>
+    @if($visitedChannels->lastPage()>1)<nav class="page_bx1" aria-label="방문 채널 목록 페이지">@foreach($visitedChannels->getUrlRange(1,$visitedChannels->lastPage()) as $page=>$url)<a class="num {{ $page===$visitedChannels->currentPage()?'on':'' }}" href="{{ $url }}">{{ $page }}</a>@endforeach</nav>@endif
+</section></div></div>
+<div class="popup_bx" id="visited-qr-modal" role="dialog" aria-modal="true" aria-labelledby="visited-qr-title"><div class="pop_w"><div class="pop_inner"><div class="pop_con w560 member-qr-modal"><button type="button" class="close_btn close1" aria-label="QR 닫기">닫기</button><h2 id="visited-qr-title"></h2><p id="visited-qr-url"></p><img id="visited-qr-image" alt="확대 QR 코드" width="240" height="240"><div class="btm_btn"><button type="button" class="btn_submit close_btn">닫기</button></div></div></div></div></div>
 @endsection
-
 @push('scripts')
-    <script>
-        function deleteAllVisitedChannels() {
-            if (confirm('모든 방문 기록을 삭제하시겠습니까?')) {
-                var form = document.createElement('form');
-                form.method = 'POST';
-                form.action = "{{ route('mypage.visited_channels.delete_all') }}";
-
-                var csrfToken = document.createElement('input');
-                csrfToken.type = 'hidden';
-                csrfToken.name = '_token';
-                csrfToken.value = "{{ csrf_token() }}";
-                form.appendChild(csrfToken);
-
-                document.body.appendChild(form);
-                form.submit();
-            }
-        }
-
-        // QR Code Modal Trigger
-        $(document).on('click', '.js-qr-click', function() {
-            var data = $(this).data();
-            $('#qrModalShopName').text(data.shop);
-            $('#qrModalShopUrl').text(data.url);
-            $('#qrModalImage').attr('src', data.largeQr);
-            $('#qrModal').fadeIn(200);
-        });
-
-        function closeQrModal() {
-            $('#qrModal').fadeOut(200);
-        }
-    </script>
-    @if(Session::has('success_message'))
-        <script>
-            alert("{{ Session::get('success_message') }}");
-        </script>
-    @endif
+<script>
+document.querySelectorAll('.member-qr-open').forEach(button=>button.addEventListener('click',()=>{
+    document.getElementById('visited-qr-title').textContent=button.dataset.name;
+    document.getElementById('visited-qr-url').textContent=button.dataset.url;
+    document.getElementById('visited-qr-image').src=button.dataset.image;
+    document.getElementById('visited-qr-modal').style.display='block';
+    document.querySelector('#visited-qr-modal .close_btn').focus();
+}));
+document.querySelectorAll('#visited-qr-modal .close_btn').forEach(button=>button.addEventListener('click',()=>{document.getElementById('visited-qr-modal').style.display='none';}));
+document.addEventListener('keydown',event=>{if(event.key==='Escape') document.getElementById('visited-qr-modal').style.display='none';});
+</script>
 @endpush

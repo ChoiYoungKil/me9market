@@ -246,6 +246,7 @@ class ChannelPointService
 
     public function recordFirstVisit(ShopChannel $shop, int $userId): ?PointTransaction
     {
+        if ($shop->use_own_pg) return null;
         $points = max(0, (int) $shop->first_visit_points);
         if ($points === 0 || ! $shop->vendor_id) {
             return null;

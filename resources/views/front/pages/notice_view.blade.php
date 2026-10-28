@@ -1,84 +1,23 @@
-@extends('layouts.frontend')
-
-@section('page_type', 'sub')
-
-@php
-    $dep1_id = "04";
-    $dep2_id = "01";
-    $dep1_tit = "고객센터";
-    $dep2_tit = "공지사항";
-    $dep2_sub = "미구마켓의 다양한 소식을 안내해 드립니다.";
-@endphp
-
+@extends('layouts.market-sub')
+@section('page_title', '고객센터 · 공지사항 상세')
 @section('content')
-    @include('layouts.inc.sub_header')
-    <div id="container">
-        <div id="contents">
-            <div id="notice">
-                <div class="box box1">
-                    <div class="inner_bx">
-                        <div id="board">
-                            <div class="view01">
-                                <div class="subject">
-                                    @if($notice->is_important)
-                                        <div class="on">공지</div>
-                                    @endif
-                                    <strong>{{ $notice->title }}</strong>
-                                    <ul>
-                                        <li>{{ $notice->created_at->format('Y-m-d') }}</li>
-                                    </ul>
-                                </div>
-
-                                @if($notice->attachment)
-                                    <div class="file">
-                                        <span class="l_txt">첨부파일</span>
-                                        <ul>
-                                            <li>
-                                                <a href="{{ url('admin/attachments/notices/' . $notice->attachment) }}"
-                                                    download>
-                                                    {{ $notice->attachment }}
-                                                </a>
-                                            </li>
-                                        </ul>
-                                    </div>
-                                @endif
-
-                                <div class="con">
-                                    {!! $notice->content !!}
-                                </div>
-
-                                <div class="page">
-                                    @if($prevNotice)
-                                        <div class="page_w prev">
-                                            <span class="l_txt">이전글</span>
-                                            <div class="sb">
-                                                <a href="{{ route('cs.notice.view', ['id' => $prevNotice->id]) }}">
-                                                    {{ $prevNotice->title }}
-                                                </a>
-                                            </div>
-                                        </div>
-                                    @endif
-
-                                    @if($nextNotice)
-                                        <div class="page_w next">
-                                            <span class="l_txt">다음글</span>
-                                            <div class="sb">
-                                                <a href="{{ route('cs.notice.view', ['id' => $nextNotice->id]) }}">
-                                                    {{ $nextNotice->title }}
-                                                </a>
-                                            </div>
-                                        </div>
-                                    @endif
-                                </div>
-                            </div>
-
-                            <div class="btm_btn">
-                                <a href="{{ route('cs.notice') }}">목록</a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div><!-- //contents -->
-    </div><!-- //container -->
+@include('partials.market-support-heading')
+<article class="market-shell market-notice-detail" aria-labelledby="notice-title" id="notice-article">
+    <header class="market-notice-detail-head">
+        <p class="home-eyebrow">{{ $notice->is_important ? 'IMPORTANT NOTICE' : 'NOTICE' }}</p>
+        <h2 id="notice-title">{{ $notice->title }}</h2>
+        <p><span>작성일</span> <time datetime="{{ $notice->created_at->toDateString() }}">{{ $notice->created_at->format('Y-m-d') }}</time></p>
+    </header>
+    @if($notice->attachment)
+        <div class="market-notice-attachment"><span>첨부파일</span><a href="{{ url('admin/attachments/notices/'.$notice->attachment) }}" download><span class="attachment-format">{{ strtoupper(pathinfo($notice->attachment, PATHINFO_EXTENSION)) }}</span> 첨부파일 다운로드 <span aria-hidden="true">↓</span></a></div>
+    @endif
+    <div class="market-notice-body">{!! $notice->content !!}</div>
+    @if($prevNotice || $nextNotice)
+        <nav class="market-notice-neighbors" aria-label="이전글 다음글">
+            @if($prevNotice)<a href="{{ route('cs.notice.view', ['id' => $prevNotice->id]) }}"><span>이전글</span><strong>{{ $prevNotice->title }}</strong><span aria-hidden="true">↑</span></a>@endif
+            @if($nextNotice)<a href="{{ route('cs.notice.view', ['id' => $nextNotice->id]) }}"><span>다음글</span><strong>{{ $nextNotice->title }}</strong><span aria-hidden="true">↓</span></a>@endif
+        </nav>
+    @endif
+    <div class="market-notice-back"><a class="market-button market-button-outline" href="{{ route('cs.notice') }}">목록 <span aria-hidden="true">↗</span></a></div>
+</article>
 @endsection

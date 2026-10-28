@@ -29,6 +29,17 @@
                 <div class="shop-purchase-total"><strong>총 상품 금액</strong><output data-price-total>{{ number_format($price * $minimumQuantity) }}원</output></div>
                 <div class="shop-actions"><button type="submit" class="shop-btn" @disabled($maximumQuantity < $minimumQuantity)>장바구니</button><button class="shop-btn primary" type="submit" name="buy_now" value="1" @disabled($maximumQuantity < $minimumQuantity)>바로 구매</button></div>
             </form>
+            @auth
+                @php
+                    $isWishlisted = \App\Models\Wishlist::where('user_id', auth()->id())->where('shop_channel_product_id', $shopProduct->id)->exists();
+                @endphp
+                <form class="shop-actions" method="post" action="{{ route('shop.wishlist.toggle', $shopProduct->id) }}">
+                    @csrf
+                    <button type="submit" class="shop-btn" aria-pressed="{{ $isWishlisted ? 'true' : 'false' }}">{{ $isWishlisted ? '찜 해제' : '찜하기' }}</button>
+                </form>
+            @else
+                <div class="shop-actions"><a href="{{ route('shop.login') }}" class="shop-btn">로그인 후 찜하기</a></div>
+            @endauth
         </div>
     </div>
     <div class="shop-product-tabs" data-tabs>

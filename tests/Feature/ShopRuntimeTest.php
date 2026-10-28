@@ -182,6 +182,65 @@ class ShopRuntimeTest extends TestCase
         $this->get('/admin/orders/invoice/pdf/'.$order->id)->assertNotFound();
     }
 
+    public function test_member_cart_persists_across_channels_and_mypage_deletion_is_owner_scoped(): void
+    {
+        [,,$shop,,$product]=$this->createShopProduct('member-cart-a','MEM-CART-A','MemberCartA');
+        [,,$otherShop,,$otherProduct]=$this->createShopProduct('member-cart-b','MEM-CART-B','MemberCartB');
+        $user=User::factory()->create();
+        $this->actingAs($user)->withSession(['shop_channel_id'=>$shop->id])->post(route('front.shop.cart.add'),['shop_product_id'=>$product->id,'qty'=>2])->assertRedirect();
+        $this->withSession(['shop_channel_id'=>$otherShop->id])->post(route('front.shop.cart.add'),['shop_product_id'=>$otherProduct->id,'qty'=>1])->assertRedirect();
+        session()->forget('shop_channel_cart');
+        $this->get(route('mypage.cart'))->assertOk()->assertSee('MemberCartA Product')->assertSee('MemberCartB Product');
+        $entry=\App\Models\MemberShopCart::where('user_id',$user->id)->where('shop_channel_id',$shop->id)->firstOrFail();
+        $this->assertSame(2,(int)$entry->quantity);
+        $otherUser=User::factory()->create();
+        $this->actingAs($otherUser)->post(route('mypage.shop_cart.delete',$entry->id))->assertRedirect();
+        $this->assertDatabaseHas('member_shop_carts',['id'=>$entry->id,'user_id'=>$user->id]);
+        $this->actingAs($user)->post(route('mypage.shop_cart.delete',$entry->id))->assertRedirect();
+        $this->withSession(['shop_channel_id'=>$shop->id])->get(route('front.shop.cart.index'))->assertOk()->assertSee('장바구니가 비어 있습니다.');
+        $this->withSession(['shop_channel_id'=>$otherShop->id])->get(route('front.shop.cart.index'))->assertOk()->assertSee('MemberCartB Product');
+    }
+
+    public function test_guest_cart_is_adopted_once_when_member_opens_mypage_cart(): void
+    {
+        [,,$shop,,$product]=$this->createShopProduct('adopt-cart','ADOPT-CART','AdoptCart');
+        $this->withSession(['shop_channel_id'=>$shop->id])->post(route('front.shop.cart.add'),['shop_product_id'=>$product->id,'qty'=>2])->assertRedirect();
+        $user=User::factory()->create();
+        $this->actingAs($user)->get(route('mypage.cart'))->assertOk()->assertSee('AdoptCart Product');
+        $this->get(route('mypage.cart'))->assertOk();
+        $this->assertSame(1,\App\Models\MemberShopCart::where('user_id',$user->id)->count());
+        $this->assertSame(2,(int)\App\Models\MemberShopCart::where('user_id',$user->id)->value('quantity'));
+    }
+
+    public function test_member_mock_checkout_clears_only_the_purchased_channels_cart(): void
+    {
+        Mail::fake();
+        [,,$shop,,$product]=$this->createShopProduct('checkout-cart-a','CHECKOUT-CART-A','CheckoutCartA');
+        [,,$otherShop,,$otherProduct]=$this->createShopProduct('checkout-cart-b','CHECKOUT-CART-B','CheckoutCartB');
+        $user=User::factory()->create();
+        $this->actingAs($user)->withSession(['shop_channel_id'=>$shop->id])->post(route('front.shop.cart.add'),['shop_product_id'=>$product->id,'qty'=>1]);
+        $this->withSession(['shop_channel_id'=>$otherShop->id])->post(route('front.shop.cart.add'),['shop_product_id'=>$otherProduct->id,'qty'=>1]);
+        $this->withSession(['shop_channel_id'=>$shop->id])->post(route('front.shop.order.checkout'),[
+            'order_confirmed'=>'1','name'=>'검수 회원','mobile'=>'01012345678','email'=>$user->email,'pincode'=>'04524','address'=>'검수용 주소',
+        ])->assertRedirect(route('front.shop.order.complete'));
+        $this->assertSame(0,\App\Models\MemberShopCart::where('user_id',$user->id)->where('shop_channel_id',$shop->id)->count());
+        $this->assertSame(1,\App\Models\MemberShopCart::where('user_id',$user->id)->where('shop_channel_id',$otherShop->id)->count());
+    }
+
+    public function test_wishlist_toggle_is_scoped_to_current_shop_and_each_member(): void
+    {
+        [,,$shop,,$product]=$this->createShopProduct('wishlist-own','WISHLIST-OWN','WishlistOwn');
+        [,,,,$foreign]=$this->createShopProduct('wishlist-other','WISHLIST-OTHER','WishlistOther');
+        $user=User::factory()->create();$other=User::factory()->create();
+        $this->actingAs($user)->withSession(['shop_channel_id'=>$shop->id])->post(route('shop.wishlist.toggle',$foreign->id))->assertNotFound();
+        $this->post(route('shop.wishlist.toggle',$product->id))->assertRedirect();
+        $entry=\App\Models\Wishlist::where('user_id',$user->id)->firstOrFail();
+        $this->actingAs($other)->post(route('mypage.wishlist.delete',$entry->id))->assertRedirect();
+        $this->assertDatabaseHas('wishlists',['id'=>$entry->id,'user_id'=>$user->id]);
+        $this->actingAs($user)->post(route('shop.wishlist.toggle',$product->id))->assertRedirect();
+        $this->assertDatabaseMissing('wishlists',['id'=>$entry->id]);
+    }
+
     private function createShopProduct(string $channelCode, string $productCode, string $customerPrefix): array
     {
         $vendor = Vendor::create([

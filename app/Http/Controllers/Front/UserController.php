@@ -39,6 +39,8 @@ use Illuminate\Validation\ValidationException;
 
 class UserController extends Controller
 {
+    private const SAVED_LOGIN_ID_COOKIE = 'me9_saved_login_id';
+
     // 새로운 로그인 액션
     public function loginUser(Request $request)
     {
@@ -46,14 +48,27 @@ class UserController extends Controller
             $data = $request->all();
 
             $rules = [
-                'login_id' => 'required',
-                'password' => 'required',
+                'login_id' => 'required|string|max:255',
+                'password' => 'required|string|max:4096',
+                'remember_id' => 'nullable|boolean',
             ];
 
-            $validator = Validator::make($data, $rules);
+            $validator = Validator::make($data, $rules, [
+                'login_id.required' => '아이디 또는 이메일을 입력해 주세요.',
+                'login_id.string' => '아이디 또는 이메일을 올바르게 입력해 주세요.',
+                'login_id.max' => '아이디 또는 이메일은 255자 이내로 입력해 주세요.',
+                'password.required' => '비밀번호를 입력해 주세요.',
+                'password.string' => '비밀번호를 올바르게 입력해 주세요.',
+                'password.max' => '비밀번호를 확인해 주세요.',
+            ]);
 
             if ($validator->fails()) {
-                return redirect()->back()->withErrors($validator)->withInput();
+                return redirect()->back()->withErrors($validator)->withInput($request->only('login_id', 'remember_id', 'remember'));
+            }
+
+            $saveLoginId = $request->boolean('remember_id') || $request->boolean('remember');
+            if (! $saveLoginId) {
+                \Illuminate\Support\Facades\Cookie::queue(\Illuminate\Support\Facades\Cookie::forget(self::SAVED_LOGIN_ID_COOKIE));
             }
 
             $credentials = [
@@ -62,8 +77,12 @@ class UserController extends Controller
             ];
 
             $authenticated = false;
+            $temporaryExpired = false;
             foreach ($credentials as $credential) {
-                if (Auth::attempt($credential, $request->boolean('remember'))) {
+                if (Auth::attemptWhen($credential, function ($user) use (&$temporaryExpired) {
+                    $temporaryExpired = $user->temporaryPasswordIsExpired();
+                    return ! $temporaryExpired;
+                }, false)) {
                     $authenticated = true;
                     break;
                 }
@@ -72,9 +91,11 @@ class UserController extends Controller
             if ($authenticated) {
                 $request->session()->regenerate();
                 if ((string) Auth::user()->status === '0') {
+                    $withdrawn = DB::table('member_withdrawals')->where('user_id', Auth::id())->exists();
                     Auth::logout();
 
-                    return redirect()->back()->with('error_message', '계정이 아직 활성화되지 않았습니다. 관리자에게 문의하세요.');
+                    return redirect()->back()->with('error_message', $withdrawn ? '탈퇴 처리된 계정입니다. 로그인할 수 없습니다.' : '계정이 아직 활성화되지 않았습니다. 관리자에게 문의하세요.')
+                        ->withInput($request->only('login_id', 'remember_id', 'remember'));
                 }
 
                 // 장바구니 업데이트
@@ -84,9 +105,19 @@ class UserController extends Controller
                     Cart::where('session_id', $session_id)->update(['user_id' => $user_id]);
                 }
 
-                return redirect('/');
+                if ($saveLoginId) {
+                    \Illuminate\Support\Facades\Cookie::queue(cookie(self::SAVED_LOGIN_ID_COOKIE, $data['login_id'], 60 * 24 * 30,
+                        '/', null, $request->isSecure(), true, false, 'lax'));
+                }
+
+                $response = redirect()->intended('/');
+                if (Auth::user()->temporary_password_expires_at) {
+                    $response->with('success_message', '임시비밀번호로 로그인했습니다. 회원정보에서 새 비밀번호로 변경해 주세요.');
+                }
+                return $response;
             } else {
-                return redirect()->back()->with('error_message', '아이디(이메일) 또는 비밀번호가 일치하지 않습니다.');
+                return redirect()->back()->with('error_message', $temporaryExpired ? '임시비밀번호의 유효시간이 지났습니다. 비밀번호 찾기에서 다시 발급해 주세요.' : '아이디(이메일) 또는 비밀번호가 일치하지 않습니다.')
+                    ->withInput($request->only('login_id', 'remember_id', 'remember'));
             }
         }
     }
@@ -175,6 +206,7 @@ class UserController extends Controller
             $user->save();
 
             // 즉시 자동 로그인 처리
+            $request->session()->forget(['social_signup', 'social_oauth']);
             Auth::login($user);
             $request->session()->regenerate();
 
@@ -211,398 +243,85 @@ class UserController extends Controller
 
     public function updateMemberStep1(Request $request)
     {
-        if (! Auth::check()) {
-            return redirect()->route('front.member.login')->with('error_message', '로그인이 필요합니다.');
+        abort_unless(Auth::check(), 401);
+        app(\App\Services\MemberRegistration::class)->saveProfile($request, Auth::user());
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json(['status' => 'success', 'message' => '기본정보가 저장되었습니다.']);
         }
-
-        $user = Auth::user();
-
-        // Ensure user is an Eloquent model instance
-        if (! ($user instanceof User)) {
-            $user = User::find(Auth::id());
-            if (! $user) {
-                return redirect()->route('front.member.login')->with('error_message', '로그인이 필요합니다.');
-            }
-            Auth::setUser($user); // Update the session user instance
-        }
-
-        $data = $request->all();
-
-        // 유효성 검사
-        $rules = [
-            'name' => 'required|string|max:100',
-            'mobile_1' => 'required',
-            'mobile_2' => 'required',
-            'mobile_3' => 'required',
-            'zipcode' => 'required',
-            'address1' => 'required',
-            'address2' => 'required',
-        ];
-
-        $validator = Validator::make($data, $rules);
-
-        if ($validator->fails()) {
-            return redirect()->back()->withErrors($validator)->withInput();
-        }
-
-        // 사용자 업데이트
-        $user->name = $data['name'];
-        if (isset($data['gender'])) {
-            $user->gender = $data['gender'];
-        }
-
-        if (isset($data['member_number']) && empty($user->member_number)) {
-            $user->member_number = $data['member_number'];
-        }
-
-        $user->mobile = $data['mobile_1'].'-'.$data['mobile_2'].'-'.$data['mobile_3'];
-        $user->pincode = $data['zipcode'];
-        $user->address = $data['address1'];
-        $user->city = $data['address2']; // 상세 주소를 기존 스키마에 따라 city/state에 저장하거나 적절히 매핑함
-
-        $user->save();
-
-        if ($request->ajax()) {
-            return response()->json([
-                'status' => 'success',
-                'message' => '회원정보가 수정되었습니다.',
-            ]);
-        }
-
-        return redirect()->back()->with('success_message', '회원정보가 수정되었습니다.');
+        return back()->with('success_message', '기본정보가 저장되었습니다.');
     }
 
     public function registerStep1()
     {
-        if (! Auth::check()) {
-            return redirect()->route('front.member.login')->with('error_message', '로그인이 필요합니다.');
-        }
-
-        $user = Auth::user();
-
-        $memberNumber = $user->member_number;
-
-        if (empty($memberNumber)) {
-            // 회원 번호 생성: M9-YYMMDD-XXXX (당일 가입 순서)
-            $dateStr = $user->created_at->format('ymd');
-            $rank = User::whereDate('created_at', $user->created_at->format('Y-m-d'))
-                ->where('id', '<=', $user->id)
-                ->count();
-            $memberNumber = 'M9-'.$dateStr.'-'.str_pad($rank, 4, '0', STR_PAD_LEFT);
-        }
-
-        return view('front.member.register.step1', compact('user', 'memberNumber'));
+        return $this->registrationStep(1);
     }
 
     public function registerStep2()
     {
-        if (! Auth::check()) {
-            return redirect()->route('front.member.login')->with('error_message', '로그인이 필요합니다.');
-        }
-
-        $user = Auth::user();
-
-        // 회원번호 로직 (Step 1과 동일)
-        $memberNumber = $user->member_number;
-        if (empty($memberNumber)) {
-            $dateStr = $user->created_at->format('ymd');
-            $rank = User::whereDate('created_at', $user->created_at->format('Y-m-d'))
-                ->where('id', '<=', $user->id)
-                ->count();
-            $memberNumber = 'M9-'.$dateStr.'-'.str_pad($rank, 4, '0', STR_PAD_LEFT);
-            // 이상적으로는 지금 저장해야 하지만, Step 1에서 처리하거나 Step 2에서 저장하도록 함.
-        }
-
-        $vendorDetails = null;
-        $businessDetails = null;
-        $bankDetails = null;
-
-        if ($user->vendor_id) {
-            $vendorDetails = Vendor::find($user->vendor_id);
-            if ($vendorDetails) {
-                $businessDetails = VendorsBusinessDetail::where('vendor_id', $user->vendor_id)->first();
-                $bankDetails = VendorsBankDetail::where('vendor_id', $user->vendor_id)->first();
-            }
-        }
-
-        return view('front.member.register.step2', compact('user', 'memberNumber', 'vendorDetails', 'businessDetails', 'bankDetails'));
-    }
-
-    public function updateMemberStep2(Request $request)
-    {
-        if (! Auth::check()) {
-            return response()->json(['status' => 'error', 'message' => '로그인이 필요합니다.']);
-        }
-
-        /** @var User $user */
-        $user = Auth::user();
-
-        // Ensure user is an Eloquent model instance
-        if (! ($user instanceof User)) {
-            $user = User::find(Auth::id());
-            if (! $user) {
-                return response()->json(['status' => 'error', 'message' => '사용자 정보를 찾을 수 없습니다.']);
-            }
-            Auth::setUser($user);
-        }
-        $data = $request->all();
-
-        // Validation
-        $rules = [
-            'shop_name' => 'required',
-            'shop_business_type' => 'required',
-            'business_license_1' => 'required',
-            'business_license_2' => 'required',
-            'business_license_3' => 'required',
-            'mobile_1' => 'required',
-            'mobile_2' => 'required',
-            'mobile_3' => 'required',
-            'email_1' => 'required',
-            'email_2' => 'required',
-            'zipcode' => 'required',
-            'address1' => 'required',
-            'address2' => 'required',
-            'bank_name' => 'required',
-            'account_number' => 'required',
-            'account_holder_name' => 'required',
-            'agree1' => 'required',
-        ];
-
-        $validator = Validator::make($data, $rules);
-        if ($validator->fails()) {
-            return response()->json(['status' => 'error', 'message' => '필수 항목을 모두 입력해주세요.', 'errors' => $validator->errors()]);
-        }
-
-        // 1. Vendor가 존재하는지 확인하고 사용자와 연결
-        if (! $user->vendor_id) {
-            $vendor = new Vendor;
-            $vendor->name = $user->name;
-            $vendor->mobile = $user->mobile;
-            $vendor->email = $user->email;
-            $vendor->status = 0;
-            $vendor->commission = 0;
-            $vendor->confirm = 'No';
-            $vendor->save();
-
-            $user->vendor_id = $vendor->id;
-            $user->type = 'company';
-            $user->save();
-        } else {
-            if ($user->type == 'general') {
-                $user->type = 'company';
-                $user->save();
-            }
-        }
-
-        $vendor_id = $user->vendor_id;
-
-        // 2. 사업자 상세 정보 업데이트
-        $business = VendorsBusinessDetail::where('vendor_id', $vendor_id)->first();
-        if (! $business) {
-            $business = new VendorsBusinessDetail;
-            $business->vendor_id = $vendor_id;
-        }
-
-        $business->shop_name = $data['shop_name'];
-        $business->shop_business_type = $data['shop_business_type'];
-        $business->business_license_number = $data['business_license_1'].'-'.$data['business_license_2'].'-'.$data['business_license_3'];
-        $business->shop_mobile = $data['mobile_1'].'-'.$data['mobile_2'].'-'.$data['mobile_3'];
-        $business->shop_email = $data['email_1'].'@'.$data['email_2'];
-        $business->shop_address = $data['address1'];
-        $business->shop_address_detail = $data['address2'];
-        $business->shop_pincode = $data['zipcode'];
-        $business->shop_city = '';
-        $business->shop_state = '';
-        $business->shop_country = '';
-        $business->address_proof = '';
-        $business->address_proof_image = '';
-        $business->gst_number = '';
-        $business->pan_number = '';
-        $business->bank_name = $data['bank_name'];
-        $business->bank_account_number = $data['account_number'];
-        $business->bank_account_holder_name = $data['account_holder_name'];
-
-        // 이미지 업로드 처리
-        if ($request->hasFile('bank_copy_image')) {
-            $image_tmp = $request->file('bank_copy_image');
-            if ($image_tmp->isValid()) {
-                // 이미지 확장자 가져오기
-                $extension = $image_tmp->getClientOriginalExtension();
-                // 새로운 이미지 이름 생성
-                $imageName = $vendor_id.'-'.rand(111, 99999).'.'.$extension;
-                $imagePath = 'front/images/bank_copies/'.$imageName;
-                // 이미지 업로드
-                $image_tmp->move(public_path('front/images/bank_copies'), $imageName);
-                $business->bank_copy_image = $imageName;
-            }
-        }
-
-        $business->save();
-
-        // 3. 은행 상세 정보 업데이트 (필요 시 병렬 테이블)
-        $bank = VendorsBankDetail::where('vendor_id', $vendor_id)->first();
-        if (! $bank) {
-            $bank = new VendorsBankDetail;
-            $bank->vendor_id = $vendor_id;
-        }
-        $bank->bank_name = $data['bank_name'];
-        $bank->account_number = $data['account_number'];
-        $bank->account_holder_name = $data['account_holder_name'];
-        $bank->bank_ifsc_code = ''; // 레거시 제약 조건 충족
-        $bank->save();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => '기본정보가 저장되었습니다.',
-        ]);
-    }
-
-    public function updateMemberStep3(Request $request)
-    {
-        if (! Auth::check()) {
-            return response()->json(['status' => 'error', 'message' => '로그인이 필요합니다.']);
-        }
-
-        $user = Auth::user();
-
-        // Ensure user is an Eloquent model instance
-        if (! ($user instanceof User)) {
-            $user = User::find(Auth::id());
-            if (! $user) {
-                return response()->json(['status' => 'error', 'message' => '사용자 정보를 찾을 수 없습니다.']);
-            }
-            Auth::setUser($user);
-        }
-        $data = $request->all();
-
-        // 유효성 검사 - agree1은 필수입니다.
-        if (! isset($data['agree1'])) {
-            return response()->json(['status' => 'error', 'message' => '필수 약관에 동의해야 합니다.']);
-        }
-
-        if (! $user->vendor_id) {
-            return response()->json(['status' => 'error', 'message' => '회원사 정보(Step 2)를 먼저 입력해주세요.']);
-        }
-
-        $vendor_id = $user->vendor_id;
-
-        // 1. 사업자 상세 정보 업데이트 (문서)
-        $business = VendorsBusinessDetail::where('vendor_id', $vendor_id)->first();
-        if (! $business) {
-            $business = new VendorsBusinessDetail;
-            $business->vendor_id = $vendor_id;
-        }
-
-        // 사업자등록증 업로드 처리
-        if ($request->hasFile('address_proof_image')) {
-            $image_tmp = $request->file('address_proof_image');
-            if ($image_tmp->isValid()) {
-                $extension = $image_tmp->getClientOriginalExtension();
-                $imageName = $vendor_id.'-license-'.rand(111, 99999).'.'.$extension;
-                $image_tmp->move(public_path('front/images/bank_copies'), $imageName); // 가독성을 위해 동일한 폴더 사용
-                $business->address_proof_image = $imageName;
-                $business->address_proof = 'Business License';
-            }
-        }
-
-        // 통장사본 업로드 처리
-        if ($request->hasFile('bank_copy_image')) {
-            $image_tmp = $request->file('bank_copy_image');
-            if ($image_tmp->isValid()) {
-                $extension = $image_tmp->getClientOriginalExtension();
-                $imageName = $vendor_id.'-bankbook-'.rand(111, 99999).'.'.$extension;
-                $image_tmp->move(public_path('front/images/bank_copies'), $imageName);
-                $business->bank_copy_image = $imageName;
-            }
-        }
-
-        // 제공된 경우 계좌 정보 업데이트
-        if (isset($data['bank_name'])) {
-            $business->bank_name = $data['bank_name'];
-        }
-        if (isset($data['account_number'])) {
-            $business->bank_account_number = $data['account_number'];
-        }
-        if (isset($data['account_holder_name'])) {
-            $business->bank_account_holder_name = $data['account_holder_name'];
-        }
-
-        // 레거시 제약 조건 충족
-        $business->shop_city = $business->shop_city ?? '';
-        $business->shop_state = $business->shop_state ?? '';
-        $business->shop_country = $business->shop_country ?? '';
-        $business->gst_number = $business->gst_number ?? '';
-        $business->pan_number = $business->pan_number ?? '';
-
-        $business->save();
-
-        // 2. 은행 상세 정보 테이블 업데이트
-        $bank = VendorsBankDetail::where('vendor_id', $vendor_id)->first();
-        if (! $bank) {
-            $bank = new VendorsBankDetail;
-            $bank->vendor_id = $vendor_id;
-        }
-        if (isset($data['bank_name'])) {
-            $bank->bank_name = $data['bank_name'];
-        }
-        if (isset($data['account_number'])) {
-            $bank->account_number = $data['account_number'];
-        }
-        if (isset($data['account_holder_name'])) {
-            $bank->account_holder_name = $data['account_holder_name'];
-        }
-        $bank->bank_ifsc_code = $bank->bank_ifsc_code ?? '';
-        $bank->save();
-
-        // 사용자 타입을 'vendor'로 업데이트
-        if ($user->type != 'vendor') {
-            $user->type = 'vendor';
-            $user->save();
-        }
-
-        return response()->json([
-            'status' => 'success',
-            'message' => '인증 요청이 접수되었습니다. (기본정보 저장 완료)',
-        ]);
+        return $this->registrationStep(2);
     }
 
     public function registerStep3()
     {
+        return $this->registrationStep(3);
+    }
+
+    private function registrationStep(int $step)
+    {
         if (! Auth::check()) {
             return redirect()->route('front.member.login')->with('error_message', '로그인이 필요합니다.');
         }
+        return view('front.member.register.step'.$step, app(\App\Services\MemberRegistration::class)->details(Auth::user()));
+    }
 
+    public function updateMemberStep2(Request $request)
+    {
+        abort_unless(Auth::check(), 401);
+        app(\App\Services\MemberRegistration::class)->saveCompany($request, Auth::user());
+        return response()->json(['status' => 'success', 'message' => '회원사 정보가 저장되었습니다.']);
+    }
+
+    public function updateMemberStep3(Request $request)
+    {
+        abort_unless(Auth::check(), 401);
+        $requested = app(\App\Services\MemberRegistration::class)->saveSeller($request, Auth::user());
+        return response()->json([
+            'status' => 'success',
+            'message' => $requested ? '판매 권한 인증 요청이 접수되었습니다. 심사 후 권한이 부여됩니다.' : '판매자 정보가 저장되었습니다. 인증 요청은 아직 접수되지 않았습니다.',
+            'requested' => $requested,
+            'redirect_url' => $requested ? route('front.member.register.complete') : route('front.member.register.step3'),
+        ]);
+    }
+
+    public function registrationComplete()
+    {
         $user = Auth::user();
-
-        // 회원번호 로직 (Step 1, 2와 동일)
-        $memberNumber = $user->member_number;
-        if (empty($memberNumber)) {
-            $dateStr = $user->created_at->format('ymd');
-            $rank = User::whereDate('created_at', $user->created_at->format('Y-m-d'))
-                ->where('id', '<=', $user->id)
-                ->count();
-            $memberNumber = 'M9-'.$dateStr.'-'.str_pad($rank, 4, '0', STR_PAD_LEFT);
+        if (! $user->profile_completed_at) {
+            return redirect()->route('front.member.register.step1');
         }
+        return view('front.member.register.complete', app(\App\Services\MemberRegistration::class)->details($user));
+    }
 
-        $vendorDetails = null;
-        $businessDetails = null;
-        $bankDetails = null;
-
-        if ($user->vendor_id) {
-            $vendorDetails = Vendor::find($user->vendor_id);
-            if ($vendorDetails) {
-                $businessDetails = VendorsBusinessDetail::where('vendor_id', $user->vendor_id)->first();
-                $bankDetails = VendorsBankDetail::where('vendor_id', $user->vendor_id)->first();
-            }
-        }
-
-        return view('front.member.register.step3', compact('user', 'memberNumber', 'vendorDetails', 'businessDetails', 'bankDetails'));
+    public function registrationDocument(string $kind)
+    {
+        abort_unless(Auth::user()->vendor_id, 404);
+        return app(\App\Services\MemberRegistration::class)->document(Auth::user()->vendor_id, $kind);
     }
 
     // 새로운 로그인 페이지
-    public function login()
+    public function login(Request $request)
     {
-        return view('front.member.login');
+        if (Auth::check()) {
+            return redirect()->route('mypage.dashboard');
+        }
+        $savedLoginId = $request->cookie(self::SAVED_LOGIN_ID_COOKIE, '');
+        $savedLoginId = is_string($savedLoginId) ? $savedLoginId : '';
+        $hasOldLoginId = $request->session()->hasOldInput('login_id');
+        $loginId = $hasOldLoginId ? old('login_id') : $savedLoginId;
+        $loginId = is_string($loginId) ? $loginId : '';
+        $rememberId = $hasOldLoginId ? (bool) old('remember_id', old('remember', false)) : $savedLoginId !== '';
+
+        return view('front.member.login', compact('loginId', 'rememberId'));
     }
 
     // 새로운 회원가입 페이지
@@ -626,10 +345,8 @@ class UserController extends Controller
         }
 
         // Fetch user's inquiries from contacts table (matching email or phone)
-        $inquiries = Contact::where('email', $user->email)
-            ->orWhere('phone', $user->mobile)
-            ->orWhere('phone', $mobileWithDashes)
-            ->orWhere('phone', str_replace('-', '', $user->mobile))
+        $inquiries = Contact::where('user_id', $user->id)
+            ->orWhere(fn ($query) => $query->whereNull('user_id')->where('email', $user->email))
             ->orderBy('id', 'desc')
             ->get();
 
@@ -657,7 +374,34 @@ class UserController extends Controller
             })
             ->count();
 
-        return view('front.mypage.index', compact('user', 'inquiries', 'ordersCount', 'confirmedCount', 'cancelCount', 'returnCount'));
+        $recentOrders=Order::with('orders_products')->where('user_id',$user->id)->latest()->limit(5)->get();
+        $visited=VisitedChannel::with(['shopChannel','vendor.vendorbusinessdetails'])->where('user_id',$user->id)->latest('updated_at')->limit(5)->get();
+        $statusCounts=OrdersProduct::where('user_id',$user->id)->get()->countBy(fn ($item)=>$item->normalized_status);
+        $portal=app(\App\Services\MemberPortal::class);
+        $shortcuts=$portal->shortcuts(); $selectedShortcuts=$user->mypage_shortcuts ?? ['profile','delivery','orders'];
+        $subAccounts=$portal->subAccounts($user);
+        return view('front.mypage.index', compact('user', 'inquiries', 'ordersCount', 'confirmedCount', 'cancelCount', 'returnCount',
+            'recentOrders','visited','statusCounts','shortcuts','selectedShortcuts','subAccounts'));
+    }
+
+    public function saveMypageShortcuts(Request $request)
+    {
+        $choices=app(\App\Services\MemberPortal::class)->shortcuts();
+        $data=$request->validate(['shortcuts'=>'nullable|array|max:7','shortcuts.*'=>['string',\Illuminate\Validation\Rule::in(array_keys($choices))]]);
+        $user=Auth::user();$user->mypage_shortcuts=array_values(array_unique($data['shortcuts']??[]));$user->save();
+        return redirect()->route('mypage.dashboard')->with('success_message','바로가기를 저장했습니다.');
+    }
+
+    public function openMemberChannel(Request $request)
+    {
+        if ($request->filled('sub_account_id')) {
+            $sub=app(\App\Services\MemberPortal::class)->subAccounts(Auth::user())->firstWhere('id',(int)$request->input('sub_account_id'));
+            abort_unless($sub,403);$admin=$sub->admin;
+        } else {
+            $admin=app(\App\Services\MemberPortal::class)->owner(Auth::user());
+        }
+        Auth::guard('admin')->login($admin);$request->session()->regenerate();
+        return redirect()->route('channel.index');
     }
 
     public function orderView(Request $request)
@@ -679,17 +423,19 @@ class UserController extends Controller
         }
 
         // Eager load order products and claims
-        $order->load(['orders_products.product', 'claims']);
+        $order->load(['orders_products.product.category', 'orders_products.shopChannel', 'orders_products.vendor.vendorbusinessdetails', 'claims']);
+        $payment = app(\App\Services\OrderInvoiceService::class)->data($order);
 
-        return view('front.mypage.order.view', compact('user', 'order'));
+        return view('front.mypage.order.view', compact('user', 'order') + ['paymentTotals' => $payment['totals']]);
     }
 
     public function orderClaimSubmit(Request $request)
     {
         $data = $request->validate([
-            'order_item_id' => 'required',
+            'order_item_id' => 'required|integer',
             'type' => 'required|in:cancel,return,exchange,confirm',
-            'reason' => 'required_unless:type,confirm',
+            'reason' => 'required_unless:type,confirm|nullable|string|max:150',
+            'detail_reason' => 'required_if:reason,other|nullable|string|max:2000',
             'recovery_method' => 'required_if:type,return,exchange|nullable|in:자동회수,수동회수,automatic,manual',
             'customer_courier_name' => 'nullable|string|max:100',
             'customer_tracking_number' => 'nullable|string|max:100',
@@ -804,6 +550,19 @@ class UserController extends Controller
         });
     }
 
+    public function orderInquirySubmit(Request $request)
+    {
+        $data = $request->validate(['order_item_id'=>'required|integer','subject'=>'required|string|max:255','message'=>'required|string|max:3000']);
+        $item = OrdersProduct::with('order')->where('user_id', Auth::id())
+            ->whereHas('order', fn ($query) => $query->where('user_id', Auth::id()))->findOrFail($data['order_item_id']);
+        Contact::create(['user_id'=>Auth::id(),'vendor_id'=>$item->vendor_id,'shop_channel_id'=>$item->shop_channel_id,
+            'order_id'=>$item->order_id,'order_product_id'=>$item->id,'product_id'=>$item->product_id,
+            'name'=>Auth::user()->name,'email'=>Auth::user()->email,'phone'=>Auth::user()->mobile,
+            'inquiry_category'=>'product','subject'=>$data['subject'],'message'=>$data['message'],'type'=>'inquiry','status'=>'pending']);
+
+        return back()->with('success_message','판매자 문의가 접수되었습니다.');
+    }
+
     public function profileEdit()
     {
         $user = Auth::user();
@@ -829,15 +588,18 @@ class UserController extends Controller
             $data = $request->all();
 
             $rules = [
-                'name' => 'required',
-                'mobile_1' => 'required',
-                'mobile_2' => 'required',
-                'mobile_3' => 'required',
-                'email_1' => 'required',
-                'email_2' => 'required',
-                'zipcode' => 'required',
-                'address1' => 'required',
-                'address2' => 'required',
+                'name' => 'required|string|max:100',
+                'gender'=>'nullable|in:Male,Female',
+                'birth_date'=>'nullable|date_format:Y-m-d|after:1900-01-01|before_or_equal:today',
+                'mobile_1' => ['required','regex:/^0[0-9]{1,2}$/'],
+                'mobile_2' => ['required','regex:/^[0-9]{3,4}$/'],
+                'mobile_3' => ['required','regex:/^[0-9]{4}$/'],
+                'email_1' => 'required|string|max:100',
+                'email_2' => 'required|string|max:100',
+                'zipcode' => ['required','regex:/^[0-9]{5}$/'],
+                'address1' => 'required|string|max:255',
+                'address2' => 'required|string|max:255',
+                'marketing_opt_in'=>'nullable|boolean','notification_opt_in'=>'nullable|boolean',
             ];
 
             $validator = Validator::make($data, $rules);
@@ -851,6 +613,7 @@ class UserController extends Controller
 
             // 이메일 결합
             $email = $data['email_1'].'@'.$data['email_2'];
+            validator(['email'=>$email],['email'=>'required|email|max:150'])->validate();
 
             // 중복 확인 (현재 사용자 제외)
             $user_id = Auth::user()->id;
@@ -861,7 +624,11 @@ class UserController extends Controller
 
             $user = User::find($user_id);
             $user->name = $data['name'];
-            $user->gender = $data['gender'];
+            $user->gender = $data['gender'] ?? $user->gender;
+            $user->birth_date = $data['birth_date'] ?? $user->birth_date;
+            foreach (['marketing_opt_in','notification_opt_in'] as $field) {
+                if ($request->has($field)) { $user->$field=$request->boolean($field); }
+            }
             $user->mobile = $mobile;
             $user->email = $email;
 
@@ -873,6 +640,33 @@ class UserController extends Controller
 
             return redirect()->back()->with('success_message', '회원정보가 수정되었습니다.');
         }
+    }
+
+    public function updateMemberPg(Request $request)
+    {
+        $vendor=Auth::user()->vendor_id ? Vendor::find(Auth::user()->vendor_id) : null;
+        abort_unless($vendor && (int)$vendor->status===1,403);
+        $data=$request->validate(['use_own_pg'=>'required|boolean','pg_provider'=>'nullable|in:inicis,kcp,toss',
+            'pg_merchant_id'=>'nullable|string|max:255','pg_site_code'=>'nullable|string|max:255',
+            'pg_client_key'=>'nullable|string|max:255','pg_secret_key'=>'nullable|string|max:255']);
+        $enabled=$request->boolean('use_own_pg');
+        if ($enabled) {
+            $providerChanged=$request->filled('pg_provider') && $data['pg_provider'] !== $vendor->pg_provider;
+            foreach (['pg_provider','pg_merchant_id','pg_site_code','pg_client_key','pg_secret_key'] as $field) {
+                $value=$request->filled($field)?$data[$field]:($providerChanged ? null : $vendor->$field);
+                if (! $value) throw ValidationException::withMessages([$field=>'자사 PG 연결 정보를 입력해 주세요.']);
+                $vendor->$field=$value;
+            }
+        }
+        DB::transaction(function () use ($vendor,$enabled) {
+            $vendor->use_own_pg=$enabled;$vendor->save();
+            foreach (ShopChannel::where('vendor_id',$vendor->id)->get() as $shop) {
+                $shop->use_own_pg=$enabled;
+                foreach (['pg_provider','pg_merchant_id','pg_site_code','pg_client_key','pg_secret_key'] as $field) $shop->$field=$vendor->$field;
+                $shop->save();
+            }
+        });
+        return redirect()->route('mypage.profile')->with('success_message','자사 PG 설정을 저장했습니다.');
     }
 
     public function delivery()
@@ -890,12 +684,12 @@ class UserController extends Controller
 
             // Validation
             $rules = [
-                'name' => 'required|max:100',
-                'zipcode' => 'required',
-                'address1' => 'required',
-                'address2' => 'required',
+                'name' => 'required|string|max:100',
+                'zipcode' => ['required','regex:/^[0-9]{5}$/'],
+                'address1' => 'required|string|max:255',
+                'address2' => 'required|string|max:255',
                 // 'mobile' => 'required', // 필요하다면 추가
-                'is_default' => 'required',
+                'is_default' => 'required|boolean',
             ];
 
             $validator = Validator::make($data, $rules);
@@ -904,7 +698,9 @@ class UserController extends Controller
                 return redirect()->back()->withErrors($validator)->withInput();
             }
 
+            DB::transaction(function () use ($data) {
             $user_id = Auth::id();
+            User::whereKey($user_id)->lockForUpdate()->firstOrFail();
 
             // 만약 '기본(1)'으로 설정한다면 기존 기본 배송지를 일반(0)으로 변경
             $is_default = (int) $data['is_default'];
@@ -926,6 +722,8 @@ class UserController extends Controller
             $delivery->status = 1;
             $delivery->save();
 
+            });
+
             return redirect()->back()->with('success_message', '배송지가 추가되었습니다.');
         }
     }
@@ -936,10 +734,10 @@ class UserController extends Controller
             $data = $request->all();
 
             $rules = [
-                'name' => 'required|max:100',
-                'zipcode' => 'required',
-                'address1' => 'required',
-                'address2' => 'required',
+                'name' => 'required|string|max:100',
+                'zipcode' => ['required','regex:/^[0-9]{5}$/'],
+                'address1' => 'required|string|max:255',
+                'address2' => 'required|string|max:255',
             ];
 
             $validator = Validator::make($data, $rules);
@@ -948,7 +746,9 @@ class UserController extends Controller
                 return redirect()->back()->withErrors($validator)->withInput();
             }
 
+            DB::transaction(function () use ($data) {
             $user_id = Auth::id();
+            User::whereKey($user_id)->lockForUpdate()->firstOrFail();
 
             // 기존 기본 배송지 확인
             $delivery = DeliveryAddress::where('user_id', $user_id)->where('is_default', 1)->first();
@@ -971,6 +771,8 @@ class UserController extends Controller
 
             $delivery->save();
 
+            });
+
             return redirect()->back()->with('success_message', '기본 배송지가 수정되었습니다.');
         }
     }
@@ -981,11 +783,11 @@ class UserController extends Controller
             $data = $request->all();
 
             $rules = [
-                'name' => 'required|max:100',
-                'zipcode' => 'required',
-                'address1' => 'required',
-                'address2' => 'required',
-                'is_default' => 'required',
+                'name' => 'required|string|max:100',
+                'zipcode' => ['required','regex:/^[0-9]{5}$/'],
+                'address1' => 'required|string|max:255',
+                'address2' => 'required|string|max:255',
+                'is_default' => 'required|boolean',
             ];
 
             $validator = Validator::make($data, $rules);
@@ -994,11 +796,13 @@ class UserController extends Controller
                 return redirect()->back()->withErrors($validator)->withInput();
             }
 
+            DB::transaction(function () use ($data) {
             $user_id = Auth::id();
+            User::whereKey($user_id)->lockForUpdate()->firstOrFail();
             $delivery = DeliveryAddress::where('id', $data['id'])->where('user_id', $user_id)->first();
 
             if (! $delivery) {
-                return redirect()->back()->with('error_message', '배송지를 찾을 수 없습니다.');
+                abort(404, '배송지를 찾을 수 없습니다.');
             }
 
             $is_default = (int) $data['is_default'];
@@ -1016,6 +820,8 @@ class UserController extends Controller
 
             $delivery->save();
 
+            });
+
             return redirect()->back()->with('success_message', '배송지가 수정되었습니다.');
         }
     }
@@ -1030,57 +836,47 @@ class UserController extends Controller
         }
     }
 
-    public function withdraw()
+    public function withdraw(\App\Services\MemberWithdrawal $withdrawal)
     {
-        $user_id = Auth::id();
-        $user = User::findOrFail($user_id);
+        $user = Auth::user();
+        $sellingCount = $withdrawal->sharedSellingCount($user);
+        $pointBalance = (int) PointTransaction::where('user_id', $user->id)->sum('points');
 
-        // Count selling products
-        $sellingCount = 0;
-        if ($user->vendor_id) {
-            $sellingCount = Product::where('vendor_id', $user->vendor_id)->where('status', 1)->count();
-        }
-
-        return view('front.mypage.sub01.withdraw_confirm', compact('user', 'sellingCount'));
+        return view('front.mypage.sub01.withdraw_confirm', compact('user', 'sellingCount', 'pointBalance'));
     }
 
-    public function withdrawSubmit(Request $request)
+    public function withdrawSubmit(Request $request, \App\Services\MemberWithdrawal $withdrawal)
     {
-        if ($request->isMethod('post')) {
-            $data = $request->all();
-
-            // 1. Password Validation
-            if (! Hash::check($data['password'], Auth::user()->password)) {
-                return redirect()->back()->with('error_message', '비밀번호가 일치하지 않습니다.');
-            }
-
-            if ($data['password'] !== $data['password_confirmation']) {
-                return redirect()->back()->with('error_message', '비밀번호 확인이 일치하지 않습니다.');
-            }
-
-            // 2. Selling products check
-            $user_id = Auth::id();
-            $user = User::findOrFail($user_id);
-
-            if ($user->vendor_id) {
-                $sellingCount = Product::where('vendor_id', $user->vendor_id)->where('status', 1)->count();
-                if ($sellingCount > 0) {
-                    return redirect()->back()->with('error_message', '내 상품을 다른 회원사에서 판매 중일 때는 탈퇴가 거부 됩니다.');
-                }
-            }
-
-            // 3. Process Withdrawal (Deactivate user)
-            $user->status = 0;
-            // $user->point = 0; // Assuming point column exists, handled if necessary
-            $user->save();
-
-            return redirect()->route('mypage.withdraw.success');
+        $data = $request->validate([
+            'password' => 'required|string|max:255|confirmed',
+            'reason' => 'required|in:'.implode(',', array_keys(config('array.withdraw_reasons'))),
+            'reason_detail' => 'nullable|required_if:reason,reason_other|string|max:2000',
+        ], [
+            'password.confirmed' => '비밀번호 확인이 일치하지 않습니다.',
+            'reason_detail.required_if' => '기타 탈퇴 사유를 입력해 주세요.',
+        ]);
+        if (! Hash::check($data['password'], Auth::user()->password)) {
+            return back()->with('error_message', '비밀번호가 일치하지 않습니다.')
+                ->withInput($request->only('reason', 'reason_detail'));
         }
+
+        $receipt = $withdrawal->withdraw(Auth::user(), $data['reason'], $data['reason_detail'] ?? null);
+        Auth::guard('web')->logout();
+        Auth::guard('admin')->logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        $request->session()->put('member_withdrawal_receipt', $receipt);
+
+        return redirect()->route('mypage.withdraw.success');
     }
 
-    public function withdrawSuccess()
+    public function withdrawSuccess(Request $request)
     {
-        return view('front.mypage.sub01.withdraw_success');
+        $receipt = $request->session()->get('member_withdrawal_receipt');
+        abort_unless(is_array($receipt) && ($receipt['expires_at'] ?? 0) > now()->timestamp, 404);
+
+        return response()->view('front.mypage.sub01.withdraw_success', compact('receipt'))
+            ->header('Cache-Control', 'no-store, private');
     }
 
     public function withdrawLogout()
@@ -1093,29 +889,14 @@ class UserController extends Controller
     // 방문한 채널 목록
     public function visitedChannels(Request $request)
     {
-        $query = VisitedChannel::with('vendor.vendorbusinessdetails') // 입점업체 정보 로드
-            ->where('user_id', Auth::id());
-
-        // 채널명 검색
-        if ($request->has('search') && ! empty($request->search)) {
-            $search = $request->search;
-            $query->whereHas('vendor.vendorbusinessdetails', function ($q) use ($search) {
-                $q->where('shop_name', 'like', '%'.$search.'%');
-            });
+        $data = $request->validate(['search' => 'nullable|string|max:100']);
+        $query = VisitedChannel::with(['shopChannel', 'vendor.vendorbusinessdetails'])->where('user_id', Auth::id());
+        if ($search = trim($data['search'] ?? '')) {
+            $query->whereHas('shopChannel', fn ($channel) => $channel->where(function ($channel) use ($search) {
+                $channel->where('channel_name', 'like', '%'.$search.'%')->orWhere('channel_code', 'like', '%'.$search.'%');
+            }));
         }
-
-        $visitedChannels = $query->orderBy('updated_at', 'desc')
-            ->paginate(10);
-
-        // Calculate actual orders count for each visited channel
-        $visitedChannels->getCollection()->transform(function ($visit) {
-            $visit->orders_count = DB::table('orders_products')
-                ->where('user_id', Auth::id())
-                ->where('vendor_id', $visit->vendor_id)
-                ->count();
-
-            return $visit;
-        });
+        $visitedChannels = $query->latest('updated_at')->paginate(10)->withQueryString();
 
         return view('front.mypage.sub01.visited_channels', compact('visitedChannels'));
     }
@@ -1317,10 +1098,10 @@ class UserController extends Controller
 
             if ($validator->passes()) { // if validation passes (is successful), log the user in (but check first if they're inactive), and update the user's Cart (update the user's `user_id` column in `carts` table)
                 // Log the user in
-                if (Auth::attempt([ // Here, we use the Laravel's default 'web' Authentication Guard, whose 'Provider' is the User.php model i.e. `users` table    // Manually Authenticating Users: https://laravel.com/docs/9.x/authentication#other-authentication-methods
+                if (Auth::attemptWhen([ // 기본 회원 인증
                     'email' => $data['email'],   // $data['email']    comes from the 'data' object sent from inside the $.ajax() method in front/js/custom.js file
                     'password' => $data['password'], // $data['password'] comes from the 'data' object sent from inside the $.ajax() method in front/js/custom.js file
-                ])) {
+                ], fn ($user) => ! $user->temporaryPasswordIsExpired())) {
                     // First, check if the user being authenticated/logged in is inactive/disabled/deactivated by an admin (`status` is zero 0 in `users` table), logout the user, then return them back with a message
                     if (Auth::user()->status == 0) {
                         Auth::logout(); // logout the user
@@ -1558,7 +1339,7 @@ class UserController extends Controller
             $validator = Validator::make($request->all(), [
                 // the 'name' HTML attribute of the request (the array key of the $request array) (ATTRIBUTE) => Validation Rules
                 'current_password' => 'required',
-                'new_password' => ['required', \Illuminate\Validation\Rules\Password::min(12)->mixedCase()->letters()->numbers()],
+                'new_password' => ['required', 'different:current_password', \Illuminate\Validation\Rules\Password::min(12)->mixedCase()->letters()->numbers()],
                 'confirm_password' => 'required|same:new_password',
 
             ] /*, [ // Customizing The Error Messages: https://laravel.com/docs/9.x/validation#manual-customizing-the-error-messages
@@ -1578,6 +1359,8 @@ class UserController extends Controller
                 if (Hash::check($current_password, $checkPassword->password)) { // if the entered current password is correct, update the current password    // Confirming The Password: https://laravel.com/docs/9.x/authentication#confirming-the-password
                     // Update the user's current password to the new password
                     $user = User::find(Auth::user()->id);
+                    $user->temporary_password_issued_at = null;
+                    $user->temporary_password_expires_at = null;
                     $user->password = bcrypt($data['new_password']); // $data['new_password']    comes from the 'data' object sent from inside the $.ajax() method in front/js/custom.js file
                     $user->save();
 
@@ -1616,12 +1399,22 @@ class UserController extends Controller
         $result = null;
 
         if ($request->isMethod('post')) {
-            $memberNumber = $request->input('member_number');
-            $email = $request->input('email');
+            $data = $request->validate([
+                'member_number' => 'required|string|max:50',
+                'email' => 'required|string|email|max:150',
+            ], [
+                'member_number.required' => '회원번호를 입력해 주세요.',
+                'member_number.string' => '회원번호를 올바르게 입력해 주세요.',
+                'email.required' => '대표이메일을 입력해 주세요.',
+                'email.email' => '이메일 형식을 확인해 주세요.',
+            ]);
+            $memberNumber = $data['member_number'];
+            $email = $data['email'];
 
             // 회원번호와 이메일로 사용자 검색
             $user = User::where('member_number', $memberNumber)
                 ->where('email', $email)
+                ->where('status', 1)
                 ->first();
 
             if ($user) {
@@ -1637,44 +1430,42 @@ class UserController extends Controller
             }
         }
 
-        return view('front.member.find_id', compact('result'));
+        return response()->view('front.member.find_id', compact('result'))->header('Cache-Control', 'no-store, private');
     }
 
     /**
-     * 비밀번호 찾기 - 이메일로 만료되는 재설정 링크를 발송합니다.
+     * 비밀번호 찾기 - PPT 36 임시비밀번호 메일을 발송합니다.
      */
     public function findPw(Request $request)
     {
         $result = null;
-
         if ($request->isMethod('post')) {
             $data = $request->validate([
-                'username' => ['required', 'string', 'max:255'],
-                'email' => ['required', 'email', 'max:255'],
+                'username' => 'required|string|max:255',
+                'email' => 'required|string|email|max:150',
+            ], [
+                'username.required' => '아이디를 입력해 주세요.',
+                'email.required' => '대표이메일을 입력해 주세요.',
+                'email.email' => '이메일 형식을 확인해 주세요.',
             ]);
-
-            $userExists = User::where('username', $data['username'])
-                ->where('email', $data['email'])
-                ->exists();
-
-            if (! $userExists) {
+            try {
+                $previewId = app(\App\Services\MemberPasswordRecovery::class)->issue($request, $data);
+            } catch (ValidationException $exception) {
+                throw $exception;
+            } catch (\Throwable $exception) {
+                report($exception);
                 return back()->withInput($request->only('username', 'email'))
-                    ->withErrors(['email' => '입력한 아이디와 이메일이 일치하지 않습니다.']);
+                    ->withErrors(['email' => '메일을 발송하지 못했습니다. 비밀번호는 변경되지 않았습니다. 잠시 후 다시 시도해 주세요.']);
             }
-
-            $status = Password::broker('users')->sendResetLink(['email' => $data['email']]);
-            if ($status !== Password::RESET_LINK_SENT) {
-                return back()->withInput($request->only('username', 'email'))
-                    ->withErrors(['email' => __($status)]);
+            $result = ['type' => 'success', 'message' => $previewId
+                ? '검수용 메일함에 임시비밀번호 메일이 생성되었습니다.'
+                : '대표이메일로 임시비밀번호를 발송했습니다.'];
+            if ($previewId) {
+                $request->session()->put('account_recovery_previews.'.$previewId, now()->addMinutes(60)->timestamp);
+                $result['preview_url'] = route('local.preview.recovery_mail', $previewId);
             }
-
-            $result = [
-                'type' => 'success',
-                'message' => '비밀번호 재설정 링크를 이메일로 발송했습니다.',
-            ];
         }
-
-        return view('front.member.find_pw', compact('result'));
+        return response()->view('front.member.find_pw', compact('result'))->header('Cache-Control', 'no-store, private');
     }
 
     public function pointStatus()
@@ -1687,56 +1478,33 @@ class UserController extends Controller
             ->whereNull('shop_channel_id')
             ->sum('points');
 
-        $visitedVendorIds = VisitedChannel::where('user_id', $user->id)->pluck('vendor_id');
-        $pointShopIds = PointTransaction::where('user_id', $user->id)
-            ->whereNotNull('shop_channel_id')
-            ->pluck('shop_channel_id');
-        $shops = ($visitedVendorIds->isEmpty() && $pointShopIds->isEmpty())
-            ? collect()
-            : ShopChannel::where(function ($query) use ($visitedVendorIds, $pointShopIds) {
-                if ($visitedVendorIds->isNotEmpty()) {
-                    $query->whereIn('vendor_id', $visitedVendorIds);
-                }
+        $balances = PointTransaction::where('user_id', $user->id)->whereNotNull('shop_channel_id')
+            ->select('shop_channel_id')->selectRaw('SUM(points) as balance')->groupBy('shop_channel_id')->pluck('balance', 'shop_channel_id');
+        $shopIds = VisitedChannel::where('user_id', $user->id)->whereNotNull('shop_channel_id')->pluck('shop_channel_id')
+            ->merge($balances->keys())->unique();
+        $shops = ShopChannel::with('vendor.vendorbusinessdetails')->whereIn('id', $shopIds)->orderByDesc('id')->get();
+        $operatingShops = ShopChannel::whereIn('vendor_id', $shops->pluck('vendor_id'))->where('status', 1)
+            ->where('closure_status', '!=', 'approved')->where('use_own_pg', false)->get()
+            ->filter(fn ($shop) => (int) $shop->use_period_type !== 1 ||
+                ((!$shop->start_at || now()->gte($shop->start_at)) && (!$shop->end_at || now()->lte($shop->end_at))))
+            ->groupBy('vendor_id');
+        $pointsList = $shops->values()->map(function ($shop, $index) use ($balances) {
+            return ['no' => $index + 1, 'vendor_id' => $shop->vendor_id,
+                'seller_name' => $shop->vendor?->vendorbusinessdetails?->shop_name ?: ($shop->vendor?->name ?? $shop->channel_name),
+                'channel_name' => $shop->channel_name, 'channel_code' => $shop->channel_code,
+                'status' => (int) $shop->status === 1 ? '운영' : ($shop->closure_status === 'approved' ? '운영종료 승인' : '중지 · 승인 대기'),
+                'available_points' => (int) ($balances[$shop->id] ?? 0), 'shop_channel_id' => $shop->id,
+                'can_convert' => ($balances[$shop->id] ?? 0) > 0 && (int) $shop->status !== 1 && $shop->closure_status === 'approved'];
+        });
+        $shopChannelsByVendor = $operatingShops->map(fn ($channels) => $channels->map(function ($shop) use ($balances) {
+            $url = route('shop.enter', $shop->channel_code);
+            return ['name'=>$shop->channel_name, 'code'=>$shop->channel_code, 'url'=>$url,
+                'points'=>(int)($balances[$shop->id] ?? 0),
+                'qr'=>'data:image/png;base64,'.\DNS2D::getBarcodePNG($url, 'QRCODE', 4, 4),
+                'large_qr'=>'data:image/png;base64,'.\DNS2D::getBarcodePNG($url, 'QRCODE', 10, 10)];
+        }));
 
-                if ($pointShopIds->isNotEmpty()) {
-                    $method = $visitedVendorIds->isNotEmpty() ? 'orWhereIn' : 'whereIn';
-                    $query->{$method}('id', $pointShopIds);
-                }
-            })
-                ->with('vendor')
-                ->orderByDesc('id')
-                ->get();
-
-        $pointsList = $shops->values()->map(function ($shop, $index) use ($user) {
-            $availablePoints = PointTransaction::where('user_id', $user->id)
-                ->where('shop_channel_id', $shop->id)
-                ->sum('points');
-
-            return [
-                'no' => $index + 1,
-                'seller_name' => $shop->vendor?->name ?? $shop->channel_name,
-                'channel_code' => $shop->channel_code,
-                'status' => (int) $shop->status === 1 ? '운영' : (($shop->closure_status ?? 'none') === 'approved' ? '운영중지 승인' : '중지'),
-                'available_points' => $availablePoints,
-                'has_shop' => true,
-                'shop_channel_id' => $shop->id,
-                'can_convert' => $availablePoints > 0 && (int) $shop->status !== 1 && ($shop->closure_status ?? 'none') === 'approved',
-            ];
-        })->all();
-
-        $shopChannels = $shops->values()->map(function ($shop, $index) {
-            $url = route('shop.enter', ['channelCode' => $shop->channel_code]);
-
-            return [
-                'no' => $index + 1,
-                'name' => $shop->channel_name,
-                'info' => $shop->channel_code,
-                'qr' => 'https://api.qrserver.com/v1/create-qr-code/?size=150x150&data='.urlencode($url),
-                'url' => $url,
-            ];
-        })->all();
-
-        return view('front.mypage.sub01.point_status', compact('user', 'channelPoints', 'me9Points', 'pointsList', 'shopChannels'));
+        return view('front.mypage.sub01.point_status', compact('user', 'channelPoints', 'me9Points', 'pointsList', 'shopChannelsByVendor'));
     }
 
     public function convertChannelPoint(Request $request)
@@ -1764,15 +1532,17 @@ class UserController extends Controller
     public function pointHistory(Request $request)
     {
         $user = Auth::user();
-        $filters = $request->only([
-            'start_date',
-            'end_date',
-            'shop_channel',
-            'channel_code',
-            'point_type',
-            'point_min',
-            'point_max',
-            'detail',
+        $rules = [
+            'start_date' => 'nullable|date_format:Y-m-d', 'end_date' => 'nullable|date_format:Y-m-d',
+            'shop_channel' => 'nullable|string|max:100', 'channel_code' => 'nullable|string|max:100',
+            'point_type' => 'nullable|in:적립,소진,earn,use,in,out',
+            'point_min' => 'nullable|integer', 'point_max' => 'nullable|integer', 'detail' => 'nullable|string|max:255',
+        ];
+        if ($request->filled('start_date') && $request->filled('end_date')) $rules['end_date'] .= '|after_or_equal:start_date';
+        if ($request->filled('point_min') && $request->filled('point_max')) $rules['point_max'] .= '|gte:point_min';
+        $filters = $request->validate($rules, [
+            'end_date.after_or_equal' => '종료일은 시작일 이후로 선택해 주세요.',
+            'point_max.gte' => '최대 포인트는 최소 포인트 이상으로 입력해 주세요.',
         ]);
 
         $query = PointTransaction::with('shopChannel')
@@ -1799,9 +1569,9 @@ class UserController extends Controller
         }
 
         if (! empty($filters['point_type'])) {
-            if (str_contains('적립', $filters['point_type']) || str_contains(strtolower($filters['point_type']), 'in')) {
+            if (in_array($filters['point_type'], ['적립', 'earn', 'in'], true)) {
                 $query->where('points', '>=', 0);
-            } elseif (str_contains('소진', $filters['point_type']) || str_contains(strtolower($filters['point_type']), 'out')) {
+            } elseif (in_array($filters['point_type'], ['소진', 'use', 'out'], true)) {
                 $query->where('points', '<', 0);
             }
         }
@@ -1838,27 +1608,39 @@ class UserController extends Controller
     public function cartList(Request $request)
     {
         $user = Auth::user();
-        $channelName = $request->input('channel_name');
-
-        $cartItems = Cart::with('product')
-            ->where('user_id', $user->id)
-            ->orderByDesc('id')
-            ->get()
-            ->map(fn ($cart) => $this->mypageProductRow($cart->product, $cart->id, $cart->size, $cart->quantity))
-            ->filter()
-            ->when($channelName, function ($items) use ($channelName) {
-                return $items->filter(fn ($item) => str_contains($item['shop_channel'], $channelName));
-            })
-            ->values()
-            ->all();
+        if ($shop = ShopChannel::find(Session::get('shop_channel_id'))) {
+            app(\App\Services\MemberCart::class)->read($shop);
+        }
+        $channelName = $request->validate(['channel_name'=>'nullable|string|max:100'])['channel_name'] ?? null;
+        $legacy = Cart::with('product.attributes')->where('user_id', $user->id)->latest('id')->get()->map(function ($cart) {
+            $row = $this->mypageProductRow($cart->product, $cart->id, $cart->size, $cart->quantity);
+            if ($row) $row['delete_url'] = route('mypage.cart.delete', $cart->id);
+            return $row;
+        });
+        $entries = \App\Models\MemberShopCart::with(['shopChannelProduct.product.attributes','shopChannelProduct.shopChannel'])
+            ->where('user_id', $user->id)->latest('id')->get();
+        $quantities = $entries->groupBy('shop_channel_product_id')->map->sum('quantity');
+        $memberRows = $entries->map(function ($cart) use ($quantities) {
+            $row = $this->mypageProductRow($cart->shopChannelProduct?->product, $cart->id, $cart->option_name, $cart->quantity, $cart->shopChannelProduct, $quantities[$cart->shop_channel_product_id]);
+            if ($row) $row['delete_url'] = route('mypage.shop_cart.delete', $cart->id);
+            return $row;
+        });
+        $cartItems = $memberRows->concat($legacy)->filter()->when($channelName, fn ($rows) => $rows->filter(fn ($row) => str_contains($row['shop_channel'], $channelName)))->values()->all();
 
         return view('front.mypage.sub01.cart_list', compact('user', 'cartItems', 'channelName'));
+    }
+
+    public function deleteShopCartItem(int $id)
+    {
+        \App\Models\MemberShopCart::where('user_id', Auth::id())->whereKey($id)->delete();
+
+        return redirect()->route('mypage.cart')->with('success_message', '장바구니 상품을 삭제했습니다.');
     }
 
     public function wishlist(Request $request)
     {
         $user = Auth::user();
-        $channelName = $request->input('channel_name');
+        $channelName = $request->validate(['channel_name'=>'nullable|string|max:100'])['channel_name'] ?? null;
 
         $wishlistItems = Wishlist::with('shopChannelProduct.product')
             ->where('user_id', $user->id)
@@ -1901,20 +1683,25 @@ class UserController extends Controller
         return redirect()->route('mypage.wishlist')->with('success_message', '찜한 상품을 삭제했습니다.');
     }
 
-    private function mypageProductRow($product, int $id, string $option = '기본옵션', int $quantity = 1, $shopProduct = null): ?array
+    private function mypageProductRow($product, int $id, string $option = '기본옵션', int $quantity = 1, $shopProduct = null, ?int $pricingQuantity = null): ?array
     {
         if (! $product) {
             return null;
         }
 
-        $shopProduct = $shopProduct ?: ShopChannelProduct::with('shopChannel')
+        $candidates = !$shopProduct ? ShopChannelProduct::with('shopChannel')
             ->where('product_id', $product->id)
             ->where('status', 1)->where('approval_status', 'approved')
             ->whereHas('shopChannel', fn ($query) => $query->where('status', 1)->where(fn ($q) => $q->whereNull('closure_status')->orWhere('closure_status', '!=', 'approved')))
-            ->first();
+            ->limit(2)->get() : collect();
+        $shopProduct = $shopProduct ?: ($candidates->count() === 1 ? $candidates->first() : null);
         $shop = $shopProduct?->shopChannel;
         $visitUrl = $shop ? route('shop.enter', ['channelCode' => $shop->channel_code, 'product' => $shopProduct->id]) : route('shop.gate');
-        $price = $shopProduct?->selling_price ?: $product->product_price;
+        $jointPrice = $shopProduct ? app(\App\Services\JointPurchasePricingService::class)->projectedPriceForProduct($product->id, $pricingQuantity ?? $quantity) : null;
+        $product->loadMissing('attributes');
+        $price = (float)($jointPrice['unit_price'] ?? ($shopProduct?->selling_price ?: $product->product_price));
+        $price += (float)($product->attributes->firstWhere('size', $option)?->price_delta ?? 0);
+        $channelUrl = $shop ? route('shop.enter', $shop->channel_code) : route('shop.gate');
 
         return [
             'id' => $id,
@@ -1926,7 +1713,10 @@ class UserController extends Controller
             'option' => $option ?: '기본옵션',
             'quantity' => $quantity,
             'price' => $price,
-            'qr_code' => 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data='.urlencode($visitUrl),
+            'line_total' => $price * $quantity,
+            'qr_code' => 'data:image/png;base64,'.\DNS2D::getBarcodePNG($channelUrl, 'QRCODE', 10, 10),
+            'channel_url' => $channelUrl,
+            'product_url' => $visitUrl,
             'shop_channel' => $shop?->channel_name ?? 'Me9 Shop',
             'visit_url' => $visitUrl,
         ];
@@ -1971,6 +1761,11 @@ class UserController extends Controller
             return redirect()->route('front.member.login');
         }
 
+        $filterRules = ['tab'=>'nullable|in:order,cancel,return,exchange','status'=>'nullable|string|max:40',
+            'vendor_id'=>'nullable|integer','page'=>'nullable|integer|min:1','start_date'=>'nullable|date_format:Y-m-d','end_date'=>'nullable|date_format:Y-m-d'];
+        if ($request->filled('start_date') && $request->filled('end_date')) $filterRules['end_date'] .= '|after_or_equal:start_date';
+        $request->validate($filterRules);
+
         // Status filter from request
         $status = $request->input('status', 'all');
         $tab = $request->input('tab', 'order');
@@ -1979,7 +1774,7 @@ class UserController extends Controller
         $endDate = $request->input('end_date');
 
         // Fetch real orders from database
-        $ordersQuery = Order::with(['orders_products.product'])
+        $ordersQuery = Order::with(['orders_products.product.category','orders_products.shopChannel'])
             ->where('user_id', $user->id);
 
         if (! empty($startDate)) {
@@ -2029,11 +1824,11 @@ class UserController extends Controller
                         $keepItem = true;
                     }
                 } elseif ($tab === 'return') {
-                    if (in_array($normalizedStatus, [OrderItemStatus::RETURN_REQUESTED, OrderItemStatus::RETURNED], true)) {
+                    if (in_array($normalizedStatus, array_merge(OrderItemStatus::pendingReturnStatuses(), [OrderItemStatus::RETURNED]), true)) {
                         $keepItem = true;
                     }
                 } elseif ($tab === 'exchange') {
-                    if (in_array($normalizedStatus, [OrderItemStatus::EXCHANGE_REQUESTED, OrderItemStatus::EXCHANGED], true)) {
+                    if (in_array($normalizedStatus, array_merge(OrderItemStatus::pendingExchangeStatuses(), [OrderItemStatus::EXCHANGED]), true)) {
                         $keepItem = true;
                     }
                 }
@@ -2049,15 +1844,16 @@ class UserController extends Controller
                         'payment_completed' => OrderItemStatus::PAID,
                         'preparing_shipment' => OrderItemStatus::READY_TO_SHIP,
                         'shipping' => OrderItemStatus::SHIPPING,
+                        'delivered' => OrderItemStatus::DELIVERED,
                         'purchase_confirmed' => OrderItemStatus::CONFIRMED,
                         'cancel_request' => OrderItemStatus::CANCEL_REQUESTED,
                         'cancel_completed' => OrderItemStatus::CANCELLED,
-                        'return_request' => OrderItemStatus::RETURN_REQUESTED,
+                        'return_request' => OrderItemStatus::pendingReturnStatuses(),
                         'return_completed' => OrderItemStatus::RETURNED,
-                        'exchange_request' => OrderItemStatus::EXCHANGE_REQUESTED,
+                        'exchange_request' => OrderItemStatus::pendingExchangeStatuses(),
                         'exchange_completed' => OrderItemStatus::EXCHANGED,
                     ];
-                    $keepItem = ($filterStatusMap[$status] ?? null) === $normalizedStatus;
+                    $keepItem = in_array($normalizedStatus, (array) ($filterStatusMap[$status] ?? []), true);
                 }
 
                 if (! $keepItem) {
@@ -2080,23 +1876,25 @@ class UserController extends Controller
                     ->where('vendor_id', $item->vendor_id)
                     ->value('shop_name') ?? 'Me9 브랜드 전용관';
 
-                $productImage = 'https://placehold.co/100';
+                $productImage = asset('front/images/product_images/small/no-image.png');
                 if ($item->product && ! empty($item->product->product_image)) {
                     $productImage = asset('front/images/product_images/small/'.$item->product->product_image);
                 }
 
+                $itemPayment = app(\App\Services\SettlementCalculator::class)->paymentAmounts($item);
                 $items[] = [
                     'id' => $item->id,
                     'order_item_id' => $item->id,
-                    'shop_name' => $shopName,
+                    'shop_name' => $item->shopChannel?->channel_name ?: $shopName,
+                    'category_path' => $item->product?->category_path ?? '상품 정보',
                     'seller_name' => 'Seller',
                     'product_image' => $productImage,
                     'product_name' => $item->product_name,
                     'product_id' => $item->product_id,
-                    'option' => '옵션: '.$item->product_size.' / '.$item->product_qty.'개',
+                    'option' => '옵션: '.$item->product_size.' / '.$item->product_qty.'개'.($item->is_exchange_replacement ? ' · 교환 재발송 (추가 상품 결제 없음)' : ''),
                     'price' => $item->product_price * $item->product_qty,
                     'status' => $itemStatus,
-                    'shipping_fee' => $order->shipping_charges > 0 ? '배송비: '.number_format($order->shipping_charges).' 원' : '무료배송',
+                    'shipping_fee' => $itemPayment['shipping'] > 0 ? '배송비: '.number_format($itemPayment['shipping']).' 원' : '무료배송',
                     'buttons' => $buttons,
                     'return_address' => app(ReturnAddressResolver::class)->forOrderItem($item),
                     // Additional dates for UI output
@@ -2117,7 +1915,11 @@ class UserController extends Controller
             }
         }
 
-        $orders = $formattedOrders;
+        $page = max(1, (int) $request->input('page', 1));
+        $orders = new \Illuminate\Pagination\LengthAwarePaginator(
+            collect($formattedOrders)->forPage($page, 10)->values(), count($formattedOrders), 10, $page,
+            ['path'=>route('mypage.order.list'), 'query'=>$request->query()]
+        );
 
         return view('front.mypage.order.list', compact('user', 'orders', 'status', 'tab', 'startDate', 'endDate'));
     }

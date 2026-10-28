@@ -225,12 +225,7 @@
                                 <tbody class="textL">
                                     <tr>
                                         <th class="w160"><span>변경 내역</span></th>
-                                        <td colspan="3">
-                                            2024-09-28 12:17:16 반품요청 / 브롬톤런던 티셔츠 / admin(최고관리자)<br>
-                                            2024-09-28 12:16:18 배송완료 / 브롬톤런던 티셔츠 / admin(최고관리자)<br>
-                                            2024-09-28 12:16:14 배송중 / 브롬톤런던 티셔츠 / admin(최고관리자)<br>
-                                            2024-09-28 12:16:04 배송준비중 / 브롬톤런던 티셔츠 / admin(최고관리자)
-                                        </td>
+                                        <td colspan="3" id="pop_info_status_history" style="white-space:pre-line">등록된 처리 이력이 없습니다.</td>
                                     </tr>
                                 </tbody>
                             </table>

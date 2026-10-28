@@ -1,4 +1,5 @@
-@extends('layouts.frontend')
+@extends('layouts.market-sub')
+@section('page_title', '회원가입')
 
 @section('page_type', 'sub')
 
@@ -8,9 +9,9 @@
             <div id="join">
                 <div class="box box1">
                     <div class="inner_bx">
-                        <div class="top_ttl">회원가입</div>
+                        <header class="market-register-head"><p class="home-eyebrow">JOIN ME9 MARKET</p><h1>새로운 연결의 시작,<br><em>회원가입.</em></h1><p>회원정보를 입력하고 미구마켓과 함께하세요.</p></header>
                         @unless(app(\App\Services\ShopChannelRuntime::class)->canRegister())<p role="status">회원가입 약관을 준비 중입니다. 판매자에게 문의해 주세요.</p>@endunless
-                        <form name="joinForm" method="POST" action="{{ route('front.member.register.submit') }}">
+                        <form name="joinForm" onsubmit="event.preventDefault(); checkForm();" method="POST" action="{{ route('front.member.register.submit') }}">
                             @csrf
                             <input type="hidden" name="register_type" value="{{ $type ?? 'general' }}">
                             <div id="board">
@@ -63,69 +64,32 @@
                                         <!-- General Registration Block -->
                                         @if(($type ?? 'general') === 'general')
                                             <div class="f_w">
-                                                <div class="f_ttl">회원가입 정보입력</div>
-                                                <div class="tb01 type2">
-                                                    <table class="two">
-                                                        <colgroup>
-                                                            <col width="160px">
-                                                            <col width="">
-                                                            <col width="160px">
-                                                            <col width="">
-                                                        </colgroup>
-                                                        <tbody>
-                                                            <tr>
-                                                                <th class="w160"><span>아이디</span></th>
-                                                                <td colspan="3">
-                                                                    <div class="r_btn_w w430">
-                                                                        <input type="text" name="username" id="username"
-                                                                            required placeholder="아이디를 입력하세요">
-                                                                        <a href="javascript:void(0);" onclick="checkId();"
-                                                                            class="btn01 col2">중복확인</a>
-                                                                    </div>
-                                                                    <span class="imp_txt" id="id_check_msg"
-                                                                        style="display:none;"></span>
-                                                                </td>
-                                                            </tr>
-                                                            <!-- Name and Mobile removed -->
-                                                            <tr>
-                                                                <th class="w160"><span>이메일</span></th>
-                                                                <td colspan="3">
-                                                                    <div class="email_bx">
-                                                                        <input type="text" class="email1" name="email_prefix"
-                                                                            required="required">
-                                                                        <span>@</span>
-                                                                        <input type="text" class="email2" name="email_domain"
-                                                                            required="required">
-                                                                        <select class="off" name="email_domain_select">
-                                                                            <option value="" selected="">직접입력</option>
-                                                                            <option value="naver.com">naver.com</option>
-                                                                            <option value="gmail.com">gmail.com</option>
-                                                                            <option value="daum.net">daum.net</option>
-                                                                        </select>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <th class="w160"><span>비밀번호</span></th>
-                                                                <td colspan="3">
-                                                                    <input class="w300" type="password" name="password"
-                                                                        id="password" required="required">
-                                                                    <p class="txt_guide"
-                                                                        style="margin-top:5px; color:#888; font-size:12px;">
-                                                                        ※ 비밀번호는 영문 대문자, 소문자, 특수문자(!@#$%^&*)를 포함하여 12자 이상이어야 합니다.
-                                                                    </p>
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <th class="w160"><span>비밀번호확인</span></th>
-                                                                <td colspan="3">
-                                                                    <input class="w300" type="password"
-                                                                        name="password_confirmation" id="password_confirmation"
-                                                                        required="required">
-                                                                </td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
+                                                <h2 class="f_ttl">회원가입 정보입력</h2>
+                                                <div class="market-registration-fields">
+                                                    <div class="market-reg-row">
+                                                        <label for="username">아이디</label>
+                                                        <div class="market-reg-field">
+                                                            <div class="market-reg-id"><input type="text" name="username" id="username" aria-label="아이디" placeholder="아이디를 입력하세요" autocomplete="username" required><button type="button" onclick="checkId();" class="market-id-button">중복확인</button></div>
+                                                            <span id="id_check_msg" style="display:none;" role="status"></span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="market-reg-row">
+                                                        <span class="market-reg-label" id="register-email-label">이메일</span>
+                                                        <div class="market-reg-field market-reg-email" role="group" aria-labelledby="register-email-label">
+                                                            <input type="text" name="email_prefix" aria-label="이메일 아이디" placeholder="이메일 아이디" required>
+                                                            <span aria-hidden="true">@</span>
+                                                            <input type="text" name="email_domain" aria-label="이메일 도메인" placeholder="직접 입력" required>
+                                                            <div class="market-reg-domain-select"><span data-domain-label aria-hidden="true">직접입력</span><svg aria-hidden="true" width="10" height="6" viewBox="0 0 10 6"><path d="m1 1 4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg><select name="email_domain_select" aria-label="이메일 도메인 선택"><option value="">직접입력</option><option value="naver.com">naver.com</option><option value="gmail.com">gmail.com</option><option value="daum.net">daum.net</option></select></div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="market-reg-row">
+                                                        <label for="password">비밀번호</label>
+                                                        <div class="market-reg-field"><input type="password" name="password" id="password" aria-label="비밀번호" autocomplete="new-password" required aria-describedby="register-password-help"><p class="market-password-help" id="register-password-help">비밀번호는 영문 대문자, 소문자, 특수문자(!@#$%^&*)를 포함하여 12자 이상이어야 합니다.</p></div>
+                                                    </div>
+                                                    <div class="market-reg-row">
+                                                        <label for="password_confirmation">비밀번호 확인</label>
+                                                        <div class="market-reg-field"><input type="password" name="password_confirmation" id="password_confirmation" aria-label="비밀번호 확인" autocomplete="new-password" required></div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         @endif
@@ -222,7 +186,7 @@
 
                                 </div>
                                 <div class="btm_btn type2">
-                                    @if(app(\App\Services\ShopChannelRuntime::class)->canRegister())<a href="javascript:;" onclick="checkForm();" class="col2">가입완료</a>@endif
+                                    @if(app(\App\Services\ShopChannelRuntime::class)->canRegister())<button type="submit" class="col2">가입완료</button>@endif
                                 </div>
                             </div>
                         </form>

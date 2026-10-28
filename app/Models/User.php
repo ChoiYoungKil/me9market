@@ -10,6 +10,16 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
+    public function socialAccounts()
+    {
+        return $this->hasMany(SocialAccount::class);
+    }
+
+    public function temporaryPasswordIsExpired(): bool
+    {
+        return $this->temporary_password_expires_at?->isPast() ?? false;
+    }
+
     // Laravel Passport의 HasApiTokens 트레이트 추가
     use /* HasApiTokens, */ HasFactory, Notifiable, \Laravel\Passport\HasApiTokens; 
 
@@ -54,6 +64,11 @@ class User extends Authenticatable
      * @var array<string, string>
      */
     protected $casts = [
+        'mypage_shortcuts' => 'array',
+        'birth_date' => 'date',
+        'profile_completed_at' => 'datetime',
+        'temporary_password_issued_at' => 'datetime',
+        'temporary_password_expires_at' => 'datetime',
         'email_verified_at' => 'datetime',
         'marketing_opt_in' => 'boolean',
         'terms_accepted_at' => 'datetime',

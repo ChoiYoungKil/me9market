@@ -17,15 +17,16 @@
 
     $paidCount = $countFor([\App\Support\OrderItemStatus::PAID]);
     $readyToShipCount = $countFor([\App\Support\OrderItemStatus::READY_TO_SHIP]);
-    $shippingCount = $countFor([\App\Support\OrderItemStatus::SHIPPING, \App\Support\OrderItemStatus::DELIVERED]);
+    $shippingCount = $countFor([\App\Support\OrderItemStatus::SHIPPING]);
+    $deliveredCount = $countFor([\App\Support\OrderItemStatus::DELIVERED]);
     $confirmedCount = $countFor([\App\Support\OrderItemStatus::CONFIRMED]);
     $cancelRequestCount = $countFor([\App\Support\OrderItemStatus::CANCEL_REQUESTED]);
     $cancelCompletedCount = $countFor([\App\Support\OrderItemStatus::CANCELLED]);
-    $returnRequestCount = $countFor([\App\Support\OrderItemStatus::RETURN_REQUESTED]);
+    $returnRequestCount = $countFor(\App\Support\OrderItemStatus::pendingReturnStatuses());
     $returnCompletedCount = $countFor([\App\Support\OrderItemStatus::RETURNED]);
-    $exchangeRequestCount = $countFor([\App\Support\OrderItemStatus::EXCHANGE_REQUESTED]);
+    $exchangeRequestCount = $countFor(\App\Support\OrderItemStatus::pendingExchangeStatuses());
     $exchangeCompletedCount = $countFor([\App\Support\OrderItemStatus::EXCHANGED]);
-    $orderTotalCount = $paidCount + $readyToShipCount + $shippingCount + $confirmedCount;
+    $orderTotalCount = $paidCount + $readyToShipCount + $shippingCount + $deliveredCount + $confirmedCount;
 @endphp
 
 <div id="l_menu">
