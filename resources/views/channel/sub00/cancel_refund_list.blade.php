@@ -2,7 +2,7 @@
 @section('page_type','sub')
 @php($dep1_id='00')
 @push('styles')
-<link rel="stylesheet" href="/admin/vendors/quill/quill.snow.css">
+<link rel="stylesheet" href="/channel_assets/vendor/quill/quill.snow.css">
 <link rel="stylesheet" href="/common/policy-rich-text.css?v={{ filemtime(public_path('common/policy-rich-text.css')) }}">
 <link rel="stylesheet" href="/channel_assets/css/order-workspace.css?v={{ filemtime(public_path('channel_assets/css/order-workspace.css')) }}">
 <link rel="stylesheet" href="/channel_assets/css/refund-policies.css?v={{ filemtime(public_path('channel_assets/css/refund-policies.css')) }}">
@@ -22,4 +22,4 @@
 @foreach($policies as $policy)<dialog id="refund-edit-{{ $policy->id }}" class="order-dialog refund-dialog" aria-labelledby="refund-edit-title-{{ $policy->id }}"><div class="order-dialog-heading"><h2 id="refund-edit-title-{{ $policy->id }}">취소/환불안내 수정</h2><button type="button" data-refund-close>창닫기</button></div><form method="POST" action="{{ route('channel.refund.update',$policy->id) }}">@csrf @include('channel.sub00.inc.refund_policy_form',['policy'=>$policy])</form></dialog>@endforeach
 <dialog id="refund-view" class="order-dialog refund-dialog" aria-labelledby="refund-view-title"><div class="order-dialog-heading"><h2 id="refund-view-title">취소/환불안내 정보</h2><button type="button" data-refund-close>창닫기</button></div><div data-refund-details aria-live="polite"></div></dialog>
 @endsection
-@push('scripts')<script src="/admin/vendors/quill/quill.min.js"></script><script src="/channel_assets/js/refund-policies.js?v={{ filemtime(public_path('channel_assets/js/refund-policies.js')) }}" defer></script>@endpush
+@push('scripts')<script src="/channel_assets/vendor/quill/quill.min.js"></script><script src="/channel_assets/js/refund-policies.js?v={{ filemtime(public_path('channel_assets/js/refund-policies.js')) }}" defer></script>@endpush
