@@ -28,14 +28,14 @@ class ChannelOrderTest extends TestCase
         $item->save();
         $this->postJson('/channel/order/return/request', $payload + ['reason' => 'Damaged', 'detail_reason' => 'Damaged parcel'])->assertOk();
         foreach (['return_complete', 'return_hold'] as $action) {
-            $this->postJson('/channel/order/claim/action', $payload + ['action' => $action])->assertUnprocessable();
+            $this->postJson('/channel/order/claim/action', $payload + ['action' => $action, 'reason' => '검수 보류 사유'])->assertUnprocessable();
         }
         foreach (['return_receive', 'return_hold'] as $action) {
-            $this->postJson('/channel/order/claim/action', $payload + ['action' => $action])->assertOk();
+            $this->postJson('/channel/order/claim/action', $payload + ['action' => $action, 'reason' => '검수 보류 사유'])->assertOk();
         }
         $this->postJson('/channel/order/claim/action', $payload + ['action' => 'return_complete'])->assertUnprocessable();
         foreach (['return_release', 'return_complete'] as $action) {
-            $this->postJson('/channel/order/claim/action', $payload + ['action' => $action])->assertOk();
+            $this->postJson('/channel/order/claim/action', $payload + ['action' => $action, 'reason' => '검수 보류 사유'])->assertOk();
         }
         $this->assertSame(OrderItemStatus::RETURNED, $item->fresh()->normalized_status);
         $this->postJson('/channel/order/claim/action', $payload + ['action' => 'return_complete'])->assertUnprocessable();
@@ -52,11 +52,11 @@ class ChannelOrderTest extends TestCase
         $item->save();
         $this->postJson('/channel/order/exchange/request', $payload + ['reason' => 'Size', 'detail_reason' => 'Wrong size'])->assertOk();
         foreach (['exchange_receive', 'exchange_complete', 'exchange_hold_after', 'exchange_to_return'] as $action) {
-            $this->postJson('/channel/order/claim/action', $payload + ['action' => $action])->assertUnprocessable();
+            $this->postJson('/channel/order/claim/action', $payload + ['action' => $action, 'reason' => '검수 보류 사유'])->assertUnprocessable();
         }
         $this->postJson('/channel/order/claim/action', $payload + ['action' => 'exchange_option', 'option' => 'L'])->assertUnprocessable();
         foreach (['exchange_hold_before', 'exchange_release_before', 'exchange_approve', 'exchange_receive', 'exchange_hold_after', 'exchange_release_after', 'exchange_complete'] as $action) {
-            $this->postJson('/channel/order/claim/action', $payload + ['action' => $action])->assertOk();
+            $this->postJson('/channel/order/claim/action', $payload + ['action' => $action, 'reason' => '검수 보류 사유'])->assertOk();
         }
         $this->assertSame(OrderItemStatus::EXCHANGED, $item->fresh()->normalized_status);
     }
@@ -164,6 +164,8 @@ class ChannelOrderTest extends TestCase
     {
         list($vendor, $admin, $shop, $product, $order, $item) = $this->createSetup();
 
+        $item->setStatus(OrderItemStatus::READY_TO_SHIP);
+        $item->save();
         $response = $this->actingAs($admin, 'admin')->post('/channel/order/status/update', [
             'order_id' => $order->id,
             'status' => 'shipping',
@@ -195,6 +197,8 @@ class ChannelOrderTest extends TestCase
         $purchase = $service->requestPurchase($vendor->id, 100000, 'card', null, $shop->id, $admin->id);
         $service->approve($purchase, $admin->id);
 
+        $item->setStatus(OrderItemStatus::READY_TO_SHIP);
+        $item->save();
         $response = $this->actingAs($admin, 'admin')->post('/channel/order/status/update', [
             'order_id' => $order->id,
             'status' => 'shipping',
@@ -238,7 +242,7 @@ class ChannelOrderTest extends TestCase
 
         $response->assertJson([
             'status' => true,
-            'message' => '취소 처리가 완료되었습니다.',
+            'message' => '취소 요청이 접수되었습니다.',
         ]);
 
         $this->assertDatabaseHas('order_claims', [
@@ -247,19 +251,19 @@ class ChannelOrderTest extends TestCase
             'type' => 'cancel',
             'reason' => 'Out of stock',
             'detail_reason' => 'Inventory count mismatch, item is unavailable.',
-            'status' => 'completed',
+            'status' => 'requested',
         ]);
 
         $this->assertDatabaseHas('orders_products', [
             'id' => $item->id,
-            'item_status' => '취소완료',
+            'item_status' => '취소요청',
         ]);
 
         $this->actingAs($admin, 'admin')
             ->get('/channel/order/cancel/list')
             ->assertStatus(200)
             ->assertSee('P123')
-            ->assertSee('취소완료');
+            ->assertSee('취소요청');
     }
 
     public function test_request_return_creates_claim_and_updates_status()
@@ -413,9 +417,10 @@ class ChannelOrderTest extends TestCase
 
     public function test_exchange_claim_creates_one_zero_value_replacement_item(): void
     {
-        [, $admin, , , $order, $item] = $this->createSetup();
+        [, $admin, , $product, $order, $item] = $this->createSetup();
         $item->setStatus(OrderItemStatus::DELIVERED);
         $item->save();
+        \App\Models\ProductsAttribute::create(['product_id'=>$product->id,'size'=>'L','sku'=>'QA-exchange-L','price'=>100,'price_adjustment'=>0,'option_type'=>'general','stock'=>10,'status'=>1]);
         $headers = ['X-Requested-With' => 'XMLHttpRequest'];
 
         $this->actingAs($admin, 'admin')->post('/channel/order/exchange/request', [
@@ -469,5 +474,156 @@ class ChannelOrderTest extends TestCase
             'status' => 'shipping',
             'item_ids' => [$item->id],
         ])->assertStatus(422)->assertJson(['status' => false]);
+    }
+    public function test_pending_payment_only_and_shipping_requires_ready_state(): void
+    {
+        [, $admin, , , $order, $item] = $this->createSetup();
+        $this->actingAs($admin,'admin')->withHeaders(['X-Requested-With'=>'XMLHttpRequest']);
+        $payload=['order_id'=>$order->id,'item_ids'=>[$item->id]];
+        $this->postJson('/channel/order/status/update',$payload+['status'=>'paid'])->assertUnprocessable();
+        $this->postJson('/channel/order/status/update',$payload+['status'=>'shipping','courier_name'=>'CJ','tracking_number'=>'QA'])->assertUnprocessable();
+        $item->setStatus(OrderItemStatus::AWAITING_PAYMENT);$item->save();
+        $this->postJson('/channel/order/status/update',$payload+['status'=>'paid'])->assertOk()->assertJson(['status'=>true]);
+        $this->assertSame(OrderItemStatus::PAID,$item->fresh()->normalized_status);
+        $this->assertDatabaseHas('orders_logs',['order_id'=>$order->id,'order_item_id'=>$item->id,'order_status'=>'결제완료','actor'=>$admin->name]);
+        $this->postJson('/channel/order/status/update',$payload+['status'=>'paid'])->assertUnprocessable();
+    }
+
+    public function test_cancel_request_is_not_a_refund_and_approval_reverses_only_once(): void
+    {
+        [, $admin, , , $order, $item] = $this->createSetup();
+        $item->forceFill(['line_total'=>100,'paid_line_total_snapshot'=>100,'shipping_amount_snapshot'=>0,'point_usage_snapshot'=>['channel'=>0,'me9'=>0]])->save();
+        $this->actingAs($admin,'admin')->withHeaders(['X-Requested-With'=>'XMLHttpRequest']);
+        $payload=['order_id'=>$order->id,'item_ids'=>[$item->id]];
+        $this->postJson('/channel/order/cancel/request',$payload+['reason'=>'변심','detail_reason'=>'검수'])->assertOk()->assertJson(['status'=>true]);
+        $this->assertSame(OrderItemStatus::CANCEL_REQUESTED,$item->fresh()->normalized_status);
+        $this->assertNull($item->fresh()->financial_reversed_at);
+        $this->postJson('/channel/order/claim/action',$payload+['action'=>'cancel_approve'])->assertOk();
+        $this->assertSame(OrderItemStatus::CANCELLED,$item->fresh()->normalized_status);
+        $this->assertNotNull($item->fresh()->financial_reversed_at);
+        $this->postJson('/channel/order/claim/action',$payload+['action'=>'cancel_approve'])->assertUnprocessable();
+        $this->assertSame(1,OrderClaim::where('order_product_id',$item->id)->count());
+    }
+
+    public function test_pickup_contacts_and_total_return_fee_are_persisted_without_duplicate_deductions(): void
+    {
+        [, $admin, , , $order, $item] = $this->createSetup();
+        $item->forceFill(['line_total'=>100,'paid_line_total_snapshot'=>100,'shipping_amount_snapshot'=>0,'point_usage_snapshot'=>['channel'=>0,'me9'=>0]])->save();
+        $item->setStatus(OrderItemStatus::SHIPPING);$item->save();
+        $second=$item->replicate();$second->save();
+        $this->actingAs($admin,'admin')->withHeaders(['X-Requested-With'=>'XMLHttpRequest']);
+        $payload=['order_id'=>$order->id,'item_ids'=>[$item->id,$second->id],'reason'=>'불량','detail_reason'=>'검수','pickup_method'=>'automatic','pickup_name'=>'QA','pickup_mobile'=>'01000000000','return_address'=>'QA address','claim_shipping_fee'=>150];
+        $this->postJson('/channel/order/return/request',$payload)->assertOk()->assertJson(['status'=>true]);
+        $this->assertSame(150,$item->fresh()->return_shipping_fee+$second->fresh()->return_shipping_fee);
+        $this->assertDatabaseHas('order_claims',['order_product_id'=>$item->id,'pickup_method'=>'automatic','return_address'=>'QA address','pickup_name'=>'QA','pickup_mobile'=>'01000000000']);
+        foreach ([$item,$second] as $line) {
+            foreach(['return_receive','return_complete'] as $action)$this->postJson('/channel/order/claim/action',['order_id'=>$order->id,'item_ids'=>[$line->id],'action'=>$action])->assertOk();
+        }
+        $this->assertEquals(50,$item->fresh()->refund_cash_amount+$second->fresh()->refund_cash_amount);
+    }
+
+    public function test_invalid_pickup_fee_and_hold_reasons_do_not_mutate_order(): void
+    {
+        [, $admin, , , $order, $item] = $this->createSetup();
+        $item->setStatus(OrderItemStatus::DELIVERED);$item->save();
+        $this->actingAs($admin,'admin')->withHeaders(['X-Requested-With'=>'XMLHttpRequest']);
+        $payload=['order_id'=>$order->id,'item_ids'=>[$item->id],'reason'=>'QA'];
+        $this->postJson('/channel/order/return/request',$payload+['pickup_method'=>'automatic','claim_shipping_fee'=>1])->assertJson(['status'=>false]);
+        $this->postJson('/channel/order/return/request',$payload+['claim_shipping_fee'=>101])->assertUnprocessable();
+        $this->assertSame(OrderItemStatus::DELIVERED,$item->fresh()->normalized_status);
+        $this->assertDatabaseCount('order_claims',0);
+        $this->postJson('/channel/order/exchange/request',$payload)->assertOk();
+        $this->postJson('/channel/order/claim/action',['order_id'=>$order->id,'item_ids'=>[$item->id],'action'=>'exchange_hold_before'])->assertUnprocessable();
+        $this->assertSame(OrderItemStatus::EXCHANGE_REQUESTED,$item->fresh()->normalized_status);
+    }
+
+    public function test_withdrawal_restores_delivery_status_and_invoice_edit_keeps_claim_status(): void
+    {
+        [, $admin, , , $order, $item] = $this->createSetup();
+        $item->setStatus(OrderItemStatus::DELIVERED);$item->save();
+        $this->actingAs($admin,'admin')->withHeaders(['X-Requested-With'=>'XMLHttpRequest']);
+        $payload=['order_id'=>$order->id,'item_ids'=>[$item->id]];
+        $this->postJson('/channel/order/return/request',$payload+['reason'=>'QA'])->assertOk();
+        $this->postJson('/channel/order/claim/action',$payload+['action'=>'return_invoice','courier_name'=>'CJ','tracking_number'=>'QA-153'])->assertOk();
+        $this->assertSame(OrderItemStatus::RETURN_REQUESTED,$item->fresh()->normalized_status);
+        $this->assertDatabaseHas('order_claims',['order_product_id'=>$item->id,'customer_courier_name'=>'CJ','customer_tracking_number'=>'QA-153','status'=>'requested']);
+        $this->postJson('/channel/order/claim/action',$payload+['action'=>'return_withdraw'])->assertOk();
+        $this->assertSame(OrderItemStatus::DELIVERED,$item->fresh()->normalized_status);
+    }
+
+    public function test_claim_item_cannot_be_submitted_under_another_order(): void
+    {
+        [, $admin, , , $order, $item] = $this->createSetup();
+        $other=$order->replicate();$other->save();
+        $item->setStatus(OrderItemStatus::CANCEL_REQUESTED);$item->save();
+        OrderClaim::create(['order_id'=>$order->id,'order_product_id'=>$item->id,'vendor_id'=>$item->vendor_id,'user_id'=>$item->user_id,'type'=>'cancel','reason'=>'QA','status'=>'requested']);
+        $this->actingAs($admin,'admin')->withHeaders(['X-Requested-With'=>'XMLHttpRequest'])
+            ->postJson('/channel/order/claim/action',['order_id'=>$other->id,'item_ids'=>[$item->id],'action'=>'cancel_approve'])->assertUnprocessable();
+        $this->assertSame(OrderItemStatus::CANCEL_REQUESTED,$item->fresh()->normalized_status);
+    }
+    public function test_rejected_cancel_stays_in_claim_list_and_searches_by_claim_number(): void
+    {
+        [, $admin, , , $order, $item]=$this->createSetup();
+        $this->actingAs($admin,'admin')->withHeaders(['X-Requested-With'=>'XMLHttpRequest']);
+        $payload=['order_id'=>$order->id,'item_ids'=>[$item->id]];
+        $this->postJson('/channel/order/cancel/request',$payload+['reason'=>'QA','detail_reason'=>'QA'])->assertOk();
+        $claim=OrderClaim::sole();
+        $this->postJson('/channel/order/claim/action',$payload+['action'=>'cancel_reject'])->assertOk();
+        $number='Me9-Cancel-'.str_pad($claim->id,8,'0',STR_PAD_LEFT);
+        $this->get('/channel/order/cancel/list?search_type=order_no&keyword='.$number)->assertOk()->assertSee($number)->assertSee('거절')->assertViewHas('orders',fn($orders)=>$orders->total()===1);
+        $this->assertNotEmpty($claim->fresh()->lifecycle_dates['rejected']);
+        $this->assertNull($claim->fresh()->lifecycle_dates['completed']);
+        $this->assertSame(OrderItemStatus::PAID,$item->fresh()->normalized_status);
+    }
+
+    public function test_status_filtered_list_keeps_other_owned_items_in_order_detail(): void
+    {
+        [, $admin, , , $order, $item]=$this->createSetup();
+        $second=$item->replicate();$second->product_code='OTHER-LINE';$second->setStatus(OrderItemStatus::SHIPPING);$second->save();
+        $this->actingAs($admin,'admin')->get('/channel/order/list?order_statuses[]=paid')->assertOk()
+            ->assertViewHas('orders',fn($orders)=>$orders->first()->items->count()===2 && $orders->first()->list_items->count()===1);
+    }
+
+    public function test_joint_campaign_on_same_product_does_not_change_normal_order_type(): void
+    {
+        [, $admin, , $product, $order, $item]=$this->createSetup();
+        $campaign=\Illuminate\Support\Facades\DB::table('joint_purchases')->insertGetId(['product_id'=>$product->id,'min_quantity'=>10,'discount_price'=>90,'start_date'=>now()->toDateString(),'end_date'=>now()->addWeek()->toDateString(),'status'=>1,'created_at'=>now(),'updated_at'=>now()]);
+        $this->actingAs($admin,'admin')->get('/channel/order/list?order_type=normal')->assertOk()->assertViewHas('orders',fn($orders)=>$orders->total()===1 && $orders->first()->items->first()['order_type']==='normal');
+        $this->get('/channel/order/list?order_type=joint')->assertOk()->assertViewHas('orders',fn($orders)=>$orders->total()===0);
+        $item->joint_purchase_id=$campaign;$item->save();
+        $this->get('/channel/order/list?order_type=joint')->assertOk()->assertViewHas('orders',fn($orders)=>$orders->total()===1);
+    }
+
+    public function test_unpaid_cancellation_does_not_refund_uncollected_cash(): void
+    {
+        [, $admin, , , $order, $item]=$this->createSetup();
+        $item->forceFill(['line_total'=>100,'paid_line_total_snapshot'=>100,'shipping_amount_snapshot'=>0,'point_usage_snapshot'=>['channel'=>0,'me9'=>0]])->save();
+        $item->setStatus(OrderItemStatus::AWAITING_PAYMENT);$item->save();
+        $this->actingAs($admin,'admin')->withHeaders(['X-Requested-With'=>'XMLHttpRequest']);
+        $payload=['order_id'=>$order->id,'item_ids'=>[$item->id]];
+        $this->postJson('/channel/order/cancel/request',$payload+['reason'=>'QA','detail_reason'=>'QA'])->assertOk();
+        $this->postJson('/channel/order/claim/action',$payload+['action'=>'cancel_approve'])->assertOk();
+        $this->assertEquals(0,$item->fresh()->refund_cash_amount);
+        $this->assertSame('not_required',$item->fresh()->refund_status);
+    }
+
+    public function test_exchange_replacement_keeps_recipient_and_no_second_payment(): void
+    {
+        [, $admin, , $product, $order, $item]=$this->createSetup();
+        \App\Models\ProductsAttribute::create(['product_id'=>$product->id,'size'=>'L','sku'=>'QA-NEW-L','price'=>100,'price_adjustment'=>0,'option_type'=>'general','stock'=>10,'status'=>1]);
+        $item->setStatus(OrderItemStatus::SHIPPING);$item->save();
+        $this->actingAs($admin,'admin')->withHeaders(['X-Requested-With'=>'XMLHttpRequest']);
+        $payload=['order_id'=>$order->id,'item_ids'=>[$item->id]];
+        $this->postJson('/channel/order/exchange/request',$payload+['reason'=>'QA','exchange_options'=>[$item->id=>'L'],'exchange_recipient_name'=>'QA receiver','exchange_recipient_mobile'=>'01000000000','exchange_recipient_address'=>'QA replacement address'])->assertOk();
+        foreach(['exchange_approve','exchange_receive','exchange_complete'] as $action)$this->postJson('/channel/order/claim/action',$payload+['action'=>$action])->assertOk();
+        $replacement=$item->fresh()->exchangeReplacement;
+        $this->assertNotNull($replacement);
+        $this->assertSame('QA replacement address',$replacement->recipient_address);
+        $this->assertSame('L',$replacement->product_size);
+        $this->assertEquals(0,$replacement->paid_line_total_snapshot);
+        $this->assertEquals(0,$replacement->shipping_amount_snapshot);
+        $this->assertSame('M',OrderClaim::sole()->original_option);
+        $this->postJson('/channel/order/claim/action',$payload+['action'=>'exchange_complete'])->assertUnprocessable();
+        $this->assertSame(1,OrdersProduct::where('replacement_for_order_product_id',$item->id)->count());
     }
 }

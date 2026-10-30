@@ -10,6 +10,7 @@ class ShopChannelProduct extends Model
     use HasFactory;
 
     protected $fillable = [
+        'reward_points', 'listed_at',
         'shop_channel_id',
         'product_id',
         'distributor_id',
@@ -34,6 +35,7 @@ class ShopChannelProduct extends Model
     ];
 
     protected $casts = [
+        'listed_at' => 'datetime',
         'requested_at' => 'datetime',
         'reviewed_at' => 'datetime',
     ];

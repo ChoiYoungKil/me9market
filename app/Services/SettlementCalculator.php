@@ -46,7 +46,7 @@ class SettlementCalculator
         $rows = $this->items($period, $vendorId, $shopChannelId);
 
         return $rows
-            ->groupBy(fn (array $row) => $row['vendor_id'].':'.($row['shop_channel_id'] ?: 0).':'.($row['settlement_role'] ?? 'seller'))
+            ->groupBy(fn (array $row) => $row['vendor_id'].':'.($row['shop_channel_id'] ?: 0).':'.($row['settlement_role'] ?? 'seller').':'.($row['payment_gateway_type'] ?? 'me9_pg'))
             ->map(fn (Collection $group) => $this->summarizeGroup($period, $group))
             ->values();
     }
@@ -60,9 +60,9 @@ class SettlementCalculator
             ->values();
     }
 
-    public function generate(string $period, ?int $adminId = null): Collection
+    public function generate(string $period, ?int $adminId = null, ?int $vendorId = null, ?int $shopId = null): Collection
     {
-        $summaries = $this->preview($period);
+        $summaries = $this->preview($period,$vendorId,$shopId);
 
         return DB::transaction(function () use ($summaries, $adminId) {
             return $summaries->map(function (array $summary) use ($adminId) {
@@ -135,7 +135,7 @@ class SettlementCalculator
 
     public function paymentAmounts(OrdersProduct $item): array
     {
-        $line = (float) ($item->paid_line_total_snapshot ?? $item->line_total ?? $item->product_price * $item->product_qty);
+        $line = (float) ($item->paid_line_total_snapshot ?? ($item->line_total > 0 ? $item->line_total : $item->product_price * $item->product_qty));
         $shipping = $this->allocatedShippingAmount($item);
         $points = $this->allocatedUsedPointAmount($item);
         $coupon = $this->allocatedCouponAmount($item);
@@ -156,6 +156,18 @@ class SettlementCalculator
         }
         $rows = $this->calculateItemRows($item, now()->format('Y-m'))->where('vendor_id', $vendorId);
         return ['payout' => $rows->sum('payout_amount'), 'sales_profit' => $rows->sum('sales_profit_amount')];
+    }
+
+    public function channelReportAmounts(OrdersProduct $item, ?int $vendorId = null): array
+    {
+        // Reuse the order's frozen policy, including shared fixed-price resale.
+        $rows = $this->calculateItemRows($item, now()->format('Y-m'))->where('vendor_id', $vendorId ?? $item->vendor_id);
+        return [
+            'sale' => $rows->sum('invoice_sales_amount'),
+            'purchase' => max(0, $rows->sum('invoice_purchase_amount') - ($rows->contains('settlement_role', 'shared_free_reseller') ? $this->allocatedShippingAmount($item) : 0)),
+            'purchase_shipping' => $rows->contains('settlement_role', 'shared_free_reseller') ? $this->allocatedShippingAmount($item) : 0,
+            'form' => $rows->contains('settlement_role', 'shared_fixed_reseller') ? '위탁판매' : '상품판매',
+        ];
     }
 
     private function calculateItemRows(OrdersProduct $item, string $period): Collection
@@ -311,7 +323,7 @@ class SettlementCalculator
         $role = $amounts['settlement_role'] ?? 'seller';
 
         return array_merge([
-            'settlement_key' => $this->settlementKey($period, $vendorId, $item->shop_channel_id ? (int) $item->shop_channel_id : null, $role),
+            'settlement_key' => $this->settlementKey($period, $vendorId, $item->shop_channel_id ? (int) $item->shop_channel_id : null, $role, $amounts['payment_gateway_type'] ?? 'me9_pg'),
             'period' => $period,
             'order_product_id' => $item->id,
             'order_id' => $item->order_id,
@@ -388,9 +400,9 @@ class SettlementCalculator
         ];
     }
 
-    private function settlementKey(string $period, int $vendorId, ?int $shopChannelId, string $role): string
+    private function settlementKey(string $period, int $vendorId, ?int $shopChannelId, string $role, string $pg = 'me9_pg'): string
     {
-        return $period.':vendor:'.$vendorId.':shop:'.($shopChannelId ?: 0).':role:'.$role;
+        return $period.':vendor:'.$vendorId.':shop:'.($shopChannelId ?: 0).':role:'.$role.($pg==='own_pg'?':pg:own_pg':'');
     }
 
     private function commissionAmount(float $grossAmount, int $quantity, int $settlementType, float $settlementRate): float
@@ -409,7 +421,7 @@ class SettlementCalculator
 
     private function ceilToTen(float $amount): float
     {
-        return ceil($amount / 10) * 10;
+        return ceil(round($amount, 6) / 10) * 10;
     }
 
     private function rebateAmount(OrdersProduct $item, float $invoiceGross): float

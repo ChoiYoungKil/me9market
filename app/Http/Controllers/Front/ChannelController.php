@@ -15,143 +15,90 @@ class ChannelController extends Controller
 {
 
 
-    public function index()
+    public function index(\App\Services\ChannelDashboard $dashboard)
     {
-        // 판매자 제한 확인
-        if (\Illuminate\Support\Facades\Auth::guard('admin')->check()) {
-            $user = \Illuminate\Support\Facades\Auth::guard('admin')->user();
-            if ($user->type == 'vendor' && $user->status == 0) {
-                return redirect()->route('channel.complete_profile');
-            }
-            
-            $vendor_id = $user->vendor_id;
-
-            // 1. Order Status Counts
-            $data = app(ChannelOrderMetrics::class)->counts($vendor_id);
-
-            // 2. Recent Orders (Top 3)
-            $recentOrders = \App\Models\Order::with(['orders_products' => function($q) use ($vendor_id) {
-                $q->where('vendor_id', $vendor_id);
-            }, 'user'])
-            ->whereHas('orders_products', function($q) use ($vendor_id) {
-                $q->where('vendor_id', $vendor_id);
-            })
-            ->orderBy('created_at', 'desc')
-            ->take(3)
-            ->get();
-            
-            // Transform for view
-            $recentOrders->transform(function($order) {
-                $order->items = $order->orders_products;
-                return $order;
-            });
-
-            // 3. Monthly Sales (Line Chart) - Current Year
-            $monthlySales = \App\Models\OrdersProduct::where('vendor_id', $vendor_id)
-                ->whereYear('created_at', date('Y'))
-                ->select(
-                    \Illuminate\Support\Facades\DB::raw('MONTH(created_at) as month'),
-                    \Illuminate\Support\Facades\DB::raw('SUM(CASE WHEN line_total > 0 THEN line_total ELSE product_price * product_qty END) as total_sales')
-                )
-                ->groupBy('month')
-                ->orderBy('month')
-                ->pluck('total_sales', 'month')
-                ->all();
-            
-            // Fill missing months with 0
-            $chartData = [];
-            for ($i = 1; $i <= 12; $i++) {
-                $chartData[] = $monthlySales[$i] ?? 0;
-            }
-
-            $categoryRows = \App\Models\OrdersProduct::where('orders_products.vendor_id', $vendor_id)
-                ->leftJoin('products', 'orders_products.product_id', '=', 'products.id')
-                ->leftJoin('categories', 'products.category_id', '=', 'categories.id')
-                ->select(
-                    \Illuminate\Support\Facades\DB::raw('COALESCE(categories.category_name, "미분류") as category_name'),
-                    \Illuminate\Support\Facades\DB::raw('SUM(CASE WHEN orders_products.line_total > 0 THEN orders_products.line_total ELSE orders_products.product_price * orders_products.product_qty END) as total_sales')
-                )
-                ->groupBy('category_name')
-                ->orderByDesc('total_sales')
-                ->limit(6)
-                ->get();
-
-            $categoryChart = [
-                'labels' => $categoryRows->pluck('category_name')->values(),
-                'data' => $categoryRows->pluck('total_sales')->map(fn ($value) => (float) $value)->values(),
-            ];
-
-            $recentInquiries = Contact::with(['orderProduct', 'shopChannel'])
-                ->where('vendor_id', $vendor_id)
-                ->whereNotNull('order_product_id')
-                ->orderByDesc('created_at')
-                ->take(5)
-                ->get();
-
-            return view('channel.index', [
-                'dep1_id' => '00',
-                'user' => $user,
-                'counts' => $data,
-                'recentOrders' => $recentOrders,
-                'recentInquiries' => $recentInquiries,
-                'chartData' => $chartData,
-                'categoryChart' => $categoryChart,
-            ]);
+        $user = Auth::guard('admin')->user();
+        if (! $user) return redirect()->route('channel.login');
+        if ($user->type === 'vendor' && (int) $user->status === 0) {
+            return redirect()->route('channel.complete_profile');
         }
-        return redirect()->route('channel.login');
+        return view('channel.index', $dashboard->data($user) + ['user' => $user, 'dep1_id' => '00']);
     }
 
-    public function login()
+    public function saveDashboardShortcuts(Request $request, \App\Services\ChannelDashboard $dashboard)
     {
-        return view('channel.login');
+        $user = Auth::guard('admin')->user();
+        $data = $request->validate([
+            'shortcuts' => 'nullable|array|max:7',
+            'shortcuts.*' => ['string', \Illuminate\Validation\Rule::in(array_keys($dashboard->shortcuts($user)))],
+        ]);
+        $user->channel_shortcuts = array_values(array_unique($data['shortcuts'] ?? []));
+        $user->save();
+        return redirect()->route('channel.index')->with('success_message', '바로가기 메뉴를 저장했습니다.');
+    }
+
+    public function openDashboardShop(int $id, \App\Services\ShopChannelRuntime $runtime)
+    {
+        $shop = \App\Models\ShopChannel::where('vendor_id', Auth::guard('admin')->user()->vendor_id)->findOrFail($id);
+        $runtime->enterManagedChannel($shop);
+        return redirect()->route('shop.channel_main');
+    }
+
+    private const SAVED_CHANNEL_LOGIN_ID = 'me9_channel_login_id';
+
+    public function login(Request $request)
+    {
+        $admin = Auth::guard('admin')->user();
+        if ($admin && (int) $admin->status === 1 && in_array($admin->type, ['vendor','subadmin'], true)) {
+            return redirect()->route('channel.index');
+        }
+        $saved = $request->cookie(self::SAVED_CHANNEL_LOGIN_ID, '');
+        $saved = is_string($saved) ? $saved : '';
+        $loginId = $request->session()->hasOldInput('login_id') ? old('login_id') : $saved;
+        $loginId = is_string($loginId) ? $loginId : '';
+        $rememberId = $request->session()->hasOldInput('login_id') ? (bool) old('remember_id') : $saved !== '';
+        return view('channel.login', compact('loginId','rememberId'));
     }
 
     public function loginUser(Request $request)
     {
-        if (Auth::guard('admin')->check()) {
-            if (in_array(Auth::guard('admin')->user()->type, ['vendor', 'subadmin'], true)) {
-                return redirect()->route('channel.index');
-            }
-            return redirect('/admin/dashboard');
-        }
-
-        $rules = [
-            'email'    => 'required|email|max:255',
-            'password' => 'required',
-        ];
-
-        $customMessages = [
-            'email.required'    => '이메일 주소를 입력해 주세요!',
-            'email.email'       => '유효한 이메일 주소를 입력해 주세요',
-            'password.required' => '비밀번호를 입력해 주세요!',
-        ];
-
-        $request->validate($rules, $customMessages);
-
-        // Attempt login using 'admin' guard
-        if (Auth::guard('admin')->attempt(['email' => $request->email, 'password' => $request->password])) {
-            $request->session()->regenerate();
-            $user = Auth::guard('admin')->user();
-
-            if (! in_array($user->type, ['vendor', 'subadmin'], true)) {
-                Auth::guard('admin')->logout();
-                return redirect()->route('channel.login')->with('error_message', '판매자 전용 로그인 페이지입니다. 최고관리자 계정은 로그인할 수 없습니다.');
-            }
-
-            if ($user->confirm == 'No') {
-                Auth::guard('admin')->logout();
-                return redirect()->route('channel.login')->with('error_message', '판매자 계정 활성화를 위해 이메일 인증을 완료해 주세요.');
-            }
-
-            if ($user->status == 0) {
-                Auth::guard('admin')->logout();
-                return redirect()->route('channel.login')->with('error_message', '비활성화된 판매자 계정입니다. 관리자 승인을 대기해 주세요.');
-            }
-
-            return redirect()->route('channel.index');
+        $loginId = $request->input('login_id', $request->input('email', ''));
+        $request->merge(['login_id'=>is_string($loginId) ? trim($loginId) : $loginId]);
+        $data = $request->validate([
+            'login_id'=>'required|string|max:255', 'password'=>'required|string|max:4096', 'remember_id'=>'nullable|boolean',
+        ], ['login_id.required'=>'아이디를 입력해 주세요.', 'password.required'=>'비밀번호를 입력해 주세요.']);
+        $member = \App\Models\User::where(fn ($query) => $query->where('username', $data['login_id'])->orWhere('email', $data['login_id']))->first();
+        if ($member && \Illuminate\Support\Facades\Hash::check($data['password'], $member->password)) {
+            $admin = app(\App\Services\ChannelMemberAccess::class)->administratorFor($member);
+            Auth::guard('web')->login($member);
         } else {
-            return redirect()->route('channel.login')->with('error_message', '이메일 또는 비밀번호가 일치하지 않습니다.');
+            $admin = \App\Models\Admin::where('email', $data['login_id'])->first();
+            if (! $admin || ! \Illuminate\Support\Facades\Hash::check($data['password'], $admin->password)) {
+                return redirect()->route('channel.login')->with('error_message', '아이디 또는 비밀번호가 일치하지 않습니다.')
+                    ->withInput($request->only('login_id','remember_id'));
+            }
+            if (! in_array($admin->type, ['vendor','subadmin'], true)) {
+                return redirect()->route('channel.login')->with('error_message', '채널관리자 전용 로그인입니다. 전체관리자 계정은 관리자 로그인 화면을 이용해 주세요.')
+                    ->withInput($request->only('login_id','remember_id'));
+            }
+            if ((int) $admin->status !== 1 || $admin->confirm === 'No') {
+                return redirect()->route('channel.login')->with('error_message', '비활성화되었거나 이메일 인증이 필요한 채널관리자 계정입니다.')
+                    ->withInput($request->only('login_id','remember_id'));
+            }
         }
+        if ($admin->type === 'subadmin' && \App\Models\ChannelSubAccount::where('admin_id',$admin->id)->whereNotNull('user_id')->exists()
+            && !($member && \Illuminate\Support\Facades\Hash::check($data['password'],$member->password))) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['login_id'=>'연결된 회원의 아이디와 비밀번호로 로그인해 주세요.']);
+        }
+        if ($admin->type === 'subadmin' && !\App\Models\ChannelSubAccount::where('admin_id',$admin->id)->where('vendor_id',$admin->vendor_id)->activeNow()->exists()) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['login_id'=>'서브관리자 이용기간 또는 회원 상태를 확인해 주세요.']);
+        }
+        Auth::guard('admin')->login($admin);
+        $request->session()->regenerate();
+        $response = redirect()->route('channel.index');
+        return $request->boolean('remember_id')
+            ? $response->withCookie(cookie(self::SAVED_CHANNEL_LOGIN_ID, $data['login_id'], 43200, '/channel', null, $request->isSecure(), true, false, 'lax'))
+            : $response->withoutCookie(self::SAVED_CHANNEL_LOGIN_ID, '/channel');
     }
 
     public function logout(Request $request)
@@ -169,13 +116,16 @@ class ChannelController extends Controller
         if (!$admin) return redirect()->route('channel.login');
 
         $query = \App\Models\ShopChannel::where('vendor_id', $admin->vendor_id);
+        $params=$request->validate(['search_name'=>'nullable|string|max:255','search_keyword'=>'nullable|string|max:50',
+            'status'=>'nullable|in:all,0,1','is_public'=>'nullable|array','is_public.*'=>'in:0,1','is_member_only'=>'nullable|array','is_member_only.*'=>'in:0,1']);
 
         // 검색 필터
         if ($request->filled('search_name')) {
             $query->where('channel_name', 'like', '%' . $request->search_name . '%');
         }
         if ($request->filled('search_keyword')) {
-            $query->where('keywords', 'like', '%' . $request->search_keyword . '%');
+            $pattern='%'.$request->search_keyword.'%';
+            $query->whereRaw("CASE WHEN JSON_VALID(keywords) THEN JSON_SEARCH(keywords, 'one', ?) IS NOT NULL ELSE keywords LIKE ? END",[$pattern,$pattern]);
         }
         if ($request->filled('status') && $request->status !== 'all') {
             $query->where('status', $request->status);
@@ -189,18 +139,24 @@ class ChannelController extends Controller
             $query->whereIn('is_member_only', $request->is_member_only);
         }
 
-        $shops = $query->withCount('shopChannelProducts')->orderBy('created_at', 'desc')->paginate(10);
+        $shops = $query->withCount(['shopChannelProducts'=>fn($q)=>$q->where('approval_status','approved')->whereNotNull('listed_at')])->orderBy('created_at', 'desc')->orderByDesc('id')->paginate(10);
 
         return view('channel.sub01.shop_list', [
             'dep1_id' => '01',
             'shops' => $shops,
-            'params' => $request->all()
+            'params' => $params
         ]);
     }
 
-    public function shopRegister()
+    public function shopRegister(\App\Services\ShopChannelConfiguration $configuration)
     {
-        return view('channel.sub01.shop_register', ['dep1_id' => '01']);
+        return view('channel.sub01.shop_register', $configuration->form(Auth::guard('admin')->user()));
+    }
+
+    public function previewPrivateAccess(Request $request, \App\Services\PrivateAccessImport $import)
+    {
+        $request->validate(['private_access_file'=>'required|file|max:5120|mimes:xlsx,xls,csv,txt']);
+        return response()->json(['rows'=>$import->file($request->file('private_access_file'))]);
     }
 
     public function privateAccessTemplate()
@@ -227,229 +183,10 @@ class ChannelController extends Controller
         ]);
     }
 
-    public function shopRegisterSubmit(Request $request)
+    public function shopRegisterSubmit(Request $request, \App\Services\ShopChannelConfiguration $configuration)
     {
-        $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
-        if (!$admin) return redirect()->route('channel.login');
-
-        // 1. Validation Rules
-        $rules = [
-            'channel_code' => 'required|string|max:80|alpha_dash|unique:shop_channels,channel_code',
-            'channel_name' => 'required|max:255',
-            'copyright' => 'required|max:255',
-            'keywords' => 'required|array|min:1',
-        ];
-
-        $messages = [
-            'channel_name.required' => '채널명을 입력해 주세요.',
-            'copyright.required' => '카피라이트를 입력해 주세요.',
-            'keywords.required' => '최소 하나 이상의 키워드를 입력해 주세요.',
-        ];
-
-        // 조건부 유효성 검사 추가
-        $data = $request->all();
-
-        $messages = [
-            'channel_name.required' => '채널명을 입력해 주세요.',
-            'copyright.required' => '카피라이트를 입력해 주세요.',
-            'keywords.required' => '최소 하나 이상의 키워드를 입력해 주세요.',
-            'start_date.required' => '사용 시작 날짜를 선택해 주세요.',
-            'start_hour.required' => '사용 시작 시간을 선택해 주세요.',
-            'end_date.required' => '사용 종료 날짜를 선택해 주세요.',
-            'end_date.after_or_equal' => '종료일은 시작일 이후여야 합니다.',
-            'end_hour.required' => '사용 종료 시간을 선택해 주세요.',
-        ];
-
-        // 비공개시 비밀번호 체크
-        if (($data['is_public'] ?? '1') == '0') {
-            $rules['password'] = 'required|min:4';
-            $messages['password.required'] = '비공개 설정 시 비밀번호를 입력해 주세요.';
-        }
-        $rules['private_access_rows'] = 'nullable|string';
-        $rules['private_access_file'] = 'nullable|file|max:5120|mimes:xlsx,xls,csv,txt';
-        $rules['purchase_sms_templates.purchase'] = 'nullable|string|max:500';
-        $rules['purchase_sms_templates.purchase_confirmed'] = 'nullable|string|max:500';
-        $rules['purchase_sms_templates.cancel'] = 'nullable|string|max:500';
-        $rules['purchase_sms_templates.return'] = 'nullable|string|max:500';
-        $rules['first_visit_points'] = 'nullable|integer|min:0|max:100000';
-
-        // 사용기간(기간제) 체크
-        if (($data['use_period_type'] ?? '0') == '1') {
-            $rules['start_date'] = 'required|date';
-            $rules['start_hour'] = 'required';
-            $rules['end_date'] = 'required|date|after_or_equal:start_date';
-            $rules['end_hour'] = 'required';
-            $messages['start_date.required'] = '사용 시작 날짜를 선택해 주세요.';
-            $messages['start_hour.required'] = '사용 시작 시간을 선택해 주세요.';
-            $messages['end_date.required'] = '사용 종료 날짜를 선택해 주세요.';
-            $messages['end_date.after_or_equal'] = '종료일은 시작일 이후여야 합니다.';
-            $messages['end_hour.required'] = '사용 종료 시간을 선택해 주세요.';
-        }
-
-        // 로고 이미지 체크
-        if (($data['use_logo'] ?? '0') == '1') {
-            if (!$request->hasFile('logo_image')) {
-                $rules['logo_image'] = 'required|image';
-                $messages['logo_image.required'] = '사용할 로고 이미지를 업로드해 주세요.';
-            }
-        }
-
-        // 메인 배너 체크
-        if (($data['use_banner'] ?? '0') == '1') {
-            if (!$request->hasFile('banner_files')) {
-                $rules['banner_files'] = 'required|array|min:1';
-                $messages['banner_files.required'] = '배너 이미지를 최소 1개 이상 등록해 주세요.';
-            }
-        }
-
-        // OG TAG 체크
-        if (($data['use_og'] ?? '0') == '1') {
-            $rules['og_title'] = 'required|max:255';
-            $rules['og_description'] = 'required|max:500';
-            if (!$request->hasFile('og_image')) {
-                $rules['og_image'] = 'required|image';
-            }
-            $messages['og_title.required'] = 'OG Title을 입력해 주세요.';
-            $messages['og_description.required'] = 'OG Description을 입력해 주세요.';
-            $messages['og_image.required'] = 'OG 이미지를 업로드해 주세요.';
-        }
-
-        if (($data['use_own_pg'] ?? '0') == '1') {
-            $vendor = \App\Models\Vendor::find($admin->vendor_id);
-            if (!$vendor || (int) $vendor->status !== 1) {
-                return back()->withInput()->withErrors(['use_own_pg' => '판매인증이 완료된 채널만 자사 PG를 사용할 수 있습니다.']);
-            }
-
-            $rules['pg_provider'] = 'required|in:inicis,kcp,toss';
-            $rules['pg_merchant_id'] = 'required|string|max:255';
-            $rules['pg_client_key'] = 'required|string|max:255';
-            $rules['pg_secret_key'] = 'required|string|max:255';
-            $messages['pg_provider.required'] = '자사 PG사를 선택해 주세요.';
-            $messages['pg_provider.in'] = '지원하는 PG사를 선택해 주세요.';
-            $messages['pg_merchant_id.required'] = '자사 PG 상점 ID를 입력해 주세요.';
-            $messages['pg_client_key.required'] = '자사 PG Client Key를 입력해 주세요.';
-            $messages['pg_secret_key.required'] = '자사 PG Secret Key를 입력해 주세요.';
-        }
-
-        // 관리자 정보 체크
-        if (($data['use_admin'] ?? '0') == '1') {
-            $rules['admin_name'] = 'required|max:50';
-            $rules['admin_login_id'] = 'required|max:50|unique:shop_channels,admin_login_id';
-            $rules['admin_password'] = ['required', \Illuminate\Validation\Rules\Password::min(12)->mixedCase()->letters()->numbers()];
-            
-            if (($data['settlement_type'] ?? '1') == '1') {
-                $rules['settlement_rate_percent'] = 'required|numeric|between:0,100';
-                $messages['settlement_rate_percent.required'] = '정산 요율(%)을 입력해 주세요.';
-            } else {
-                $rules['settlement_rate_amount'] = 'required|numeric|min:0';
-                $messages['settlement_rate_amount.required'] = '정산 금액(원)을 입력해 주세요.';
-            }
-
-            $messages['admin_name.required'] = '관리자 성명을 입력해 주세요.';
-            $messages['admin_login_id.required'] = '로그인 ID를 입력해 주세요.';
-            $messages['admin_login_id.unique'] = '이미 사용 중인 관리자 ID입니다.';
-            $messages['admin_password.required'] = '관리자 비밀번호를 입력해 주세요.';
-        }
-
-        $request->validate($rules, $messages);
-
-        $data = $request->all();
-
-        // 2. Create Instance
-        $shop = new \App\Models\ShopChannel();
-        $shop->vendor_id = $admin->vendor_id;
-        $shop->channel_code = $data['channel_code'];
-        $shop->status = $data['status'] ?? 0;
-        $shop->is_public = $data['is_public'] ?? 1;
-        $shop->password = $data['password'] ?? null;
-        $shop->is_member_only = ((string) ($data['is_public'] ?? '1') === '0') ? 0 : (isset($data['is_member_only']) ? 1 : 0);
-        $shop->channel_name = $data['channel_name'];
-        $shop->copyright = $data['copyright'];
-        $shop->keywords = json_encode($data['keywords'], JSON_UNESCAPED_UNICODE);
-
-        // 사용주기
-        $shop->use_period_type = $data['use_period_type'] ?? 0;
-        if ($shop->use_period_type == 1) {
-            if (!empty($data['start_date']) && isset($data['start_hour']) && $data['start_hour'] !== '') {
-                try {
-                    $shop->start_at = \Carbon\Carbon::createFromFormat('Y-m-d H', $data['start_date'] . ' ' . $data['start_hour'])->startOfHour();
-                } catch (\Exception $e) {
-                    $shop->start_at = null;
-                }
-            }
-            if (!empty($data['end_date']) && isset($data['end_hour']) && $data['end_hour'] !== '') {
-                try {
-                    $shop->end_at = \Carbon\Carbon::createFromFormat('Y-m-d H', $data['end_date'] . ' ' . $data['end_hour'])->startOfHour();
-                } catch (\Exception $e) {
-                    $shop->end_at = null;
-                }
-            }
-        } else {
-            $shop->start_at = null;
-            $shop->end_at = null;
-        }
-
-        // 로고 이미지 처리
-        $shop->use_logo = $data['use_logo'] ?? 0;
-        if ($request->hasFile('logo_image')) {
-            $file = $request->file('logo_image');
-            $fileName = time() . '_logo.' . $file->getClientOriginalExtension();
-            $file->move(public_path('uploads/shop/logo'), $fileName);
-            $shop->logo_image = 'uploads/shop/logo/' . $fileName;
-        }
-
-        // 메인 배너 처리
-        $shop->use_banner = $data['use_banner'] ?? 0;
-        if ($request->hasFile('banner_files')) {
-            $banners = [];
-            foreach ($request->file('banner_files') as $file) {
-                $fileName = time() . '_' . rand(100, 999) . '_banner.' . $file->getClientOriginalExtension();
-                $file->move(public_path('uploads/shop/banner'), $fileName);
-                $banners[] = 'uploads/shop/banner/' . $fileName;
-            }
-            $shop->banner_images = json_encode($banners);
-        }
-
-        // OG TAG 처리
-        $shop->use_og = $data['use_og'] ?? 0;
-        $shop->og_title = $data['og_title'] ?? null;
-        $shop->og_description = $data['og_description'] ?? null;
-        if ($request->hasFile('og_image')) {
-            $file = $request->file('og_image');
-            $fileName = time() . '_og.' . $file->getClientOriginalExtension();
-            $file->move(public_path('uploads/shop/og'), $fileName);
-            $shop->og_image = 'uploads/shop/og/' . $fileName;
-        }
-
-        $shop->use_own_pg = ($data['use_own_pg'] ?? '0') == '1';
-        $shop->pg_provider = $shop->use_own_pg ? ($data['pg_provider'] ?? null) : null;
-        $shop->pg_merchant_id = $shop->use_own_pg ? ($data['pg_merchant_id'] ?? null) : null;
-        $shop->pg_site_code = $shop->use_own_pg ? ($data['pg_site_code'] ?? null) : null;
-        $shop->pg_client_key = $shop->use_own_pg ? ($data['pg_client_key'] ?? null) : null;
-        $shop->pg_secret_key = $shop->use_own_pg ? ($data['pg_secret_key'] ?? null) : null;
-
-        $shop->use_purchase_sms = ($data['use_purchase_sms'] ?? '0') == '1';
-        $shop->purchase_sms_templates = $shop->use_purchase_sms ? $this->purchaseSmsTemplates($data) : null;
-        $shop->first_visit_points = (int) ($data['first_visit_points'] ?? 0);
-
-        // 관리자 정보 처리
-        $shop->use_admin = $data['use_admin'] ?? 0;
-        $shop->admin_name = $data['admin_name'] ?? null;
-        $shop->admin_login_id = $data['admin_login_id'] ?? null;
-        if (!empty($data['admin_password'])) {
-            $shop->admin_password = bcrypt($data['admin_password']);
-        }
-        $shop->settlement_type = $data['settlement_type'] ?? 1;
-        if ($shop->settlement_type == 1) {
-            $shop->settlement_rate = $data['settlement_rate_percent'] ?? 0;
-        } else {
-            $shop->settlement_rate = $data['settlement_rate_amount'] ?? 0;
-        }
-
-        $shop->save();
-        $this->syncPrivateAccesses($shop, $this->combinedPrivateAccessRows($request, $shop));
-
-        return redirect()->route('channel.shop_list')->with('success_message', 'Shop 채널이 성공적으로 등록되었습니다.');
+        $configuration->save($request, Auth::guard('admin')->user());
+        return redirect()->route('channel.shop_list')->with('success_message','Shop 채널을 등록했습니다.');
     }
 
     public function shopInfo(Request $request)
@@ -457,7 +194,7 @@ class ChannelController extends Controller
         $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
         if (!$admin) return redirect()->route('channel.login');
 
-        $shop = \App\Models\ShopChannel::where('vendor_id', $admin->vendor_id)
+        $shop = \App\Models\ShopChannel::with('privateAccesses')->where('vendor_id', $admin->vendor_id)
             ->where('id', $request->id)
             ->first();
 
@@ -543,7 +280,7 @@ class ChannelController extends Controller
 
         // Fetch products for this shop channel with status = 1 (판매중)
         $products = \App\Models\ShopChannelProduct::where('shop_channel_id', $shopId)
-            ->where('status', 1)
+            ->where('status', 1)->where('approval_status','approved')->whereNotNull('listed_at')
             ->with(['product' => function($query) {
                 $query->with(['category', 'images']);
             }])
@@ -588,7 +325,7 @@ class ChannelController extends Controller
             'publicProducts' => $publicProducts,
             'partialProducts' => $partialProducts,
             'popupFilters' => $popupFilters,
-        ]);
+        ] + app(\App\Services\ShopCatalog::class)->data($request,$shop));
     }
 
     public function shopProduct02(Request $request)
@@ -613,7 +350,7 @@ class ChannelController extends Controller
 
         // Fetch products for this shop channel with status = 0 (판매중지)
         $products = \App\Models\ShopChannelProduct::where('shop_channel_id', $shopId)
-            ->where('status', 0)
+            ->where('status', 0)->where('approval_status','approved')->whereNotNull('listed_at')
             ->with(['product' => function($query) {
                 $query->with(['category', 'images']);
             }])
@@ -658,7 +395,7 @@ class ChannelController extends Controller
             'publicProducts' => $publicProducts,
             'partialProducts' => $partialProducts,
             'popupFilters' => $popupFilters,
-        ]);
+        ] + app(\App\Services\ShopCatalog::class)->data($request,$shop));
     }
 
     private function shopProductPopupFilters(Request $request): array
@@ -805,14 +542,11 @@ class ChannelController extends Controller
         $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
         if (!$admin) return redirect()->route('channel.login');
 
-        // Get shop_id from request or use first shop for this vendor
-        $shopId = $request->get('shop_id');
-        if (!$shopId) {
-            $shop = \App\Models\ShopChannel::where('vendor_id', $admin->vendor_id)->first();
-            $shopId = $shop ? $shop->id : null;
-        }
-
-        if (!$shopId) {
+        $shop = \App\Models\ShopChannel::where('vendor_id', $admin->vendor_id)
+            ->when($request->filled('shop_id'), fn($query) => $query->whereKey($request->input('shop_id')))
+            ->first();
+        $shopId = $shop?->id;
+        if (!$shop) {
             return redirect()->route('channel.shop_list')->with('error_message', 'Shop 채널을 먼저 등록해 주세요.');
         }
 
@@ -850,7 +584,7 @@ class ChannelController extends Controller
         return view('channel.sub01.shop_community', [
             'dep1_id' => '01',
             'notices' => $notices,
-            'shopId' => $shopId,
+            'shopId' => $shopId,'shop'=>$shop,
             'perPage' => $perPage,
             'searchType' => $searchType,
             'searchValue' => $searchValue
@@ -899,8 +633,9 @@ class ChannelController extends Controller
         if (!$admin) return redirect()->route('channel.login');
 
         $filters = $this->productListFilters($request);
-        $query = \App\Models\Product::where('is_public', 'Yes')
-            ->with(['category', 'images', 'vendor.vendorbusinessdetails']);
+        $query = \App\Models\Product::where('is_public', 'Yes')->where('vendor_id','!=',$admin->vendor_id)
+            ->whereHas('shopChannelProducts',fn($q)=>$q->where('product_type','public')->where('approval_status','approved')->whereNotNull('listed_at')->whereHas('shopChannel',fn($c)=>$c->where('vendor_id',$admin->vendor_id)))
+            ->with(['category','images','vendor.vendorbusinessdetails','shopChannelProducts'=>fn($q)=>$q->where('product_type','public')->where('approval_status','approved')->whereNotNull('listed_at')->whereHas('shopChannel',fn($c)=>$c->where('vendor_id',$admin->vendor_id))->with('shopChannel')]);
         $this->applyProductListFilters($query, $filters, true);
 
         $products = $query->orderBy('id', 'desc')
@@ -926,8 +661,9 @@ class ChannelController extends Controller
             ->filter(fn ($state) => in_array($state, ['available', 'pending', 'approved', 'rejected'], true))
             ->values()
             ->all();
-        $query = \App\Models\Product::where('is_partial', 'Yes')
-            ->with(['category', 'images', 'vendor.vendorbusinessdetails']);
+        $query = \App\Models\Product::where('is_partial', 'Yes')->where('vendor_id','!=',$admin->vendor_id)
+            ->whereHas('shopChannelProducts',fn($q)=>$q->where('product_type','partial')->where('approval_status','approved')->whereNotNull('listed_at')->whereHas('shopChannel',fn($c)=>$c->where('vendor_id',$admin->vendor_id)))
+            ->with(['category','images','vendor.vendorbusinessdetails','shopChannelProducts'=>fn($q)=>$q->where('product_type','partial')->where('approval_status','approved')->whereNotNull('listed_at')->whereHas('shopChannel',fn($c)=>$c->where('vendor_id',$admin->vendor_id))->with('shopChannel')]);
         $this->applyProductListFilters($query, $filters, true);
         if (!empty($filters['request_states'])) {
             $shopChannelIds = \App\Models\ShopChannel::where('vendor_id', $admin->vendor_id)->pluck('id')->all();
@@ -988,7 +724,7 @@ class ChannelController extends Controller
             ->where('product_type', 'partial');
 
         if ($filters['request_status'] !== '' && in_array((string) $filters['request_status'], ['0', '1', '2'], true)) {
-            $query->where('status', (int) $filters['request_status']);
+            $query->where('approval_status',['0'=>'pending','1'=>'approved','2'=>'rejected'][(string)$filters['request_status']]);
         }
         if ($filters['requester'] !== '') {
             $query->whereHas('shopChannel', function ($shopQuery) use ($filters) {
@@ -1074,17 +810,16 @@ class ChannelController extends Controller
                 $vendorQuery->where('name', 'like', '%' . $filters['seller'] . '%')
                     ->orWhere('email', 'like', '%' . $filters['seller'] . '%')
                     ->orWhereHas('vendorbusinessdetails', function ($businessQuery) use ($filters) {
-                        $businessQuery->where('shop_name', 'like', '%' . $filters['seller'] . '%')
-                            ->orWhere('company_name', 'like', '%' . $filters['seller'] . '%');
+                        $businessQuery->where('shop_name', 'like', '%' . $filters['seller'] . '%');
                     });
             });
         }
 
         if ($filters['price_min'] !== '' && is_numeric($filters['price_min'])) {
-            $query->where('product_price', '>=', (float) $filters['price_min']);
+            $query->whereRaw('CASE WHEN price_constraint_enabled = 1 AND price_constraint_type = ? THEN price_fixed WHEN price_constraint_enabled = 1 AND price_constraint_type = ? THEN price_max ELSE product_price END >= ?', ['fixed', 'range', (float) $filters['price_min']]);
         }
         if ($filters['price_max'] !== '' && is_numeric($filters['price_max'])) {
-            $query->where('product_price', '<=', (float) $filters['price_max']);
+            $query->whereRaw('CASE WHEN price_constraint_enabled = 1 AND price_constraint_type = ? THEN price_fixed WHEN price_constraint_enabled = 1 AND price_constraint_type = ? THEN price_min ELSE product_price END <= ?', ['fixed', 'range', (float) $filters['price_max']]);
         }
     }
 
@@ -1129,23 +864,10 @@ class ChannelController extends Controller
 
     public function communityRegister(Request $request)
     {
-        $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
-        if (!$admin) return redirect()->route('channel.login');
-
-        $shopId = $request->get('shop_id');
-        if (!$shopId) {
-            $shop = \App\Models\ShopChannel::where('vendor_id', $admin->vendor_id)->first();
-            $shopId = $shop ? $shop->id : null;
-        }
-
-        if (!$shopId) {
-            return redirect()->route('channel.shop_list')->with('error_message', 'Shop 채널을 먼저 등록해 주세요.');
-        }
-
-        return view('channel.sub01.community_register', [
-            'dep1_id' => '01',
-            'shopId' => $shopId
-        ]);
+        $shop=\App\Models\ShopChannel::where('vendor_id',Auth::guard('admin')->user()->vendor_id)
+            ->when($request->filled('shop_id'),fn($q)=>$q->whereKey($request->input('shop_id')))->first();
+        if(!$shop)return redirect()->route('channel.shop_list');
+        return view('channel.sub01.community_register',['dep1_id'=>'01','shopId'=>$shop->id,'shop'=>$shop]);
     }
 
     public function communityView(Request $request, $id)
@@ -1178,7 +900,7 @@ class ChannelController extends Controller
         return view('channel.sub01.community_view', [
             'dep1_id' => '01',
             'notice' => $notice,
-            'shopId' => $shop->id,
+            'shopId' => $shop->id,'shop'=>$shop,
             'prevNotice' => $prevNotice,
             'nextNotice' => $nextNotice
         ]);
@@ -1199,114 +921,27 @@ class ChannelController extends Controller
         return view('channel.sub01.community_update', [
             'dep1_id' => '01',
             'notice' => $notice,
-            'shopId' => $shop->id
+            'shopId' => $shop->id,'shop'=>$shop
         ]);
     }
 
-    public function communityRegisterSubmit(Request $request)
+    public function communityRegisterSubmit(Request $request, \App\Services\ShopCommunity $community)
     {
-        $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
-        if (!$admin) return redirect()->route('channel.login');
-
-        $shopId = $request->input('shop_id');
-        
-        // Verify shop belongs to this vendor
-        $shop = \App\Models\ShopChannel::where('id', $shopId)
-            ->where('vendor_id', $admin->vendor_id)
-            ->firstOrFail();
-
-        $validated = $request->validate([
-            'type' => 'required|in:notice,general',
-            'title' => 'required|string|max:500',
-            'author' => 'nullable|string|max:100',
-            'content' => 'required|string',
-            'attachment' => 'nullable|file|max:10240', // 10MB max
-        ], [
-            'type.required' => '분류를 선택해 주세요.',
-            'title.required' => '제목을 입력해 주세요.',
-            'content.required' => '내용을 입력해 주세요.',
-        ]);
-
-        $data = [
-            'shop_channel_id' => $shopId,
-            'type' => $validated['type'],
-            'title' => $validated['title'],
-            'author' => $validated['author'] ?? $admin->name,
-            'content' => $validated['content'],
-            'status' => 1,
-            'view_count' => 0,
-        ];
-
-        // Handle file upload
-        if ($request->hasFile('attachment')) {
-            $file = $request->file('attachment');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            if (!is_dir(public_path('uploads/notices'))) {
-                mkdir(public_path('uploads/notices'), 0755, true);
-            }
-            $file->move(public_path('uploads/notices'), $filename);
-            $data['attachment'] = $filename;
-        }
-
-        \App\Models\ShopChannelNotice::create($data);
-
-        return redirect()->route('channel.shop_community', ['shop_id' => $shopId])
-            ->with('success_message', '공지사항이 등록되었습니다.');
+        $shop=\App\Models\ShopChannel::where('vendor_id',Auth::guard('admin')->user()->vendor_id)->findOrFail($request->input('shop_id'));
+        $notice=$community->save($request,$shop);
+        return redirect()->route('channel.community.view',$notice->id)->with('success_message','게시글을 등록했습니다.');
     }
-
-    public function communityUpdateSubmit(Request $request, $id)
+    public function communityUpdateSubmit(Request $request,$id, \App\Services\ShopCommunity $community)
     {
-        $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
-        if (!$admin) return redirect()->route('channel.login');
-
-        $notice = \App\Models\ShopChannelNotice::findOrFail($id);
-        
-        // Verify this notice belongs to vendor's shop channel
-        $shop = \App\Models\ShopChannel::where('id', $notice->shop_channel_id)
-            ->where('vendor_id', $admin->vendor_id)
-            ->firstOrFail();
-
-        $validated = $request->validate([
-            'type' => 'required|in:notice,general',
-            'title' => 'required|string|max:500',
-            'author' => 'nullable|string|max:100',
-            'content' => 'required|string',
-            'attachment' => 'nullable|file|max:10240',
-        ], [
-            'type.required' => '분류를 선택해 주세요.',
-            'title.required' => '제목을 입력해 주세요.',
-            'content.required' => '내용을 입력해 주세요.',
-        ]);
-
-        $notice->type = $validated['type'];
-        $notice->title = $validated['title'];
-        $notice->author = $validated['author'] ?? $admin->name;
-        $notice->content = $validated['content'];
-
-        // Handle file deletion
-        if ($request->has('delete_attachment') && $request->delete_attachment == '1') {
-            $this->deleteCommunityNoticeAttachment($notice->attachment);
-            $notice->attachment = null;
-        }
-
-        // Handle file upload
-        if ($request->hasFile('attachment')) {
-            // Delete old file
-            $this->deleteCommunityNoticeAttachment($notice->attachment);
-            
-            $file = $request->file('attachment');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            if (!is_dir(public_path('uploads/notices'))) {
-                mkdir(public_path('uploads/notices'), 0755, true);
-            }
-            $file->move(public_path('uploads/notices'), $filename);
-            $notice->attachment = $filename;
-        }
-
-        $notice->save();
-
-        return redirect()->route('channel.shop_community', ['shop_id' => $shop->id])
-            ->with('success_message', '공지사항이 수정되었습니다.');
+        $notice=\App\Models\ShopChannelNotice::whereHas('shopChannel',fn($q)=>$q->where('vendor_id',Auth::guard('admin')->user()->vendor_id))->findOrFail($id);
+        $community->save($request,$notice->shopChannel,$notice);
+        return redirect()->route('channel.community.view',$id)->with('success_message','게시글을 수정했습니다.');
+    }
+    public function communityAttachment($id, \App\Services\ShopCommunity $community)
+    {
+        $notice=\App\Models\ShopChannelNotice::whereHas('shopChannel',fn($q)=>$q->where('vendor_id',Auth::guard('admin')->user()->vendor_id))->findOrFail($id);
+        $path=$notice->attachment?$community->path($notice->attachment):null;abort_unless($path,404);
+        return response()->download($path,$notice->attachment_name?:basename($path),['X-Content-Type-Options'=>'nosniff','Cache-Control'=>'no-store, private']);
     }
 
     public function communityDelete($id)
@@ -1332,348 +967,22 @@ class ChannelController extends Controller
 
     private function deleteCommunityNoticeAttachment(?string $filename): void
     {
-        if (!$filename) {
-            return;
-        }
-
-        foreach (['uploads/notices', 'uploads/channel/notices', 'uploads/shop_notices'] as $directory) {
-            $path = public_path($directory . '/' . $filename);
-            if (file_exists($path)) {
-                unlink($path);
-            }
-        }
+        if($filename)app(\App\Services\ShopCommunity::class)->delete($filename);
     }
 
-
-    public function infoUpdate($id)
+    public function infoUpdate($id, \App\Services\ShopChannelConfiguration $configuration)
     {
-        $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
-        if (!$admin) return redirect()->route('channel.login');
-
-        $shop = \App\Models\ShopChannel::where('vendor_id', $admin->vendor_id)
-            ->where('id', $id)
-            ->first();
-
-        if (!$shop) {
-            return redirect()->route('channel.shop_list')->with('error_message', '존재하지 않거나 권한이 없는 채널입니다.');
-        }
-
-        return view('channel.sub01.info_update', [
-            'dep1_id' => '01',
-            'shop' => $shop,
-            'privateAccessRows' => $this->privateAccessRowsForForm($shop),
-        ]);
+        $admin=Auth::guard('admin')->user();
+        $shop=\App\Models\ShopChannel::where('vendor_id',$admin->vendor_id)->findOrFail($id);
+        return view('channel.sub01.info_update',$configuration->form($admin,$shop));
     }
 
-    public function infoUpdateSubmit(Request $request, $id)
+    public function infoUpdateSubmit(Request $request,$id, \App\Services\ShopChannelConfiguration $configuration)
     {
-        $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
-        if (!$admin) return redirect()->route('channel.login');
-
-        $shop = \App\Models\ShopChannel::where('vendor_id', $admin->vendor_id)
-            ->where('id', $id)
-            ->firstOrFail();
-
-        // 1. Validation Rules (similar to register but less strict on files if already exists)
-        $rules = [
-            'channel_code' => 'sometimes|string|max:80|alpha_dash|unique:shop_channels,channel_code,' . $shop->id,
-            'channel_name' => 'required|max:255',
-            'copyright' => 'required|max:255',
-            'keywords' => 'required|array|min:1',
-        ];
-
-        $data = $request->all();
-
-        // 비공개시 비밀번호 체크
-        if (($data['is_public'] ?? '1') == '0') {
-            $rules['password'] = 'required|min:4';
-        }
-        $rules['private_access_rows'] = 'nullable|string';
-        $rules['private_access_file'] = 'nullable|file|max:5120|mimes:xlsx,xls,csv,txt';
-        $rules['purchase_sms_templates.purchase'] = 'nullable|string|max:500';
-        $rules['purchase_sms_templates.purchase_confirmed'] = 'nullable|string|max:500';
-        $rules['purchase_sms_templates.cancel'] = 'nullable|string|max:500';
-        $rules['purchase_sms_templates.return'] = 'nullable|string|max:500';
-        $rules['first_visit_points'] = 'nullable|integer|min:0|max:100000';
-
-        // 사용기간(기간제) 체크
-        if (($data['use_period_type'] ?? '0') == '1') {
-            $rules['start_date'] = 'required|date';
-            $rules['start_hour'] = 'required';
-            $rules['end_date'] = 'required|date|after_or_equal:start_date';
-            $rules['end_hour'] = 'required';
-        }
-
-        // 관리자 정보 체크
-        if (($data['use_admin'] ?? '0') == '1') {
-            $rules['admin_name'] = 'required|max:50';
-            $rules['admin_login_id'] = 'required|max:50|unique:shop_channels,admin_login_id,' . $shop->id;
-            $rules['admin_password'] = ['nullable', \Illuminate\Validation\Rules\Password::min(12)->mixedCase()->letters()->numbers()];
-            
-            if (($data['settlement_type'] ?? '1') == '1') {
-                $rules['settlement_rate_percent'] = 'required|numeric|between:0,100';
-            } else {
-                $rules['settlement_rate_amount'] = 'required|numeric|min:0';
-            }
-        }
-
-        if (($data['use_own_pg'] ?? '0') == '1') {
-            $vendor = \App\Models\Vendor::find($admin->vendor_id);
-            if (!$vendor || (int) $vendor->status !== 1) {
-                return back()->withInput()->withErrors(['use_own_pg' => '판매인증이 완료된 채널만 자사 PG를 사용할 수 있습니다.']);
-            }
-
-            $rules['pg_provider'] = 'required|in:inicis,kcp,toss';
-            $rules['pg_merchant_id'] = 'required|string|max:255';
-            $rules['pg_client_key'] = 'required|string|max:255';
-            $rules['pg_secret_key'] = ($shop->pg_secret_key ? 'nullable' : 'required') . '|string|max:255';
-            $messages['pg_provider.required'] = '자사 PG사를 선택해 주세요.';
-            $messages['pg_provider.in'] = '지원하는 PG사를 선택해 주세요.';
-            $messages['pg_merchant_id.required'] = '자사 PG 상점 ID를 입력해 주세요.';
-            $messages['pg_client_key.required'] = '자사 PG Client Key를 입력해 주세요.';
-            $messages['pg_secret_key.required'] = '자사 PG Secret Key를 입력해 주세요.';
-        }
-
-        $request->validate($rules, $messages);
-
-        // 2. Update Data
-        $shop->status = $data['status'] ?? 0;
-        $shop->is_public = $data['is_public'] ?? 1;
-        $shop->password = $data['password'] ?? null;
-        $shop->is_member_only = ((string) ($data['is_public'] ?? '1') === '0') ? 0 : (isset($data['is_member_only']) ? 1 : 0);
-        $shop->channel_name = $data['channel_name'];
-        $shop->copyright = $data['copyright'];
-        $shop->keywords = json_encode($data['keywords'], JSON_UNESCAPED_UNICODE);
-
-        // 사용주기
-        $shop->use_period_type = $data['use_period_type'] ?? 0;
-        if ($shop->use_period_type == 1) {
-            if (!empty($data['start_date']) && isset($data['start_hour']) && $data['start_hour'] !== '') {
-                try {
-                    $shop->start_at = \Carbon\Carbon::createFromFormat('Y-m-d H', $data['start_date'] . ' ' . $data['start_hour'])->startOfHour();
-                } catch (\Exception $e) {
-                    // Ignore or handle
-                }
-            }
-            if (!empty($data['end_date']) && isset($data['end_hour']) && $data['end_hour'] !== '') {
-                try {
-                    $shop->end_at = \Carbon\Carbon::createFromFormat('Y-m-d H', $data['end_date'] . ' ' . $data['end_hour'])->startOfHour();
-                } catch (\Exception $e) {
-                    // Ignore
-                }
-            }
-        } else {
-            $shop->start_at = null;
-            $shop->end_at = null;
-        }
-
-        // 로고 이미지 처리
-        $shop->use_logo = $data['use_logo'] ?? 0;
-        if ($request->hasFile('logo_image')) {
-            $file = $request->file('logo_image');
-            $fileName = time() . '_logo.' . $file->getClientOriginalExtension();
-            $file->move(public_path('uploads/shop/logo'), $fileName);
-            $shop->logo_image = 'uploads/shop/logo/' . $fileName;
-        }
-
-        // 메인 배너 처리
-        $shop->use_banner = $data['use_banner'] ?? 0;
-        $banners = $data['existing_banners'] ?? []; // 기존 유지할 배너들
-        if ($request->hasFile('banner_files')) {
-            foreach ($request->file('banner_files') as $file) {
-                $fileName = time() . '_' . rand(100, 999) . '_banner.' . $file->getClientOriginalExtension();
-                $file->move(public_path('uploads/shop/banner'), $fileName);
-                $banners[] = 'uploads/shop/banner/' . $fileName;
-            }
-        }
-        $shop->banner_images = json_encode(array_slice($banners, 0, 5));
-
-        // OG TAG 처리
-        $shop->use_og = $data['use_og'] ?? 0;
-        $shop->og_title = $data['og_title'] ?? null;
-        $shop->og_description = $data['og_description'] ?? null;
-        if ($request->hasFile('og_image')) {
-            $file = $request->file('og_image');
-            $fileName = time() . '_og.' . $file->getClientOriginalExtension();
-            $file->move(public_path('uploads/shop/og'), $fileName);
-            $shop->og_image = 'uploads/shop/og/' . $fileName;
-        }
-
-        $shop->use_own_pg = ($data['use_own_pg'] ?? '0') == '1';
-        $shop->pg_provider = $shop->use_own_pg ? ($data['pg_provider'] ?? null) : null;
-        $shop->pg_merchant_id = $shop->use_own_pg ? ($data['pg_merchant_id'] ?? null) : null;
-        $shop->pg_site_code = $shop->use_own_pg ? ($data['pg_site_code'] ?? null) : null;
-        $shop->pg_client_key = $shop->use_own_pg ? ($data['pg_client_key'] ?? null) : null;
-        if ($shop->use_own_pg && array_key_exists('pg_secret_key', $data)) {
-            $shop->pg_secret_key = $data['pg_secret_key'] ?: $shop->pg_secret_key;
-        } elseif (!$shop->use_own_pg) {
-            $shop->pg_secret_key = null;
-        }
-
-        $shop->use_purchase_sms = ($data['use_purchase_sms'] ?? '0') == '1';
-        $shop->purchase_sms_templates = $shop->use_purchase_sms ? $this->purchaseSmsTemplates($data) : null;
-        $shop->first_visit_points = (int) ($data['first_visit_points'] ?? 0);
-
-        // 관리자 정보 처리
-        $shop->use_admin = $data['use_admin'] ?? 0;
-        $shop->admin_name = $data['admin_name'] ?? null;
-        $shop->admin_login_id = $data['admin_login_id'] ?? null;
-        if (!empty($data['admin_password'])) {
-            $shop->admin_password = bcrypt($data['admin_password']);
-        }
-        $shop->settlement_type = $data['settlement_type'] ?? 1;
-        if ($shop->settlement_type == 1) {
-            $shop->settlement_rate = $data['settlement_rate_percent'] ?? 0;
-        } else {
-            $shop->settlement_rate = $data['settlement_rate_amount'] ?? 0;
-        }
-
-        $shop->save();
-        $this->syncPrivateAccesses($shop, $this->combinedPrivateAccessRows($request, $shop));
-
-        return redirect()->route('channel.shop_info', ['id' => $shop->id])->with('success_message', '채널 정보가 수정되었습니다.');
-    }
-
-    private function purchaseSmsTemplates(array $data): array
-    {
-        $templates = $data['purchase_sms_templates'] ?? [];
-
-        return [
-            'purchase' => trim((string) ($templates['purchase'] ?? $templates['customer'] ?? '')),
-            'purchase_confirmed' => trim((string) ($templates['purchase_confirmed'] ?? '')),
-            'cancel' => trim((string) ($templates['cancel'] ?? '')),
-            'return' => trim((string) ($templates['return'] ?? '')),
-        ];
-    }
-
-    private function privateAccessRowsForForm(\App\Models\ShopChannel $shop): string
-    {
-        return $shop->privateAccesses()
-            ->orderBy('id')
-            ->get()
-            ->map(fn ($access) => trim($access->phone . ',' . $access->entry_code))
-            ->implode("\n");
-    }
-
-    private function syncPrivateAccesses(\App\Models\ShopChannel $shop, ?string $rawRows): void
-    {
-        $rows = $this->parsePrivateAccessRows($rawRows, (string) $shop->password);
-        $keepIds = [];
-
-        foreach ($rows as $row) {
-            $access = \App\Models\ShopChannelPrivateAccess::updateOrCreate(
-                [
-                    'shop_channel_id' => $shop->id,
-                    'phone_normalized' => $row['phone_normalized'],
-                ],
-                [
-                    'phone' => $row['phone'],
-                    'entry_code' => $row['entry_code'],
-                    'user_id' => $row['user_id'],
-                ]
-            );
-            $keepIds[] = $access->id;
-        }
-
-        $query = $shop->privateAccesses();
-        if (!empty($keepIds)) {
-            $query->whereNotIn('id', $keepIds);
-        }
-        $query->delete();
-    }
-
-    private function combinedPrivateAccessRows(Request $request, \App\Models\ShopChannel $shop): string
-    {
-        $rows = trim((string) $request->input('private_access_rows', ''));
-        $uploadedRows = $this->privateAccessRowsFromUpload($request->file('private_access_file'), (string) $shop->password);
-
-        return trim(implode("\n", array_filter([$rows, $uploadedRows], fn ($value) => trim((string) $value) !== '')));
-    }
-
-    private function privateAccessRowsFromUpload($file, string $defaultEntryCode): string
-    {
-        if (!$file) {
-            return '';
-        }
-
-        $extension = strtolower($file->getClientOriginalExtension());
-        $rows = in_array($extension, ['xlsx', 'xls'], true)
-            ? $this->spreadsheetRows($file->getRealPath())
-            : $this->csvRows($file->getRealPath());
-
-        $lines = [];
-        foreach ($rows as $row) {
-            $phone = trim((string) ($row[0] ?? ''));
-            $entryCode = trim((string) ($row[1] ?? $defaultEntryCode));
-            $userId = trim((string) ($row[2] ?? ''));
-
-            if (\App\Models\ShopChannelPrivateAccess::normalizePhone($phone) === '') {
-                continue;
-            }
-
-            $line = [$phone, $entryCode !== '' ? $entryCode : $defaultEntryCode];
-            if ($userId !== '') {
-                $line[] = $userId;
-            }
-            $lines[] = implode(',', $line);
-        }
-
-        return implode("\n", $lines);
-    }
-
-    private function spreadsheetRows(string $path): array
-    {
-        try {
-            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($path);
-        } catch (\Throwable $e) {
-            return [];
-        }
-
-        return $spreadsheet->getActiveSheet()->toArray(null, true, true, false);
-    }
-
-    private function csvRows(string $path): array
-    {
-        $handle = fopen($path, 'r');
-        if (!$handle) {
-            return [];
-        }
-
-        $rows = [];
-        while (($row = fgetcsv($handle)) !== false) {
-            $rows[] = $row;
-        }
-        fclose($handle);
-
-        return $rows;
-    }
-
-    private function parsePrivateAccessRows(?string $rawRows, string $defaultEntryCode): array
-    {
-        $rows = [];
-        foreach (preg_split('/\r\n|\r|\n/', (string) $rawRows) as $line) {
-            $line = trim($line);
-            if ($line === '') {
-                continue;
-            }
-
-            $parts = array_map('trim', str_getcsv($line));
-            $phone = $parts[0] ?? '';
-            $entryCode = $parts[1] ?? $defaultEntryCode;
-            $normalizedPhone = \App\Models\ShopChannelPrivateAccess::normalizePhone($phone);
-            if ($normalizedPhone === '' || trim((string) $entryCode) === '') {
-                continue;
-            }
-
-            $rows[$normalizedPhone] = [
-                'phone' => $phone,
-                'phone_normalized' => $normalizedPhone,
-                'entry_code' => trim((string) $entryCode),
-                'user_id' => isset($parts[2]) && is_numeric($parts[2]) ? (int) $parts[2] : null,
-            ];
-        }
-
-        return array_values($rows);
+        $admin=Auth::guard('admin')->user();
+        $shop=\App\Models\ShopChannel::where('vendor_id',$admin->vendor_id)->findOrFail($id);
+        $configuration->save($request,$admin,$shop);
+        return redirect()->route('channel.shop_info',['id'=>$shop->id])->with('success_message','채널 정보를 수정했습니다.');
     }
 
     // 상품 관리 (Sub02) 관련 메서드는 위에 이미 정의되어 있습니다.
@@ -1681,11 +990,8 @@ class ChannelController extends Controller
     // 주문 관리 (Sub04)
     public function orderList(Request $request)
     {
-        if (!$request->query->has('order_type')) {
-            $request->merge(['order_type' => 'normal']);
-        }
-
-        return $this->renderOrderList($request, 'list', $this->normalOrderStatusKeys());
+        if (!$request->query->has('order_type')) $request->merge(['order_type' => 'all']);
+        return $this->renderOrderList($request, 'list', []);
     }
 
     public function orderJointPurchaseList(Request $request)
@@ -1694,7 +1000,7 @@ class ChannelController extends Controller
 
         return $this->renderOrderList($request, 'joint', $this->normalOrderStatusKeys());
     }
-    
+
     public function orderCancelList(Request $request)
     {
         return $this->renderOrderList($request, 'cancel', [
@@ -1731,6 +1037,8 @@ class ChannelController extends Controller
         if (!$admin) return redirect()->route('channel.login');
 
         $filters = $this->orderListFilters($request);
+        $filters['claim_type'] = in_array($pageType, ['cancel','return','exchange'], true) ? $pageType : null;
+        $filters['claim_statuses'] = $baseStatusKeys;
         $orders = $this->fetchOrders($admin->vendor_id, $baseStatusKeys, $filters)
             ->appends($request->query());
 
@@ -1755,6 +1063,7 @@ class ChannelController extends Controller
     private function normalOrderStatusKeys(): array
     {
         return [
+            OrderItemStatus::AWAITING_PAYMENT,
             OrderItemStatus::PAID,
             OrderItemStatus::READY_TO_SHIP,
             OrderItemStatus::SHIPPING,
@@ -1796,9 +1105,15 @@ class ChannelController extends Controller
             $orderType = '';
         }
 
+        $claimMatch = [];
+        if (in_array($searchType, ['all','order_no'], true)) preg_match('/^Me9-(Cancel|Return|Exchange|Change)-(\d+)$/i', trim((string)$request->input('keyword','')), $claimMatch);
         return [
+            'claim_id' => isset($claimMatch[2]) ? (int)$claimMatch[2] : null,
+            'claim_search_type' => isset($claimMatch[1]) ? (strtolower($claimMatch[1]) === 'change' ? 'exchange' : strtolower($claimMatch[1])) : null,
             'search_type' => $searchType,
             'keyword' => trim((string) $request->input('keyword', '')),
+            'order_id' => max(0, $request->integer('order_id')),
+            'joint_purchase_id' => max(0, $request->integer('joint_purchase_id')),
             'date_from' => $request->input('date_from', ''),
             'date_to' => $request->input('date_to', ''),
             'order_statuses' => $statusKeys,
@@ -1824,15 +1139,10 @@ class ChannelController extends Controller
                 ->pluck('id')
                 ->map(fn ($id) => (int) $id)
                 ->all();
-        $vendorProductIds = empty($vendorShopIds)
-            ? []
-            : DB::table('shop_channel_products')
-                ->whereIn('shop_channel_id', $vendorShopIds)
-                ->pluck('product_id')
-                ->map(fn ($id) => (int) $id)
-                ->all();
+        $vendorProductIds = \App\Models\Product::where('vendor_id', $vendor_id)
+            ->pluck('id')->map(fn ($id) => (int) $id)->all();
         $selectedStatusKeys = $filters['order_statuses'] ?? [];
-        $effectiveStatusKeys = $baseStatusKeys;
+        $effectiveStatusKeys = !empty($filters['claim_type']) ? [] : $baseStatusKeys;
         if (!empty($selectedStatusKeys)) {
             $effectiveStatusKeys = empty($baseStatusKeys)
                 ? $selectedStatusKeys
@@ -1867,7 +1177,9 @@ class ChannelController extends Controller
                 });
             }
 
+            $this->applyOrderClaimFilter($q, $filters);
             $this->applyOrderTypeFilter($q, $filters['order_type'] ?? '');
+            if (!empty($filters['joint_purchase_id'])) $q->where('joint_purchase_id', $filters['joint_purchase_id']);
 
             $keyword = $filters['keyword'] ?? '';
             $searchType = $filters['search_type'] ?? 'all';
@@ -1893,18 +1205,30 @@ class ChannelController extends Controller
             }
         };
 
+        $detailFilter = function ($q) use ($vendor_id, $vendorShopIds, $vendorShopProductIds, $vendorProductIds) {
+            $q->where(function ($owner) use ($vendor_id, $vendorShopIds, $vendorShopProductIds, $vendorProductIds) {
+                $owner->where('vendor_id', $vendor_id);
+                if ($vendorShopIds) $owner->orWhereIn('shop_channel_id', $vendorShopIds);
+                if ($vendorShopProductIds) $owner->orWhereIn('shop_channel_product_id', $vendorShopProductIds);
+                if ($vendorProductIds) $owner->orWhereIn('product_id', $vendorProductIds);
+            });
+        };
+
         $query = \App\Models\Order::with([
-            'orders_products' => function($q) use ($itemFilter) {
-                $itemFilter($q);
+            'orders_products' => function($q) use ($detailFilter) {
+                $detailFilter($q);
                 $q->with(['shopChannel', 'shopChannelProduct', 'product.attributes']);
             },
             'user',
             'claims',
+            'statusLogs',
+            'payments',
         ]);
 
         $query->whereHas('orders_products', $itemFilter);
+        if (!empty($filters['order_id'])) $query->whereKey($filters['order_id']);
 
-        $keyword = $filters['keyword'] ?? '';
+        $keyword = !empty($filters['claim_id']) ? '' : ($filters['keyword'] ?? '');
         $searchType = $filters['search_type'] ?? 'all';
         if ($keyword !== '' && $searchType === 'all') {
             $query->where(function ($mixedQuery) use ($keyword, $vendor_id, $vendorShopIds, $vendorShopProductIds, $vendorProductIds, $statusValues, $hasImpossibleStatusFilter, $filters) {
@@ -1941,7 +1265,9 @@ class ChannelController extends Controller
                                 ->orWhereIn('item_status', $statusValues);
                         });
                     }
+                    $this->applyOrderClaimFilter($itemQuery, $filters);
                     $this->applyOrderTypeFilter($itemQuery, $filters['order_type'] ?? '');
+                    if (!empty($filters['joint_purchase_id'])) $itemQuery->where('joint_purchase_id', $filters['joint_purchase_id']);
                     if (($filters['price_min'] ?? '') !== '' && is_numeric($filters['price_min'])) {
                         $itemQuery->whereRaw('CASE WHEN line_total > 0 THEN line_total ELSE product_price * product_qty END >= ?', [(float) $filters['price_min']]);
                     }
@@ -1988,46 +1314,52 @@ class ChannelController extends Controller
         $orders = $query->orderBy('created_at', 'desc')->paginate($filters['per_page'] ?? 20);
         $orders->getCollection()->loadMissing('orders_products.exchangeReplacement');
 
-        $productIds = $orders->getCollection()
-            ->flatMap(fn ($order) => $order->orders_products->pluck('product_id'))
-            ->filter()
-            ->unique()
-            ->values();
+        $matchingIds = \App\Models\OrdersProduct::whereIn('order_id', $orders->getCollection()->pluck('id'))
+            ->where($itemFilter)->pluck('id')->flip();
 
-        $jointProductIds = $productIds->isEmpty()
-            ? collect()
-            : DB::table('joint_purchases')
-                ->whereIn('product_id', $productIds)
-                ->pluck('product_id')
-                ->map(fn ($productId) => (int) $productId)
-                ->flip();
-
-        $orders->getCollection()->transform(function($order) use ($jointProductIds) {
+        $orders->getCollection()->transform(function($order) use ($matchingIds) {
             $order->order_no = 'Me9-' . str_pad($order->id, 8, '0', STR_PAD_LEFT); 
             $order->user_name = $order->buyer_name ?: $order->name;
             $order->setRelation('claims', $order->claims->whereIn('order_product_id', $order->orders_products->pluck('id'))->values());
             $order->claims_data = $order->claims;
+            $order->events = $order->statusLogs->whereIn('order_item_id', $order->orders_products->pluck('id'))->map(fn ($log) => ['order_product_id'=>$log->order_item_id,'created_at'=>$log->created_at?->format('Y-m-d H:i:s'),'status_label'=>$log->order_status,'actor'=>$log->actor ?: '관리자'])->values();
+            $order->payment_logs = $order->payments->map(fn ($payment) => $payment->only(['payment_id','amount','currency','payment_status','created_at']))->values();
             
             $vendorItems = $order->orders_products;
             $firstItem = $vendorItems->first();
             $order->shop_name = $firstItem?->shopChannel?->channel_name ?? 'Me9 Market';
             
-            $order->items = $vendorItems->map(function($item) use ($jointProductIds) {
+            $order->items = $vendorItems->map(function($item) {
                 $lineTotal = $item->line_total > 0
                     ? $item->line_total
                     : $item->product_price * $item->product_qty;
-                $isJointPurchase = $jointProductIds->has((int) $item->product_id);
+                $isJointPurchase = (bool) $item->joint_purchase_id;
                 $payment = app(\App\Services\SettlementCalculator::class)->paymentAmounts($item);
-                $financial = app(\App\Services\SettlementCalculator::class)->orderFinancialAmounts($item, (int) $item->vendor_id);
+                $financial = app(\App\Services\SettlementCalculator::class)->orderFinancialAmounts($item, (int) Auth::guard('admin')->user()->vendor_id);
 
                 return [
                     'id' => $item->id,
+                    'product_id' => $item->product_id,
+                    'is_exchange_replacement' => (bool) $item->is_exchange_replacement,
+                    'recipient_name' => $item->recipient_name,
+                    'recipient_mobile' => $item->recipient_mobile,
+                    'recipient_address' => $item->recipient_address,
+                    'product_url' => $item->shop_channel_product_id ? route('shop.product_details', $item->shop_channel_product_id).'?shop_id='.$item->shop_channel_id : null,
+                    'shop_name' => $item->shopChannel?->channel_name ?? 'Me9 Market',
+                    'can_manage' => (int) $item->vendor_id === (int) Auth::guard('admin')->user()->vendor_id,
+                    'channel_financial' => app(\App\Services\SettlementCalculator::class)->channelReportAmounts($item, (int) Auth::guard('admin')->user()->vendor_id),
+                    'exchange_shipping_fee' => (int) $item->exchange_shipping_fee,
+                    'shipped_at' => $item->shipped_at?->format('Y-m-d H:i:s'),
+                    'delivered_at' => $item->delivered_at?->format('Y-m-d H:i:s'),
+                    'confirmed_at' => $item->confirmed_at?->format('Y-m-d H:i:s'),
                     'status' => $item->normalized_status,
                     'replacement' => $item->exchangeReplacement ? [
                         'id' => $item->exchangeReplacement->id,
                         'status_label' => $item->exchangeReplacement->status_label,
                         'courier_name' => $item->exchangeReplacement->courier_name,
                         'tracking_number' => $item->exchangeReplacement->tracking_number,
+                        'recipient_name'=>$item->exchangeReplacement->recipient_name,
+                        'recipient_address'=>$item->exchangeReplacement->recipient_address,
                     ] : null,
                     'status_label' => $item->status_label,
                     'order_type' => $isJointPurchase ? 'joint' : 'normal',
@@ -2040,11 +1372,14 @@ class ChannelController extends Controller
                     'price' => $item->selling_price ?: $item->product_price,
                     'line_total' => $lineTotal,
                     'shipping_amount' => $payment['shipping'],
+                    'discount_amount' => $payment['coupon'],
+                    'paid_line_total' => $payment['paid_line_total'],
                     'used_point_amount' => $payment['points'],
                     'paid_cash_amount' => $payment['cash'],
                     'estimated_payout' => $financial['payout'],
                     'sales_profit' => $financial['sales_profit'],
                     'reward_points' => $item->is_exchange_replacement ? 0 : $payment['reward'],
+                    'actual_refund_cash_amount' => (float) $item->refund_cash_amount,
                     'refund_cash_amount' => $item->financial_reversed_at ? (float) $item->refund_cash_amount : max(0, $payment['cash'] - (float) $item->return_shipping_fee),
                     'refund_status' => $item->refund_status,
                     'refund_status_label' => $item->refund_status_label,
@@ -2058,6 +1393,8 @@ class ChannelController extends Controller
                     'product_type' => $item->shopChannelProduct?->product_type === 'public' ? '공유' : ($item->shopChannelProduct?->product_type === 'partial' ? '제휴' : '자사'),
                 ];
             });
+
+            $order->list_items = $order->items->filter(fn ($item) => $matchingIds->has($item['id']))->values();
 
             $totalProductPrice = $vendorItems->sum(function($item) {
                 return $item->line_total > 0 ? $item->line_total : $item->product_price * $item->product_qty;
@@ -2080,26 +1417,31 @@ class ChannelController extends Controller
         return $orders;
     }
 
+    private function applyOrderClaimFilter($query, array $filters): void
+    {
+        if (!empty($filters['claim_type'])) {
+            $values=$this->orderStatusQueryValues($filters['claim_statuses'] ?? []);
+            $query->where(function ($claimQuery) use ($filters,$values) {
+                $claimQuery->whereHas('claims', fn($claim)=>$claim->where('type',$filters['claim_type']))
+                    ->orWhereIn('status_code',$values)->orWhereIn('item_status',$values);
+            });
+        }
+        if (!empty($filters['claim_id'])) $query->whereHas('claims',fn($claim)=>$claim->whereKey($filters['claim_id'])->where('type',$filters['claim_search_type']));
+    }
+
     private function applyOrderTypeFilter($query, string $orderType): void
     {
         if ($orderType === 'joint') {
-            $query->whereExists(function ($jointQuery) {
-                $jointQuery->select(DB::raw(1))
-                    ->from('joint_purchases')
-                    ->whereColumn('joint_purchases.product_id', 'orders_products.product_id');
-            });
+            $query->whereNotNull('joint_purchase_id');
         } elseif ($orderType === 'normal') {
-            $query->whereNotExists(function ($jointQuery) {
-                $jointQuery->select(DB::raw(1))
-                    ->from('joint_purchases')
-                    ->whereColumn('joint_purchases.product_id', 'orders_products.product_id');
-            });
+            $query->whereNull('joint_purchase_id');
         }
     }
 
     private function orderStatusOptions(array $statusKeys = []): array
     {
         $options = [
+            OrderItemStatus::AWAITING_PAYMENT => '입금대기',
             OrderItemStatus::PAID => '결제완료',
             OrderItemStatus::READY_TO_SHIP => '배송대기',
             OrderItemStatus::SHIPPING => '배송중',
@@ -2273,246 +1615,22 @@ class ChannelController extends Controller
     }
     
     // 추가 정보 / 설정 (Sub00)
-    public function deliveryChargeList()
+    public function infoManagement(\App\Services\ChannelInformation $information)
     {
-        if (!Auth::guard('admin')->check()) {
-            return redirect()->route('channel.login');
-        }
-
         $admin = Auth::guard('admin')->user();
-        $charges = \App\Models\ChannelDeliveryCharge::where('vendor_id', (int) $admin->vendor_id)
-            ->orderByDesc('id')
-            ->paginate(20)
-            ->withQueryString();
-
-        return view('channel.sub00.delivery_charge_list', [
-            'dep1_id' => '00',
-            'charges' => $charges,
-            'shippingTypes' => $this->channelDeliveryShippingTypes(),
-            'paymentTypes' => $this->channelDeliveryPaymentTypes(),
-        ]);
+        return view('channel.sub00.info_management', $information->data($admin) + ['dep1_id'=>'00']);
     }
 
-    public function storeDeliveryCharge(Request $request)
+    public function updateInfo(Request $request, \App\Services\ChannelInformation $information)
     {
-        if (!Auth::guard('admin')->check()) {
-            return redirect()->route('channel.login');
-        }
-
-        $admin = Auth::guard('admin')->user();
-
-        \App\Models\ChannelDeliveryCharge::create($this->deliveryChargePayload($request, (int) $admin->vendor_id));
-
-        return redirect()->route('channel.delivery.list')->with('flash_message_success', '배송비가 등록되었습니다.');
+        $result = $information->update($request, Auth::guard('admin')->user());
+        return redirect()->route('channel.info.management')->with('success_message', $result === 'requested'
+            ? '판매인증 요청이 접수되었습니다. 관리자 심사 후 승인됩니다.' : '회원사 정보를 저장했습니다.');
     }
 
-    public function updateDeliveryCharge(Request $request, $id)
+    public function informationDocument(string $kind, string $mode, \App\Services\MemberRegistration $registration)
     {
-        if (!Auth::guard('admin')->check()) {
-            return redirect()->route('channel.login');
-        }
-
-        $admin = Auth::guard('admin')->user();
-        $charge = \App\Models\ChannelDeliveryCharge::where('vendor_id', (int) $admin->vendor_id)->findOrFail($id);
-        $charge->update($this->deliveryChargePayload($request, (int) $admin->vendor_id));
-
-        return redirect()->route('channel.delivery.list')->with('flash_message_success', '배송비가 수정되었습니다.');
-    }
-
-    public function deleteDeliveryCharge($id)
-    {
-        if (!Auth::guard('admin')->check()) {
-            return redirect()->route('channel.login');
-        }
-
-        $admin = Auth::guard('admin')->user();
-        $charge = \App\Models\ChannelDeliveryCharge::where('vendor_id', (int) $admin->vendor_id)->findOrFail($id);
-        if (\App\Models\Product::where('vendor_id', $admin->vendor_id)->where(function ($query) use ($charge) {
-            $query->where('shipping_policy_id', $charge->id)
-                ->orWhere(fn ($legacy) => $legacy->whereNull('shipping_policy_id')->where('shipping_policy_name', $charge->name));
-        })->exists()) {
-            throw \Illuminate\Validation\ValidationException::withMessages(['shipping' => '상품에서 사용 중인 배송비 정책은 삭제할 수 없습니다.']);
-        }
-        $charge->delete();
-
-        return redirect()->route('channel.delivery.list')->with('flash_message_success', '배송비가 삭제되었습니다.');
-    }
-
-    private function deliveryChargePayload(Request $request, int $vendorId): array
-    {
-        return app(\App\Services\DeliveryPolicyRules::class)->payload($request, $vendorId);
-    }
-
-    private function channelDeliveryShippingTypes(): array
-    {
-        return [
-            'free' => '무료배송',
-            'conditional' => '무료배송(조건부)',
-            'fixed' => '고정 배송비',
-            'variable' => '변동 배송비',
-            'tiered' => '구간별 배송비',
-        ];
-    }
-
-    private function channelDeliveryPaymentTypes(): array
-    {
-        return [
-            'prepaid' => '선결제',
-            'cod' => '착불',
-        ];
-    }
-
-    public function cancelRefundList()
-    {
-        $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
-        if (!$admin) return redirect()->route('channel.login');
-
-        $policies = \App\Models\ShopCancelRefundPolicy::where('vendor_id', $admin->vendor_id)
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        return view('channel.sub00.cancel_refund_list', [
-            'dep1_id' => '00',
-            'policies' => $policies
-        ]);
-    }
-
-    public function infoManagement()
-    {
-        $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
-        if (!$admin) return redirect()->route('channel.login');
-        
-        $vendor = \App\Models\Vendor::where('id', $admin->vendor_id)->first();
-        $details = \App\Models\VendorsBusinessDetail::where('vendor_id', $admin->vendor_id)->first();
-        
-        return view('channel.sub00.info_management', [
-            'dep1_id' => '00',
-            'admin' => $admin,
-            'vendor' => $vendor,
-            'details' => $details
-        ]);
-    }
-
-    public function updateInfo(Request $request)
-    {
-        $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
-        if (!$admin) return redirect()->route('channel.login');
-
-        if ($request->isMethod('post')) {
-            $data = $request->all();
-
-            $vendor = \App\Models\Vendor::find($admin->vendor_id);
-
-            if ($request->boolean('use_own_pg') && (int) ($vendor->status ?? 0) !== 1) {
-                return redirect()->back()
-                    ->withInput()
-                    ->with('error_message', '판매인증이 완료된 회원사만 자사 PG를 등록할 수 있습니다.');
-            }
-
-            $request->validate([
-                'pg_provider' => 'nullable|required_if:use_own_pg,1|in:inicis,kcp,toss',
-                'pg_merchant_id' => 'nullable|required_if:use_own_pg,1|string|max:255',
-                'pg_site_code' => 'nullable|string|max:255',
-                'pg_client_key' => 'nullable|required_if:use_own_pg,1|string|max:255',
-                'pg_secret_key' => 'nullable|string|max:255',
-            ]);
-
-            // 1. Update Vendor table (basic info + Ver3 PG info)
-            if ($vendor) {
-                $vendorPayload = [];
-                if (isset($data['shop_name'])) {
-                    $vendorPayload['name'] = $data['shop_name'];
-                }
-
-                $vendorPayload['use_own_pg'] = $request->boolean('use_own_pg');
-                if ($request->boolean('use_own_pg')) {
-                    $vendorPayload['pg_provider'] = $data['pg_provider'] ?? null;
-                    $vendorPayload['pg_merchant_id'] = $data['pg_merchant_id'] ?? null;
-                    $vendorPayload['pg_site_code'] = $data['pg_site_code'] ?? null;
-                    $vendorPayload['pg_client_key'] = $data['pg_client_key'] ?? null;
-                    if (!empty($data['pg_secret_key'])) {
-                        $vendorPayload['pg_secret_key'] = $data['pg_secret_key'];
-                    }
-                } else {
-                    $vendorPayload['pg_provider'] = null;
-                    $vendorPayload['pg_merchant_id'] = null;
-                    $vendorPayload['pg_site_code'] = null;
-                    $vendorPayload['pg_client_key'] = null;
-                    $vendorPayload['pg_secret_key'] = null;
-                }
-
-                $vendor->fill($vendorPayload)->save();
-            }
-
-            // 2. Prepare Detailed Info
-            $updateData = [];
-            if (isset($data['shop_name'])) $updateData['shop_name'] = $data['shop_name'];
-            if (isset($data['shop_business_type'])) $updateData['shop_business_type'] = $data['shop_business_type'];
-            
-            if (isset($data['brn1']) && isset($data['brn2']) && isset($data['brn3'])) {
-                $updateData['business_license_number'] = $data['brn1'] . '-' . $data['brn2'] . '-' . $data['brn3'];
-            }
-            
-            if (isset($data['mobile1']) && isset($data['mobile2']) && isset($data['mobile3'])) {
-                $updateData['shop_mobile'] = $data['mobile1'] . '-' . $data['mobile2'] . '-' . $data['mobile3'];
-            }
-            
-            if (isset($data['email1']) && isset($data['email2'])) {
-                $updateData['shop_email'] = $data['email1'] . '@' . $data['email2'];
-            }
-            
-            if (isset($data['shop_pincode'])) $updateData['shop_pincode'] = $data['shop_pincode'];
-            if (isset($data['shop_address'])) $updateData['shop_address'] = $data['shop_address'];
-            if (isset($data['shop_address_detail'])) $updateData['shop_address_detail'] = $data['shop_address_detail'];
-            
-            if (isset($data['bank_name'])) $updateData['bank_name'] = $data['bank_name'];
-            if (isset($data['bank_account_number'])) $updateData['bank_account_number'] = $data['bank_account_number'];
-            if (isset($data['bank_account_holder_name'])) $updateData['bank_account_holder_name'] = $data['bank_account_holder_name'];
-
-            // 3. Handle File Uploads
-            $upload_path = public_path('front/images/bank_copies');
-            if (!file_exists($upload_path)) {
-                mkdir($upload_path, 0777, true);
-            }
-
-            // Bank Copy
-            if ($request->hasFile('bank_copy')) {
-                $file = $request->file('bank_copy');
-                if ($file->isValid()) {
-                    $extension = $file->getClientOriginalExtension();
-                    $fileName = 'bank_' . rand(111, 99999) . '.' . $extension;
-                    $file->move($upload_path, $fileName);
-                    $updateData['bank_copy_image'] = $fileName;
-                }
-            } elseif ($request->hasFile('cert_bank_copy')) {
-                 $file = $request->file('cert_bank_copy');
-                if ($file->isValid()) {
-                    $extension = $file->getClientOriginalExtension();
-                    $fileName = 'bank_' . rand(111, 99999) . '.' . $extension;
-                    $file->move($upload_path, $fileName);
-                    $updateData['bank_copy_image'] = $fileName;
-                }
-            }
-
-            // Address Proof / BRN Image
-            if ($request->hasFile('cert_brn')) {
-                $file = $request->file('cert_brn');
-                if ($file->isValid()) {
-                    $extension = $file->getClientOriginalExtension();
-                    $fileName = 'brn_' . rand(111, 99999) . '.' . $extension;
-                    $file->move($upload_path, $fileName);
-                    $updateData['address_proof_image'] = $fileName;
-                }
-            }
-
-            if (!empty($updateData)) {
-                \App\Models\VendorsBusinessDetail::where('vendor_id', $admin->vendor_id)->update($updateData);
-            }
-
-            return redirect()->back()->with('success_message', '회원사 정보가 성공적으로 업데이트되었습니다.');
-        }
-
-        return redirect()->back()->with('error_message', '잘못된 접근입니다.');
+        return $registration->document((int) Auth::guard('admin')->user()->vendor_id, $kind, $mode === 'download');
     }
 
     public function updatePassword(Request $request)
@@ -2542,185 +1660,6 @@ class ChannelController extends Controller
 
             return response()->json(['status' => 'success', 'message' => '비밀번호가 성공적으로 변경되었습니다.']);
         }
-    }
-
-    public function orderManagerList(Request $request)
-    {
-        if (!Auth::guard('admin')->check()) {
-            return redirect()->route('channel.login');
-        }
-
-        $keyword = trim((string) $request->query('keyword', ''));
-
-        $admin = Auth::guard('admin')->user();
-
-        $managers = $this->orderManagersForVendor((int) ($admin->vendor_id ?? 0))
-            ->withCount('products')
-            ->when($keyword !== '', function ($query) use ($keyword) {
-                $query->where(function ($inner) use ($keyword) {
-                    $inner->where('email', 'like', '%' . $keyword . '%')
-                        ->orWhere('name', 'like', '%' . $keyword . '%');
-                });
-            })
-            ->orderByDesc('id')
-            ->get();
-
-        return view('channel.sub00.order_manager_list', [
-            'dep1_id' => '00',
-            'managers' => $managers,
-            'keyword' => $keyword,
-        ]);
-    }
-
-    public function storeOrderManager(Request $request)
-    {
-        if (!Auth::guard('admin')->check()) {
-            return redirect()->route('channel.login');
-        }
-
-        $data = $request->validate([
-            'status' => 'required|in:0,1',
-            'email' => 'required|email|max:255|unique:distributors,email',
-            'name' => 'required|string|max:100',
-            'phone' => 'nullable|string|max:50',
-            'return_postcode' => 'nullable|string|max:20',
-            'return_address' => 'nullable|string|max:255',
-            'access_started_at' => 'nullable|date',
-            'access_ended_at' => 'nullable|date|after_or_equal:access_started_at',
-            'password' => ['required', 'confirmed', \Illuminate\Validation\Rules\Password::min(12)->mixedCase()->letters()->numbers()],
-        ]);
-
-        $admin = Auth::guard('admin')->user();
-
-        $payload = [
-            'status' => (int) $data['status'],
-            'email' => $data['email'],
-            'name' => $data['name'],
-            'phone' => $data['phone'] ?? null,
-            'return_postcode' => $data['return_postcode'] ?? null,
-            'return_address' => $data['return_address'] ?? null,
-            'access_started_at' => $data['access_started_at'] ?? null,
-            'access_ended_at' => $data['access_ended_at'] ?? null,
-            'password' => \Illuminate\Support\Facades\Hash::make($data['password']),
-        ];
-
-        if (\Illuminate\Support\Facades\Schema::hasColumn('distributors', 'vendor_id')) {
-            $payload['vendor_id'] = (int) ($admin->vendor_id ?? 0);
-        }
-
-        \App\Models\Distributor::create($payload);
-
-        return back()->with('flash_message_success', '발주담당자가 등록되었습니다.');
-    }
-
-    public function updateOrderManager(Request $request, $id)
-    {
-        if (!Auth::guard('admin')->check()) {
-            return redirect()->route('channel.login');
-        }
-
-        $admin = Auth::guard('admin')->user();
-        $manager = $this->orderManagersForVendor((int) ($admin->vendor_id ?? 0))->findOrFail($id);
-
-        $data = $request->validate([
-            'status' => 'required|in:0,1',
-            'email' => 'required|email|max:255|unique:distributors,email,' . $manager->id,
-            'name' => 'required|string|max:100',
-            'phone' => 'nullable|string|max:50',
-            'return_postcode' => 'nullable|string|max:20',
-            'return_address' => 'nullable|string|max:255',
-            'access_started_at' => 'nullable|date',
-            'access_ended_at' => 'nullable|date|after_or_equal:access_started_at',
-            'password' => ['nullable', 'confirmed', \Illuminate\Validation\Rules\Password::min(12)->mixedCase()->letters()->numbers()],
-        ]);
-
-        $payload = [
-            'status' => (int) $data['status'],
-            'email' => $data['email'],
-            'name' => $data['name'],
-            'phone' => $data['phone'] ?? null,
-            'return_postcode' => $data['return_postcode'] ?? null,
-            'return_address' => $data['return_address'] ?? null,
-            'access_started_at' => $data['access_started_at'] ?? null,
-            'access_ended_at' => $data['access_ended_at'] ?? null,
-        ];
-
-        if (!empty($data['password'])) {
-            $payload['password'] = \Illuminate\Support\Facades\Hash::make($data['password']);
-        }
-
-        $manager->update($payload);
-
-        return back()->with('flash_message_success', '발주담당자 정보가 수정되었습니다.');
-    }
-
-    public function openOrderManagerPortal($id)
-    {
-        if (!Auth::guard('admin')->check()) {
-            return redirect()->route('channel.login');
-        }
-
-        $admin = Auth::guard('admin')->user();
-        $manager = $this->orderManagersForVendor((int) ($admin->vendor_id ?? 0))->findOrFail($id);
-
-        abort_unless($manager->canAccess(), 403);
-
-        request()->session()->regenerate();
-        \Illuminate\Support\Facades\Session::put('distributor_id', $manager->id);
-        \Illuminate\Support\Facades\Session::put('distributor_name', $manager->name);
-        \Illuminate\Support\Facades\Session::put('distributor_email', $manager->email);
-
-        return redirect()->route('distributor.orders.pending')
-            ->with('flash_message_success', $manager->name . ' 발주사 페이지로 연결되었습니다.');
-    }
-
-    private function orderManagersForVendor(int $vendorId)
-    {
-        $query = \App\Models\Distributor::query();
-
-        if (\Illuminate\Support\Facades\Schema::hasColumn('distributors', 'vendor_id')) {
-            $query->where('vendor_id', $vendorId);
-        }
-
-        return $query;
-    }
-
-    public function pointList(Request $request)
-    {
-        if (!Auth::guard('admin')->check()) {
-            return redirect()->route('channel.login');
-        }
-
-        $admin = Auth::guard('admin')->user();
-        $vendorId = (int) ($admin->vendor_id ?? 0);
-        $history = $request->query('history', 'all');
-        $ledger = \App\Models\PointTransaction::whereHas('shopChannel', fn ($query) => $query->where('vendor_id', $vendorId));
-        $transactions = (clone $ledger)->with('shopChannel');
-
-        if ($history === 'earn') {
-            $transactions->where('points', '>', 0)->where('type', '!=', 'refund');
-        } elseif ($history === 'use') {
-            $transactions->where('points', '<', 0);
-        } elseif ($history === 'refund') {
-            $transactions->where('type', 'refund');
-        }
-
-        $transactions = $transactions->latest()->paginate(20)->withQueryString();
-
-        return view('channel.sub00.point_list', [
-            'dep1_id' => '00',
-            'summary' => [
-                'balance' => (int) (clone $ledger)->sum('points'),
-                'distributed' => (int) (clone $ledger)->where('points', '>', 0)->where('type', '!=', 'refund')->sum('points'),
-                'used' => -(int) (clone $ledger)->where('type', 'use')->sum('points'),
-                'converted' => -(int) (clone $ledger)->where('type', 'convert_out')->sum('points'),
-                'restored' => (int) (clone $ledger)->where('type', 'refund')->sum('points'),
-            ],
-            'transactions' => $transactions,
-            'filters' => [
-                'history' => $history,
-            ],
-        ]);
     }
 
     public function requestOperationStop(Request $request)
@@ -2812,157 +1751,6 @@ class ChannelController extends Controller
         return redirect()->route('channel.point.list')->with('success_message', '포인트 환급 요청이 접수되었습니다. 최고관리자 승인 후 환급 처리됩니다.');
     }
     
-    public function subList(Request $request)
-    {
-        if (!Auth::guard('admin')->check()) {
-            return redirect()->route('channel.login');
-        }
-
-        $admin = Auth::guard('admin')->user();
-        $keyword = trim((string) $request->query('keyword', ''));
-
-        $accounts = \App\Models\ChannelSubAccount::with('admin')
-            ->where('vendor_id', (int) $admin->vendor_id)
-            ->when($keyword !== '', function ($query) use ($keyword) {
-                $query->where(function ($inner) use ($keyword) {
-                    $inner->where('member_no', 'like', '%' . $keyword . '%')
-                        ->orWhereHas('admin', function ($adminQuery) use ($keyword) {
-                            $adminQuery->where('email', 'like', '%' . $keyword . '%')
-                                ->orWhere('name', 'like', '%' . $keyword . '%')
-                                ->orWhere('mobile', 'like', '%' . $keyword . '%');
-                        });
-                });
-            })
-            ->orderByDesc('id')
-            ->paginate(20)
-            ->withQueryString();
-
-        return view('channel.sub00.sub_accounts_list', [
-            'dep1_id' => '00',
-            'accounts' => $accounts,
-            'keyword' => $keyword,
-            'permissionLabels' => $this->subAccountPermissionLabels(),
-        ]);
-    }
-
-    public function storeSubAccount(Request $request)
-    {
-        if (!Auth::guard('admin')->check()) {
-            return redirect()->route('channel.login');
-        }
-
-        $owner = Auth::guard('admin')->user();
-        $data = $this->subAccountValidatedData($request, null);
-
-        $admin = new \App\Models\Admin;
-        $admin->name = $data['name'];
-        $admin->type = 'subadmin';
-        $admin->vendor_id = (int) $owner->vendor_id;
-        $admin->mobile = $data['mobile'] ?? '';
-        $admin->email = $data['email'];
-        $admin->password = \Illuminate\Support\Facades\Hash::make($data['password']);
-        $admin->confirm = 'Yes';
-        $admin->status = (int) $data['status'];
-        $admin->save();
-
-        \App\Models\ChannelSubAccount::create([
-            'vendor_id' => (int) $owner->vendor_id,
-            'admin_id' => $admin->id,
-            'member_no' => $data['member_no'] ?? null,
-            'started_at' => $data['started_at'] ?? null,
-            'ended_at' => $data['ended_at'] ?? null,
-            'permissions' => $data['permissions'] ?? [],
-        ]);
-
-        return redirect()->route('channel.sub_accounts.list')->with('flash_message_success', '서브관리자가 등록되었습니다.');
-    }
-
-    public function updateSubAccount(Request $request, $id)
-    {
-        if (!Auth::guard('admin')->check()) {
-            return redirect()->route('channel.login');
-        }
-
-        $owner = Auth::guard('admin')->user();
-        $account = \App\Models\ChannelSubAccount::with('admin')
-            ->where('vendor_id', (int) $owner->vendor_id)
-            ->findOrFail($id);
-
-        $data = $this->subAccountValidatedData($request, $account->admin_id);
-
-        $account->admin->forceFill([
-            'name' => $data['name'],
-            'mobile' => $data['mobile'] ?? '',
-            'email' => $data['email'],
-            'status' => (int) $data['status'],
-        ]);
-
-        if (!empty($data['password'])) {
-            $account->admin->password = \Illuminate\Support\Facades\Hash::make($data['password']);
-        }
-
-        $account->admin->save();
-        $account->update([
-            'member_no' => $data['member_no'] ?? null,
-            'started_at' => $data['started_at'] ?? null,
-            'ended_at' => $data['ended_at'] ?? null,
-            'permissions' => $data['permissions'] ?? [],
-        ]);
-
-        return redirect()->route('channel.sub_accounts.list')->with('flash_message_success', '서브관리자가 수정되었습니다.');
-    }
-
-    public function deleteSubAccount($id)
-    {
-        if (!Auth::guard('admin')->check()) {
-            return redirect()->route('channel.login');
-        }
-
-        $owner = Auth::guard('admin')->user();
-        $account = \App\Models\ChannelSubAccount::with('admin')
-            ->where('vendor_id', (int) $owner->vendor_id)
-            ->findOrFail($id);
-        $admin = $account->admin;
-        $account->delete();
-
-        if ($admin && $admin->type === 'subadmin') {
-            $admin->delete();
-        }
-
-        return redirect()->route('channel.sub_accounts.list')->with('flash_message_success', '서브관리자가 삭제되었습니다.');
-    }
-
-    private function subAccountValidatedData(Request $request, ?int $adminId): array
-    {
-        return $request->validate([
-            'status' => 'required|in:0,1',
-            'member_no' => 'nullable|string|max:50',
-            'email' => 'required|email|max:255|unique:admins,email' . ($adminId ? ',' . $adminId : ''),
-            'name' => 'required|string|max:100',
-            'mobile' => 'nullable|string|max:50',
-            'password' => [
-                $adminId ? 'nullable' : 'required',
-                'confirmed',
-                \Illuminate\Validation\Rules\Password::min(12)->mixedCase()->letters()->numbers(),
-            ],
-            'started_at' => 'nullable|date',
-            'ended_at' => 'nullable|date|after_or_equal:started_at',
-            'permissions' => 'nullable|array',
-            'permissions.*' => 'in:shop,product,joint_purchase,order,settings',
-        ]);
-    }
-
-    private function subAccountPermissionLabels(): array
-    {
-        return [
-            'shop' => 'Shop 채널',
-            'product' => '상품관리',
-            'joint_purchase' => '공동상품관리',
-            'order' => '주문관리',
-            'settings' => '설정관리',
-        ];
-    }
-
     // 채널 등록 (판매자)
     public function register()
     {
@@ -3225,156 +2013,6 @@ class ChannelController extends Controller
                 ]);
             }
         }
-    }
-
-    // 취소/환불 정책 CRUD 메서드들
-    public function storeCancelRefundPolicy(Request $request)
-    {
-        $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
-        if (!$admin) {
-            return response()->json(['status' => 'error', 'message' => '로그인이 필요합니다.']);
-        }
-
-        $validated = $request->validate([
-            'type' => 'required|in:default,custom',
-            'status' => 'required|in:active,inactive',
-            'name' => 'required|string|max:255',
-            'content' => 'nullable|string',
-        ], [
-            'type.required' => '설정구분을 선택해 주세요.',
-            'status.required' => '상태를 선택해 주세요.',
-            'name.required' => '취소/환불안내 명칭을 입력해 주세요.',
-        ]);
-
-        $policy = \App\Models\ShopCancelRefundPolicy::create([
-            'vendor_id' => $admin->vendor_id,
-            'type' => $validated['type'],
-            'status' => $validated['status'],
-            'name' => $validated['name'],
-            'content' => $validated['content'] ?? '',
-            'product_count' => 0
-        ]);
-
-        return response()->json([
-            'status' => 'success',
-            'message' => '취소/환불안내가 등록되었습니다.',
-            'policy' => $policy
-        ]);
-    }
-
-    public function getCancelRefundPolicy($id)
-    {
-        $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
-        if (!$admin) {
-            return response()->json(['status' => 'error', 'message' => '로그인이 필요합니다.']);
-        }
-
-        $policy = \App\Models\ShopCancelRefundPolicy::where('id', $id)
-            ->where('vendor_id', $admin->vendor_id)
-            ->first();
-
-        if (!$policy) {
-            return response()->json(['status' => 'error', 'message' => '정책을 찾을 수 없습니다.']);
-        }
-
-        return response()->json([
-            'status' => 'success',
-            'policy' => $policy
-        ]);
-    }
-
-    public function updateCancelRefundPolicy(Request $request, $id)
-    {
-        $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
-        if (!$admin) {
-            return response()->json(['status' => 'error', 'message' => '로그인이 필요합니다.']);
-        }
-
-        $policy = \App\Models\ShopCancelRefundPolicy::where('id', $id)
-            ->where('vendor_id', $admin->vendor_id)
-            ->first();
-
-        if (!$policy) {
-            return response()->json(['status' => 'error', 'message' => '정책을 찾을 수 없습니다.']);
-        }
-
-        $validated = $request->validate([
-            'type' => 'required|in:default,custom',
-            'status' => 'required|in:active,inactive',
-            'name' => 'required|string|max:255',
-            'content' => 'nullable|string',
-        ], [
-            'type.required' => '설정구분을 선택해 주세요.',
-            'status.required' => '상태를 선택해 주세요.',
-            'name.required' => '취소/환불안내 명칭을 입력해 주세요.',
-        ]);
-
-        $policy->update([
-            'type' => $validated['type'],
-            'status' => $validated['status'],
-            'name' => $validated['name'],
-            'content' => $validated['content'] ?? '',
-        ]);
-
-        return response()->json([
-            'status' => 'success',
-            'message' => '취소/환불안내가 수정되었습니다.',
-            'policy' => $policy
-        ]);
-    }
-
-    public function deleteCancelRefundPolicy($id)
-    {
-        $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
-        if (!$admin) {
-            return response()->json(['status' => 'error', 'message' => '로그인이 필요합니다.']);
-        }
-
-        $policy = \App\Models\ShopCancelRefundPolicy::where('id', $id)
-            ->where('vendor_id', $admin->vendor_id)
-            ->first();
-
-        if (!$policy) {
-            return response()->json(['status' => 'error', 'message' => '정책을 찾을 수 없습니다.']);
-        }
-
-        $policy->delete();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => '취소/환불안내가 삭제되었습니다.'
-        ]);
-    }
-
-    public function copyCancelRefundPolicy($id)
-    {
-        $admin = \Illuminate\Support\Facades\Auth::guard('admin')->user();
-        if (!$admin) {
-            return response()->json(['status' => 'error', 'message' => '로그인이 필요합니다.']);
-        }
-
-        $policy = \App\Models\ShopCancelRefundPolicy::where('id', $id)
-            ->where('vendor_id', $admin->vendor_id)
-            ->first();
-
-        if (!$policy) {
-            return response()->json(['status' => 'error', 'message' => '정책을 찾을 수 없습니다.']);
-        }
-
-        $newPolicy = \App\Models\ShopCancelRefundPolicy::create([
-            'vendor_id' => $admin->vendor_id,
-            'type' => $policy->type,
-            'status' => 'inactive', // 복사본은 기본적으로 중지 상태
-            'name' => $policy->name . ' (복사본)',
-            'content' => $policy->content,
-            'product_count' => 0
-        ]);
-
-        return response()->json([
-            'status' => 'success',
-            'message' => '취소/환불안내가 복사되었습니다.',
-            'policy' => $newPolicy
-        ]);
     }
 
     public function jointPurchaseList()

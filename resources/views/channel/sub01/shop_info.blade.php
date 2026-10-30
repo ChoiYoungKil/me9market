@@ -1,275 +1,76 @@
 @extends('layouts.channel')
-
 @php
-    $dep1_id = "01";
-    $dep1_tit = "Shop채널관리";
+    $dep1_id='01'; $dep1_tit='Shop채널관리';
+    $keywords=app(\App\Services\ShopChannelConfiguration::class)->keywords($shop->keywords);
+    $banners=$shop->banner_images; if(is_string($banners))$banners=json_decode($banners,true); $banners=$banners?:[];
+    $templates=$shop->purchase_sms_templates??[];
 @endphp
-
-@section('page_type', 'sub')
-
+@section('page_type','sub')
 @section('content')
-    <div id="container_w">
-        <div id="contents">
-            <div class="row">
-                <div class="box box1">
-                    <div class="page_info">
-                        <div class="ttl">Shop채널 상세페이지</div>
-                        <ul class="dep">
-                            <li>HOME</li>
-                            <li>Shop채널관리</li>
-                            <li>Shop채널 상세페이지</li>
-                        </ul>
-                    </div>
-                    <div class="tab_bx1">
-                        <ul>
-                            <li><a href="{{ url()->current() }}" class="on"><span>Shop채널 정보</span></a></li>
-                            <li><a href="{{ route('channel.shop_product01', ['id' => $shop->id]) }}"><span>판매상품</span></a></li>
-                            <li><a href="{{ route('channel.shop_community', ['id' => $shop->id]) }}"><span>커뮤니티</span></a></li>
-                        </ul>
-                    </div>
-                    <div class="conbx">
-                        <div class="con_w">
-                            <div class="ttl01">Shop 채널 기본정보</div>
-                            <div class="tb01">
-                                <table>
-                                    <colgroup>
-                                        <col width="175px">
-                                        <col width="">
-                                        <col width="175px">
-                                        <col width="">
-                                    </colgroup>
-                                    <tbody class="textL">
-                                        <tr>
-                                            <th class="w160"><span>Shop 채널코드</span></th>
-                                            <td>{{ $shop->channel_code }}</td>
-                                            <th class="w160"><span>등록일</span></th>
-                                            <td>{{ $shop->created_at->format('Y-m-d H:i') }}</td>
-                                        </tr>
-                                        <tr>
-                                            <th class="w160"><span>채널상태</span></th>
-                                            <td>{{ $shop->status == 1 ? '운영' : '중지' }}</td>
-                                            <th class="w160"><span>공개여부</span></th>
-                                            <td>{{ $shop->is_public == 1 ? '공개' : '비공개' }}</td>
-                                        </tr>
-                                        <tr>
-                                            <th class="w160"><span>채널명</span></th>
-                                            <td colspan="3">{{ $shop->channel_name }}</td>
-                                        </tr>
-                                        <tr>
-                                            <th class="w160"><span>구매권한</span></th>
-                                            <td>{{ $shop->is_member_only == 1 ? '회원전용' : '비회원 구매가능' }}</td>
-                                        @if($shop->use_period_type == 1)
-                                            <tr>
-                                                <th class="w160"><span>채널사용주기</span></th>
-                                                <td colspan="3">
-                                                    기간제 / 
-                                                    {{ $shop->start_at ? date('Y-m-d H시', strtotime($shop->start_at)) : '-' }} 
-                                                    ~ 
-                                                    {{ $shop->end_at ? date('Y-m-d H시', strtotime($shop->end_at)) : '-' }}
-                                                </td>
-                                            </tr>
-                                        @endif
-                                        </tr>
-                                        <tr>
-                                            <th class="w160"><span>카피라이트</span></th>
-                                            <td colspan="3">{{ $shop->copyright }}</td>
-                                        </tr>
-                                        <tr>
-                                            <th class="w160"><span>그룹 keyword</span></th>
-                                            <td colspan="3">
-                                                <ul class="tag_list" style="display: flex; gap: 5px; list-style: none; padding: 0;">
-                                                    @php
-                                                        $keywords = is_array($shop->keywords)
-                                                            ? $shop->keywords
-                                                            : (json_decode($shop->keywords ?? '[]', true) ?: []);
-                                                    @endphp
-                                                    @foreach($keywords as $keyword)
-                                                        <li style="background-color: #eeeeee; color: #666; padding: 2px 10px; border-radius: 10px; font-size: 11px;">#{{ $keyword }}</li>
-                                                    @endforeach
-                                                </ul>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                        <div class="con_w">
-                            <div class="ttl01">Shop 채널 PG 정보</div>
-                            <div class="tb01">
-                                <table>
-                                    <colgroup>
-                                        <col width="175px">
-                                        <col width="">
-                                        <col width="175px">
-                                        <col width="">
-                                    </colgroup>
-                                    <tbody class="textL">
-                                        <tr>
-                                            <th class="w160"><span>자사 PG 사용여부</span></th>
-                                            <td>{{ $shop->use_own_pg ? '사용' : '사용하지 않음' }}</td>
-                                            <th class="w160"><span>자사 PG 모듈</span></th>
-                                            <td>
-                                                @if($shop->use_own_pg)
-                                                    {{ ['inicis' => 'KG 이니시스', 'kcp' => 'NHN KCP', 'toss' => '토스페이먼츠'][$shop->pg_provider] ?? '-' }}
-                                                @else
-                                                    -
-                                                @endif
-                                            </td>
-                                        </tr>
-                                        @if($shop->use_own_pg)
-                                            <tr>
-                                                <th class="w160"><span>상점 ID</span></th>
-                                                <td>{{ $shop->pg_merchant_id ?: '-' }}</td>
-                                                <th class="w160"><span>사이트코드</span></th>
-                                                <td>{{ $shop->pg_site_code ?: '-' }}</td>
-                                            </tr>
-                                            <tr>
-                                                <th class="w160"><span>Client Key</span></th>
-                                                <td>********</td>
-                                                <th class="w160"><span>Secret Key</span></th>
-                                                <td>********</td>
-                                            </tr>
-                                        @endif
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                        @if($shop->use_admin == 1)
-                        <div class="con_w">
-                            <div class="ttl01">Shop 채널 (모니터링) 관리자 정보</div>
-                            @if($shop->use_admin)<p><a href="{{ route('shop.monitor.login') }}" target="_blank" rel="noopener">모니터링 로그인</a></p>@endif
-                            <div class="tb01">
-                                <table>
-                                    <colgroup>
-                                        <col width="175px">
-                                        <col width="">
-                                        <col width="175px">
-                                        <col width="">
-                                    </colgroup>
-                                    <tbody class="textL">
-                                        <tr>
-                                            <th class="w160"><span>Shop 채널 관리자 여부</span></th>
-                                            <td>사용</td>
-                                            <th class="w160"><span>Shop 채널 관리자 성명</span></th>
-                                            <td>{{ $shop->admin_name }}</td>
-                                        </tr>
-                                        <tr>
-                                            <th class="w160"><span>로그인 ID</span></th>
-                                            <td>{{ $shop->admin_login_id }}</td>
-                                            <th class="w160"><span>로그인 PW</span></th>
-                                            <td>********</td>
-                                        </tr>
-                                        <tr>
-                                            <th class="w160"><span>정산방법</span></th>
-                                            <td>{{ $shop->settlement_type == 1 ? '전체 판매 수수료' : '판매 개당 비용' }}</td>
-                                            <th class="w160"><span>정산요율</span></th>
-                                            <td>{{ $shop->settlement_rate }}{{ $shop->settlement_type == 1 ? '%' : '원' }}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                        @endif
-                        @if($shop->use_og == 1)
-                        <div class="con_w">
-                            <div class="ttl01">OG TAG</div>
-                            <div class="tb01">
-                                <table>
-                                    <colgroup>
-                                        <col width="175px">
-                                        <col width="100px">
-                                        <col width="">
-                                    </colgroup>
-                                    <tbody class="textL">
-                                        <tr>
-                                            <th class="w160"><span>OG 사용여부</span></th>
-                                            <td colspan="2">사용</td>
-                                        </tr>
-                                        <tr>
-                                            <th class="w160" rowspan="3"><span>OG TAG</span></th>
-                                            <td>Title</td>
-                                            <td>{{ $shop->og_title }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td>Description</td>
-                                            <td>{{ $shop->og_description }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td>Image</td>
-                                            <td>
-                                                @if($shop->og_image)
-                                                    <img src="{{ asset($shop->og_image) }}" style="max-width: 200px;">
-                                                @else
-                                                    등록된 이미지가 없습니다.
-                                                @endif
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                        @endif
-                        @if($shop->use_logo == 1 || $shop->use_banner == 1)
-                        <div class="con_w">
-                            <div class="ttl01">이미지</div>
-                            <div class="tb01">
-                                <table>
-                                    <colgroup>
-                                        <col width="175px">
-                                        <col width="100px">
-                                        <col width="">
-                                    </colgroup>
-                                    <tbody class="textL">
-                                        @if($shop->use_logo == 1)
-                                            <tr>
-                                                <th class="w160"><span>로고 이미지</span></th>
-                                                <td colspan="2">
-                                                    @if($shop->logo_image)
-                                                        <img src="{{ asset($shop->logo_image) }}" style="max-width: 200px;">
-                                                    @else
-                                                        등록된 로고가 없습니다.
-                                                    @endif
-                                                </td>
-                                            </tr>
-                                        @endif
-
-                                        @if($shop->use_banner == 1)
-                                            @php
-                                                $banners = is_array($shop->banner_images)
-                                                    ? $shop->banner_images
-                                                    : (json_decode($shop->banner_images ?? '[]', true) ?: []);
-                                            @endphp
-                                            <tr>
-                                                <th class="w160" rowspan="{{ max(1, count($banners)) }}"><span>배너 이미지</span></th>
-                                                @forelse($banners as $index => $banner)
-                                                    @if($index > 0) <tr> @endif
-                                                    <td>#{{ $index + 1 }}</td>
-                                                    <td><img src="{{ asset($banner) }}" style="max-height: 100px;"></td>
-                                                    @if($index > 0) </tr> @endif
-                                                @empty
-                                                    <td colspan="2">-</td>
-                                                @endforelse
-                                            </tr>
-                                        @endif
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                        @endif
-                    </div>
-                </div>
-
-                <div class="btm_btn" style="display: flex; justify-content: center; gap: 10px; margin-top: 20px;">
-                    <a href="{{ route('channel.info_update', ['id' => $shop->id]) }}" class="col2" style="width: 140px; height: 40px; line-height: 40px; text-align: center; border-radius: 5px; color: #fff; font-weight: bold;">정보수정</a>
-                    <a href="{{ route('shop.enter', ['channelCode' => $shop->channel_code]) }}" target="_blank" class="col7" style="width: 140px; height: 40px; line-height: 40px; text-align: center; border-radius: 5px; color: #fff; font-weight: bold; background: #007bff;">Shop채널보기</a>
-                    <a href="{{ route('channel.shop_list') }}" class="col5" style="width: 140px; height: 40px; line-height: 40px; text-align: center; border-radius: 5px; color: #fff; font-weight: bold;">목록</a>
-                </div>
-            </div>
-        </div>
-    </div>
+<div id="container_w"><div id="contents"><div class="channel-shop" id="channel-shop-detail">
+<header><p>MY CHANNEL</p><h1>Shop채널 상세페이지</h1><p>{{ $shop->channel_name }}</p></header>
+@if(session('success_message'))<p class="shop-feedback" role="status">{{ session('success_message') }}</p>@endif
+<nav class="shop-tabs" aria-label="Shop 채널 상세 메뉴">
+<a href="{{ route('channel.shop_info',['id'=>$shop->id]) }}" aria-current="page">Shop채널 정보</a>
+<a href="{{ route('channel.shop_product01',['shop_id'=>$shop->id]) }}">판매상품</a>
+<a href="{{ route('channel.shop_community',['shop_id'=>$shop->id]) }}">커뮤니티</a>
+</nav>
+<section class="shop-panel"><h2>Shop 채널 기본정보</h2><dl class="shop-details">
+<div><dt>Shop 채널코드</dt><dd>{{ $shop->channel_code }}</dd></div>
+<div><dt>등록일</dt><dd>{{ $shop->created_at?->format('Y-m-d H:i') }}</dd></div>
+<div><dt>채널상태</dt><dd>{{ $shop->status==1?'운영':'중지' }}</dd></div>
+<div><dt>공개여부</dt><dd>{{ $shop->is_public?'공개':'비공개' }} @unless($shop->is_public)<span> · 접속가능인원 {{ $shop->privateAccesses->count() }}명</span> <button type="button" data-detail-private>인원관리</button>@endunless</dd></div>
+<div><dt>채널명</dt><dd>{{ $shop->channel_name }}</dd></div>
+<div><dt>구매권한</dt><dd>{{ $shop->is_member_only?'회원전용':'비회원 구매가능' }}</dd></div>
+<div><dt>채널사용주기</dt><dd>@if($shop->use_period_type)기간제 / {{ $shop->start_at?->format('Y-m-d H시') }} ~ {{ $shop->end_at?->format('Y-m-d H시') }}@else무기한@endif</dd></div>
+<div><dt>카피라이트</dt><dd>{{ $shop->copyright?:'-' }}</dd></div>
+<div><dt>그룹 keyword</dt><dd><div class="keyword-tags">@forelse($keywords as $keyword)<span class="keyword-tag">#{{ $keyword }}</span>@empty-@endforelse</div></dd></div>
+</dl></section>
+<section class="shop-panel"><h2>Shop 채널 PG 정보</h2><dl class="shop-details">
+<div><dt>자사 PG 사용여부</dt><dd>{{ $shop->use_own_pg?'사용':'사용하지 않음' }}</dd></div>
+@if($shop->use_own_pg)
+<div><dt>자사 PG 모듈</dt><dd>{{ ['inicis'=>'KG 이니시스','kcp'=>'NHN KCP','toss'=>'토스페이먼츠'][$shop->pg_provider]??'-' }}</dd></div>
+<div><dt>상점 ID / 사이트 코드</dt><dd>{{ $shop->pg_merchant_id?'등록됨':'미등록' }} / {{ $shop->pg_site_code?'등록됨':'미등록' }}</dd></div>
+<div><dt>Client Key / Secret Key</dt><dd>******** / ********</dd></div>
+@endif
+</dl></section>
+<section class="shop-panel"><h2>OG TAG</h2><dl class="shop-details">
+<div><dt>OG 사용여부</dt><dd>{{ $shop->use_og?'사용':'미사용' }}</dd></div>
+@if($shop->use_og)
+<div><dt>Title</dt><dd>{{ $shop->og_title }}</dd></div><div><dt>Description</dt><dd>{{ $shop->og_description }}</dd></div>
+<div><dt>Image</dt><dd class="image-preview">@if($shop->og_image)<a href="{{ asset($shop->og_image) }}" target="_blank" rel="noopener"><img src="{{ asset($shop->og_image) }}" alt="OG 이미지"></a>@else등록된 이미지가 없습니다.@endif</dd></div>
+@endif
+</dl></section>
+<section class="shop-panel"><h2>이미지</h2><dl class="shop-details">
+<div><dt>로고 이미지</dt><dd class="image-preview">@if($shop->use_logo && $shop->logo_image)<a href="{{ asset($shop->logo_image) }}" target="_blank" rel="noopener"><img src="{{ asset($shop->logo_image) }}" alt="채널 로고 이미지"></a>@else미사용 · 채널명 표시@endif</dd></div>
+<div><dt>메인 배너 이미지</dt><dd>@if($shop->use_banner)<div class="banner-previews">@forelse($banners as $banner)<figure><a href="{{ asset($banner) }}" target="_blank" rel="noopener"><img src="{{ asset($banner) }}" alt="배너 이미지 {{ $loop->iteration }}"></a><figcaption>#{{ $loop->iteration }}</figcaption></figure>@empty등록된 이미지가 없습니다.@endforelse</div>@else미사용@endif</dd></div>
+</dl></section>
+<section class="shop-panel"><h2>구매현황 문자알림</h2><dl class="shop-details">
+<div><dt>문자알림 사용여부</dt><dd>{{ $shop->use_purchase_sms?'사용':'미사용' }}</dd></div>
+@if($shop->use_purchase_sms)
+@foreach(['purchase'=>'상품구매알림','purchase_confirmed'=>'상품구매확정알림','cancel'=>'상품취소알림','return'=>'상품반품알림'] as $key=>$label)
+<div><dt>{{ $label }}</dt><dd><p class="sms-text">{{ $templates[$key]??'' }}</p><small>{{ mb_strlen($templates[$key]??'') }} / 300</small></dd></div>
+@endforeach
+@endif
+</dl></section>
+<section class="shop-panel"><h2>Shop 채널 (모니터링) 관리자 정보</h2><dl class="shop-details">
+<div><dt>Shop 채널 관리자 여부</dt><dd>{{ $shop->use_admin?'사용':'미사용' }}</dd></div>
+@if($shop->use_admin)
+<div><dt>Shop 채널 관리자 성명</dt><dd>{{ $shop->admin_name }}</dd></div>
+<div><dt>로그인 ID</dt><dd>{{ $shop->admin_login_id }}</dd></div>
+<div><dt>로그인 PW</dt><dd>********</dd></div>
+<div><dt>정산방법</dt><dd>{{ $shop->settlement_type==2?'판매 개당 금액':'판매금액 대비 % 지급' }}</dd></div>
+<div><dt>정산요율</dt><dd>{{ number_format((float)$shop->settlement_rate,$shop->settlement_type==2?0:2) }} {{ $shop->settlement_type==2?'원 / 판매 개당':'%' }}</dd></div>
+@endif
+</dl></section>
+@unless($shop->is_public)
+<dialog id="detail-private-dialog"><h2>{{ $shop->channel_code }} 비공개 접속인원관리</h2><p>접속가능인원 {{ $shop->privateAccesses->count() }}명</p><p class="shop-help">명단 변경은 정보수정의 인원관리에서 진행할 수 있습니다.</p>
+<div class="table-scroll"><table><thead><tr><th>No</th><th>Shop 채널코드</th><th>핸드폰 번호</th><th>입장 코드</th><th>등록일</th></tr></thead><tbody>
+@forelse($shop->privateAccesses as $access)<tr><td>{{ $loop->iteration }}</td><td>{{ $shop->channel_code }}</td><td>{{ $access->phone }}</td><td>{{ $access->entry_code }}</td><td>{{ $access->created_at?->format('Y-m-d H:i') }}</td></tr>@empty<tr><td colspan="5">등록된 접속인원이 없습니다.</td></tr>@endforelse
+</tbody></table></div><div class="shop-actions"><a href="{{ route('channel.info_update',$shop->id) }}">정보수정</a><button type="button" data-detail-close class="secondary">닫기</button></div></dialog>
+@endunless
+<div class="shop-actions"><a href="{{ route('channel.info_update',$shop->id) }}">정보수정</a><a href="{{ route('channel.shop.open',$shop->id) }}" target="_blank" rel="noopener">Shop채널보기</a><a href="{{ route('channel.shop_list') }}" class="secondary">목록</a></div>
+</div></div></div>
 @endsection
-
-@push('scripts')
-    <script type="text/javascript">
-    </script>
-@endpush
+@push('styles')<link rel="stylesheet" href="{{ asset('channel_assets/css/shop-configuration.css') }}">@endpush
+@push('scripts')<script src="{{ asset('channel_assets/js/shop-detail.js') }}"></script>@endpush

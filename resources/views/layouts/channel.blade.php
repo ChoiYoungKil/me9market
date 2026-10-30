@@ -1,3 +1,8 @@
+@php
+    $channelAdmin=Auth::guard('admin')->user();
+    $channelAssignment=$channelAdmin?->type==='subadmin' ? \App\Models\ChannelSubAccount::where('admin_id',$channelAdmin->id)->where('vendor_id',$channelAdmin->vendor_id)->activeNow()->first() : null;
+    $channelCan=fn($key)=>$channelAdmin?->type!=='subadmin' || in_array($key,$channelAssignment?->permissions ?? [],true);
+@endphp
 <!DOCTYPE html>
 <html lang="ko">
 
@@ -52,21 +57,21 @@
             <button class="portal-menu-toggle" type="button" aria-controls="l_menu" aria-expanded="false">메뉴</button>
 			<a href="/" class="logo">Me9 market</a>
 
-			<div class="t_menu">
+			<div class="t_menu" id="gnb" role="navigation" aria-label="주 메뉴">
 				<ul>
-					<li><a href="{{ route('channel.shop_list') }}" class="{{ request()->is('channel/shop*') ? 'on' : '' }}">Shop채널관리</a></li>
-					<li><a href="{{ route('channel.product_own') }}" class="{{ request()->is('channel/product*') ? 'on' : '' }}">상품관리</a></li>
-					<li><a href="{{ route('channel.joint_purchase.list') }}" class="{{ request()->is('channel/joint-purchase*') ? 'on' : '' }}">공동구매관리</a></li>
-					<li><a href="{{ route('channel.order.list') }}" class="{{ request()->is('channel/order*') || request()->is('channel/inquiries*') ? 'on' : '' }}">주문관리</a></li>
-					<li><a href="{{ route('channel.settlement.list') }}" class="{{ request()->is('channel/settlement*') ? 'on' : '' }}">정산관리</a></li>
+@if($channelCan('shop'))					<li><a href="{{ route('channel.shop_list') }}" class="{{ request()->is('channel/shop*') ? 'on' : '' }}">Shop채널관리</a></li>@endif
+@if($channelCan('product'))					<li><a href="{{ route('channel.product_own') }}" class="{{ request()->is('channel/product*') ? 'on' : '' }}">상품관리</a></li>@endif
+@if($channelCan('joint_purchase'))					<li><a href="{{ route('channel.joint_purchase.list') }}" class="{{ request()->is('channel/joint-purchase*') ? 'on' : '' }}">공동구매관리</a></li>@endif
+@if($channelCan('order'))					<li><a href="{{ route('channel.order.list') }}" class="{{ request()->is('channel/order*') || request()->is('channel/inquiries*') ? 'on' : '' }}">주문관리</a></li>@endif
+@if($channelCan('settings'))					<li><a href="{{ route('channel.settlement.list') }}" class="{{ request()->is('channel/settlement*') ? 'on' : '' }}">정산관리</a></li>@endif
 				</ul>
 			</div>
 
 			<div class="r_bx">
-				<div class="name">[상호명] {{ Auth::guard('admin')->user()->name ?? 'Seller' }}</div>
-				<a href="{{ route('channel.complete_profile') }}" class="btn icon1" title="내 정보" aria-label="내 정보"></a>
+				<div class="name">[{{ $channelCompanyName ?: '회원사' }}] {{ Auth::guard('admin')->user()->name ?? 'Seller' }}</div>
+				@if($channelAdmin?->type!=='subadmin')<a href="{{ route('channel.complete_profile') }}" class="btn icon1" title="내 정보" aria-label="내 정보"></a>@endif
 				<a href="{{ route('channel.logout') }}" class="btn icon2" title="로그아웃"></a>
-				<div class="r_menu">
+				@if($channelCan('shop'))<div class="r_menu">
 					<div class="r_menu_btn"><span>채널목록{{ isset($headerChannels) && $headerChannels->count() ? ' (' . $headerChannels->count() . ')' : '' }}</span></div>
 					<div class="menu_w">
 						<ul>
@@ -84,10 +89,11 @@
 							@empty
 								<li><a href="{{ route('channel.shop_register') }}"><span>등록된 채널이 없습니다. 채널등록</span></a></li>
 							@endforelse
-							<li><a href="{{ route('channel.shop_list') }}"><span>전체 채널목록 보기</span></a></li>
+@if($channelCan('shop'))							<li><a href="{{ route('channel.shop_list') }}"><span>전체 채널목록 보기</span></a></li>@endif
 						</ul>
 					</div>
 				</div>
+                @endif
 			</div>
 		</header><!-- //header -->
 

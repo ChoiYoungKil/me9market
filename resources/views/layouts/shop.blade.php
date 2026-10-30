@@ -6,10 +6,10 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="format-detection" content="telephone=no">
     <title>@yield('title', ($shop->channel_name ?? 'Me9 Market').' | Shop')</title>
-    <meta name="description" content="{{ $shop->og_description ?? '' }}">
-    <meta property="og:title" content="{{ $shop->og_title ?? $shop->channel_name ?? 'Me9 Market' }}">
-    <meta property="og:description" content="{{ $shop->og_description ?? '' }}">
-    <meta property="og:image" content="{{ asset($shop->og_image ?? 'me9market/images/common/logo.png') }}">
+    <meta name="description" content="{{ ($shop->use_og ?? false) ? ($shop->og_description ?? '') : '' }}">
+    <meta property="og:title" content="{{ ($shop->use_og ?? false) ? ($shop->og_title ?: $shop->channel_name) : ($shop->channel_name ?? 'Me9 Market') }}">
+    <meta property="og:description" content="{{ ($shop->use_og ?? false) ? ($shop->og_description ?? '') : '' }}">
+    <meta property="og:image" content="{{ asset(($shop->use_og ?? false) && $shop->og_image ? $shop->og_image : 'me9market/images/common/logo.png') }}">
     @foreach(['base', 'common', 'main', 'sub', 'board', 'runtime'] as $stylesheet)
         <link rel="stylesheet" href="{{ asset('shop/css/'.$stylesheet.'.css') }}?v={{ filemtime(public_path('shop/css/'.$stylesheet.'.css')) }}">
     @endforeach
@@ -24,7 +24,11 @@
     <header id="header">
         <div class="h_inner">
             <a href="{{ route('shop.channel_main') }}" class="logo" aria-label="{{ $shop->channel_name ?? 'Me9 Market' }} 홈">
-                <img src="{{ asset(($shop->use_logo ?? false) && ($shop->logo_image ?? null) ? $shop->logo_image : 'me9market/images/common/logo.png') }}" alt="{{ ($shop->use_logo ?? false) && ($shop->logo_image ?? null) ? $shop->channel_name : 'Me9 market' }}">
+                @if(isset($shop) && !($shop->use_logo && $shop->logo_image))
+                    <span class="channel-name-logo">{{ $shop->channel_name }}</span>
+                @else
+                    <img src="{{ asset($shop->logo_image ?? 'me9market/images/common/logo.png') }}" alt="{{ $shop->channel_name ?? 'Me9 market' }}">
+                @endif
             </a>
             <button type="button" class="search_btn" aria-label="검색 열기" aria-expanded="false" aria-controls="shop-search"><span></span><span></span></button>
             <form id="shop-search" class="search_bx" action="{{ route('shop.products_list') }}" method="GET" role="search">
@@ -56,7 +60,7 @@
     </main>
     <footer id="footer">
         <div class="f_inner">
-            <div class="txt1">&copy; {{ $shop->copyright ?? $shop->channel_name ?? 'Me9 Market' }} All rights Reserved.</div>
+            <div class="txt1">{{ filled($shop->copyright ?? null) ? $shop->copyright : '© '.($shop->channel_name ?? 'Me9 Market').' All rights Reserved.' }}</div>
             <ul class="link_bx"><li><a href="{{ url('/') }}">Me9 Market</a></li><li><a href="{{ route('shop.notices') }}" class="bold">공지사항</a></li></ul>
         </div>
     </footer>

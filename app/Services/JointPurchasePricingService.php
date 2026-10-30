@@ -19,9 +19,9 @@ class JointPurchasePricingService
 
         return DB::table('joint_purchases')
             ->where('product_id', $productId)
-            ->where('status', 1)
-            ->whereDate('start_date', '<=', now()->toDateString())
-            ->whereDate('end_date', '>=', now()->toDateString())
+            ->where('status', 1)->whereNull('deleted_at')
+            ->where(fn($q)=>$q->whereNull('start_date')->orWhereDate('start_date', '<=', now('Asia/Seoul')->toDateString()))
+            ->where(fn($q)=>$q->whereNull('end_date')->orWhereDate('end_date', '>=', now('Asia/Seoul')->toDateString()))
             ->orderByDesc('id')
             ->first();
     }

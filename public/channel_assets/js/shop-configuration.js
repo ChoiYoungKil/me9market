@@ -1,0 +1,52 @@
+(() => {
+    const root=document.getElementById('channel-shop-form');if(!root)return;
+    const form=root.querySelector('form');const state=JSON.parse(root.querySelector('#shop-form-state').textContent);
+    const error=root.querySelector('[data-form-feedback]');
+    const showError=text=>{error.textContent=text;error.hidden=!text;if(text)error.scrollIntoView({block:'center'});};
+    const element=(tag,text,attrs={})=>{const e=document.createElement(tag);if(text!==undefined)e.textContent=text;Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));return e;};
+    const selected=name=>form.querySelector(`input[name="${name}"]:checked`)?.value;
+    const memberOnly=root.querySelector('[data-member-only]');
+    function toggle(){
+        root.querySelectorAll('[data-section]').forEach(section=>{section.hidden=selected(section.dataset.section)!=='1';});
+        const privateChannel=selected('is_public')==='0';root.querySelector('[data-private-controls]').hidden=!privateChannel;
+        memberOnly.disabled=privateChannel;if(privateChannel)memberOnly.checked=false;
+        root.querySelectorAll('[data-rate]').forEach(field=>field.hidden=field.dataset.rate!==selected('settlement_type'));
+    }
+    form.querySelectorAll('input[type=radio]').forEach(input=>input.addEventListener('change',toggle));toggle();
+    let keywords=Array.isArray(state.keywords)?[...new Set(state.keywords)]:[];
+    const tags=root.querySelector('[data-keyword-tags]');const keywordInput=root.querySelector('#shop-keyword-input');
+    function renderKeywords(){tags.replaceChildren();keywords.forEach((keyword,index)=>{const tag=element('span',undefined,{class:'keyword-tag'});tag.append(element('span',keyword));const remove=element('button','×',{type:'button','aria-label':keyword+' 키워드 삭제'});remove.addEventListener('click',()=>{keywords.splice(index,1);renderKeywords();});tag.append(remove,element('input',undefined,{type:'hidden',name:'keywords[]',value:keyword}));tags.append(tag);});}
+    function addKeyword(){const text=keywordInput.value.trim();if(!text)return;if(keywords.length>=20){showError('키워드는 최대 20개까지 등록할 수 있습니다.');return;}if(!keywords.includes(text))keywords.push(text);keywordInput.value='';renderKeywords();showError('');}
+    keywordInput.addEventListener('keydown',event=>{if(event.key==='Enter'){event.preventDefault();addKeyword();}});root.querySelector('[data-add-keyword]').addEventListener('click',addKeyword);renderKeywords();
+    root.querySelectorAll('[data-image-preview]').forEach(input=>input.addEventListener('change',()=>{const box=root.querySelector(`[data-preview="${input.dataset.imagePreview}"]`);box.replaceChildren();const file=input.files[0];if(!file)return;if(file.size>5*1024*1024){showError('이미지는 5MB 이하로 선택해 주세요.');input.value='';return;}const img=element('img',undefined,{src:URL.createObjectURL(file),alt:file.name});img.addEventListener('load',()=>URL.revokeObjectURL(img.src),{once:true});box.append(img);}));
+    let keptBanners=Array.isArray(state.banners)?[...state.banners]:[];let newBanners=[];
+    const bannerInput=root.querySelector('#shop-banner-files'),bannerBox=root.querySelector('[data-banner-previews]');
+    const syncFiles=()=>{const transfer=new DataTransfer();newBanners.forEach(file=>transfer.items.add(file));bannerInput.files=transfer.files;};
+    function renderBanners(){bannerBox.replaceChildren();
+        const card=(src,name,remove)=>{const figure=element('figure');const img=element('img',undefined,{src,alt:name});const button=element('button','삭제',{type:'button','aria-label':name+' 삭제'});button.addEventListener('click',remove);figure.append(img,element('figcaption',name),button);return figure;};
+        keptBanners.forEach((path,index)=>{const figure=card(new URL('/'+path,location.origin).href,'등록 배너 '+(index+1),()=>{keptBanners.splice(index,1);renderBanners();});figure.append(element('input',undefined,{type:'hidden',name:'existing_banners[]',value:path}));bannerBox.append(figure);});
+        newBanners.forEach((file,index)=>{const src=URL.createObjectURL(file);const figure=card(src,file.name,()=>{newBanners.splice(index,1);syncFiles();renderBanners();});figure.querySelector('img').addEventListener('load',()=>URL.revokeObjectURL(src),{once:true});bannerBox.append(figure);});
+        root.querySelector('[data-banner-count]').textContent=`${keptBanners.length+newBanners.length} / 5`;
+    }
+    bannerInput.addEventListener('change',()=>{const added=Array.from(bannerInput.files);if(keptBanners.length+newBanners.length+added.length>5){showError('배너 이미지는 최대 5개까지 등록할 수 있습니다.');syncFiles();return;}if(added.some(file=>file.size>5*1024*1024)){showError('배너 이미지는 파일당 5MB 이하로 선택해 주세요.');syncFiles();return;}newBanners.push(...added);syncFiles();renderBanners();showError('');});root.querySelector('[data-add-banner]').addEventListener('click',()=>bannerInput.click());renderBanners();
+    let smsTarget=root.querySelector('.sms-editor textarea');
+    root.querySelectorAll('.sms-editor').forEach(editor=>{const input=editor.querySelector('textarea');const count=()=>editor.querySelector('[data-sms-count]').textContent=`${input.value.length} / 300`;input.addEventListener('input',count);input.addEventListener('focus',()=>smsTarget=input);count();editor.querySelector('[data-sms-preview]').addEventListener('click',()=>{const result=editor.querySelector('[data-sms-result]');const samples={'구매자':'검수 구매자','구매상품':'검수 상품','구매수량':'1','구매액':'12,000','구매날짜':new Date().toLocaleDateString('sv-SE')};result.textContent=input.value.replace(/\{\{(구매자|구매상품|구매수량|구매액|구매날짜)\}\}/g,(_,key)=>samples[key]);result.hidden=false;});});
+    root.querySelectorAll('[data-sms-token]').forEach(button=>button.addEventListener('click',()=>{const token='{{'+button.dataset.smsToken+'}}';if(smsTarget.value.length+token.length>300)return;smsTarget.setRangeText(token,smsTarget.selectionStart,smsTarget.selectionEnd,'end');smsTarget.dispatchEvent(new Event('input'));smsTarget.focus();}));
+    const dialog=root.querySelector('#private-access-dialog'),raw=root.querySelector('[data-private-rows]');
+    const readRows=text=>text.split(/\r?\n/).filter(line=>line.trim()).map(line=>{const cells=line.match(/("(?:[^"]|"")*"|[^,]*)(,|$)/g)?.map(cell=>cell.replace(/,$/,'').replace(/^"|"$/g,'').replaceAll('""','"'))||[];return{phone:cells[0]||'',entry_code:cells[1]||'',user_id:cells[2]||null};});
+    let rows=readRows(raw.value).map(r=>({...r,created_at:(state.privateRows||[]).find(old=>old.phone.replace(/\D/g,'')===r.phone.replace(/\D/g,''))?.created_at})),draft=[];
+    const quote=value=>'"'+String(value??'').replaceAll('"','""')+'"';
+    const serialize=list=>list.map(r=>[quote(r.phone),quote(r.entry_code),r.user_id||''].join(',')).join('\n');
+    const updateCount=()=>root.querySelector('[data-private-count]').textContent=rows.length;
+    const privateError=text=>{const message=root.querySelector('[data-private-error]');message.textContent=text;message.hidden=!text;};
+    function renderPrivate(){const body=root.querySelector('[data-private-table]');body.replaceChildren();draft.forEach((r,index)=>{const tr=element('tr');[index+1,state.code,r.phone,r.entry_code,r.created_at?String(r.created_at).slice(0,16).replace('T',' '):'등록 전'].forEach(value=>tr.append(element('td',String(value))));const cell=element('td');const remove=element('button','삭제',{type:'button','aria-label':r.phone+' 인원 삭제'});remove.addEventListener('click',()=>{draft.splice(index,1);renderPrivate();});cell.append(remove);tr.append(cell);body.append(tr);});if(!draft.length){const tr=element('tr');tr.append(element('td','등록된 접속인원이 없습니다.',{colspan:'6'}));body.append(tr);}root.querySelector('[data-private-total]').textContent=`접속가능인원 ${draft.length}명`;}
+    root.querySelector('[data-open-private]').addEventListener('click',()=>{draft=rows.map(r=>({...r}));privateError('');renderPrivate();dialog.showModal();});
+    const file=root.querySelector('[data-private-file]');
+    root.querySelector('[data-private-close]').addEventListener('click',()=>{file.value='';dialog.close();});
+    dialog.addEventListener('cancel',()=>{file.value='';});
+    root.querySelector('[data-private-apply]').addEventListener('click',()=>{if(file.files.length){privateError('업로드 버튼을 눌러 명단을 확인한 후 적용해 주세요.');return;}rows=draft.map(r=>({...r}));raw.value=serialize(rows);updateCount();dialog.close();});
+    root.querySelector('[data-private-clear]').addEventListener('click',()=>{draft=[];renderPrivate();});
+    root.querySelector('[data-private-add]').addEventListener('click',()=>{const phone=root.querySelector('[data-private-phone]'),code=root.querySelector('[data-private-code]');const number=phone.value.replace(/\D/g,'');if(!/^01[016789][0-9]{7,8}$/.test(number)||!code.value.trim()){privateError('휴대폰번호와 입장코드를 입력해 주세요.');return;}const item={phone:phone.value.trim(),entry_code:code.value.trim(),user_id:null};const index=draft.findIndex(r=>r.phone.replace(/\D/g,'')===number);if(index>=0)draft[index]=item;else draft.push(item);phone.value='';code.value='';privateError('');renderPrivate();});
+    root.querySelector('[data-private-upload]').addEventListener('click',async()=>{if(!file.files[0]){privateError('명단 파일을 먼저 선택해 주세요.');return;}const data=new FormData();data.append('private_access_file',file.files[0]);data.append('_token',form.querySelector('[name=_token]').value);try{const response=await fetch(state.preview,{method:'POST',body:data,headers:{Accept:'application/json'}});const result=await response.json();if(!response.ok){privateError(Object.values(result.errors||{}).flat().join(' ')||'파일을 확인해 주세요.');return;}const merged=new Map(draft.map(r=>[r.phone.replace(/\D/g,''),r]));result.rows.forEach(r=>merged.set(r.phone_normalized,r));draft=Array.from(merged.values());file.value='';privateError('');renderPrivate();}catch{privateError('파일을 읽지 못했습니다. 다시 시도해 주세요.');}});
+    updateCount();form.addEventListener('submit',event=>{addKeyword();if(!keywords.length){event.preventDefault();showError('키워드를 한 개 이상 등록해 주세요.');keywordInput.focus();return;}if(selected('use_period_type')==='1'){const startDate=form.elements.start_date.value,endDate=form.elements.end_date.value,startHour=form.elements.start_hour.value,endHour=form.elements.end_hour.value;if(!startDate||!endDate||startHour===''||endHour===''){event.preventDefault();showError('사용기간의 시작과 종료 날짜·시간을 모두 입력해 주세요.');return;}if(startDate+'T'+startHour.padStart(2,'0')>endDate+'T'+endHour.padStart(2,'0')){event.preventDefault();showError('종료 날짜와 시간은 시작 이후여야 합니다.');}}});
+})();

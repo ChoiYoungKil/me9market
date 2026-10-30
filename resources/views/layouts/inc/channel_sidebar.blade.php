@@ -1,9 +1,10 @@
 <div id="l_menu">
     @php
+        $sidebarOrderActive=(request()->routeIs('channel.order.*') && !request()->routeIs('channel.order.manager*')) || request()->routeIs('channel.inquiries.*');
         $formatSidebarCount = fn ($value) => ($value ?? 0) > 99 ? '99+' : (string) ($value ?? 0);
     @endphp
     <div class="con_bx">
-        <div class="con1">
+        @if($channelCan('order'))<div class="con1">
             <div class="ttl">주문관리</div>
             <ul>
                 <li>
@@ -49,8 +50,9 @@
             </ul>
         </div>
 
+        @endif
         <!-- 상품등록 -->
-        <div class="con2">
+        @if($channelCan('product'))<div class="con2">
             <div class="ttl">상품등록</div>
             <div class="list_bx">
                 <div class="list_w">
@@ -58,18 +60,19 @@
                         <li><a href="{{ route('channel.product_own') }}">- 자사상품 수<span>({{ $sidebar_counts['own'] ?? 0 }})</span></a></li>
                         <li><a href="{{ route('channel.product_public') }}">- 공유상품 수<span>({{ $sidebar_counts['public'] ?? 0 }})</span></a></li>
                         <li><a href="{{ route('channel.product_own') }}">- 판매 상품 수<span>({{ $sidebar_counts['selling'] ?? 0 }})</span></a></li>
-                        <li><a href="{{ route('channel.shop_list') }}">- 판매채널 수<span>({{ $sidebar_counts['channels'] ?? 0 }})</span></a></li>
+                        @if($channelCan('shop'))<li><a href="{{ route('channel.shop_list') }}">- 판매채널 수<span>({{ $sidebar_counts['channels'] ?? 0 }})</span></a></li>@endif
                     </ul>
                     <a href="{{ route('channel.product.base.create') }}" class="add_btn"><span>상품등록</span></a>
                 </div>
             </div>
         </div>
 
+        @endif
         <div class="con3">
             <!-- 메인 관리 메뉴 -->
             <div class="con_w">
                 <ul class="dep1_wrap type2">
-                    <li class="dep1 {{ request()->routeIs('channel.shop_*') ? 'on' : '' }}">
+                    @if($channelCan('shop'))<li class="dep1 {{ request()->routeIs('channel.shop_*') ? 'on' : '' }}">
                         <a href="javascript:void(0);" class="toggle-btn">Shop 채널관리 <span class="arrow">▼</span></a>
                         <ul class="dep2_wrap"
                             style="{{ request()->routeIs('channel.shop_*') ? 'display: block;' : 'display: none;' }}">
@@ -81,8 +84,8 @@
                                     class="{{ request()->routeIs('channel.shop_register') ? 'active-link' : '' }}">-
                                     Shop 채널등록</a></li>
                         </ul>
-                    </li>
-                    <li class="dep1 {{ request()->routeIs('channel.product_*') || request()->routeIs('channel.product.*') ? 'on' : '' }}">
+                    </li>@endif
+                    @if($channelCan('product'))<li class="dep1 {{ request()->routeIs('channel.product_*') || request()->routeIs('channel.product.*') ? 'on' : '' }}">
                         <a href="javascript:void(0);" class="toggle-btn">상품관리 <span class="arrow">▼</span></a>
                         <ul class="dep2_wrap"
                             style="{{ request()->routeIs('channel.product_*') || request()->routeIs('channel.product.*') ? 'display: block;' : 'display: none;' }}">
@@ -105,18 +108,18 @@
                                     class="{{ request()->routeIs('channel.product_request') ? 'active-link' : '' }}">-
                                     판매요청관리</a></li>
                         </ul>
-                    </li>
-                    <li class="dep1 {{ request()->routeIs('channel.joint_purchase.*') ? 'on' : '' }}">
+                    </li>@endif
+                    @if($channelCan('joint_purchase'))<li class="dep1 {{ request()->routeIs('channel.joint_purchase.*') ? 'on' : '' }}">
                         <a href="javascript:void(0);" class="toggle-btn">공동구매 관리 <span class="arrow">▼</span></a>
                         <ul class="dep2_wrap" style="{{ request()->routeIs('channel.joint_purchase.*') ? 'display: block;' : 'display: none;' }}">
                             <li><a href="{{ route('channel.joint_purchase.list') }}" class="{{ request()->routeIs('channel.joint_purchase.list') ? 'active-link' : '' }}">- 공동구매 상품목록</a></li>
                             <li><a href="{{ route('channel.joint_purchase.create') }}" class="{{ request()->routeIs('channel.joint_purchase.create') ? 'active-link' : '' }}">- 공동구매 상품등록</a></li>
                         </ul>
-                    </li>
-                    <li class="dep1 {{ request()->routeIs('channel.order.*') || request()->routeIs('channel.inquiries.*') ? 'on' : '' }}">
+                    </li>@endif
+                    @if($channelCan('order'))<li class="dep1 {{ $sidebarOrderActive ? 'on' : '' }}">
                         <a href="javascript:void(0);" class="toggle-btn">주문관리 <span class="arrow">▼</span></a>
                         <ul class="dep2_wrap"
-                            style="{{ request()->routeIs('channel.order.*') || request()->routeIs('channel.inquiries.*') ? 'display: block;' : 'display: none;' }}">
+                            style="{{ $sidebarOrderActive ? 'display: block;' : 'display: none;' }}">
 	                            <li><a href="{{ route('channel.order.list') }}"
 	                                    class="{{ request()->routeIs('channel.order.list') ? 'active-link' : '' }}">- 주문목록</a></li>
 	                            <li><a href="{{ route('channel.order.cancel_list') }}"
@@ -130,37 +133,37 @@
                             <li><a href="{{ route('channel.inquiries.index') }}"
                                     class="{{ request()->routeIs('channel.inquiries.*') ? 'active-link' : '' }}">- 상품문의</a></li>
                         </ul>
-                    </li>
-                    <li class="dep1">
+                    </li>@endif
+                    @if($channelCan('settings'))<li class="dep1">
                         <a href="{{ route('channel.settlement.list') }}">정산관리</a>
-                    </li>
+                    </li>@endif
                 </ul>
             </div>
 
             <!-- 환경설정 -->
-            <div class="con_w">
+            @if($channelCan('settings') || $channelAdmin?->type!=='subadmin')<div class="con_w">
                 <div class="c_ttl">환경설정</div>
                 <ul class="dep1_wrap type2">
-                    <li class="dep1">
+                    @if($channelCan('settings'))<li class="dep1">
                         <a href="{{ route('channel.info.management') }}">정보관리</a>
-                    </li>
-                    <li class="dep1">
+                    </li>@endif
+                    @if($channelAdmin?->type!=='subadmin')<li class="dep1">
                         <a href="{{ route('channel.sub_accounts.list') }}">서브관리자 관리</a>
-                    </li>
-                    <li class="dep1">
+                    </li>@endif
+                    @if($channelCan('settings'))<li class="dep1">
                         <a href="{{ route('channel.order.manager') }}">발주담당자 관리</a>
-                    </li>
-                    <li class="dep1">
+                    </li>@endif
+                    @if($channelCan('settings'))<li class="dep1">
                         <a href="{{ route('channel.point.list') }}">포인트 관리</a>
-                    </li>
-                    <li class="dep1">
+                    </li>@endif
+                    @if($channelCan('settings'))<li class="dep1">
                         <a href="{{ route('channel.delivery.list') }}">배송비 설정</a>
-                    </li>
-                    <li class="dep1">
+                    </li>@endif
+                    @if($channelCan('settings'))<li class="dep1">
                         <a href="{{ route('channel.refund.list') }}">취소/환불 안내</a>
-                    </li>
+                    </li>@endif
                 </ul>
-            </div>
+            </div>@endif
         </div>
     </div>
 </div>

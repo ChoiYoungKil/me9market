@@ -42,7 +42,7 @@ class Admin
         if ($admin->type === 'subadmin') {
             abort_if($request->is('admin', 'admin/*'), 403);
             // Role assignment and channel closure remain owner-only even with settings access.
-            abort_if($request->is('channel/settings/sub-accounts*', 'channel/settings/operation-stop'), 403);
+            abort_if($request->is('channel/settings/sub-accounts*', 'channel/settings/operation-stop', 'channel/complete-profile'), 403);
 
             if ($request->is('channel*')) {
                 $account = ChannelSubAccount::where('admin_id', $admin->id)
@@ -50,10 +50,8 @@ class Admin
                     ->first();
 
                 abort_unless(
-                    $admin->status == 1
-                    && $account
-                    && (! $account->started_at || $account->started_at->isToday() || $account->started_at->isPast())
-                    && (! $account->ended_at || $account->ended_at->isToday() || $account->ended_at->isFuture()),
+                    $account && $account->isActive()
+                    && (!$account->user_id || (int)Auth::guard('web')->id()===(int)$account->user_id),
                     403
                 );
 

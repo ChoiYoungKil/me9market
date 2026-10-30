@@ -66,7 +66,7 @@ class AppServiceProvider extends ServiceProvider
             ) {
                 $user = \Illuminate\Support\Facades\Auth::guard('admin')->user();
 
-                if ($user->type === 'vendor') {
+                if ($user->type === 'vendor' || ($user->type === 'subadmin' && app(\App\Services\ChannelDashboard::class)->canView($user,'shop'))) {
                     $headerChannels = \App\Models\ShopChannel::where('vendor_id', $user->vendor_id)
                         ->select('id', 'channel_code', 'channel_name', 'status', 'is_public', 'is_member_only')
                         ->orderByDesc('created_at')
@@ -74,7 +74,12 @@ class AppServiceProvider extends ServiceProvider
                 }
             }
 
-            $view->with('headerChannels', $headerChannels);
+            $companyName = null;
+            if (isset($user) && $user->vendor_id) {
+                $companyName = \App\Models\VendorsBusinessDetail::where('vendor_id', $user->vendor_id)->value('shop_name')
+                    ?: \App\Models\Vendor::whereKey($user->vendor_id)->value('name');
+            }
+            $view->with('headerChannels', $headerChannels)->with('channelCompanyName', $companyName);
         });
     }
 }

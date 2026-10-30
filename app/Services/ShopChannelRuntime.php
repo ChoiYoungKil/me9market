@@ -27,6 +27,8 @@ class ShopChannelRuntime
 
     private const PRIVATE_ACCESS_KEY = 'shop_channel_private_access_id';
 
+    private const MANAGED_CHANNEL_KEY = 'shop_channel_manager';
+
     public function seedDemoDataIfAllowed(): ?ShopChannel
     {
         return null;
@@ -60,6 +62,14 @@ class ShopChannelRuntime
             return true;
         }
 
+        $manager = Auth::guard('admin')->user();
+        $managed = Session::get(self::MANAGED_CHANNEL_KEY, []);
+        if ($manager && ($managed['shop_id'] ?? null) === $shop->id
+            && ($managed['admin_id'] ?? null) === $manager->id && (int) $manager->vendor_id === (int) $shop->vendor_id
+            && app(ChannelDashboard::class)->canView($manager, 'shop')) {
+            return true;
+        }
+
         $accessId = Session::get(self::PRIVATE_ACCESS_KEY);
 
         return $accessId && ShopChannelPrivateAccess::whereKey($accessId)
@@ -69,7 +79,18 @@ class ShopChannelRuntime
 
     public function leaveChannel(): void
     {
-        Session::forget([self::CHANNEL_KEY, self::PRIVATE_ACCESS_KEY, self::CART_KEY]);
+        Session::forget([self::CHANNEL_KEY, self::PRIVATE_ACCESS_KEY, self::MANAGED_CHANNEL_KEY, self::CART_KEY]);
+    }
+
+    public function enterManagedChannel(ShopChannel $shop): void
+    {
+        $manager = Auth::guard('admin')->user();
+        abort_unless($manager && (int) $manager->vendor_id === (int) $shop->vendor_id
+            && app(ChannelDashboard::class)->canView($manager, 'shop'), 403);
+        abort_unless($this->isChannelAvailable($shop), 404);
+        Session::forget(self::PRIVATE_ACCESS_KEY);
+        Session::put(self::CHANNEL_KEY, $shop->id);
+        Session::put(self::MANAGED_CHANNEL_KEY, ['shop_id'=>$shop->id, 'admin_id'=>$manager->id]);
     }
 
     public function enterChannel(string $entryCode): ?ShopChannel
@@ -81,6 +102,7 @@ class ShopChannelRuntime
         }
 
         Session::forget(self::PRIVATE_ACCESS_KEY);
+        Session::forget(self::MANAGED_CHANNEL_KEY);
 
         Session::put(self::CHANNEL_KEY, $shop->id);
         $this->recordAuthenticatedVisit($shop);
@@ -90,6 +112,7 @@ class ShopChannelRuntime
 
     public function enterPrivateAccess(ShopChannelPrivateAccess $access): ?ShopChannel
     {
+        Session::forget(self::MANAGED_CHANNEL_KEY);
         $access->loadMissing('shopChannel');
         if (! $access->shopChannel || ! $this->isChannelAvailable($access->shopChannel) || (int) $access->shopChannel->is_public !== 0) {
             return null;

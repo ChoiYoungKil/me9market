@@ -113,7 +113,8 @@ class CustomerPointService
         }
         $item->loadMissing('order');
         $knownAmounts = $item->point_usage_snapshot !== null && $item->shipping_amount_snapshot !== null;
-        $paidCash = $knownAmounts ? max(0, round(($item->paid_line_total_snapshot ?? $item->line_total) + $item->shipping_amount_snapshot - $item->used_point_amount, 2)) : 0;
+        $paidCash = $knownAmounts ? app(SettlementCalculator::class)->paymentAmounts($item)['cash'] : 0;
+        if ($item->claim_previous_status === OrderItemStatus::AWAITING_PAYMENT) $paidCash = 0;
         $fee = $item->normalized_status === OrderItemStatus::RETURNED ? max(0, (float) $item->return_shipping_fee) : 0;
         $cash = max(0, $paidCash - $fee);
         $requiresReview = ! $knownAmounts || $fee > $paidCash || ($knownAmounts && -(int) $spends->sum('points') !== (int) $item->used_point_amount);

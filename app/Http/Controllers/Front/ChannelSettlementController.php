@@ -16,12 +16,16 @@ class ChannelSettlementController extends Controller
 {
     public function index(Request $request, SettlementCalculator $calculator)
     {
+        $request->validate(['period'=>'nullable|string']);
         $admin = Auth::guard('admin')->user();
         $vendor_id = $admin->vendor_id;
         $period = $request->query('period')
             ? $calculator->normalizePeriod($request->query('period'))
             : $this->latestSettlementPeriod($vendor_id, $calculator);
         $periodOptions = $calculator->periodOptions();
+        $hasPeriod=$request->filled('period');
+        if($hasPeriod)$request->validate(['period'=>[\Illuminate\Validation\Rule::in(array_keys($periodOptions))]]);
+        $shippingRows=app(\App\Services\SettlementReport::class)->shipping($period,(int)$vendor_id);
         $runs = SettlementRun::where('period', $period)
             ->where('vendor_id', $vendor_id)
             ->get()
@@ -67,6 +71,8 @@ class ChannelSettlementController extends Controller
             ->get();
 
         return view('channel.sub05.settlement_list', [
+            'hasPeriod'=>$hasPeriod,
+            'shippingRows'=>$shippingRows,
             'settlements' => $settlements,
             'executions' => $executions,
             'dep1_id' => '05',
@@ -82,11 +88,11 @@ class ChannelSettlementController extends Controller
         $admin = Auth::guard('admin')->user();
         $execution = SettlementExecution::where('vendor_id', $admin->vendor_id)->findOrFail($id);
 
-        if (!$execution->attachment_path || !Storage::disk('public')->exists($execution->attachment_path)) {
+        if (!$execution->attachment_path || !Storage::disk($execution->attachment_disk ?: 'public')->exists($execution->attachment_path)) {
             abort(404);
         }
 
-        return Storage::disk('public')->download($execution->attachment_path, $execution->attachment_name ?: basename($execution->attachment_path));
+        return Storage::disk($execution->attachment_disk ?: 'public')->download($execution->attachment_path, $execution->attachment_name ?: basename($execution->attachment_path));
     }
 
     public function view(Request $request, $period, SettlementCalculator $calculator)
@@ -96,8 +102,10 @@ class ChannelSettlementController extends Controller
         $period = $calculator->normalizePeriod($period);
         $shopChannelId = $this->normalizeShopChannelId($request->query('shop_channel_id'));
 
-        $summary = $calculator->preview($period, $vendor_id, $shopChannelId)->first();
-        $rowData = $calculator->items($period, $vendor_id, $shopChannelId)->values();
+        $role=$request->query('role');
+        $pg=$request->query('pg');
+        $summary = $calculator->preview($period, $vendor_id, $shopChannelId)->when($role,fn($rows)=>$rows->where('settlement_role',$role))->when($pg,fn($rows)=>$rows->where('payment_gateway_type',$pg))->first();
+        $rowData = $calculator->items($period, $vendor_id, $shopChannelId)->when($role,fn($rows)=>$rows->where('settlement_role',$role))->when($pg,fn($rows)=>$rows->where('payment_gateway_type',$pg))->values();
         $rows = $this->ordersFromSettlementRows($rowData);
 
         if (!$summary && $shopChannelId !== null) {
@@ -130,6 +138,17 @@ class ChannelSettlementController extends Controller
             'dep1_id' => '05',
             'rate' => $summary['settlement_rate'] ?? optional($rows->first())->rate ?? 0,
         ]);
+    }
+
+    public function export(Request $request, SettlementCalculator $calculator)
+    {
+        $data=$request->validate(['period'=>['required',\Illuminate\Validation\Rule::in(array_keys($calculator->periodOptions()))],'kind'=>'nullable|in:orders,shipping']);
+        $vendor=(int)Auth::guard('admin')->user()->vendor_id;
+        $report=app(\App\Services\SettlementReport::class);
+        $shipping=($data['kind']??'orders')==='shipping';
+        return $report->download('settlement_'.$data['period'].($shipping?'_shipping':'').'.xlsx',
+            $shipping?$report::SHIPPING_HEADERS:$report::HEADERS,
+            $shipping?$report->shipping($data['period'],$vendor):$report->rows($calculator->items($data['period'],$vendor)));
     }
 
     private function ordersFromSettlementRows($rowData)

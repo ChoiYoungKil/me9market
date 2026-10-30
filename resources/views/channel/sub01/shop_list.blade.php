@@ -1,6 +1,7 @@
 @extends('layouts.channel')
 
 @section('page_type', 'sub')
+@push('styles')<link rel="stylesheet" href="{{ asset('channel_assets/css/shop-configuration.css') }}?v={{ filemtime(public_path('channel_assets/css/shop-configuration.css')) }}">@endpush
 @php
     $dep1_id = "01";
 @endphp
@@ -34,16 +35,17 @@
                                                     <input type="text" name="search_name"
                                                         value="{{ $params['search_name'] ?? '' }}"
                                                         placeholder="채널명을 입력해 주세요." style="flex: 1;">
-                                                    <a id="arrow1" class="btn01 arrow"
-                                                        style="width: 100px;"><span>상세검색</span></a>
+                                                    <button type="button" id="arrow1" class="btn01 arrow"
+                                                        aria-controls="shop-search-details" aria-expanded="{{ (isset($params['search_keyword']) || isset($params['status']) || isset($params['is_public']) || isset($params['is_member_only'])) ? 'true' : 'false' }}"
+                                                        style="width: 100px;"><span>상세검색</span></button>
                                                 </div>
                                             </td>
                                         </tr>
                                     </tbody>
                                 </table>
                             </div>
-                            <div class="tb01 bN arrowbx" data-arrowbx="arrow1"
-                                style="display: {{ (isset($params['search_keyword']) || isset($params['status']) || isset($params['is_public'])) ? 'block' : 'none' }};">
+                            <div class="tb01 bN arrowbx" id="shop-search-details" data-arrowbx="arrow1"
+                                style="display: {{ (isset($params['search_keyword']) || isset($params['status']) || isset($params['is_public']) || isset($params['is_member_only'])) ? 'block' : 'none' }};">
                                 <table>
                                     <colgroup>
                                         <col width="175px">
@@ -191,7 +193,7 @@
                                                 <button type="button" class="btn02 col2 copy-channel-url" data-copy-url="{{ route('shop.enter', $shop->channel_code) }}" style="border: none; cursor: pointer; padding: 0 10px;">주소복사</button>
                                                 <a href="{{ route('channel.shop_info', ['id' => $shop->id]) }}"
                                                     class="btn02 col7">관리</a>
-                                                <a href="{{ route('shop.enter', $shop->channel_code) }}" target="_blank" rel="noopener"
+                                                <a href="{{ route('channel.shop.open', $shop->id) }}" target="_blank" rel="noopener"
                                                     class="btn02 col5">보기</a>
                                                 <form action="{{ route('channel.shop.delete', $shop->id) }}" method="POST" style="display: inline;">
                                                     @csrf
@@ -245,7 +247,8 @@
     <script type="text/javascript">
         $(".btn01.arrow").click(function () {
             var thisId = $(this).attr("id");
-            $(this).toggleClass("on");
+            var expanded = $(this).attr("aria-expanded") !== "true";
+            $(this).toggleClass("on", expanded).attr("aria-expanded", String(expanded));
             $(".arrowbx[data-arrowbx='" + thisId + "']").stop().slideToggle(300);
         });
 

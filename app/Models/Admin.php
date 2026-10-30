@@ -20,6 +20,8 @@ class Admin extends Authenticatable
     // 다중 인증 가드 설정 (auth.php 파일에서 'admin' 가드 확인)
     protected $guard = 'admin'; 
 
+    protected $casts = ['channel_shortcuts' => 'array'];
+
 
 
     // 관계 정의: 관리자는 특정 입점업체에 속할 수 있음

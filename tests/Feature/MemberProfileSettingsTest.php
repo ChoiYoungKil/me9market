@@ -34,15 +34,21 @@ class MemberProfileSettingsTest extends TestCase
         $vendor=new Vendor;
         $vendor->name='PG 검수';$vendor->email='pg@example.test';$vendor->mobile='01000002222';$vendor->commission=0;$vendor->status=1;$vendor->save();
         $user->forceFill(['vendor_id'=>$vendor->id])->save();
+        $base=['vendor_id'=>$vendor->id,'channel_name'=>'PG 선택 검수','copyright'=>'검수','keywords'=>['PG'],'status'=>1,'is_public'=>1];
+        $platform=\App\Models\ShopChannel::forceCreate($base+['channel_code'=>'platform-profile','use_own_pg'=>false]);
+        $own=\App\Models\ShopChannel::forceCreate($base+['channel_code'=>'own-profile','use_own_pg'=>true]);
         $this->postJson(route('mypage.pg.update'),['use_own_pg'=>1,'pg_provider'=>'toss'])->assertUnprocessable();
         $data=['use_own_pg'=>1,'pg_provider'=>'toss','pg_merchant_id'=>'test-merchant','pg_site_code'=>'test-site','pg_client_key'=>'test-client-key','pg_secret_key'=>'test-secret-key'];
         $this->post(route('mypage.pg.update'),$data)->assertRedirect(route('mypage.profile'));
         $this->assertTrue($vendor->fresh()->use_own_pg);
+        $this->assertFalse($platform->fresh()->use_own_pg);
+        $this->assertSame('test-secret-key',$own->fresh()->pg_secret_key);
         $this->assertNotSame('test-secret-key',$vendor->fresh()->getRawOriginal('pg_secret_key'));
         $this->get(route('mypage.profile'))->assertOk()->assertDontSee('test-secret-key')->assertDontSee('test-client-key');
         $this->postJson(route('mypage.pg.update'),['use_own_pg'=>1,'pg_provider'=>'kcp'])->assertUnprocessable();
         $this->assertSame('toss',$vendor->fresh()->pg_provider);
         $this->post(route('mypage.pg.update'),['use_own_pg'=>0])->assertRedirect(route('mypage.profile'));
         $this->assertFalse($vendor->fresh()->use_own_pg);
+        $this->assertFalse($own->fresh()->use_own_pg);
     }
 }

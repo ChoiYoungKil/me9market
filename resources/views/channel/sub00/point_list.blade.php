@@ -1,163 +1,63 @@
 @extends('layouts.channel')
-
+@section('page_type','sub')
 @php
-    $dep1_id = "00";
-    $dep1_tit = "포인트관리";
-    $typeLabels = [
-        'earn' => '분배',
-        'first_visit' => '첫 방문 지급(이전)',
-        'use' => '구매 사용',
-        'convert_out' => 'Me9 전환',
-        'refund' => '취소/반품 복구',
-    ];
-    $historyLabels = [
-        'all' => '전체',
-        'earn' => '분배내역',
-        'use' => '소진내역',
-        'refund' => '복구내역',
-    ];
+    $dep1_id = '00';
+    $typeLabels = ['earn'=>'상품 구매 지급', 'first_visit'=>'첫 방문 지급(이전)', 'use'=>'구매 사용', 'convert_out'=>'Me9 포인트 전환', 'refund'=>'취소·반품 복구'];
+    $historyLabels = ['all'=>'전체', 'earn'=>'분배', 'use'=>'소진'];
+    if ($filters['history'] === 'refund') $historyLabels['refund'] = '소진 취소';
+    $filterValue = static function ($name) use ($filters) {
+        $value = old($name, $filters[$name]);
+        return is_string($value) ? $value : $filters[$name];
+    };
 @endphp
-
-@section('page_type', 'sub')
-
+@push('styles')
+<link rel="stylesheet" href="/channel_assets/css/order-workspace.css?v={{ filemtime(public_path('channel_assets/css/order-workspace.css')) }}">
+<link rel="stylesheet" href="/channel_assets/css/point-history.css?v={{ filemtime(public_path('channel_assets/css/point-history.css')) }}">
+@endpush
 @section('content')
-    <div id="contents">
-        <div class="row">
-            <div class="box box1">
-                <div class="page_info">
-                    <div class="ttl">포인트 관리</div>
-                    <ul class="dep">
-                        <li>HOME</li>
-                        <li>포인트 관리</li>
-                    </ul>
-                </div>
-                <div class="conbx">
-                    <div class="con_w">
-                        @if(session('success_message'))
-                            <div style="background:#e8f5e9; color:#1b5e20; padding:12px; margin-bottom:15px; border-radius:4px;">
-                                {{ session('success_message') }}
-                            </div>
-                        @endif
-                        @if($errors->any())
-                            <div style="background:#ffebee; color:#b71c1c; padding:12px; margin-bottom:15px; border-radius:4px;">
-                                {{ $errors->first() }}
-                            </div>
-                        @endif
-
-                        <div class="list_top1 btn">
-                            <div class="count">고객 보유 포인트 <strong>{{ number_format($summary['balance'] ?? 0) }}</strong> P</div>
-                        </div>
-
-                        <div class="tb01">
-                            <table>
-                                <colgroup>
-                                    <col width="160px">
-                                    <col width="">
-                                    <col width="160px">
-                                    <col width="">
-                                    <col width="160px">
-                                    <col width="">
-                                </colgroup>
-                                <tbody class="textL">
-                                    <tr>
-                                        <th><span>분배 포인트</span></th>
-                                        <td>{{ number_format($summary['distributed'] ?? 0) }} P</td>
-                                        <th><span>구매 사용</span></th>
-                                        <td>{{ number_format($summary['used'] ?? 0) }} P</td>
-                                        <th><span>Me9 전환</span></th>
-                                        <td>{{ number_format($summary['converted'] ?? 0) }} P</td>
-                                    </tr>
-                                    <tr>
-                                        <th><span>취소/반품 복구</span></th>
-                                        <td colspan="5">{{ number_format($summary['restored'] ?? 0) }} P</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-
-            <div class="box box1">
-                <div class="conbx">
-                    <div class="con_w">
-                        <form method="GET" action="{{ route('channel.point.list') }}" class="tb01" style="margin-bottom:15px;">
-                            <table>
-                                <tbody class="textL">
-                                    <tr>
-                                        <th class="w160"><span>내역 구분</span></th>
-                                        <td>
-                                            <select name="history" class="w160">
-                                                @foreach($historyLabels as $value => $label)
-                                                    <option value="{{ $value }}" {{ ($filters['history'] ?? 'all') === $value ? 'selected' : '' }}>{{ $label }}</option>
-                                                @endforeach
-                                            </select>
-                                        </td>
-                                        <td class="t_c">
-                                            <button type="submit" class="btn02 col5">검색</button>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </form>
-
-                        <div class="list_top1">
-                            <div class="count">총 <strong>{{ number_format($transactions->total()) }}</strong> 건</div>
-                        </div>
-                        <div class="tb01">
-                            <table>
-                                <colgroup>
-                                    <col width="70px">
-                                    <col width="140px">
-                                    <col width="120px">
-                                    <col width="120px">
-                                    <col width="130px">
-                                    <col width="130px">
-                                    <col width="">
-                                </colgroup>
-                                <thead>
-                                    <tr>
-                                        <th>No</th>
-                                        <th>등록일</th>
-                                        <th>구분</th>
-                                        <th>Shop 채널</th>
-                                        <th>포인트</th>
-                                        <th>주문번호</th>
-                                        <th>내역</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse($transactions as $transaction)
-                                        <tr>
-                                            <td>{{ $transactions->firstItem() + $loop->index }}</td>
-                                            <td>{{ optional($transaction->created_at)->format('Y-m-d H:i') }}</td>
-                                            <td>{{ $typeLabels[$transaction->type] ?? $transaction->type }}</td>
-                                            <td>{{ $transaction->shopChannel?->channel_name }}</td>
-                                            <td class="t_r">
-                                                <span class="{{ $transaction->points >= 0 ? 'fcol5' : 'fcol3' }}">
-                                                    {{ $transaction->points >= 0 ? '+' : '' }}{{ number_format($transaction->points) }} P
-                                                </span>
-                                            </td>
-                                            <td>{{ $transaction->order_id ?: '-' }}</td>
-                                            <td>{{ $transaction->description ?: '-' }}</td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="7" class="t_c">등록된 포인트 내역이 없습니다.</td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div class="page_bx1">
-                            {{ $transactions->links() }}
-                        </div>
-
-                    </div>
-                </div>
-            </div>
+<div id="contents"><div class="order-workspace point-workspace">
+    <div class="order-page-heading"><div><p>환경설정</p><h1>포인트 관리</h1></div></div>
+    @if($errors->any())<section class="order-panel point-error" role="alert">{{ $errors->first() }}</section>@endif
+    <section class="order-panel" aria-labelledby="point-summary-title">
+        <h2 id="point-summary-title">포인트 현황</h2>
+        <div class="point-totals">
+            <div class="point-balance"><span>총 포인트 통화량</span><strong>{{ number_format($summary['balance']) }} <small>Point</small></strong></div>
+            <dl><div><dt>분배 포인트</dt><dd>{{ number_format($summary['distributed']) }} Point</dd></div><div><dt>소진 포인트</dt><dd>{{ number_format($summary['consumed']) }} Point</dd></div></dl>
         </div>
-    </div>
+        <p class="point-help">전체 기간 기준 · 총 포인트 = 분배 포인트 − 소진 포인트</p>
+        <p class="point-help">소진 포인트는 구매 사용 {{ number_format($summary['used']) }} Point · Me9 전환 {{ number_format($summary['converted']) }} Point에서 취소·반품 복구 {{ number_format($summary['restored']) }} Point를 반영합니다.</p>
+    </section>
+    <section class="order-panel" aria-labelledby="point-search-title">
+        <h2 id="point-search-title">상세검색</h2>
+        <form method="GET" action="{{ route('channel.point.list') }}" class="point-search">
+            <fieldset class="point-dates"><legend>날짜</legend><div>
+                <label>시작일<input type="date" name="date_from" value="{{ $filterValue('date_from') }}"></label>
+                <span aria-hidden="true">~</span>
+                <label>종료일<input type="date" name="date_to" value="{{ $filterValue('date_to') }}"></label>
+            </div></fieldset>
+            <fieldset><legend>구분</legend><div class="order-checks">
+                @foreach($historyLabels as $value=>$label)<label><input type="radio" name="history" value="{{ $value }}" @checked($filterValue('history') === $value)>{{ $label }}</label>@endforeach
+            </div></fieldset>
+            <div class="point-search-actions"><button type="submit" class="primary">검색</button><a class="order-button" href="{{ route('channel.point.list') }}">초기화</a></div>
+        </form>
+        <p class="point-help">소진 검색에는 구매 사용·Me9 전환과 이를 되돌린 취소·반품 복구 내역이 포함됩니다.</p>
+    </section>
+    <section class="order-panel" aria-labelledby="point-history-title">
+        <div class="order-toolbar"><h2 id="point-history-title">포인트 이력</h2><p>총 <strong>{{ number_format($transactions->total()) }}</strong> 건 · 검색 결과 합계 <strong>{{ $filteredPoints > 0 ? '+' : '' }}{{ number_format($filteredPoints) }}</strong> Point</p></div>
+        <div class="order-table-scroll" tabindex="0" role="region" aria-label="포인트 이력 목록"><table class="order-table"><thead><tr><th scope="col">No</th><th scope="col">등록일</th><th scope="col">구분</th><th scope="col">포인트</th><th scope="col">내역</th></tr></thead><tbody>
+        @forelse($transactions as $transaction)
+            @php($restoration = $transaction->type === 'refund')
+            <tr>
+                <td>{{ $transactions->total() - $transactions->firstItem() - $loop->index + 1 }}</td>
+                <td>{{ $transaction->created_at?->format('Y-m-d H:i:s') ?: '-' }}</td>
+                <td><span class="order-state">{{ $restoration ? '소진 취소' : ($transaction->points > 0 ? '분배' : '소진') }}</span><small>{{ $typeLabels[$transaction->type] ?? '포인트 조정' }}</small></td>
+                <td class="point-amount {{ $transaction->points >= 0 ? 'point-credit' : 'point-debit' }}">{{ $transaction->points > 0 ? '+' : '' }}{{ number_format($transaction->points) }} Point</td>
+                <td class="point-description"><strong>{{ $transaction->user?->name ?: '회원정보 없음' }}</strong><p>{{ $transaction->description ?: ($typeLabels[$transaction->type] ?? '포인트 조정') }}</p><small>{{ $transaction->shopChannel?->channel_name ?: '-' }}@if($transaction->order_id) · 주문번호 {{ $transaction->order_id }}@endif</small></td>
+            </tr>
+        @empty<tr><td colspan="5" class="order-empty">검색 조건에 맞는 포인트 내역이 없습니다.</td></tr>
+        @endforelse
+        </tbody></table></div>
+        {{ $transactions->links() }}
+    </section>
+</div></div>
 @endsection

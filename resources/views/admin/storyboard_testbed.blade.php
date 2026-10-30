@@ -1,30 +1,16 @@
 @php
     $areas = [
         [
-            'code' => 'RF-02',
-            'title' => '채널 관리자',
-            'account' => 'channel',
-            'items' => [
-                ['065 이후', '로그인 / 정보관리', '/channel/login', '판매자 인증과 기본정보 관리'],
-                ['072-104', 'Shop 채널 관리', '/channel/shop/list', '채널 등록, 설정, 상품과 공지'],
-                ['106-123', '상품관리', '/channel/product/own', '자사, 공유, 제휴 상품 관리'],
-                ['124-132', '공동구매관리', '/channel/joint-purchase/list', '구간 가격과 발주 담당자 설정'],
-                ['134-162', '주문관리', '/channel/order/list', '주문, 송장, 취소, 반품, 교환'],
-                ['168-172', '정산관리', '/channel/settlement/list', '채널 정산 집행내역 확인'],
-                ['188-191', '포인트관리', '/channel/settings/points', '포인트 분배와 소진 원장'],
-            ],
-        ],
-        [
             'code' => 'RF-03',
             'title' => 'Shop 채널 페이지',
             'account' => null,
             'items' => [
-                ['200-202', '채널 입장', '/shop-channel/gate', '공개·비공개 채널 입장'],
-                ['206', '채널 메인', '/shop-channel/main', '배너, 소개, 상품과 공지'],
-                ['208-216', '상품 / 공동구매', '/shop-channel/products', '상품 목록, 상세와 공동구매'],
-                ['217-220', '장바구니 / 주문', '/shop/cart', '장바구니부터 주문 완료'],
-                ['222-232', '주문관리', '/shop/order/details', '주문조회와 클레임 처리'],
-                ['234-235', '채널 공지', '/shop-channel/notices', '채널별 공지 목록과 상세'],
+                ['209-215', '채널 입장', '/shop-channel/gate', '공개·비공개 채널 입장'],
+                ['216-217', '채널 메인', '/shop-channel/main', '배너, 소개, 상품과 공지'],
+                ['218-227', '상품 / 공동구매', '/shop-channel/products', '상품 목록, 상세와 공동구매'],
+                ['228-231', '장바구니 / 주문', '/shop/cart', '장바구니부터 주문 완료'],
+                ['232-243', '주문관리', '/shop/order/details', '주문조회와 클레임 처리'],
+                ['244-246', '채널 공지', '/shop-channel/notices', '채널별 공지 목록과 상세'],
             ],
         ],
         [
@@ -32,9 +18,9 @@
             'title' => '발주사',
             'account' => 'distributor',
             'items' => [
-                ['238', '발주사 로그인', '/distributor/login', '발주 담당자 인증'],
-                ['240-242', '발주 대기', '/distributor/orders/pending', '대기 주문과 송장 엑셀 처리'],
-                ['243-244', '발주 완료', '/distributor/orders/completed', '송장 등록 이후 주문 확인'],
+                ['247-249', '발주사 로그인', '/distributor/login', '발주 담당자 인증'],
+                ['250-253', '발주 대기', '/distributor/orders/pending', '대기 주문과 송장 엑셀 처리'],
+                ['254-255', '발주 완료', '/distributor/orders/completed', '송장 등록 이후 주문 확인'],
             ],
         ],
         [
@@ -43,11 +29,11 @@
             'account' => 'superadmin',
             'admin' => true,
             'items' => [
-                ['247-249', '로그인 / 대시보드', '/admin/dashboard', '최고관리자 인증과 현황'],
+                ['256-260', '로그인 / 대시보드', '/admin/dashboard', '최고관리자 인증과 현황'],
                 ['173-176', '전체 정산관리', '/admin/settlements', '정산 생성, 상세와 집행 현황'],
                 ['POINTS', '채널 포인트 원장', '/admin/channel-points', '포인트 분배와 소진 확인'],
-                ['250-254', '목록 / 상세 패턴', '/admin/sub03', '관리자 공통 화면 패턴'],
-                ['255-259', '입력 / 레이어 / 로딩', '/admin/sub02', '입력과 처리 상태 패턴'],
+                ['261-265', '목록 / 상세 패턴', '/admin/sub03', '관리자 공통 화면 패턴'],
+                ['266-270', '입력 / 레이어 / 로딩', '/admin/sub02', '입력과 처리 상태 패턴'],
             ],
         ],
     ];
@@ -113,6 +99,7 @@
         .review-note { display:block; margin-top:6px; color:#7b5920; font-size:12px; }
         .badge { display:inline-block; padding:3px 7px; border-radius:4px; font-size:12px; background:#edf3f7; color:#425669; }
         .badge.reviewed { background:#e9f6ef; color:#087443; }
+        .badge.excluded { background:#f0f0f3; color:#66717d; }
         .badge.deferred, .badge.partial { background:#fff2db; color:#8b5500; }
         .account p { font-size:12px; line-height:1.6; color:#55616e; }
         .no-matches { padding:20px; background:white; }
@@ -122,7 +109,7 @@
 <body>
 <header>
     <h1>Me9 스토리보드 통합 검수</h1>
-    <p>PPT Ver3.0.0의 실제 슬라이드 번호 기준으로 1~64번 확인 기록과 화면 진입 경로를 정리했습니다.</p>
+    <p>PPT Ver3.0.0의 실제 슬라이드 번호 기준으로 1~208번 확인 기록과 화면 진입 경로를 정리했습니다.</p>
 </header>
 <main>
     <div class="notice">전체 관리자 전용 검수 화면입니다. 링크를 열어도 현재 로그인 계정은 자동 전환되지 않습니다. 계정 생성·클레임 접수·탈퇴는 각 화면에서 직접 진행합니다.</div>
@@ -180,19 +167,21 @@
     </section>
 
     <section class="review-summary" aria-label="검수 범위와 다음 진행">
-        <h2 style="margin-top:0;">PPT 1~64번 확인 기록 · {{ $reviewedAt }}</h2>
+        <h2 style="margin-top:0;">PPT 1~208번 확인 기록 · {{ $reviewedAt }}</h2>
         <p>아래 상태는 해당 날짜의 로컬 수동 시연 기록입니다. 이 화면은 기능을 자동 실행하거나 현재 서버의 합격 여부를 판정하지 않습니다.</p>
         <p><strong>39번:</strong> 사용자 요청으로 실제 비밀번호 변경 보류. <strong>60번:</strong> 4.5점 선택·해제·저장 확인, 마우스 이동만으로 미리보기는 추가 확인 필요.</p>
         <p>취소·반품 환불은 모의 결제 검수 결과입니다. 실 PG 환불·택배사 회수/발송·문자/이메일 실전송은 별도 확인 범위입니다.</p>
-        <p><strong>다음 진행: PPT 65번 채널관리자.</strong> 각 번호를 먼저 안내하고 화면 동작을 하나씩 확인합니다.</p>
+        <p><strong>제외:</strong> 81번은 사용자 지시, 188번은 재설계, 190·191번은 삭제 화면으로 제외했습니다. <strong>추가 확인:</strong> 67번 카카오 연동·외부 계정 권한, 72번 운영 PG/수수료, 73번 실제 비밀번호 변경, 87~89번 PG·별도 계정 인증을 완료로 표시하지 않았습니다.</p>
+        <p>65~208번의 검수일은 2026-10-31이며 1~64번의 이전 기록은 유지했습니다. 운영 DB 계정·상품·주문이 로컬 검수 데이터와 다를 수 있으므로 해당 서버의 등록 자료를 사용합니다.</p>
+        <p><strong>다음 진행: PPT 209번 Shop 채널.</strong> 각 번호를 먼저 안내하고 화면 동작을 하나씩 확인합니다.</p>
     </section>
-    <h2>1~64번 페이지별 화면과 확인 순서</h2>
+    <h2>1~208번 페이지별 화면과 확인 순서</h2>
     <div class="review-tools">
         <label for="review-search">페이지 검색</label><input id="review-search" type="search" placeholder="예: 58, 반품, 배송지">
-        <label for="review-status">확인 상태</label><select id="review-status"><option value="all">전체</option><option value="reviewed">시연 확인 기록</option><option value="deferred">실제 변경 보류</option><option value="partial">추가 확인 있음</option><option value="document">문서/구분</option></select>
+        <label for="review-status">확인 상태</label><select id="review-status"><option value="all">전체</option><option value="reviewed">시연 확인 기록</option><option value="deferred">실제 변경 보류</option><option value="partial">추가 확인 있음</option><option value="document">문서/구분</option><option value="excluded">검수 대상 제외</option></select>
         <output id="review-count" aria-live="polite">{{ count($pages) }}개 페이지</output>
     </div>
-    <section class="section" aria-label="PPT 1~64번 페이지별 검수">
+    <section class="section" aria-label="PPT 1~208번 페이지별 검수">
         <table class="review-table">
             <thead><tr><th>PPT 번호</th><th>화면</th><th>진입 후 확인 순서</th><th>확인 기록</th><th>이동</th></tr></thead>
             <tbody>
@@ -202,14 +191,14 @@
                     <td>{{ $page['title'] }}</td>
                     <td>{{ $page['steps'] }}@if($page['note'])<small class="review-note">{{ $page['note'] }}</small>@endif</td>
                     <td><span class="badge {{ $page['status'] }}">{{ $page['status_label'] }}</span></td>
-                    <td><a class="open" href="{{ $frontUrl.$page['path'] }}" target="_blank" rel="noopener noreferrer" aria-label="PPT {{ $page['number'] }}번 {{ $page['title'] }} 진입 화면 열기">진입 화면 열기</a></td>
+                    <td>@if($page['status']==='excluded')<span>대상 제외</span>@else<a class="open" href="{{ ($page['admin'] ? $adminUrl : $frontUrl).$page['path'] }}" target="_blank" rel="noopener noreferrer" aria-label="PPT {{ $page['number'] }}번 {{ $page['title'] }} 진입 화면 열기">진입 화면 열기</a>@endif</td>
                 </tr>
             @endforeach
             </tbody>
         </table>
         <p id="review-empty" class="no-matches" hidden>검색 조건에 맞는 페이지가 없습니다.</p>
     </section>
-    <h2>65번 이후 기존 기능 진입 링크</h2>
+    <h2>209번 이후 다음 검수 대상 진입 링크</h2>
     <p>아래 영역은 다음 검수 대상입니다. 기존 링크와 번호는 후속 PPT 검수에서 다시 대조하며, 완료 상태를 의미하지 않습니다.</p>
 
     @foreach($areas as $area)

@@ -124,3 +124,9 @@ body.portal { min-width: 0; }
 .portal .popup_bx { z-index: 200000; }
 .portal .tb01 th em { font-size: 0; font-style: normal; }
 .portal .tb01 th em::before { content: '*'; font-size: 14px; color: #d93232; margin-left: 4px; }
+@media (max-width: 600px) {
+    .portal-channel #header .r_bx { display:flex; align-items:center; flex-wrap:wrap; gap:8px; width:100%; max-width:100%; min-width:0; margin-left:0; }
+    .portal-channel #header .r_bx .name { flex:1 1 120px; padding:0; margin:0; overflow-wrap:anywhere; }
+    .portal-channel #header .r_bx .btn { flex:0 0 20px; margin:0; }
+    .portal-channel #header .r_bx .r_menu { margin:0; }
+}

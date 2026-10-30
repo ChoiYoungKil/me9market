@@ -29,6 +29,8 @@ class DeliveryPolicyRules
             'free_order_amount' => 'nullable|integer|min:0|max:99999999',
             'free_order_quantity' => 'nullable|integer|min:0|max:999999',
             'fixed_fee' => 'nullable|integer|min:0|max:99999999',
+            'amount_condition_enabled' => 'sometimes|boolean',
+            'quantity_condition_enabled' => 'sometimes|boolean',
             'memo' => 'nullable|string|max:1000',
         ]);
 
@@ -38,6 +40,26 @@ class DeliveryPolicyRules
         $data['free_order_amount'] = $data['free_order_amount'] ?? null;
         $data['free_order_quantity'] = $data['free_order_quantity'] ?? null;
         $data['fixed_fee'] = $data['fixed_fee'] ?? null;
+
+        foreach (['amount', 'quantity'] as $condition) {
+            if ($request->has($condition.'_condition_enabled') && ! $request->boolean($condition.'_condition_enabled')) {
+                $data['free_order_'.$condition] = null;
+            }
+            unset($data[$condition.'_condition_enabled']);
+            if ($data['shipping_type'] === 'conditional' && $request->boolean($condition.'_condition_enabled') && ! ($data['free_order_'.$condition] > 0)) {
+                throw ValidationException::withMessages(['free_order_'.$condition => '선택한 무료배송 조건에 0보다 큰 기준값을 입력해 주세요.']);
+            }
+        }
+        if ($data['shipping_type'] === 'conditional' && ! ($data['free_order_amount'] > 0 || $data['free_order_quantity'] > 0)) {
+            throw ValidationException::withMessages(['free_order_amount' => '무료배송 조건을 하나 이상 선택하고 0보다 큰 기준값을 입력해 주세요.']);
+        }
+        if ($data['shipping_type'] !== 'conditional') {
+            $data['free_order_amount'] = null;
+            $data['free_order_quantity'] = null;
+        }
+        if ($data['shipping_type'] !== 'fixed') {
+            $data['fixed_fee'] = null;
+        }
 
         if ($data['shipping_type'] === 'free') {
             $data['base_fee'] = 0;
@@ -79,6 +101,7 @@ class DeliveryPolicyRules
             'calculation_rules.start_at_one' => 'nullable|boolean',
             'calculation_rules.repeat_region' => 'nullable|boolean',
             'calculation_rules.tiers' => 'required_if:shipping_type,tiered|array|max:50',
+            'calculation_rules.tiers.*' => 'required|array',
             'calculation_rules.tiers.*.min' => 'required|integer|min:0|max:99999999',
             'calculation_rules.tiers.*.max' => 'nullable|integer|min:1|max:99999999',
             'calculation_rules.tiers.*.fee' => 'required|integer|min:0|max:99999999',
@@ -93,9 +116,13 @@ class DeliveryPolicyRules
             'calculation_rules.jeju_postcodes.*' => ['required', 'regex:/^[0-9]{5}(-[0-9]{5})?$/'],
             'calculation_rules.remote_postcodes.*' => ['required', 'regex:/^[0-9]{5}(-[0-9]{5})?$/'],
         ]);
-        $rules = $data['calculation_rules'] ?? [];
+        $allowed = ['basis', 'repeat_every', 'repeat_fee', 'start_at_one', 'repeat_region', 'tiers', 'region_mode', 'jeju_fee', 'remote_fee', 'mainland_fee', 'block_jeju', 'block_remote', 'jeju_postcodes', 'remote_postcodes'];
+        $rules = array_intersect_key($data['calculation_rules'] ?? [], array_flip($allowed));
         if ($request->input('shipping_type') === 'tiered') {
             $tiers = $rules['tiers'];
+            if (! $tiers || ! array_is_list($tiers)) {
+                throw ValidationException::withMessages(['calculation_rules.tiers' => '배송비 구간을 하나 이상 순서대로 입력해 주세요.']);
+            }
             $previousMax = 0;
             foreach ($tiers as $index => &$tier) {
                 $tier = ['min' => (int) $tier['min'], 'max' => filled($tier['max'] ?? null) ? (int) $tier['max'] : null, 'fee' => (int) $tier['fee']];
@@ -124,6 +151,15 @@ class DeliveryPolicyRules
         }
         if ((($rules['region_mode'] ?? 'none') !== 'none' || ($rules['block_jeju'] ?? false)) && empty($rules['jeju_postcodes'])) {
             throw ValidationException::withMessages(['calculation_rules.jeju_postcodes' => '택배사 기준 제주 우편번호를 등록해 주세요.']);
+        }
+
+        if (($rules['region_mode'] ?? 'none') === 'none') {
+            unset($rules['jeju_fee'], $rules['remote_fee'], $rules['mainland_fee']);
+        } elseif (($rules['region_mode'] ?? '') === 'two') {
+            unset($rules['remote_fee']);
+        }
+        if ($request->input('shipping_type') !== 'variable') {
+            unset($rules['repeat_every'], $rules['repeat_fee'], $rules['start_at_one'], $rules['repeat_region']);
         }
 
         return $rules;

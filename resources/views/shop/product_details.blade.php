@@ -1,4 +1,5 @@
 @extends('layouts.shop')
+@push('styles')<link rel="stylesheet" href="/common/policy-rich-text.css?v={{ filemtime(public_path('common/policy-rich-text.css')) }}">@endpush
 @section('content')
 @php
     $product = $shopProduct->product;
@@ -51,7 +52,7 @@
     <section id="detail-panel" role="tabpanel" aria-labelledby="detail-tab" class="shop-section"><h2>상품 내용</h2>
         @if($product->detail_display_type === 'image' && ($product->detail_pc_image || $product->detail_mobile_image))
             <picture>@if($product->detail_mobile_image)<source media="(max-width:768px)" srcset="{{ asset('front/images/product_detail_images/'.$product->detail_mobile_image) }}">@endif<img src="{{ asset('front/images/product_detail_images/'.($product->detail_pc_image ?: $product->detail_mobile_image)) }}" alt="{{ $product->product_name }} 상세" style="max-width:100%; height:auto;" loading="lazy"></picture>
-        @else<div class="shop-detail-copy">{{ strip_tags($product->detail_text ?: $product->description ?: '상품 상세 설명이 준비 중입니다.') }}</div>@endif
+        @else<div class="shop-detail-copy">{!! app(\App\Services\ShopCommunity::class)->clean($product->detail_text ?: $product->description ?: '상품 상세 설명이 준비 중입니다.') !!}</div>@endif
         @if(($reviews ?? collect())->isNotEmpty())
             <h2>구매 후기</h2>
             @foreach($reviews as $review)<article class="shop-review"><strong>{{ $review->rating }} / 5</strong><time>{{ $review->created_at?->format('Y-m-d') }}</time><p class="shop-detail-copy">{{ $review->review }}</p></article>@endforeach
@@ -60,7 +61,7 @@
     <section id="sales-panel" role="tabpanel" aria-labelledby="sales-tab" class="shop-section" hidden>
         @if($product->product_notice_items)<h2>상품정보 제공고시</h2><dl class="shop-meta">@foreach($product->product_notice_items as $key=>$value)<dt>{{ $key }}</dt><dd>{{ is_scalar($value) ? $value : implode(' / ', array_filter($value, 'is_scalar')) }}</dd>@endforeach</dl>@endif
         <h2>배송 / 교환 / 반품 안내</h2><p>배송비: {{ app(\App\Services\ShopOrderTotals::class)->shippingLabel($product) }}</p>
-        @if($policy)<div class="shop-detail-copy">{{ strip_tags($policy->content) }}</div>@endif
+        @if($refundContent??'')<div class="shop-detail-copy policy-rich-text">{!! app(\App\Services\RefundPolicyContent::class)->render($refundContent) !!}</div>@endif
     </section>
     <section id="inquiry-panel" role="tabpanel" aria-labelledby="inquiry-tab" class="shop-section" hidden>
         <h2>내 상품 문의</h2>

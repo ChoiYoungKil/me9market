@@ -20,10 +20,10 @@ class MemberPortal
 
     public function subAccounts(User $user)
     {
-        if (! $user->member_number) return collect();
-        return ChannelSubAccount::with(['admin','vendor.vendorbusinessdetails'])->where('member_no',$user->member_number)
-            ->where(fn ($q)=>$q->whereNull('started_at')->orWhereDate('started_at','<=',today()))
-            ->where(fn ($q)=>$q->whereNull('ended_at')->orWhereDate('ended_at','>=',today()))
+        if ((int)$user->status !== 1) return collect();
+        return ChannelSubAccount::with(['admin','vendor.vendorbusinessdetails'])->where(fn($q)=>$q->where('user_id',$user->id)
+            ->when($user->member_number,fn($q)=>$q->orWhere(fn($legacy)=>$legacy->whereNull('user_id')->where('member_no',$user->member_number))))
+            ->activeNow()
             ->whereHas('admin',fn ($q)=>$q->where('type','subadmin')->where('status',1))->get();
     }
 

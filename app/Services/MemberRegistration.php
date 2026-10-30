@@ -200,7 +200,7 @@ class MemberRegistration
         $bank->save();
     }
 
-    public function document(int $vendorId, string $kind)
+    public function document(int $vendorId, string $kind, bool $download = true)
     {
         $business = VendorsBusinessDetail::where('vendor_id', $vendorId)->first();
         $path = $business?->{ $kind === 'license' ? 'address_proof_image' : 'bank_copy_image' };
@@ -211,9 +211,12 @@ class MemberRegistration
         $name = ($kind === 'license' ? 'business-license.' : 'bankbook.').pathinfo($path, PATHINFO_EXTENSION);
         if (str_starts_with($path, 'member-documents/'.$vendorId.'/')) {
             abort_unless(Storage::disk('local')->exists($path), 404);
-            return Storage::disk('local')->download($path, $name, ['Cache-Control' => 'private, no-store']);
+            $headers = ['Cache-Control'=>'private, no-store', 'X-Content-Type-Options'=>'nosniff', 'Content-Security-Policy'=>"sandbox"];
+            return $download ? Storage::disk('local')->download($path, $name, $headers) : Storage::disk('local')->response($path, $name, $headers, 'inline');
         }
         abort_unless(basename($path) === $path && is_file(public_path('front/images/bank_copies/'.$path)), 404);
-        return response()->download(public_path('front/images/bank_copies/'.$path), $name, ['Cache-Control' => 'private, no-store']);
+        $headers = ['Cache-Control'=>'private, no-store', 'X-Content-Type-Options'=>'nosniff', 'Content-Security-Policy'=>'sandbox'];
+        return $download ? response()->download(public_path('front/images/bank_copies/'.$path), $name, $headers)
+            : response()->file(public_path('front/images/bank_copies/'.$path), $headers);
     }
 }

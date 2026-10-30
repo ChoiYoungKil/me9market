@@ -1,211 +1,33 @@
 @extends('layouts.channel')
-
-@section('page_type', 'sub')
-
+@section('page_type','sub')
+@push('styles')<link rel="stylesheet" href="/channel_assets/css/order-workspace.css?v={{ filemtime(public_path('channel_assets/css/order-workspace.css')) }}"><link rel="stylesheet" href="/channel_assets/css/settlement-workspace.css?v={{ filemtime(public_path('channel_assets/css/settlement-workspace.css')) }}">@endpush
 @section('content')
-    @php
-        $roleLabels = [
-            'seller' => '자사상품 판매자',
-            'shared_fixed_supplier' => '공유상품 제공자(고정가)',
-            'shared_fixed_reseller' => '공유상품 판매자(수수료)',
-        'shared_free_supplier' => '공유상품 제공자(자유가)',
-        'shared_free_reseller' => '공유상품 판매자(자유가)',
-    ];
-    $pgLabels = [
-        'own_pg' => '자사PG',
-        'me9_pg' => '공용PG',
-    ];
-    @endphp
-    <div id="contents">
-        <div class="row">
-            <div class="box box1">
-                <div class="page_info">
-                    <div class="ttl">정산관리</div>
-                    <ul class="dep">
-                        <li>HOME</li>
-                        <li>정산관리</li>
-                        <li>정산내역</li>
-                    </ul>
-                </div>
-                <div class="conbx">
-                    <div class="con_w">
-                        <form method="GET" action="{{ route('channel.settlement.list') }}" class="tb01" style="margin-bottom:15px;">
-                            <table>
-                                <colgroup>
-                                    <col width="160px">
-                                    <col width="">
-                                    <col width="120px">
-                                </colgroup>
-                                <tbody class="textL">
-                                    <tr>
-                                        <th><span>정산 기간</span></th>
-                                        <td>
-                                            <select name="period" class="w160">
-                                                @foreach($periodOptions as $value => $label)
-                                                    <option value="{{ $value }}" {{ $period === $value ? 'selected' : '' }}>{{ $label }}</option>
-                                                @endforeach
-                                            </select>
-                                        </td>
-                                        <td class="t_c"><button type="submit" class="btn02 col5">검색</button></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </form>
-                        <div class="list_top1">
-                            <div class="count">총 <strong>{{ $settlements->total() }}</strong> 건</div>
-                        </div>
-                        <div class="tb01 ovS">
-                            <table>
-                                <colgroup>
-                                    <col width="150px">
-                                    <col width="170px">
-                                    <col width="150px">
-                                    <col width="100px">
-                                    <col width="90px">
-                                    <col width="140px">
-                                    <col width="140px">
-                                    <col width="140px">
-                                    <col width="140px">
-                                    <col width="140px">
-                                    <col width="140px">
-                                    <col width="140px">
-                                    <col width="100px">
-                                    <col width="100px">
-                                </colgroup>
-                                <thead>
-                                    <tr>
-                                        <th>정산기간</th>
-                                        <th>Shop 채널</th>
-                                        <th>정산역할</th>
-                                        <th>정산방식</th>
-                                        <th>PG구분</th>
-                                        <th>주문건수</th>
-                                        <th>매출</th>
-                                        <th>매입</th>
-                                        <th>포인트 예수금</th>
-                                        <th>포인트 사용</th>
-                                        <th>SMS 후불</th>
-                                        <th>지급액</th>
-                                        <th>상태</th>
-                                        <th>상세보기</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @if($settlements->count() > 0)
-                                        @foreach($settlements as $settlement)
-                                            <tr>
-                                                <td>{{ $settlement->period }}</td>
-                                                <td>{{ $settlement->shop_channel_name }}</td>
-                                                <td>{{ $roleLabels[$settlement->settlement_role ?? 'seller'] ?? ($settlement->settlement_role ?? 'seller') }}</td>
-                                                <td>
-                                                    {{ (int)$settlement->settlement_type === 2 ? '판매 개당 금액' : '판매금액 대비 %' }}
-                                                    / {{ number_format($settlement->settlement_rate, 2) }}{{ (int)$settlement->settlement_type === 2 ? '원' : '%' }}
-                                                </td>
-                                                <td>{{ $pgLabels[$settlement->payment_gateway_type ?? 'me9_pg'] ?? '공용PG' }}</td>
-                                                <td>{{ number_format($settlement->order_count) }} 건</td>
-                                                <td class="t_r">{{ number_format($settlement->invoice_sales_amount ?? $settlement->gross_sales_amount) }} 원</td>
-                                                <td class="t_r">{{ number_format($settlement->invoice_purchase_amount ?? 0) }} 원</td>
-                                                <td class="t_r">{{ number_format($settlement->point_deposit_amount ?? 0) }} P</td>
-                                                <td class="t_r">{{ number_format($settlement->point_used_amount ?? 0) }} P</td>
-                                                <td class="t_r">{{ number_format($settlement->sms_postpaid_amount ?? 0) }} 원</td>
-                                                <td class="t_r">
-                                                    <span class="bold fcol4">{{ number_format($settlement->payout_amount ?? $settlement->settlement_amount) }} 원</span>
-                                                    @if(($settlement->payment_gateway_type ?? 'me9_pg') === 'own_pg')
-                                                        <p class="fcol1" style="font-size:12px;">자사PG 결제분 제외</p>
-                                                    @endif
-                                                </td>
-                                                <td>
-                                                    @if(in_array(($settlement->run_status ?? $settlement->status), ['completed', 'pending'], true))
-                                                        정산자료 생성
-                                                    @else
-                                                        구매확정 기준
-                                                    @endif
-                                                </td>
-                                                <td>
-                                                    <a href="{{ route('channel.settlement.view', ['period' => $settlement->period, 'shop_channel_id' => $settlement->shop_channel_id ?: 0]) }}"
-                                                       class="btn02 col5">보기</a>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    @else
-                                        <tr>
-                                            <td colspan="14" class="no_data">정산 내역이 없습니다.</td>
-                                        </tr>
-                                    @endif
-                                </tbody>
-                                @if($settlements->total() > 0)
-                                    <tfoot>
-                                        <tr>
-                                            <th colspan="5">합계</th>
-                                            <th>{{ number_format($totals['order_count']) }} 건</th>
-                                            <th class="t_r">{{ number_format($totals['invoice_sales_amount'] ?? $totals['gross_sales_amount']) }} 원</th>
-                                            <th class="t_r">{{ number_format($totals['invoice_purchase_amount'] ?? 0) }} 원</th>
-                                            <th class="t_r">{{ number_format($totals['point_deposit_amount'] ?? 0) }} P</th>
-                                            <th class="t_r">{{ number_format($totals['point_used_amount'] ?? 0) }} P</th>
-                                            <th class="t_r">{{ number_format($totals['sms_postpaid_amount'] ?? 0) }} 원</th>
-                                            <th class="t_r">{{ number_format($totals['payout_amount'] ?? $totals['settlement_amount']) }} 원</th>
-                                            <th colspan="2"></th>
-                                        </tr>
-                                    </tfoot>
-                                @endif
-                            </table>
-                        </div>
-
-                        <div class="page_bx1">
-                            {{ $settlements->links() }}
-                        </div>
-
-                        <div class="ttl01 mt30">정산 집행 현황</div>
-                        <div class="tb01 ovS">
-                            <table>
-                                <colgroup>
-                                    <col width="80px">
-                                    <col width="140px">
-                                    <col width="180px">
-                                    <col width="220px">
-                                    <col width="130px">
-                                    <col width="160px">
-                                    <col width="">
-                                </colgroup>
-                                <thead>
-                                    <tr>
-                                        <th>No</th>
-                                        <th>집행일</th>
-                                        <th>Shop 채널</th>
-                                        <th>집행 내역</th>
-                                        <th>금액</th>
-                                        <th>첨부자료</th>
-                                        <th>메모</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse($executions as $execution)
-                                        <tr>
-                                            <td>{{ $loop->iteration }}</td>
-                                            <td>{{ optional($execution->executed_at)->format('Y-m-d') }}</td>
-                                            <td>{{ $execution->shopChannel?->channel_name ?? '-' }}</td>
-                                            <td>{{ $execution->title }}</td>
-                                            <td class="t_r">{{ number_format($execution->amount) }} 원</td>
-                                            <td>
-                                                @if($execution->attachment_path)
-                                                    <a href="{{ route('channel.settlement.executions.download', $execution->id) }}" class="btn02">다운로드</a>
-                                                @else
-                                                    -
-                                                @endif
-                                            </td>
-                                            <td>{{ $execution->memo ?: '-' }}</td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="7" class="no_data">정산 집행 내역이 없습니다.</td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+<div id="contents"><div class="order-workspace settlement-workspace">
+<div class="order-page-heading"><div><p>정산관리</p><h1>정산 자료</h1></div></div>
+<section class="order-panel">
+<form id="settlement-search" method="GET" action="{{ route('channel.settlement.list') }}" class="order-search-row">
+<label class="grow">정산 기간<select name="period" required><option value="">기간을 선택하여 주세요</option>@foreach($periodOptions as $key=>$label)<option value="{{ $key }}" @selected($hasPeriod && $period===$key)>{{ substr($key,0,4) }}년 {{ substr($key,5,2) }}월</option>@endforeach</select></label><button type="submit" class="primary">검색</button>
+</form><p style="margin-top:16px;color:#667085">당월부터 최근 1년 이내, 한 번에 1개월 단위로 조회할 수 있습니다.</p>
+@if($errors->any())<p role="alert">{{ $errors->first() }}</p>@endif
+</section>
+@if(!$hasPeriod)
+<section class="order-panel"><p>정산 기간을 선택해 주십시오.</p></section>
+@else
+<section class="order-panel">
+<div class="order-toolbar"><h2>{{ $period }} 정산 내역</h2><a class="order-button" href="{{ route('channel.settlement.export',['period'=>$period,'kind'=>'orders']) }}">정산 상세 엑셀</a></div>
+<div class="order-table-scroll" tabindex="0"><table class="order-table"><thead><tr><th>Shop 채널</th><th>정산역할</th><th>PG</th><th>구매확정 주문</th><th>채널매출</th><th>채널매입</th><th>제공포인트</th><th>포인트 결제</th><th>SMS 후불</th><th>정산비용</th><th>상세</th></tr></thead><tbody>
+@forelse($settlements as $row)
+<tr><td>{{ $row->shop_channel_name }}</td><td>{{ ['seller'=>'자사상품 판매자','shared_fixed_supplier'=>'공유상품 제공자(고정가)','shared_fixed_reseller'=>'위탁판매자(고정가)','shared_free_supplier'=>'공유상품 제공자(자유가)','shared_free_reseller'=>'위탁판매자(자유가)'][$row->settlement_role] ?? $row->settlement_role }}</td><td>{{ $row->payment_gateway_type==='own_pg'?'자사PG':'공용PG' }}</td><td>{{ $row->order_count }}건</td>@foreach(['invoice_sales_amount','invoice_purchase_amount','point_deposit_amount','point_used_amount','sms_postpaid_amount','payout_amount'] as $key)<td>{{ number_format($row->$key) }} {{ str_starts_with($key,'point')?'P':'원' }}</td>@endforeach<td><a class="order-button" href="{{ route('channel.settlement.view',['period'=>$period,'shop_channel_id'=>$row->shop_channel_id?:0,'role'=>$row->settlement_role,'pg'=>$row->payment_gateway_type]) }}">보기</a></td></tr>
+@empty<tr><td colspan="11">정산 내역이 없습니다.</td></tr>@endforelse
+</tbody><tfoot><tr><th colspan="4">합계</th>@foreach(['invoice_sales_amount','invoice_purchase_amount','point_deposit_amount','point_used_amount','sms_postpaid_amount','payout_amount'] as $key)<td>{{ number_format($totals[$key]) }}</td>@endforeach<td></td></tr></tfoot></table></div>
+{{ $settlements->links() }}
+</section>
+<section class="order-panel"><div class="order-toolbar"><h2>반품·교환 추가 배송비</h2><a class="order-button" href="{{ route('channel.settlement.export',['period'=>$period,'kind'=>'shipping']) }}">추가 배송비 엑셀</a></div><p>공용PG 주문의 반품·교환 완료 월을 기준으로 조회합니다.</p><div class="order-table-scroll" tabindex="0"><table class="order-table"><thead><tr>@foreach(\App\Services\SettlementReport::SHIPPING_HEADERS as $header)<th>{{ $header }}</th>@endforeach</tr></thead><tbody>@forelse($shippingRows as $row)<tr>@foreach($row as $value)<td>{{ is_numeric($value)?number_format($value):$value }}</td>@endforeach</tr>@empty<tr><td colspan="9">추가 배송비 내역이 없습니다.</td></tr>@endforelse</tbody></table></div></section>
+@endif
+<section class="order-panel"><h2 style="margin-bottom:20px">정산 집행 현황</h2><div class="order-table-scroll" tabindex="0"><table class="order-table"><thead><tr><th>집행일</th><th>집행 내역</th><th>Shop 채널</th><th>금액</th><th>첨부자료</th><th>메모</th></tr></thead><tbody>
+@forelse($hasPeriod?$executions:collect() as $execution)
+<tr><td>{{ $execution->executed_at?->format('Y-m-d') }}</td><td>{{ $execution->title }}</td><td>{{ $execution->shopChannel?->channel_name }}</td><td>{{ number_format($execution->amount) }} 원</td><td>@if($execution->attachment_path)<a class="order-button" href="{{ route('channel.settlement.executions.download',$execution->id) }}">{{ $execution->attachment_name ?: '다운로드' }}</a>@else - @endif</td><td>{{ $execution->memo ?: '-' }}</td></tr>
+@empty<tr><td colspan="6">정산 집행 내역이 없습니다.</td></tr>@endforelse
+</tbody></table></div></section>
+</div></div>
 @endsection

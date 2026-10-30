@@ -7,9 +7,23 @@ use App\Support\OrderItemStatus;
 
 class ChannelOrderMetrics
 {
-    public function counts(int $vendorId): array
+    public function items(int $vendorId): \Illuminate\Database\Eloquent\Builder
     {
-        $items = OrdersProduct::where('vendor_id', $vendorId)
+        return OrdersProduct::where(function ($query) use ($vendorId) {
+            $query->where('orders_products.vendor_id', $vendorId)
+                ->orWhereHas('shopChannel', fn ($q) => $q->where('vendor_id', $vendorId))
+                ->orWhereHas('shopChannelProduct.shopChannel', fn ($q) => $q->where('vendor_id', $vendorId))
+                ->orWhereHas('product', fn ($q) => $q->where('vendor_id', $vendorId));
+        });
+    }
+
+    public function counts(int $vendorId, ?\Carbon\CarbonInterface $from = null, ?\Carbon\CarbonInterface $to = null): array
+    {
+        $items = $this->items($vendorId)
+            ->whereHas('order', fn ($q) => $q
+                ->when($from, fn ($q) => $q->where('created_at', '>=', $from))
+                ->when($to, fn ($q) => $q->where('created_at', '<=', $to)))
+            ->with('order:id,created_at')
             ->get(['order_id', 'item_status', 'status_code', 'settlement_status', 'created_at']);
 
         $statusOrderIds = [];
@@ -26,7 +40,7 @@ class ChannelOrderMetrics
         return [
             'total' => $items->pluck('order_id')->unique()->count(),
             'today_orders' => $items
-                ->filter(fn ($item) => $item->created_at && $item->created_at->isToday())
+                ->filter(fn ($item) => $item->order?->created_at?->isToday())
                 ->pluck('order_id')
                 ->unique()
                 ->count(),

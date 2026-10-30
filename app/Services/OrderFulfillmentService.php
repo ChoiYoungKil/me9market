@@ -13,6 +13,7 @@ class OrderFulfillmentService
         $target = OrderItemStatus::normalize($target);
         $current = $item->normalized_status;
         $allowed = [
+            OrderItemStatus::AWAITING_PAYMENT => [OrderItemStatus::PAID, OrderItemStatus::CANCELLED],
             OrderItemStatus::PAID => [OrderItemStatus::READY_TO_SHIP, OrderItemStatus::SHIPPING, OrderItemStatus::CANCELLED],
             OrderItemStatus::READY_TO_SHIP => [OrderItemStatus::SHIPPING, OrderItemStatus::CANCELLED],
             OrderItemStatus::SHIPPING => [OrderItemStatus::DELIVERED],

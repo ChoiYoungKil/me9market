@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 require __DIR__ . '/auth.php';
+Route::get('/policies/{policy}', [\App\Http\Controllers\Front\PolicyController::class, 'show'])->name('policies.show');
 Route::get('/__preview/account-recovery-mail/{id}', [\App\Http\Controllers\Dev\PreviewController::class, 'recoveryMail'])
     ->whereUuid('id')->name('local.preview.recovery_mail');
 
@@ -237,6 +238,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::group([], function () {
             Route::get('settlements', 'SettlementController@index')->middleware('admin.role:superadmin,admin')->name('admin.settlements.index');
             Route::post('settlements/generate', 'SettlementController@generate')->middleware('admin.role:superadmin,admin')->name('admin.settlements.generate');
+            Route::get('settlements/workbook/{period}', 'SettlementController@workbook')->middleware('admin.role:superadmin,admin')->name('admin.settlements.workbook');
             Route::get('settlements/preview', 'SettlementController@preview')->middleware('admin.role:superadmin,admin')->name('admin.settlements.preview');
             Route::post('settlements/executions', 'SettlementController@storeExecution')->middleware('admin.role:superadmin,admin')->name('admin.settlements.executions.store');
             Route::get('settlements/executions/{id}/download', 'SettlementController@downloadExecutionAttachment')->middleware('admin.role:superadmin,admin')->name('admin.settlements.executions.download');
@@ -263,7 +265,8 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         // 배송비 관리 페이지 (admin/shipping/shipping_charges.blade.php) 렌더링 (관리자 전용)
         Route::get('shipping-charges', 'ShippingController@shippingCharges')->name('admin.shipping.index');
         Route::post('shipping-charges', 'ShippingController@store')->name('admin.shipping.store');
-        Route::get('refund-policies', 'AdminController@refundPolicies')->name('admin.refund_policies');
+        Route::get('refund-policies', 'AdminController@refundPolicies')->middleware('admin.role:superadmin,admin')->name('admin.refund_policies');
+        Route::post('refund-policies/default', 'AdminController@saveDefaultRefundPolicy')->middleware('admin.role:superadmin,admin')->name('admin.refund_policies.default');
 
         // AJAX를 사용한 배송비 상태 업데이트 (active/inactive)
         Route::post('update-shipping-status', 'ShippingController@updateShippingStatus');
@@ -429,6 +432,7 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
         // Protected Channel Routes
         Route::group(['middleware' => ['admin']], function () {
             Route::get('/', 'App\Http\Controllers\Front\ChannelController@index')->name('channel.index');
+            Route::post('/dashboard/shortcuts', 'App\Http\Controllers\Front\ChannelController@saveDashboardShortcuts')->name('channel.dashboard.shortcuts');
 
             // 판매자 프로필 완성 (대기 중인 판매자용)
             Route::get('/complete-profile', 'App\Http\Controllers\Front\ChannelController@completeProfile')->name('channel.complete_profile');
@@ -436,10 +440,12 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
 
             // 상점 관리 (Sub01)
             Route::prefix('shop')->group(function () {
+                Route::get('/{id}/open', 'ChannelController@openDashboardShop')->whereNumber('id')->name('channel.shop.open');
                 Route::get('/list', 'ChannelController@shopList')->name('channel.shop_list');
                 Route::get('/register', 'ChannelController@shopRegister')->name('channel.shop_register');
                 Route::post('/register', 'ChannelController@shopRegisterSubmit')->name('channel.shop_register.submit');
                 Route::get('/private-access-template', 'ChannelController@privateAccessTemplate')->name('channel.shop.private_access.template');
+                Route::post('/private-access-preview', 'ChannelController@previewPrivateAccess')->name('channel.shop.private_access.preview');
                 Route::get('/info', 'ChannelController@shopInfo')->name('channel.shop_info');
                 Route::post('/delete/{id}', 'ChannelController@deleteShop')->name('channel.shop.delete');
                 Route::post('/copy/{id}', 'ChannelController@copyShop')->whereNumber('id')->name('channel.shop.copy');
@@ -449,6 +455,7 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
 
                 Route::get('/community/register', 'ChannelController@communityRegister')->name('channel.community.register');
                 Route::post('/community/register', 'ChannelController@communityRegisterSubmit')->name('channel.community.register.submit');
+                Route::get('/community/attachment/{id}','ChannelController@communityAttachment')->name('channel.community.attachment');
                 Route::get('/community/view/{id}', 'ChannelController@communityView')->name('channel.community.view');
                 Route::get('/community/update/{id}', 'ChannelController@communityUpdate')->name('channel.community.update');
                 Route::post('/community/update/{id}', 'ChannelController@communityUpdateSubmit')->name('channel.community.update.submit');
@@ -456,6 +463,8 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
                 Route::get('/info-update/{id}', 'ChannelController@infoUpdate')->name('channel.info_update');
                 Route::post('/info-update/{id}', 'ChannelController@infoUpdateSubmit')->name('channel.info_update.submit');
 
+                Route::get('/product/quote','ChannelProductController@quote')->name('channel.product.quote');
+                Route::post('/product/favorite','ChannelProductController@favorite')->name('channel.product.favorite');
                 Route::post('/product/own/store', 'ChannelProductController@storeOwnProduct')->name('channel.product.own.store');
                 Route::post('/product/public/store', 'ChannelProductController@storePublicProduct')->name('channel.product.public.store');
                 Route::post('/product/partial/store', 'ChannelProductController@storePartialProduct')->name('channel.product.partial.store');
@@ -515,47 +524,56 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
             // Settlement Management (Sub05)
             Route::prefix('settlement')->group(function () {
                 Route::get('/list', 'ChannelSettlementController@index')->name('channel.settlement.list');
+                Route::get('/export', 'ChannelSettlementController@export')->name('channel.settlement.export');
                 Route::get('/view/{period}', 'ChannelSettlementController@view')->name('channel.settlement.view');
                 Route::get('/executions/{id}/download', 'ChannelSettlementController@downloadExecutionAttachment')->name('channel.settlement.executions.download');
             });
 
             // Joint Purchase Management (Sub03) (RF-02-06-XX)
             Route::prefix('joint-purchase')->group(function () {
-                Route::get('/list', 'ChannelController@jointPurchaseList')->name('channel.joint_purchase.list');
-                Route::get('/create', 'ChannelController@jointPurchaseCreate')->name('channel.joint_purchase.create');
-                Route::post('/store', 'ChannelController@jointPurchaseStore')->name('channel.joint_purchase.store');
-                Route::get('/edit/{id}', 'ChannelController@jointPurchaseEdit')->name('channel.joint_purchase.edit');
-                Route::post('/update/{id}', 'ChannelController@jointPurchaseUpdate')->name('channel.joint_purchase.update');
+                Route::post('/delete/{id}', 'ChannelJointPurchaseController@destroy')->whereNumber('id')->name('channel.joint_purchase.delete');
+                Route::get('/list', 'ChannelJointPurchaseController@index')->name('channel.joint_purchase.list');
+                Route::get('/create', 'ChannelJointPurchaseController@create')->name('channel.joint_purchase.create');
+                Route::post('/store', 'ChannelJointPurchaseController@store')->name('channel.joint_purchase.store');
+                Route::get('/edit/{id}', 'ChannelJointPurchaseController@edit')->whereNumber('id')->name('channel.joint_purchase.edit');
+                Route::post('/update/{id}', 'ChannelJointPurchaseController@update')->whereNumber('id')->name('channel.joint_purchase.update');
             });
 
             // Settings / Additional Info (Sub00)
             Route::prefix('settings')->group(function () {
-                Route::get('/delivery', 'ChannelController@deliveryChargeList')->name('channel.delivery.list');
-                Route::post('/delivery/store', 'ChannelController@storeDeliveryCharge')->name('channel.delivery.store');
-                Route::post('/delivery/{id}/update', 'ChannelController@updateDeliveryCharge')->name('channel.delivery.update');
-                Route::post('/delivery/{id}/delete', 'ChannelController@deleteDeliveryCharge')->name('channel.delivery.delete');
-                Route::get('/refund', 'ChannelController@cancelRefundList')->name('channel.refund.list');
+                Route::get('/delivery', 'ChannelDeliveryController@index')->name('channel.delivery.list');
+                Route::post('/delivery/preview', 'ChannelDeliveryController@preview')->middleware('throttle:60,1')->name('channel.delivery.preview');
+                Route::get('/delivery/{id}', 'ChannelDeliveryController@show')->whereNumber('id')->name('channel.delivery.show');
+                Route::post('/delivery/{id}/copy', 'ChannelDeliveryController@copy')->whereNumber('id')->name('channel.delivery.copy');
+                Route::post('/delivery/store', 'ChannelDeliveryController@store')->name('channel.delivery.store');
+                Route::post('/delivery/{id}/update', 'ChannelDeliveryController@update')->name('channel.delivery.update');
+                Route::post('/delivery/{id}/delete', 'ChannelDeliveryController@destroy')->name('channel.delivery.delete');
+                Route::get('/refund', 'ChannelRefundPolicyController@index')->name('channel.refund.list');
 
                 // 취소/환불 정책 CRUD
-                Route::post('/refund/store', 'ChannelController@storeCancelRefundPolicy')->name('channel.refund.store');
-                Route::get('/refund/{id}', 'ChannelController@getCancelRefundPolicy')->name('channel.refund.get');
-                Route::post('/refund/{id}/update', 'ChannelController@updateCancelRefundPolicy')->name('channel.refund.update');
-                Route::post('/refund/{id}/delete', 'ChannelController@deleteCancelRefundPolicy')->name('channel.refund.delete');
-                Route::post('/refund/{id}/copy', 'ChannelController@copyCancelRefundPolicy')->name('channel.refund.copy');
+                Route::post('/refund/store', 'ChannelRefundPolicyController@store')->name('channel.refund.store');
+                Route::get('/refund/{id}', 'ChannelRefundPolicyController@show')->name('channel.refund.get');
+                Route::post('/refund/{id}/update', 'ChannelRefundPolicyController@update')->name('channel.refund.update');
+                Route::post('/refund/{id}/delete', 'ChannelRefundPolicyController@destroy')->name('channel.refund.delete');
+                Route::post('/refund/{id}/copy', 'ChannelRefundPolicyController@copy')->name('channel.refund.copy');
 
                 Route::get('/info', 'ChannelController@infoManagement')->name('channel.info.management');
                 Route::post('/info/update', 'ChannelController@updateInfo')->name('channel.info.update');
+                Route::get('/documents/{kind}/{mode}', 'ChannelController@informationDocument')->whereIn('kind', ['license','bankbook'])->whereIn('mode', ['view','download'])->name('channel.info.document');
                 Route::post('/operation-stop', 'ChannelController@requestOperationStop')->name('channel.operation_stop.request');
                 Route::post('/update-password', 'ChannelController@updatePassword')->name('channel.update_password');
-                Route::get('/order-manager', 'ChannelController@orderManagerList')->name('channel.order.manager');
-                Route::post('/order-manager/store', 'ChannelController@storeOrderManager')->name('channel.order.manager.store');
-                Route::post('/order-manager/{id}/update', 'ChannelController@updateOrderManager')->name('channel.order.manager.update');
-                Route::post('/order-manager/{id}/portal', 'ChannelController@openOrderManagerPortal')->name('channel.order.manager.portal');
-                Route::get('/points', 'ChannelController@pointList')->name('channel.point.list');
-                Route::get('/sub-accounts', 'ChannelController@subList')->name('channel.sub_accounts.list');
-                Route::post('/sub-accounts/store', 'ChannelController@storeSubAccount')->name('channel.sub_accounts.store');
-                Route::post('/sub-accounts/{id}/update', 'ChannelController@updateSubAccount')->name('channel.sub_accounts.update');
-                Route::post('/sub-accounts/{id}/delete', 'ChannelController@deleteSubAccount')->name('channel.sub_accounts.delete');
+                Route::post('/order-manager/check-email', 'ChannelOrderManagerController@checkEmail')->middleware('throttle:30,1')->name('channel.order.manager.check_email');
+                Route::get('/order-manager/{id}', 'ChannelOrderManagerController@show')->whereNumber('id')->name('channel.order.manager.show');
+                Route::get('/order-manager', 'ChannelOrderManagerController@index')->name('channel.order.manager');
+                Route::post('/order-manager/store', 'ChannelOrderManagerController@store')->name('channel.order.manager.store');
+                Route::post('/order-manager/{id}/update', 'ChannelOrderManagerController@update')->name('channel.order.manager.update');
+                Route::post('/order-manager/{id}/portal', 'ChannelOrderManagerController@portal')->name('channel.order.manager.portal');
+                Route::get('/points', 'ChannelPointHistoryController@index')->name('channel.point.list');
+                Route::post('/sub-accounts/member-lookup', 'ChannelSubAccountController@lookup')->middleware('throttle:30,1')->name('channel.sub_accounts.lookup');
+                Route::get('/sub-accounts', 'ChannelSubAccountController@index')->name('channel.sub_accounts.list');
+                Route::post('/sub-accounts/store', 'ChannelSubAccountController@store')->name('channel.sub_accounts.store');
+                Route::post('/sub-accounts/{id}/update', 'ChannelSubAccountController@update')->name('channel.sub_accounts.update');
+                Route::post('/sub-accounts/{id}/delete', 'ChannelSubAccountController@destroy')->name('channel.sub_accounts.delete');
             });
         });
     });

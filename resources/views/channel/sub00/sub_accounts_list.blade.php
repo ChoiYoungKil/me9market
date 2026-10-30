@@ -1,239 +1,35 @@
 @extends('layouts.channel')
-
-@php
-    $dep1_id = "00";
-    $dep1_tit = "서브관리자관리";
-@endphp
-
-@section('page_type', 'sub')
-
-@section('content')
-<div id="contents">
-    <div class="row">
-        <div class="box box1">
-            <div class="page_info">
-                <div class="ttl">서브관리자 관리</div>
-                <ul class="dep">
-                    <li>HOME</li>
-                    <li>서브관리자 관리</li>
-                </ul>
-            </div>
-            <div class="conbx">
-                <div class="con_w">
-                    @if(session('flash_message_success'))
-                        <div class="alert alert-success">{{ session('flash_message_success') }}</div>
-                    @endif
-
-                    <form method="GET" action="{{ route('channel.sub_accounts.list') }}">
-                        <div class="tb01">
-                            <table>
-                                <colgroup>
-                                    <col width="160px">
-                                    <col width="">
-                                </colgroup>
-                                <tbody class="textL">
-                                    <tr>
-                                        <th class="w160"><span>검색어</span></th>
-                                        <td>
-                                            <input type="text" name="keyword" value="{{ $keyword }}" placeholder="회원번호, 이메일, 이름, 연락처">
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div class="btm_btn right mt10 search-actions">
-                            <button type="submit" class="type2">검색</button>
-                            <a href="{{ route('channel.sub_accounts.list') }}" class="col5">초기화</a>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-        <div class="box box1">
-            <div class="conbx">
-                <div class="con_w">
-                    <div class="list_top1 btn">
-                        <div class="count">총 <strong>{{ $accounts->total() }}</strong> 건</div>
-                        <div class="btn_bx">
-                            <a href="{{ url()->current() }}" class="btn01 col5 pop_btn" data-pop="pop_sub_create">서브관리자 등록</a>
-                        </div>
-                    </div>
-                    <div class="tb01 ovS">
-                        <table>
-                            <colgroup>
-                                <col width="80px">
-                                <col width="80px">
-                                <col width="120px">
-                                <col width="">
-                                <col width="120px">
-                                <col width="230px">
-                                <col width="180px">
-                                <col width="180px">
-                            </colgroup>
-                            <thead>
-                                <tr>
-                                    <th>No</th>
-                                    <th>상태</th>
-                                    <th>회원번호</th>
-                                    <th>이메일</th>
-                                    <th>관리자명</th>
-                                    <th>운영기간</th>
-                                    <th>권한</th>
-                                    <th>관리</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($accounts as $account)
-                                    @php
-                                        $permissions = collect($account->permissions ?? [])->map(fn ($value) => $permissionLabels[$value] ?? $value)->implode('<br>');
-                                    @endphp
-                                    <tr>
-                                        <td>{{ $accounts->firstItem() + $loop->index }}</td>
-                                        <td>{{ $account->admin?->status ? '운영' : '중지' }}</td>
-                                        <td>{{ $account->member_no ?: '-' }}</td>
-                                        <td class="t_l">{{ $account->admin?->email }}</td>
-                                        <td>{{ $account->admin?->name }}</td>
-                                        <td>
-                                            {{ optional($account->started_at)->format('Y.m.d') ?: '-' }}
-                                            ~
-                                            {{ optional($account->ended_at)->format('Y.m.d') ?: '-' }}
-                                        </td>
-                                        <td>{!! $permissions ?: '-' !!}</td>
-                                        <td>
-                                            <a href="{{ url()->current() }}" class="btn02 col5 pop_btn" data-pop="pop_sub_view_{{ $account->id }}">보기</a>
-                                            <a href="{{ url()->current() }}" class="btn02 col7 pop_btn" data-pop="pop_sub_edit_{{ $account->id }}">수정</a>
-                                            <form method="POST" action="{{ route('channel.sub_accounts.delete', $account->id) }}" style="display:inline;" onsubmit="return confirm('서브관리자를 삭제하시겠습니까?');">
-                                                @csrf
-                                                <button type="submit" class="btn02">삭제</button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="8" class="no_data" style="padding: 80px 0;">등록된 서브관리자가 없습니다.</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="page_bx1">
-                        {{ $accounts->links() }}
-                    </div>
-
-                    <div class="popup_bx" data-id="pop_sub_create">
-                        <div class="pop_w">
-                            <div class="pop_inner">
-                                <div class="pop_con w800">
-                                    <div class="close_btn close1">닫기</div>
-                                    <div class="page_info type2">
-                                        <div class="ttl">서브관리자 등록</div>
-                                    </div>
-                                    <form method="POST" action="{{ route('channel.sub_accounts.store') }}">
-                                        @csrf
-                                        @include('channel.sub00.inc.sub_account_form', ['account' => null])
-                                        <div class="btm_btn mt10">
-                                            <button type="submit">서브관리자 등록</button>
-                                            <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    @foreach($accounts as $account)
-                        @php
-                            $permissions = collect($account->permissions ?? [])->map(fn ($value) => $permissionLabels[$value] ?? $value)->implode('<br>');
-                        @endphp
-                        <div class="popup_bx" data-id="pop_sub_view_{{ $account->id }}">
-                            <div class="pop_w">
-                                <div class="pop_inner">
-                                    <div class="pop_con w800">
-                                        <div class="close_btn close1">닫기</div>
-                                        <div class="page_info type2">
-                                            <div class="ttl">서브관리자 보기</div>
-                                        </div>
-                                        <div class="conbx">
-                                            <div class="con_w">
-                                                <div class="tb01">
-                                                    <table>
-                                                        <tbody class="textL">
-                                                            <tr><th class="w160"><span>상태</span></th><td>{{ $account->admin?->status ? '운영' : '중지' }}</td></tr>
-                                                            <tr><th class="w160"><span>회원번호</span></th><td>{{ $account->member_no ?: '-' }}</td></tr>
-                                                            <tr><th class="w160"><span>이메일</span></th><td>{{ $account->admin?->email }}</td></tr>
-                                                            <tr><th class="w160"><span>관리자명</span></th><td>{{ $account->admin?->name }}</td></tr>
-                                                            <tr><th class="w160"><span>연락처</span></th><td>{{ $account->admin?->mobile ?: '-' }}</td></tr>
-                                                            <tr><th class="w160"><span>이용기간</span></th><td>{{ optional($account->started_at)->format('Y.m.d') ?: '-' }} ~ {{ optional($account->ended_at)->format('Y.m.d') ?: '-' }}</td></tr>
-                                                            <tr><th class="w160"><span>권한</span></th><td>{!! $permissions ?: '-' !!}</td></tr>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="btm_btn mt10">
-                                            <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="popup_bx" data-id="pop_sub_edit_{{ $account->id }}">
-                            <div class="pop_w">
-                                <div class="pop_inner">
-                                    <div class="pop_con w800">
-                                        <div class="close_btn close1">닫기</div>
-                                        <div class="page_info type2">
-                                            <div class="ttl">서브관리자 수정</div>
-                                        </div>
-                                        <form method="POST" action="{{ route('channel.sub_accounts.update', $account->id) }}">
-                                            @csrf
-                                            @include('channel.sub00.inc.sub_account_form', ['account' => $account])
-                                            <div class="btm_btn mt10">
-                                                <button type="submit">서브관리자 수정</button>
-                                                <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-@endsection
-
-@push('scripts')
-<script type="text/javascript">
-    $(".pop_btn").click(function () {
-        var popId = $(this).attr("data-pop");
-        $(".popup_bx[data-id='" + popId + "']").stop().fadeIn(300);
-        $(".popup_bx[data-id='" + popId + "']").scrollTop(0);
-        return false;
-    });
-    $(".popup_bx .close_btn").click(function () {
-        $(this).parents(".popup_bx").stop().fadeOut(300);
-        return false;
-    });
-
-    $(".datepicker").datepicker({
-        dateFormat: 'yy-mm-dd',
-        showOtherMonths: true,
-        showMonthAfterYear: true,
-        changeYear: true,
-        changeMonth: true,
-        yearSuffix: "년",
-        monthNamesShort: ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'],
-        monthNames: ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'],
-        dayNamesMin: ['일', '월', '화', '수', '목', '금', '토'],
-        dayNames: ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'],
-        minDate: "-5y",
-        maxDate: "+5y"
-    });
-</script>
+@section('page_type','sub')
+@php($dep1_id='00')
+@push('styles')
+<link rel="stylesheet" href="/channel_assets/css/order-workspace.css?v={{ filemtime(public_path('channel_assets/css/order-workspace.css')) }}">
+<link rel="stylesheet" href="/channel_assets/css/sub-accounts.css?v={{ filemtime(public_path('channel_assets/css/sub-accounts.css')) }}">
 @endpush
+@section('content')
+<div id="contents"><div class="order-workspace subaccount-workspace" data-active-form="{{ $activeForm }}">
+<div class="order-page-heading"><div><p>환경설정</p><h1>서브관리자 관리</h1></div><button class="primary" type="button" data-dialog-open="subaccount-create">서브관리자 등록</button></div>
+@if(session('flash_message_success'))<section class="order-panel" role="status">{{ session('flash_message_success') }}</section>@endif
+@if($errors->any())<section class="order-panel subaccount-error" role="alert">{{ $errors->first() }}</section>@endif
+<section class="order-panel"><form method="GET" action="{{ route('channel.sub_accounts.list') }}" class="order-search-row"><label class="grow">검색어<input name="keyword" value="{{ $keyword }}" placeholder="회원번호, 아이디, 이메일, 이름, 연락처"></label><button type="submit" class="primary">검색</button><a class="order-button" href="{{ route('channel.sub_accounts.list') }}">초기화</a></form></section>
+<section class="order-panel"><div class="order-toolbar"><h2>서브관리자 목록</h2><p>총 <strong>{{ $accounts->total() }}</strong> 건</p></div>
+<div class="order-table-scroll" tabindex="0"><table class="order-table"><thead><tr><th>No</th><th>상태</th><th>회원번호</th><th>회원아이디</th><th>회원명</th><th>이용기간</th><th>권한</th><th>관리</th></tr></thead><tbody>
+@forelse($accounts as $account)
+<tr><td>{{ $accounts->firstItem()+$loop->index }}</td><td><span class="order-state">{{ $account->access_status }}</span></td><td>{{ $account->member?->member_number ?: $account->member_no ?: '-' }}</td><td>{{ $account->member?->username ?: $account->member?->email ?: $account->admin?->email }}</td><td>{{ $account->member?->name ?: $account->admin?->name }}</td><td>{{ $account->started_at?->format('Y.m.d H:i') ?: '-' }}<br>~ {{ $account->ended_at?->format('Y.m.d H:i') ?: '-' }}</td><td>@forelse($account->permissions ?? [] as $permission)<span class="subaccount-permission">{{ $permissionLabels[$permission] ?? $permission }}</span>@empty - @endforelse</td><td><div class="subaccount-actions"><button type="button" data-dialog-open="subaccount-view-{{ $account->id }}">보기</button><button type="button" data-dialog-open="subaccount-edit-{{ $account->id }}">수정</button></div></td></tr>
+@empty<tr><td colspan="8" class="order-empty">등록된 서브관리자가 없습니다.</td></tr>
+@endforelse
+</tbody></table></div>{{ $accounts->links() }}</section>
+</div></div>
+<dialog class="order-dialog subaccount-dialog" id="subaccount-create" aria-labelledby="subaccount-create-title"><div class="order-dialog-heading"><h2 id="subaccount-create-title">서브관리자 등록</h2><button type="button" data-dialog-close>창닫기</button></div>
+<form method="POST" action="{{ route('channel.sub_accounts.store') }}" data-subaccount-form>@csrf
+@include('channel.sub00.inc.sub_account_form',['account'=>null])
+@if(old('form_key')==='create' && $errors->any())<p role="alert" class="subaccount-error">{{ $errors->first() }}</p>@endif
+<div class="order-actions"><button type="button" data-dialog-close>취소</button><button type="submit" class="primary">서브관리자 등록</button></div></form></dialog>
+@foreach($accounts as $account)
+<dialog class="order-dialog subaccount-dialog" id="subaccount-view-{{ $account->id }}" aria-labelledby="subaccount-view-title-{{ $account->id }}"><div class="order-dialog-heading"><h2 id="subaccount-view-title-{{ $account->id }}">서브관리자 보기</h2><button type="button" data-dialog-close>창닫기</button></div><h3>회원정보</h3><dl class="subaccount-facts"><div><dt>회원번호</dt><dd>{{ $account->member?->member_number ?: $account->member_no ?: '-' }}</dd></div><div><dt>회원아이디</dt><dd>{{ $account->member?->username ?: $account->member?->email ?: $account->admin?->email }}</dd></div><div><dt>회원명</dt><dd>{{ $account->member?->name ?: $account->admin?->name }}</dd></div></dl><h3>서브관리정보</h3><dl class="subaccount-facts"><div><dt>이용 상태</dt><dd>{{ $account->access_status }}</dd></div><div><dt>이용기간</dt><dd>{{ $account->started_at?->format('Y.m.d H:i') ?: '-' }} ~ {{ $account->ended_at?->format('Y.m.d H:i') ?: '-' }}</dd></div><div><dt>서브관리 권한</dt><dd>@forelse($account->permissions ?? [] as $permission)<span class="subaccount-permission">{{ $permissionLabels[$permission] ?? $permission }}</span>@empty - @endforelse</dd></div></dl></dialog>
+<dialog class="order-dialog subaccount-dialog" id="subaccount-edit-{{ $account->id }}" aria-labelledby="subaccount-edit-title-{{ $account->id }}"><div class="order-dialog-heading"><h2 id="subaccount-edit-title-{{ $account->id }}">서브관리자 수정</h2><button type="button" data-dialog-close>창닫기</button></div><form method="POST" action="{{ route('channel.sub_accounts.update',$account->id) }}" data-subaccount-form>@csrf
+@include('channel.sub00.inc.sub_account_form',['account'=>$account])
+@if(old('form_key')==='edit-'.$account->id && $errors->any())<p role="alert" class="subaccount-error">{{ $errors->first() }}</p>@endif
+<div class="order-actions"><button type="button" data-dialog-close>취소</button><button type="submit" class="primary">서브관리자 수정</button></div></form></dialog>
+@endforeach
+@endsection
+@push('scripts')<script src="/channel_assets/js/sub-accounts.js?v={{ filemtime(public_path('channel_assets/js/sub-accounts.js')) }}" defer></script>@endpush

@@ -75,7 +75,8 @@ class DistributorController extends Controller
 
     public function logout(Request $request)
     {
-        $request->session()->invalidate();
+        $request->session()->forget(['distributor_id', 'distributor_name', 'distributor_email']);
+        $request->session()->regenerate();
         $request->session()->regenerateToken();
 
         return redirect()->route('distributor.login')->with('flash_message_success', '로그아웃 되었습니다.');

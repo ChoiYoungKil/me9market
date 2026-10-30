@@ -287,3 +287,8 @@ textarea.shop-control {min-height:100px; resize:vertical;}
 .shop-runtime #header .logo{width:157px;max-width:157px}
 .shop-runtime #header .logo img{display:block;width:auto;height:auto;max-width:100%;max-height:44px;object-fit:contain}
 @media(max-width:768px){.shop-runtime #header .logo{width:120px;max-width:120px}.shop-runtime #header .logo img{max-height:28px}}
+
+/* Channel settings: display the saved channel name when its logo is disabled. */
+.shop-runtime #header .logo .channel-name-logo{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;font-size:clamp(14px,1.4vw,18px);font-weight:700;line-height:1.2;color:#293245}
+
+@media(max-width:768px){.shop-runtime #header .logo .channel-name-logo{font-size:12px;line-height:1.15}}

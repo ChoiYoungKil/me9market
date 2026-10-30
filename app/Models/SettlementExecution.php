@@ -17,6 +17,7 @@ class SettlementExecution extends Model
         'registered_by',
         'memo',
         'attachment_path',
+        'attachment_disk',
         'attachment_name',
     ];
 

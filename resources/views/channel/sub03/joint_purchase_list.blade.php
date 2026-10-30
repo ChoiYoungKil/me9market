@@ -1,101 +1,23 @@
 @extends('layouts.channel')
-
-@section('page_type', 'sub')
-@php
-    $dep1_id = "03";
-@endphp
-
+@section('page_type','sub')
+@php $dep1_id='03';$stateNames=[0=>'대기',1=>'진행중',2=>'마감']; @endphp
+@push('styles')
+<link rel="stylesheet" href="{{ asset('channel_assets/css/shop-configuration.css') }}?v={{ filemtime(public_path('channel_assets/css/shop-configuration.css')) }}">
+<link rel="stylesheet" href="{{ asset('channel_assets/css/joint-purchase.css') }}?v={{ filemtime(public_path('channel_assets/css/joint-purchase.css')) }}">
+@endpush
 @section('content')
-    <div id="contents">
-        <div class="row">
-            <div class="box box1">
-                <div class="page_info">
-                    <div class="ttl">공동구매 상품 목록</div>
-                    <ul class="dep">
-                        <li>HOME</li>
-                        <li>공동구매 관리</li>
-                        <li>공동구매 상품 목록</li>
-                    </ul>
-                </div>
-                <div class="conbx">
-                    <div class="con_w">
-                        <div class="list_top1" style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px;">
-                            <div class="count">총 <strong>{{ $jointPurchases->total() }}</strong> 건</div>
-                            <a href="{{ route('channel.joint_purchase.create') }}" class="btn02">공동구매 상품등록</a>
-                        </div>
-
-                        @if(session('success_message'))
-                            <div style="background: #e2f0d9; color: #385723; padding: 10px; margin-bottom: 15px; border-radius: 4px; font-weight: bold;">
-                                {{ session('success_message') }}
-                            </div>
-                        @endif
-
-                        <div class="tb01 ovS">
-                            <table>
-                                <colgroup>
-                                    <col width="80px">
-                                    <col width="150px">
-                                    <col width="">
-                                    <col width="120px">
-                                    <col width="120px">
-                                    <col width="180px">
-                                    <col width="100px">
-                                    <col width="150px">
-                                </colgroup>
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>상품코드</th>
-                                        <th>상품명</th>
-                                        <th>목표수량</th>
-                                        <th>현재수량</th>
-                                        <th>할인가격</th>
-                                        <th>기간</th>
-                                        <th>관리</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="textL">
-                                    @forelse($jointPurchases as $jp)
-                                        <tr>
-                                            <td class="t_c">{{ $jp->id }}</td>
-                                            <td class="t_c">{{ $jp->product_code ?? '-' }}</td>
-                                            <td><strong>{{ $jp->product_name ?? '삭제된 상품' }}</strong></td>
-                                            <td class="t_c">{{ number_format($jp->min_quantity) }}개</td>
-                                            <td class="t_c">{{ number_format($jp->current_quantity) }}개</td>
-                                            <td class="t_c" style="color: #d90000; font-weight: bold;">
-                                                @php
-                                                    $pricing = app(\App\Services\JointPurchasePricingService::class);
-                                                    $currentPrice = $pricing->priceForQuantity($jp, max(1, (int) $jp->current_quantity));
-                                                @endphp
-                                                {{ number_format($currentPrice['unit_price']) }}원
-                                                <div style="margin-top:4px; color:#667085; font-weight:400; font-size:12px;">
-                                                    @foreach($pricing->tiers((int) $jp->id) as $tier)
-                                                        {{ number_format($tier->min_quantity) }}~{{ $tier->max_quantity ? number_format($tier->max_quantity) : '이상' }}개 {{ number_format($tier->unit_price) }}원<br>
-                                                    @endforeach
-                                                </div>
-                                            </td>
-                                            <td class="t_c">{{ $jp->start_date }} ~ {{ $jp->end_date }}</td>
-                                            <td class="t_c">
-                                                <a href="{{ route('channel.order.joint_list', ['search_type' => 'product_code', 'keyword' => $jp->product_code, 'detail_open' => 1]) }}" class="btn02">주문내역</a>
-                                                <a href="{{ route('channel.joint_purchase.edit', ['id' => $jp->id]) }}" class="btn02 col7">수정</a>
-                                                <a href="/shop-channel/joint-purchases/{{ $jp->id }}" class="btn02 col5" target="_blank">상세화면</a>
-                                            </td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="8" class="t_c" style="padding: 50px 0;">등록된 공동구매 상품이 없습니다.</td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div class="btm_btn mt10" style="display: flex; justify-content: center;">
-                            {{ $jointPurchases->links() }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+<div id="contents"><div class="channel-shop joint-manager" id="joint-list"><header><p>GROUP PURCHASE</p><h1>공동구매 상품목록</h1></header>
+@if(session('success_message'))<p class="shop-feedback" role="status">{{ session('success_message') }}</p>@endif
+@if($errors->any())<div class="shop-feedback error" role="alert">@foreach($errors->all() as $error)<p>{{ $error }}</p>@endforeach</div>@endif
+<section class="shop-panel"><form method="get" id="joint-search"><div class="joint-search"><label>검색구분<select name="search_type"><option value="name" @selected(($filters['search_type']??'name')==='name')>공동구매상품명</option><option value="code" @selected(($filters['search_type']??'')==='code')>공동구매상품 코드</option></select></label><label>검색어<input name="q" value="{{ $filters['q']??'' }}" maxlength="150"></label><button type="button" id="joint-search-toggle" aria-expanded="{{ request()->hasAny(['date_from','date_to','states'])?'true':'false' }}">상세검색</button><button type="submit" class="primary">검색</button><a class="joint-button" href="{{ route('channel.joint_purchase.list') }}">초기화</a></div>
+<div id="joint-search-details" @if(!request()->hasAny(['date_from','date_to','states'])) hidden @endif><div class="joint-period"><label>판매기간 시작<input type="date" name="date_from" value="{{ $filters['date_from']??'' }}"></label><span>~</span><label>판매기간 종료<input type="date" name="date_to" value="{{ $filters['date_to']??'' }}"></label></div><fieldset><legend>상태</legend><label><input type="checkbox" id="joint-all-states" @checked(empty($filters['states']))>전체</label>@foreach($stateNames as $value=>$label)<label><input type="checkbox" name="states[]" value="{{ $value }}" @checked(in_array((string)$value,$filters['states']??[],true))>{{ $label }}</label>@endforeach</fieldset></div>
+<div class="joint-toolbar"><h2>총 {{ $jointPurchases->total() }}건</h2><div><label>목록 개수<select name="per_page" aria-label="목록 개수">@foreach([20,40,60,80,100] as $n)<option @selected((int)($filters['per_page']??20)===$n)>{{ $n }}</option>@endforeach</select></label><a class="joint-button primary" href="{{ route('channel.joint_purchase.create') }}">공동구매 상품등록</a></div></div></form>
+<div class="table-scroll"><table class="joint-table"><colgroup><col style="width:140px"><col style="width:245px"><col style="width:80px"><col style="width:155px"><col style="width:100px"><col style="width:140px"><col style="width:230px"></colgroup><thead><tr><th>공동구매 코드</th><th>상품 / 판매명</th><th>상태</th><th>판매가격 / 혜택</th><th>판매수량</th><th>판매기간</th><th>관리</th></tr></thead><tbody>
+@forelse($jointPurchases as $jp)@php $state=\App\Models\JointPurchase::state($jp); @endphp
+<tr><td>{{ $jp->purchase_code?:$jp->product->product_code }}</td><td>@include('channel.sub01.inc.catalog_product_name',['catalogProduct'=>$jp->product,'showCode'=>false])@if($jp->sale_name)<small class="sale-name">판매명: {{ $jp->sale_name }}</small>@endif</td><td><span class="joint-state state-{{ $state }}">{{ $stateNames[$state] }}</span></td><td>{{ number_format($jp->discount_price) }}원@if($jp->benefits!==null)@foreach($jp->benefits as $benefit)<small>{{ number_format($benefit['quantity']) }}개 이상 · 개당 {{ number_format($benefit['amount']) }}원 할인</small>@endforeach @else<small>기존 수량별 판매가 적용</small>@endif</td><td>{{ number_format($jp->current_quantity) }}개</td><td>{{ $jp->period_enabled?($jp->start_date.' ~ '.$jp->end_date):'기간 설정 없음' }}</td><td><div class="joint-row-actions"><a class="joint-button" href="{{ route('channel.joint_purchase.edit',$jp->id) }}">수정</a><button type="button" data-delete-joint="{{ $jp->id }}" data-joint-name="{{ $jp->sale_name?:$jp->product->product_name }}" @disabled($state!==0)>삭제</button><a class="joint-button" href="{{ route('channel.order.joint_list',['search_type'=>'product_code','keyword'=>$jp->product->product_code,'order_type'=>'joint','joint_purchase_id'=>$jp->id,'detail_open'=>1]) }}">주문내역</a></div></td></tr>
+@empty<tr><td colspan="7" class="empty">조건에 맞는 공동구매 상품이 없습니다.</td></tr>@endforelse
+</tbody></table></div>{{ $jointPurchases->links() }}</section>
+<dialog id="joint-delete-dialog"><h2>공동구매 상품 삭제</h2><p id="joint-delete-name"></p><p>공동구매상품 정보를 삭제하시겠습니까?</p><p class="shop-help">대기 상태이며 주문 이력이 없는 상품만 삭제할 수 있습니다.</p><form method="post" id="joint-delete-form">@csrf<div class="shop-actions"><button type="button" id="joint-delete-cancel" class="secondary">취소</button><button type="submit" class="danger">삭제 확인</button></div></form></dialog>
+</div></div>
 @endsection
+@push('scripts')<script src="{{ asset('channel_assets/js/joint-purchase.js') }}?v={{ filemtime(public_path('channel_assets/js/joint-purchase.js')) }}" defer></script>@endpush

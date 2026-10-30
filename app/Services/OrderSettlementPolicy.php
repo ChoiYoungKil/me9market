@@ -14,7 +14,8 @@ class OrderSettlementPolicy
         $productType = $shopProduct?->product_type ?: 'own';
         $isShared = in_array($productType, ['public', 'partial'], true);
         $isFixedShared = $isShared && $product?->price_constraint_enabled && $product?->price_constraint_type === 'fixed';
-        $rewardPoints = $isFixedShared ? 0 : max(0, (int) ($product?->reward_points ?? 0));
+        $rewardPoints = $shopProduct?->reward_points !== null ? max(0,(int)$shopProduct->reward_points)
+            : ($isFixedShared ? 0 : max(0, (int) ($product?->reward_points ?? 0)));
 
         return [
             'product_type' => $productType,
@@ -25,8 +26,8 @@ class OrderSettlementPolicy
             'payment_gateway_type' => $shop?->use_own_pg && $rewardPoints <= 0 && ! $isShared ? 'own_pg' : 'me9_pg',
             'settlement_type' => (int) ($shopProduct?->settlement_type_snapshot ?: $shop?->settlement_type ?: 1),
             'settlement_rate' => (float) ($shopProduct?->settlement_rate_snapshot ?? $shop?->settlement_rate ?? $product?->vendor?->commission ?? 0),
-            'profit_share_type' => $product?->profit_share_type,
-            'profit_share_value' => (float) ($product?->profit_share_value ?? 0),
+            'profit_share_type' => $product?->profit_share_type === 'base_percent' ? 'fixed' : $product?->profit_share_type,
+            'profit_share_value' => $product?->profit_share_type === 'base_percent' ? round((float) $product->product_price * (float) $product->profit_share_value / 100, 2) : (float) ($product?->profit_share_value ?? 0),
         ];
     }
 

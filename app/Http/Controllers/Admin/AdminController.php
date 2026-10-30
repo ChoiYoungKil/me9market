@@ -45,7 +45,17 @@ class AdminController extends Controller
         $policies = \App\Models\ShopCancelRefundPolicy::with('vendor')
             ->when($request->filled('search'), fn ($query) => $query->where('name', 'like', '%'.$request->string('search').'%'))
             ->latest()->paginate(20)->withQueryString();
-        return view('admin.refund_policies', compact('policies'));
+        $defaultRefundPolicy = \App\Models\PlatformRefundPolicy::currentContent();
+        return view('admin.refund_policies', compact('policies', 'defaultRefundPolicy'));
+    }
+
+    public function saveDefaultRefundPolicy(Request $request)
+    {
+        $data = $request->validate(['content' => 'required|string|max:30000']);
+        \App\Models\PlatformRefundPolicy::updateOrCreate(['id' => 1], [
+            'content' => trim($data['content']), 'updated_by' => Auth::guard('admin')->id(),
+        ]);
+        return back()->with('success_message', '기본 취소/환불 안내가 저장되었습니다.');
     }
 
     public function dashboard()

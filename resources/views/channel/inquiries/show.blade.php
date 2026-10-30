@@ -2,6 +2,16 @@
 
 @section('page_type', 'sub')
 
+@push('styles')
+<style>
+    .portal-channel #contents .channel-inquiry-actions { display:flex; justify-content:center; align-items:center; flex-wrap:wrap; gap:10px; margin-top:24px; }
+    .portal-channel #contents .channel-inquiry-actions > * { display:inline-flex; justify-content:center; align-items:center; box-sizing:border-box; width:160px; min-height:44px; margin:0; padding:10px 20px; border:1px solid #51489c; border-radius:6px; background:#51489c; color:#fff; font-family:inherit; font-size:14px; font-weight:700; line-height:1.4; cursor:pointer; text-decoration:none; }
+    .portal-channel #contents .channel-inquiry-actions .inquiry-list-button { border-color:#cbd2df; background:#fff; color:#394256; }
+    .portal-channel #contents .channel-inquiry-actions > *:focus-visible { outline:3px solid #bcb5e5; outline-offset:3px; }
+    .portal-channel #contents .channel-reply-input { background:#fff; border:1px solid #ccd3df; border-radius:5px; min-height:130px; padding:12px; line-height:1.7; color:#283244; resize:vertical; }
+</style>
+@endpush
+
 @section('content')
     <div id="contents">
         <div class="row">
@@ -94,9 +104,9 @@
                                             </td>
                                         </tr>
                                         <tr>
-                                            <th><span>답변내용</span></th>
+                                            <th><label for="inquiry-admin-reply">답변내용</label></th>
                                             <td>
-                                                <textarea name="admin_reply" required class="wFull">{{ old('admin_reply', $inquiry->admin_reply) }}</textarea>
+                                                <textarea id="inquiry-admin-reply" name="admin_reply" required class="wFull channel-reply-input" placeholder="고객에게 안내할 답변을 입력해 주세요.">{{ old('admin_reply', $inquiry->admin_reply) }}</textarea>
                                                 @error('admin_reply')
                                                     <p style="margin-top: 6px; color: #ef4444;">{{ $message }}</p>
                                                 @enderror
@@ -111,9 +121,9 @@
                                     </tbody>
                                 </table>
                             </div>
-                            <div class="btm_btn right mt20">
-                                <button type="submit" style="height: 40px; padding: 0 22px; border: 0; background: #3470f7; color: #fff; font-weight: 700; cursor: pointer;">답변저장</button>
-                                <a href="{{ route('channel.inquiries.index') }}">목록</a>
+                            <div class="channel-inquiry-actions">
+                                <button type="submit">답변 저장</button>
+                                <a class="inquiry-list-button" href="{{ route('channel.inquiries.index') }}">목록</a>
                             </div>
                         </form>
                     </div>

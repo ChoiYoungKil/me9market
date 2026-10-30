@@ -1,0 +1,2 @@
+<dl class="refund-facts"><div><dt>설정구분</dt><dd>{{ $policy->type==='default' ? '기본' : '사용자' }}</dd></div><div><dt>상태</dt><dd>{{ $policy->status==='active' ? '사용' : '중지' }}</dd></div><div><dt>취소/환불안내 명칭</dt><dd>{{ $policy->name }}</dd></div><div><dt>연결 상품수</dt><dd>{{ number_format($policy->linked_product_count) }}</dd></div></dl>
+<h3>취소/환불안내 내용</h3><div class="refund-content policy-rich-text">{!! app(\App\Services\RefundPolicyContent::class)->render($policy->content ?: '등록된 내용이 없습니다. 상품에는 공통 기본 안내가 표시됩니다.') !!}</div>

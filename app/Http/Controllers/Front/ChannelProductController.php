@@ -21,6 +21,29 @@ use Illuminate\Support\Facades\Schema;
 class ChannelProductController extends Controller
 {
     private const COMMISSION_VAT_MULTIPLIER = 1.1;
+    private array $createdProductImages = [];
+    private array $createdDetailImages = [];
+
+    public function quote(Request $request)
+    {
+        $d=$request->validate(['shop_id'=>'required|integer','product_id'=>'required|integer','selling_price'=>'required|numeric|min:0','reward_points'=>'nullable|integer|min:0']);
+        $shop=\App\Models\ShopChannel::where('vendor_id',Auth::guard('admin')->user()->vendor_id)->findOrFail($d['shop_id']);
+        $product=Product::findOrFail($d['product_id']);
+        $type=(int)$product->vendor_id===(int)$shop->vendor_id?'own':($product->is_public==='Yes'?'public':'partial');
+        try{return response()->json(['status'=>true,'pricing'=>$this->resolveShopProductPricing($product,$shop,(float)$d['selling_price'],$type)]);}
+        catch(ValidationException $e){return response()->json(['status'=>false,'minimum_price'=>$this->minimumSellingPrice($product,$shop),'message'=>collect($e->errors())->flatten()->first()]);}
+    }
+
+    public function favorite(Request $request)
+    {
+        $d=$request->validate(['product_id'=>'required|integer','favorite'=>'required|boolean']);
+        $vendor=Auth::guard('admin')->user()->vendor_id;
+        Product::where('vendor_id','!=',$vendor)->where('status',1)->where(fn($q)=>$q->where('is_public','Yes')->orWhere('is_partial','Yes'))->findOrFail($d['product_id']);
+        $q=\Illuminate\Support\Facades\DB::table('shop_product_favorites');
+        if($request->boolean('favorite'))$q->upsert([['vendor_id'=>$vendor,'product_id'=>$d['product_id'],'created_at'=>now(),'updated_at'=>now()]],['vendor_id','product_id'],['updated_at']);
+        else $q->where('vendor_id',$vendor)->where('product_id',$d['product_id'])->delete();
+        return response()->json(['status'=>true]);
+    }
 
     public function storeOwnProduct(Request $request)
     {
@@ -31,6 +54,7 @@ class ChannelProductController extends Controller
                 'shop_id' => 'required|exists:shop_channels,id',
                 'product_id' => 'required|exists:products,id',
                 'selling_price' => 'required|numeric|min:0',
+                'reward_points'=>'nullable|integer|min:0',
             ]);
 
             if ($validator->fails()) {
@@ -105,6 +129,7 @@ class ChannelProductController extends Controller
                 'shop_id' => 'required|exists:shop_channels,id',
                 'product_id' => 'required|exists:products,id',
                 'selling_price' => 'required|numeric|min:0',
+                'reward_points'=>'nullable|integer|min:0',
             ]);
 
             if ($validator->fails()) {
@@ -173,6 +198,7 @@ class ChannelProductController extends Controller
                 'shop_id' => 'required|exists:shop_channels,id',
                 'product_id' => 'required|exists:products,id',
                 'selling_price' => 'required|numeric|min:0',
+                'reward_points'=>'nullable|integer|min:0',
                 'request_reason' => 'nullable|string|max:1000',
             ]);
 
@@ -205,6 +231,7 @@ class ChannelProductController extends Controller
                     ->where('product_type', 'partial')
                     ->first();
 
+                if($existingShopProduct && $existingShopProduct->listed_at && $existingShopProduct->approval_status==='approved')return response()->json(['status'=>false,'message'=>'이미 채널에 추가된 상품입니다.']);
                 if ($existingShopProduct && $existingShopProduct->approval_status === 'pending') {
                     return response()->json(['status' => false, 'message' => '이미 판매 권한 요청이 접수된 상품입니다. 승인 후 판매할 수 있습니다.']);
                 }
@@ -224,6 +251,7 @@ class ChannelProductController extends Controller
                 $shopProduct->fill(array_merge([
                     'distributor_id' => $product->distributor_id,
                     'approval_status' => $existingShopProduct ? 'approved' : 'pending',
+                    'listed_at' => $existingShopProduct ? now() : null,
                     'request_reason' => $data['request_reason'] ?? null,
                     'requested_at' => $existingShopProduct?->requested_at ?? now(),
                     'status' => $existingShopProduct ? 1 : 0,
@@ -260,6 +288,7 @@ class ChannelProductController extends Controller
             'shop_id' => 'required|exists:shop_channels,id',
             'product_id' => 'required|exists:products,id',
             'selling_price' => 'required|numeric|min:0',
+                'reward_points'=>'nullable|integer|min:0',
             'request_reason' => 'required|string|max:1000',
         ]);
 
@@ -295,6 +324,7 @@ class ChannelProductController extends Controller
             'product_type' => 'partial',
         ]);
 
+        if($shopProduct->exists && in_array($shopProduct->approval_status,['pending','approved']))return response()->json(['status'=>false,'message'=>'이미 판매요청 또는 승인된 상품입니다.']);
         $shopProduct->distributor_id = $product->distributor_id;
         $shopProduct->approval_status = 'pending';
         $shopProduct->request_reason = $data['request_reason'];
@@ -302,6 +332,7 @@ class ChannelProductController extends Controller
         $shopProduct->reviewed_at = null;
         $shopProduct->reviewed_by = null;
         $shopProduct->status = 0;
+        $shopProduct->listed_at = null;
         $shopProduct->constraint_type = 'none';
         $shopProduct->stock = $product->stock ?? null;
 
@@ -347,6 +378,7 @@ class ChannelProductController extends Controller
                     return response()->json(['status' => false, 'message' => '변경 권한이 없습니다.']);
                 }
 
+                if($shopProduct->approval_status!=='approved'||!$shopProduct->listed_at)return response()->json(['status'=>false,'message'=>'판매 승인을 받고 상품추가를 완료해야 판매할 수 있습니다.']);
                 $shopProduct->status = $data['status'];
                 $shopProduct->save();
 
@@ -394,13 +426,16 @@ class ChannelProductController extends Controller
             ->where('vendor_id', $admin->vendor_id)
             ->firstOrFail();
 
+        abort_unless($shopProduct->approval_status==='approved' && $shopProduct->listed_at,403);
         $request->validate([
             'selling_price' => 'required|numeric|min:0',
+                'reward_points'=>'nullable|integer|min:0',
             'stock' => 'nullable|numeric|min:0',
             'purchase_limit' => 'nullable|numeric|min:0',
             'status' => 'required|in:0,1',
         ]);
 
+        if(!$request->has('reward_points'))$request->merge(['reward_points'=>$shopProduct->reward_points??$shopProduct->product->reward_points??0]);
         $pricing = $this->resolveShopProductPricing($shopProduct->product, $shop, (float) $request->input('selling_price'), $shopProduct->product_type ?: 'own');
         $shopProduct->product_price = $pricing['product_price'];
         $shopProduct->selling_price = $pricing['selling_price'];
@@ -461,7 +496,7 @@ class ChannelProductController extends Controller
         $profitShareLabel = '-';
         if ($product->profit_share_type === 'fixed') {
             $profitShareLabel = number_format((float) $product->profit_share_value) . ' 원';
-        } elseif ($product->profit_share_type === 'percent') {
+        } elseif (in_array($product->profit_share_type, ['percent', 'base_percent'], true)) {
             $profitShareLabel = rtrim(rtrim(number_format((float) $product->profit_share_value, 2), '0'), '.') . ' %';
         }
 
@@ -483,7 +518,7 @@ class ChannelProductController extends Controller
             $detailHtml = $detailImages ?: $detailHtml;
         }
 
-        $productArray = $product->toArray();
+        $productArray = $product->attributesToArray();
         $productArray['seller_name'] = $product->vendor?->vendorbusinessdetails?->shop_name ?? ($product->vendor?->name ?? '-');
         $productArray['tax_label'] = $taxLabels[$product->tax_type] ?? '과세';
         $productArray['reward_points_label'] = number_format((int) ($product->reward_points ?? 0)) . ' point';
@@ -491,7 +526,7 @@ class ChannelProductController extends Controller
         $productArray['profit_share_label'] = $profitShareLabel;
         $productArray['stock_label'] = $stockLabel;
         $productArray['purchase_limit_label'] = $purchaseLimitLabel;
-        $productArray['detail_html'] = $detailHtml;
+        $productArray['detail_html'] = app(\App\Services\ShopCommunity::class)->clean($detailHtml);
         $productArray['image_urls'] = $product->images->pluck('image')
             ->filter()
             ->map(fn ($image) => asset('front/images/product_images/small/' . $image))
@@ -518,12 +553,16 @@ class ChannelProductController extends Controller
     private function resolveShopProductPricing(Product $product, \App\Models\ShopChannel $shop, float $sellingPrice, string $productType): array
     {
         $this->assertOwnPgProductAllowed($shop, $productType);
+        if($shop->use_own_pg && (int)request()->input('reward_points',$product->reward_points??0)>0)throw ValidationException::withMessages(['reward_points'=>'자사 PG 채널은 지급포인트를 설정할 수 없습니다.']);
+        if((int)$product->status!==1)throw ValidationException::withMessages(['product'=>'판매 중인 상품만 추가할 수 있습니다.']);
+        if($productType==='public' && ($product->is_public!=='Yes'||(int)$product->vendor_id===(int)$shop->vendor_id))throw ValidationException::withMessages(['product'=>'공유상품 판매 권한이 없습니다.']);
+        if($productType==='partial' && ($product->is_partial!=='Yes'||(int)$product->vendor_id===(int)$shop->vendor_id))throw ValidationException::withMessages(['product'=>'제휴상품 판매 권한이 없습니다.']);
 
         $supplyPrice = (float) $product->product_price;
         $shippingFee = $this->productShippingFee($product);
-        $rewardPoints = max(0, (float) ($product->reward_points ?? 0));
-        $settlementType = (int) ($shop->settlement_type ?: 1);
-        $settlementRate = (float) ($shop->settlement_rate ?? 0);
+        $rewardPoints = max(0,(int)request()->input('reward_points',$product->reward_points??0));
+        $settlementType = 1;
+        $settlementRate = (float) ($shop->vendor?->commission ?? 0);
         $isShared = in_array($productType, ['public', 'partial'], true);
         $isFixed = $isShared
             && (bool) ($product->price_constraint_enabled ?? false)
@@ -551,7 +590,7 @@ class ChannelProductController extends Controller
                 'selling_price' => $fixedPrice,
                 'minimum_price' => $fixedPrice,
                 'profit' => round($rebate - $commission - $rewardPoints, 2),
-                'maximum_reward_points' => max(0, (int) round($rebate - $commission)),
+                'maximum_reward_points' => max(0, (int) floor($rebate - $commission)),
                 'price_decider' => 'supplier',
             ];
         }
@@ -581,7 +620,7 @@ class ChannelProductController extends Controller
             'selling_price' => $sellingPrice,
             'minimum_price' => $minimumPrice,
             'profit' => round($sellingPrice + $shippingFee - $supplyPrice - $shippingFee - $commission - $rewardPoints, 2),
-            'maximum_reward_points' => max(0, (int) round($sellingPrice - $supplyPrice - $commission)),
+            'maximum_reward_points' => max(0, (int) floor($sellingPrice - $supplyPrice - $commission)),
             'price_decider' => $isShared ? 'reseller' : 'seller',
         ];
     }
@@ -598,9 +637,10 @@ class ChannelProductController extends Controller
     private function settlementSnapshot(\App\Models\ShopChannel $shop, array $pricing, string $priceDecider): array
     {
         return [
-            'settlement_type_snapshot' => (int) ($shop->settlement_type ?: 1),
-            'settlement_rate_snapshot' => (float) ($shop->settlement_rate ?? 0),
+            'settlement_type_snapshot' => 1,
+            'settlement_rate_snapshot' => (float) ($shop->vendor?->commission ?? 0),
             'minimum_selling_price' => $pricing['minimum_price'] ?? null,
+            'reward_points' => $shop->use_own_pg ? 0 : (request()->has('reward_points')?(int)request()->input('reward_points'):null),
             'maximum_reward_points' => (int) ($pricing['maximum_reward_points'] ?? max(0, (int) round($pricing['profit'] ?? 0))),
             'price_decider' => $priceDecider,
         ];
@@ -610,9 +650,9 @@ class ChannelProductController extends Controller
     {
         $supplyPrice = (float) $product->product_price;
         $shippingFee = $this->productShippingFee($product);
-        $rewardPoints = max(0, (float) ($product->reward_points ?? 0));
-        $settlementType = (int) ($shop->settlement_type ?: 1);
-        $settlementRate = (float) ($shop->settlement_rate ?? 0);
+        $rewardPoints = max(0,(int)request()->input('reward_points',$product->reward_points??0));
+        $settlementType = 1;
+        $settlementRate = (float) ($shop->vendor?->commission ?? 0);
 
         if ($settlementType === 2) {
             $minimum = $supplyPrice + $this->shopCommissionAmount(0, 1, $settlementType, $settlementRate) + $rewardPoints;
@@ -642,6 +682,9 @@ class ChannelProductController extends Controller
     private function productRebateAmount(Product $product, float $grossAmount): float
     {
         $value = (float) ($product->profit_share_value ?? 0);
+        if ($product->profit_share_type === 'base_percent') {
+            return round((float) $product->product_price * ($value / 100), 2);
+        }
         if ($product->profit_share_type === 'percent') {
             return round($grossAmount * ($value / 100), 2);
         }
@@ -655,7 +698,7 @@ class ChannelProductController extends Controller
 
     private function ceilToTen(float $amount): float
     {
-        return ceil(max(0, $amount) / 10) * 10;
+        return ceil(round(max(0, $amount),6) / 10) * 10;
     }
 
     private function productShippingFee(Product $product): float
@@ -873,7 +916,7 @@ class ChannelProductController extends Controller
             'product_weight' => 1,
             'is_public' => 'No',
             'is_partial' => 'No',
-            'status' => 1,
+            'status' => 0,
         ]);
 
         return view('channel.sub02.product_base_edit', [
@@ -889,6 +932,7 @@ class ChannelProductController extends Controller
             'brands' => \App\Models\Brand::where('status', 1)->orderBy('name')->get(),
             'orderManagers' => $this->orderManagersForView(),
             'cancelRefundPolicies' => $this->cancelRefundPoliciesForView($admin->vendor_id),
+            'defaultRefundPolicy' => \App\Models\PlatformRefundPolicy::currentContent(),
             'shippingPolicyOptions' => $this->shippingPolicyOptions(),
             'isCreate' => true,
         ]);
@@ -953,6 +997,7 @@ class ChannelProductController extends Controller
             'brands' => \App\Models\Brand::where('status', 1)->orderBy('name')->get(),
             'orderManagers' => $this->orderManagersForView(),
             'cancelRefundPolicies' => $this->cancelRefundPoliciesForView($admin->vendor_id),
+            'defaultRefundPolicy' => \App\Models\PlatformRefundPolicy::currentContent(),
             'shippingPolicyOptions' => $this->shippingPolicyOptions(),
             'isCreate' => false,
         ]);
@@ -972,6 +1017,9 @@ class ChannelProductController extends Controller
 
         $data = $this->validateBaseProduct($request, false, $product->id);
         $this->validateAdditionalImageLimit($request, $product);
+        if ((int) $product->status === 1 && (int) $data['status'] === 0 && $this->needsStopNotice($product)) {
+            throw ValidationException::withMessages(['status' => '게시된 상품은 판매중지 예고일이 지난 후 중지할 수 있습니다.']);
+        }
         \Illuminate\Support\Facades\DB::transaction(function () use ($product, $data, $admin, $request) {
             $product->refresh();
             $this->fillBaseProduct($product, $data, $admin);
@@ -984,7 +1032,7 @@ class ChannelProductController extends Controller
         return redirect()->route('channel.product_own')->with('success_message', '상품 정보가 성공적으로 수정되었습니다.');
     }
 
-    private function validateBaseProduct(Request $request, bool $isCreate, ?int $productId = null): array
+    protected function validateBaseProduct(Request $request, bool $isCreate, ?int $productId = null): array
     {
         $uniqueRule = 'unique:products,product_code';
         if (!$isCreate && $productId) {
@@ -1002,19 +1050,19 @@ class ChannelProductController extends Controller
             'section_id' => 'nullable|exists:sections,id',
             'category_id' => 'nullable|exists:categories,id',
             'major_category_id' => 'required|exists:categories,id',
-            'middle_category_id' => 'required|exists:categories,id',
+            'middle_category_id' => 'nullable|exists:categories,id',
             'minor_category_id' => 'nullable|exists:categories,id',
             'brand_id' => 'required|exists:brands,id',
             'product_price' => 'required|numeric|min:0',
-            'sale_scope' => 'required|in:own,public,affiliate',
-            'reward_points' => 'nullable|integer|min:0',
+            'sale_scope' => 'required|in:own,public,affiliate,both',
+            'reward_points' => 'prohibited',
             'tax_type' => 'required|in:taxable,tax_free,zero_rated',
             'price_constraint_enabled' => 'required|in:0,1',
             'price_constraint_type' => 'nullable|required_if:price_constraint_enabled,1|in:range,fixed',
             'price_min' => 'nullable|required_if:price_constraint_type,range|numeric|min:0',
             'price_max' => 'nullable|required_if:price_constraint_type,range|numeric|min:0',
             'price_fixed' => 'nullable|required_if:price_constraint_type,fixed|numeric|min:0',
-            'profit_share_type' => 'nullable|in:none,fixed,percent',
+            'profit_share_type' => 'nullable|in:none,fixed,percent,base_percent',
             'profit_share_value' => 'nullable|numeric|min:0',
             'purchase_limit_enabled' => 'required|in:0,1',
             'purchase_min_qty' => 'nullable|required_if:purchase_limit_enabled,1|integer|min:1',
@@ -1044,11 +1092,11 @@ class ChannelProductController extends Controller
             'product_notice_items' => 'nullable|array',
             'product_notice_items.*' => 'nullable|string|max:2000',
             'product_image' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif|max:5120',
-            'images' => 'nullable|array|max:20',
+            'images' => 'nullable|array|max:4',
             'images.*' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif|max:5120',
             'slot_image_ids' => 'nullable|array|max:20',
             'slot_image_ids.*' => 'nullable|integer|exists:products_images,id',
-            'slot_images' => 'nullable|array|max:20',
+            'slot_images' => 'nullable|array|max:4',
             'slot_images.*' => 'nullable|image|mimes:jpg,jpeg,png,webp,gif|max:5120',
             'option_ids' => 'nullable|array|max:50',
             'option_ids.*' => 'nullable|integer|exists:products_attributes,id',
@@ -1068,6 +1116,18 @@ class ChannelProductController extends Controller
             'option_statuses.*' => 'nullable|in:0,1',
         ]);
 
+        if ((int) $data['price_constraint_enabled'] === 1 && ($data['price_constraint_type'] ?? '') === 'fixed') {
+            $base = (float) $data['product_price'];
+            $value = (float) ($data['profit_share_value'] ?? 0);
+            $type = $data['profit_share_type'] ?? 'none';
+            if ($type === 'percent' && $value >= 100) {
+                throw ValidationException::withMessages(['profit_share_value' => '판매가 기준 비율은 100% 미만이어야 합니다.']);
+            }
+            $price = $type === 'percent' ? $base / (1 - $value / 100)
+                : $base + ($type === 'base_percent' ? $base * $value / 100 : ($type === 'fixed' ? $value : 0));
+            $data['price_fixed'] = $this->ceilToTen($price);
+        }
+
         if (($data['price_constraint_type'] ?? null) === 'range'
             && isset($data['price_min'], $data['price_max'])
             && (float) $data['price_min'] > (float) $data['price_max']) {
@@ -1079,10 +1139,10 @@ class ChannelProductController extends Controller
             if ($profitShareType !== 'none' && ($data['profit_share_value'] ?? '') === '') {
                 throw ValidationException::withMessages(['profit_share_value' => '수익배분 값을 입력해 주세요.']);
             }
-            if ($profitShareType === 'percent' && isset($data['profit_share_value']) && (float) $data['profit_share_value'] > 100) {
+            if (in_array($profitShareType, ['percent', 'base_percent'], true) && isset($data['profit_share_value']) && (float) $data['profit_share_value'] > 100) {
                 throw ValidationException::withMessages(['profit_share_value' => '정률 수익배분은 100% 이하로 입력해 주세요.']);
             }
-            if (($data['price_constraint_type'] ?? null) === 'fixed' && in_array($data['sale_scope'] ?? 'own', ['public', 'affiliate'], true)) {
+            if (($data['price_constraint_type'] ?? null) === 'fixed' && in_array($data['sale_scope'] ?? 'own', ['public', 'affiliate', 'both'], true)) {
                 if ((int) ($data['reward_points'] ?? 0) > 0) {
                     throw ValidationException::withMessages(['reward_points' => '판매가 고정 공유상품은 포인트를 제공할 수 없습니다.']);
                 }
@@ -1091,7 +1151,7 @@ class ChannelProductController extends Controller
                 $minimumRebate = round($fixedPrice * 0.05 * self::COMMISSION_VAT_MULTIPLIER, 2);
                 $rebate = $profitShareType === 'percent'
                     ? round($fixedPrice * ((float) ($data['profit_share_value'] ?? 0) / 100), 2)
-                    : (float) ($data['profit_share_value'] ?? 0);
+                    : ($profitShareType === 'base_percent' ? round((float) $data['product_price'] * ((float) ($data['profit_share_value'] ?? 0) / 100), 2) : (float) ($data['profit_share_value'] ?? 0));
 
                 if ($rebate < $minimumRebate) {
                     throw ValidationException::withMessages([
@@ -1149,23 +1209,29 @@ class ChannelProductController extends Controller
         if ($majorId) {
             $vendorId = Auth::guard('admin')->user()->vendor_id ?? null;
             $major = Category::find($majorId);
-            if (!$major || (int) $major->parent_id !== 0) {
+            if (!$major || (int) $major->parent_id !== 0 || (int) $major->status !== 1 || ($major->vendor_id && (int) $major->vendor_id !== (int) $vendorId)) {
                 throw ValidationException::withMessages(['major_category_id' => '대분류를 올바르게 선택해 주세요.']);
             }
 
-            $middleQuery = Category::where('id', $middleId);
-            $this->applyChannelCategoryScope($middleQuery, $vendorId);
-            $middle = $middleQuery->first();
-            if (!$middle || (int) $middle->parent_id !== $major->id) {
-                throw ValidationException::withMessages(['middle_category_id' => '대분류에 등록된 중분류를 선택해 주세요.']);
+            $children = Category::where('parent_id', $major->id)->where('status', 1);
+            $this->applyChannelCategoryScope($children, $vendorId);
+            if (!$middleId && !$children->exists()) {
+                $finalCategory = $major;
+                $middle = null;
+            } else {
+                $middleQuery = Category::where('id', $middleId)->where('status', 1);
+                $this->applyChannelCategoryScope($middleQuery, $vendorId);
+                $middle = $middleQuery->first();
+                if (!$middle || (int) $middle->parent_id !== $major->id) {
+                    throw ValidationException::withMessages(['middle_category_id' => '대분류에 등록된 중분류를 선택해 주세요.']);
+                }
+                $finalCategory = $middle;
             }
-
-            $finalCategory = $middle;
             if ($minorId) {
                 $minorQuery = Category::where('id', $minorId);
                 $this->applyChannelCategoryScope($minorQuery, $vendorId);
                 $minor = $minorQuery->first();
-                if (!$minor || (int) $minor->parent_id !== $middle->id) {
+                if (!$minor || !$middle || (int) $minor->parent_id !== $middle->id) {
                     throw ValidationException::withMessages(['minor_category_id' => '중분류에 등록된 소분류를 선택해 주세요.']);
                 }
                 $finalCategory = $minor;
@@ -1204,7 +1270,7 @@ class ChannelProductController extends Controller
         return $data;
     }
 
-    private function baseProductCategories()
+    protected function baseProductCategories()
     {
         $noticeCategoryNames = array_keys($this->productNoticeMajorCategories());
         $vendorId = Auth::guard('admin')->user()->vendor_id ?? null;
@@ -1338,7 +1404,7 @@ class ChannelProductController extends Controller
         return $candidate;
     }
 
-    private function categoryTreeForView($categories = null): array
+    protected function categoryTreeForView($categories = null): array
     {
         $categories = $categories ?: $this->baseProductCategories();
 
@@ -1362,7 +1428,7 @@ class ChannelProductController extends Controller
         })->values()->toArray();
     }
 
-    private function categorySelectionForProduct(Product $product): array
+    protected function categorySelectionForProduct(Product $product): array
     {
         if (!$product->category_id) {
             return ['major' => null, 'middle' => null, 'minor' => null, 'middle_name' => '', 'minor_name' => '', 'final' => null];
@@ -1441,7 +1507,7 @@ class ChannelProductController extends Controller
         ];
     }
 
-    private function productNoticeTemplates(): array
+    protected function productNoticeTemplates(): array
     {
         return [
             'food_health' => [
@@ -1558,7 +1624,7 @@ class ChannelProductController extends Controller
         ];
     }
 
-    private function validateAdditionalImageLimit(Request $request, ?Product $product = null): void
+    protected function validateAdditionalImageLimit(Request $request, ?Product $product = null): void
     {
         $legacyImages = $this->validUploadedFiles($request->file('images', []));
         $slotImages = $this->validUploadedFiles($request->file('slot_images', []));
@@ -1567,9 +1633,8 @@ class ChannelProductController extends Controller
         $existingAdditionalCount = 0;
         if ($product && $product->exists) {
             $query = $product->images();
-            if (!empty($product->product_image)) {
-                $query->where('image', '!=', $product->product_image);
-            }
+            $mainName=$product->product_image?:$product->images()->orderBy('id')->value('image');
+            if($mainName)$query->where('image','!=',$mainName);
             $existingAdditionalCount = $query->count();
 
             $slotImageIds = $request->input('slot_image_ids', []);
@@ -1592,14 +1657,14 @@ class ChannelProductController extends Controller
         }
 
         $newAdditionalCount = count($legacyImages) + count($slotImages) - $replacementCount;
-        if ($existingAdditionalCount + $newAdditionalCount > 20) {
+        if ($newAdditionalCount > 0 && $existingAdditionalCount + $newAdditionalCount > 4) {
             throw ValidationException::withMessages([
-                'images' => '추가 이미지는 기존 등록 이미지를 포함해 최대 20개까지 등록할 수 있습니다.',
+                'images' => '목록 이미지는 대표 이미지를 포함해 최대 5개까지 등록할 수 있습니다.',
             ]);
         }
     }
 
-    private function fillBaseProduct(Product $product, array $data, $admin): void
+    protected function fillBaseProduct(Product $product, array $data, $admin): void
     {
         $product->section_id = $data['section_id'];
         $product->category_id = $data['category_id'];
@@ -1609,11 +1674,11 @@ class ChannelProductController extends Controller
         $product->product_price = $data['product_price'];
         $product->product_discount = $data['product_discount'] ?? 0;
         $product->product_weight = $data['product_weight'] ?? 1;
-        $product->description = $data['description'] ?? null;
+        $product->description = isset($data['description']) ? app(\App\Services\ShopCommunity::class)->clean($data['description']) : null;
         $product->status = $data['status'];
         $saleScope = $data['sale_scope'] ?? 'own';
-        $product->is_public = $saleScope === 'public' ? 'Yes' : 'No';
-        $product->is_partial = $saleScope === 'affiliate' ? 'Yes' : 'No';
+        $product->is_public = in_array($saleScope, ['public', 'both'], true) ? 'Yes' : 'No';
+        $product->is_partial = in_array($saleScope, ['affiliate', 'both'], true) ? 'Yes' : 'No';
         $product->partial_approved = 'Approved';
         $product->meta_title = $data['product_name'];
         $product->meta_keywords = $data['product_name'];
@@ -1623,7 +1688,7 @@ class ChannelProductController extends Controller
             $product->sale_scope = $saleScope;
         }
         if (Schema::hasColumn('products', 'reward_points')) {
-            $product->reward_points = $data['reward_points'] ?? null;
+            $product->reward_points = $product->exists ? $product->reward_points : null;
         }
         if (Schema::hasColumn('products', 'tax_type')) {
             $product->tax_type = $data['tax_type'] ?? 'taxable';
@@ -1651,7 +1716,7 @@ class ChannelProductController extends Controller
         if (Schema::hasColumn('products', 'detail_display_type')) {
             $detailType = $data['detail_display_type'] ?? 'unused';
             $product->detail_display_type = $detailType;
-            $product->detail_text = $detailType === 'text' ? ($data['detail_text'] ?? null) : null;
+            $product->detail_text = $detailType === 'text' ? app(\App\Services\ShopCommunity::class)->clean($data['detail_text']??'') : null;
         }
         if (Schema::hasColumn('products', 'order_manager_enabled')) {
             $managerEnabled = (int) ($data['order_manager_enabled'] ?? 0) === 1;
@@ -1711,7 +1776,7 @@ class ChannelProductController extends Controller
         })->values()->toArray();
     }
 
-    private function orderManagersForView()
+    protected function orderManagersForView()
     {
         $admin = Auth::guard('admin')->user();
         $query = \App\Models\Distributor::where('status', 1);
@@ -1725,7 +1790,7 @@ class ChannelProductController extends Controller
             ->get();
     }
 
-    private function cancelRefundPoliciesForView(?int $vendorId)
+    protected function cancelRefundPoliciesForView(?int $vendorId)
     {
         if (!$vendorId) {
             return collect();
@@ -1826,45 +1891,26 @@ class ChannelProductController extends Controller
         return $candidate;
     }
 
-    private function storeProductDetailAssets(Product $product, Request $request): void
+    protected function storeProductDetailAssets(Product $product, Request $request): void
     {
         if (!Schema::hasColumn('products', 'detail_display_type')) {
             return;
         }
 
+        $old = array_filter([$product->detail_pc_image, $product->detail_mobile_image]);
         if ($product->detail_display_type !== 'image') {
-            if ($product->detail_pc_image) {
-                $this->deleteProductDetailImageFile($product->detail_pc_image);
-            }
-            if ($product->detail_mobile_image) {
-                $this->deleteProductDetailImageFile($product->detail_mobile_image);
-            }
             $product->detail_pc_image = null;
             $product->detail_mobile_image = null;
-            $product->save();
-            return;
-        }
-
-        $updated = false;
-        if ($request->hasFile('detail_pc_image') && $request->file('detail_pc_image')->isValid()) {
-            if ($product->detail_pc_image) {
-                $this->deleteProductDetailImageFile($product->detail_pc_image);
+        } else {
+            foreach (['pc', 'mobile'] as $kind) {
+                $field = 'detail_'.$kind.'_image';
+                if ($request->hasFile($field) && $request->file($field)->isValid()) {
+                    $product->$field = $this->saveProductDetailImageFile($request->file($field), $kind);
+                }
             }
-            $product->detail_pc_image = $this->saveProductDetailImageFile($request->file('detail_pc_image'), 'pc');
-            $updated = true;
         }
-
-        if ($request->hasFile('detail_mobile_image') && $request->file('detail_mobile_image')->isValid()) {
-            if ($product->detail_mobile_image) {
-                $this->deleteProductDetailImageFile($product->detail_mobile_image);
-            }
-            $product->detail_mobile_image = $this->saveProductDetailImageFile($request->file('detail_mobile_image'), 'mobile');
-            $updated = true;
-        }
-
-        if ($updated) {
-            $product->save();
-        }
+        $product->save();
+        foreach ($old as $file) $this->deleteProductDetailImageFile($file);
     }
 
     private function saveProductDetailImageFile($image, string $prefix): string
@@ -1876,6 +1922,7 @@ class ChannelProductController extends Controller
 
         $extension = strtolower($image->getClientOriginalExtension() ?: 'jpg');
         $imageName = 'detail_' . $prefix . '_' . now()->format('YmdHis') . '_' . Str::lower(Str::random(8)) . '.' . $extension;
+        $this->createdDetailImages[] = $imageName;
         $image->move($dir, $imageName);
 
         return $imageName;
@@ -1887,19 +1934,24 @@ class ChannelProductController extends Controller
             return;
         }
 
-        $path = public_path('front/images/product_detail_images/' . $imageName);
-        if (is_file($path)) {
-            @unlink($path);
-        }
+        $remove = function () use ($imageName) {
+            if (Product::where('detail_pc_image', $imageName)->orWhere('detail_mobile_image', $imageName)->exists()) return;
+            $path = public_path('front/images/product_detail_images/' . basename($imageName));
+            if (is_file($path)) @unlink($path);
+        };
+        if (\Illuminate\Support\Facades\DB::transactionLevel() > 0) \Illuminate\Support\Facades\DB::afterCommit($remove);
+        else $remove();
     }
 
-    private function storeUploadedProductImages(Product $product, Request $request): void
+    protected function storeUploadedProductImages(Product $product, Request $request): void
     {
         if ($request->hasFile('product_image') && $request->file('product_image')->isValid()) {
             $imageName = $this->saveProductImageFile($request->file('product_image'), 'main');
-            $product->product_image = $imageName;
-            $product->save();
-            $this->createProductImageRow($product, $imageName);
+            $mainRow=$product->images()->where('image',$product->product_image)->first()??$product->images()->orderBy('id')->first();
+            $oldName=$mainRow?->image;
+            $product->product_image=$imageName;$product->save();
+            if($mainRow){$mainRow->image=$imageName;$mainRow->save();}else $this->createProductImageRow($product,$imageName);
+            if($oldName)$this->deleteProductImageFiles($oldName);
         }
 
         foreach ($this->validUploadedFiles($request->file('images', [])) as $image) {
@@ -1955,6 +2007,7 @@ class ChannelProductController extends Controller
         $extension = strtolower($image->getClientOriginalExtension() ?: 'jpg');
         $imageName = $prefix . '_' . now()->format('YmdHis') . '_' . Str::lower(Str::random(8)) . '.' . $extension;
 
+        $this->createdProductImages[] = $imageName;
         Image::make($image)->resize(1000, 1000)->save(public_path('front/images/product_images/large/' . $imageName));
         Image::make($image)->resize(500, 500)->save(public_path('front/images/product_images/medium/' . $imageName));
         Image::make($image)->resize(250, 250)->save(public_path('front/images/product_images/small/' . $imageName));
@@ -2016,11 +2069,25 @@ class ChannelProductController extends Controller
             return;
         }
 
-        foreach (['large', 'medium', 'small'] as $size) {
-            $path = public_path('front/images/product_images/' . $size . '/' . $imageName);
-            if (is_file($path)) {
-                @unlink($path);
+        $remove = function () use ($imageName) {
+            if (Product::where('product_image', $imageName)->exists() || ProductsImage::where('image', $imageName)->exists()) return;
+            foreach (['large', 'medium', 'small'] as $size) {
+                $path = public_path('front/images/product_images/' . $size . '/' . basename($imageName));
+                if (is_file($path)) @unlink($path);
             }
+        };
+        if (\Illuminate\Support\Facades\DB::transactionLevel() > 0) \Illuminate\Support\Facades\DB::afterCommit($remove);
+        else $remove();
+    }
+
+    protected function discardRolledBackUploads(): void
+    {
+        foreach ($this->createdProductImages as $file) {
+            if (Product::where('product_image', $file)->exists() || ProductsImage::where('image', $file)->exists()) continue;
+            foreach (['large', 'medium', 'small'] as $size) @unlink(public_path('front/images/product_images/'.$size.'/'.$file));
+        }
+        foreach ($this->createdDetailImages as $file) {
+            if (!Product::where('detail_pc_image',$file)->orWhere('detail_mobile_image',$file)->exists()) @unlink(public_path('front/images/product_detail_images/'.$file));
         }
     }
 
@@ -2039,7 +2106,7 @@ class ChannelProductController extends Controller
         if (!$admin) return response()->json(['status' => false, 'message' => '로그인이 필요합니다.']);
 
         $request->validate([
-            'stop_notice_at' => 'required|date',
+            'stop_notice_at' => 'required|date_format:Y-m-d|after_or_equal:'.now('Asia/Seoul')->addDays(3)->format('Y-m-d'),
             'stop_notice_reason' => 'nullable|string|max:1000',
         ]);
 
@@ -2059,6 +2126,13 @@ class ChannelProductController extends Controller
         return response()->json(['status' => true, 'message' => '판매중지 예고가 저장되었습니다.']);
     }
 
+    private function needsStopNotice(Product $product): bool
+    {
+        $posted = \App\Models\ShopChannelProduct::where('product_id', $product->id)
+            ->where('approval_status', 'approved')->whereNotNull('listed_at')->exists();
+        return $posted && (!$product->stop_notice_at || $product->stop_notice_at->format('Y-m-d') > now('Asia/Seoul')->format('Y-m-d'));
+    }
+
     public function deleteBaseProduct(Request $request, $id)
     {
         $admin = Auth::guard('admin')->user();
@@ -2075,6 +2149,12 @@ class ChannelProductController extends Controller
         $orderedCount = OrdersProduct::where('product_id', $product->id)->count();
         if ($orderedCount > 0) {
             $message = '주문 이력이 있는 상품은 삭제할 수 없습니다. 판매중지 또는 판매중지 예고를 사용해 주세요.';
+            if ($request->ajax()) return response()->json(['status' => false, 'message' => $message]);
+            return redirect()->route('channel.product_own')->with('error_message', $message);
+        }
+
+        if ($this->needsStopNotice($product)) {
+            $message = '게시된 상품은 판매중지 예고일이 지난 후 삭제할 수 있습니다.';
             if ($request->ajax()) return response()->json(['status' => false, 'message' => $message]);
             return redirect()->route('channel.product_own')->with('error_message', $message);
         }
@@ -2098,14 +2178,23 @@ class ChannelProductController extends Controller
             return response()->json(['status' => false, 'message' => '권한이 없습니다.']);
         }
 
+        $newProduct=\Illuminate\Support\Facades\DB::transaction(function()use($product){
         $newProduct = $product->replicate();
         $newProduct->product_name = $product->product_name . ' (복사본)';
         $newProduct->product_code = $product->product_code . '_copy_' . now()->format('His');
         while (Product::where('product_code', $newProduct->product_code)->exists()) {
             $newProduct->product_code = $product->product_code . '_copy_' . now()->format('His') . '_' . Str::upper(Str::random(3));
         }
+        $newProduct->status = 0;
+        $newProduct->stop_notice_at = null;
+        $newProduct->stop_notice_reason = null;
+        $newProduct->stop_notice_requested_at = null;
         $newProduct->save();
 
+        foreach($product->images as $image){$copy=$image->replicate();$copy->product_id=$newProduct->id;$copy->save();}
+        foreach($product->attributes as $index=>$option){$copy=$option->replicate();$copy->product_id=$newProduct->id;$copy->sku=$newProduct->product_code.'-OPT'.($index+1);$copy->save();}
+            return $newProduct;
+        });
         return response()->json([
             'status' => true,
             'message' => '상품이 복사되었습니다.',
@@ -2152,7 +2241,8 @@ class ChannelProductController extends Controller
         }
 
         foreach ($requests as $shopProduct) {
-            $shopProduct->status = $data['status'];
+            $shopProduct->status = 0;
+            $shopProduct->listed_at = null;
             $shopProduct->approval_status = $data['status'] == 1 ? 'approved' : 'rejected';
             $shopProduct->reviewed_at = now();
             $shopProduct->reviewed_by = $admin->id;

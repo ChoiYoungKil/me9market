@@ -21,7 +21,7 @@ class SocialLoginController extends Controller
     public function start(Request $request, string $provider, SocialLoginProvider $service)
     {
         if (Auth::check()) {
-            return redirect()->route('mypage.dashboard');
+            return $request->input('context') === 'channel' ? $this->destination(['context'=>'channel']) : redirect()->route('mypage.dashboard');
         }
         return $this->authorizeProvider($request, $provider, $service);
     }
@@ -35,9 +35,10 @@ class SocialLoginController extends Controller
 
     private function authorizeProvider(Request $request, string $provider, SocialLoginProvider $service, ?int $userId = null)
     {
+        $context = $request->input('context') === 'channel' && ! $userId ? 'channel' : 'member';
         $service->requireReady($provider);
         if ($service->blockedOnHttp($provider)) {
-            return $this->failed(SocialLoginProvider::GOOGLE_HTTPS_NOTICE);
+            return $this->failed(SocialLoginProvider::GOOGLE_HTTPS_NOTICE, $context);
         }
         $state = Str::random(64);
         $verifier = Str::random(80);
@@ -45,7 +46,7 @@ class SocialLoginController extends Controller
         $shopId = $request->input('context') === 'shop' && $runtime->hasActiveChannelAccess() ? $runtime->currentChannel()->id : null;
         $request->session()->forget('social_signup');
         $request->session()->put('social_oauth.'.$provider, ['state_hash' => hash('sha256', $state), 'verifier' => $verifier,
-            'created_at' => now()->timestamp, 'user_id' => $userId, 'shop_channel_id' => $shopId]);
+            'created_at' => now()->timestamp, 'user_id' => $userId, 'shop_channel_id' => $shopId, 'context' => $context]);
         return redirect()->away($service->authorization($provider, $state, $verifier));
     }
 
@@ -53,30 +54,31 @@ class SocialLoginController extends Controller
     {
         $service->requireReady($provider);
         $flow = $request->session()->pull('social_oauth.'.$provider);
+        $context = is_array($flow) && ($flow['context'] ?? '') === 'channel' ? 'channel' : 'member';
         $state = $request->query('state');
         if (!is_array($flow) || !is_string($state) || !hash_equals($flow['state_hash'], hash('sha256', $state))
             || now()->timestamp - $flow['created_at'] > 600) {
-            return $this->failed('로그인 요청이 만료되었거나 유효하지 않습니다. 처음부터 다시 시도해 주세요.');
+            return $this->failed('로그인 요청이 만료되었거나 유효하지 않습니다. 처음부터 다시 시도해 주세요.', $context);
         }
         if ($request->filled('error')) {
-            return $this->failed('소셜 로그인이 취소되었습니다.');
+            return $this->failed('소셜 로그인이 취소되었습니다.', $context);
         }
         if (!is_string($request->query('code')) || $request->query('code') === '' || strlen($request->query('code')) > 4096) {
-            return $this->failed('소셜 로그인 응답을 확인할 수 없습니다. 다시 시도해 주세요.');
+            return $this->failed('소셜 로그인 응답을 확인할 수 없습니다. 다시 시도해 주세요.', $context);
         }
         $linkUserId = $flow['user_id'];
         if (($linkUserId && (int) Auth::id() !== (int) $linkUserId) || (!$linkUserId && Auth::check())) {
-            return $this->failed('로그인 상태가 변경되었습니다. 다시 시도해 주세요.');
+            return $this->failed('로그인 상태가 변경되었습니다. 다시 시도해 주세요.', $context);
         }
         try {
             $profile = $service->profile($provider, $request->query('code'), $state, $flow['verifier']);
         } catch (ValidationException) {
-            return $this->failed('소셜 인증을 완료하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+            return $this->failed('소셜 인증을 완료하지 못했습니다. 잠시 후 다시 시도해 주세요.', $context);
         }
         $identity = SocialAccount::with('user')->where('provider', $provider)->where('provider_user_id', $profile['provider_user_id'])->first();
         if ($linkUserId) {
             if ((int) Auth::user()->status !== 1) {
-                return $this->failed('이용할 수 없는 회원 계정입니다.');
+                return $this->failed('이용할 수 없는 회원 계정입니다.', $context);
             }
             if ($identity && (int) $identity->user_id !== (int) $linkUserId) {
                 return redirect()->route('mypage.profile')->withErrors(['social' => '이미 다른 회원에게 연결된 소셜 계정입니다.']);
@@ -95,17 +97,17 @@ class SocialLoginController extends Controller
         }
         if ($identity) {
             if (!$identity->user || (int) $identity->user->status !== 1) {
-                return $this->failed('이용할 수 없는 회원 계정입니다.');
+                return $this->failed('이용할 수 없는 회원 계정입니다.', $context);
             }
             Auth::login($identity->user);
             $request->session()->regenerate();
             return $this->destination($flow);
         }
         if (!$profile['email']) {
-            return $this->failed('가입하려면 소셜 계정의 이메일 제공 동의가 필요합니다. 기존 회원은 로그인 후 회원정보에서 소셜 계정을 연결해 주세요.');
+            return $this->failed('가입하려면 소셜 계정의 이메일 제공 동의가 필요합니다. 기존 회원은 로그인 후 회원정보에서 소셜 계정을 연결해 주세요.', $context);
         }
         if (User::where('email', $profile['email'])->exists()) {
-            return $this->failed('같은 이메일로 가입된 회원이 있습니다. 기존 방식으로 로그인한 뒤 회원정보에서 소셜 계정을 연결해 주세요.');
+            return $this->failed('같은 이메일로 가입된 회원이 있습니다. 기존 방식으로 로그인한 뒤 회원정보에서 소셜 계정을 연결해 주세요.', $context);
         }
         $request->session()->put('social_signup', $profile + ['created_at' => now()->timestamp, 'shop_channel_id' => $flow['shop_channel_id']]);
         return redirect()->route('social.signup');
@@ -171,6 +173,16 @@ class SocialLoginController extends Controller
 
     private function destination(array $flow)
     {
+        if (($flow['context'] ?? '') === 'channel') {
+            try {
+                $admin = app(\App\Services\ChannelMemberAccess::class)->administratorFor(Auth::user());
+            } catch (ValidationException $exception) {
+                return $this->failed(collect($exception->errors())->flatten()->first(), 'channel');
+            }
+            Auth::guard('admin')->login($admin);
+            request()->session()->regenerate();
+            return redirect()->route('channel.index');
+        }
         $runtime = app(ShopChannelRuntime::class);
         if (($flow['shop_channel_id'] ?? null) && $runtime->hasActiveChannelAccess() && (int) $runtime->currentChannel()->id === (int) $flow['shop_channel_id']) {
             $runtime->recordAuthenticatedVisit();
@@ -179,8 +191,8 @@ class SocialLoginController extends Controller
         return redirect()->route('mypage.dashboard');
     }
 
-    private function failed(string $message)
+    private function failed(string $message, string $context = 'member')
     {
-        return redirect()->route('front.member.login')->with('error_message', $message);
+        return redirect()->route($context === 'channel' ? 'channel.login' : 'front.member.login')->with('error_message', $message);
     }
 }

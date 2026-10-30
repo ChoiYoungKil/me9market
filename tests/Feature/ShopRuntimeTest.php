@@ -170,6 +170,7 @@ class ShopRuntimeTest extends TestCase
         $this->assertDatabaseHas('products_attributes', ['id' => $attribute->id]);
         $this->postJson('/channel/order/cancel/request', ['order_id' => $order->id, 'item_ids' => [$item->id],
             'reason' => 'Cancel', 'detail_reason' => 'Return stock'])->assertOk();
+        $this->postJson(route('channel.order.claim.action'),['order_id'=>$order->id,'item_ids'=>[$item->id],'action'=>'cancel_approve'])->assertOk();
         $this->assertSame((int) $attribute->stock + (int) $item->attribute_stock_deducted_qty, (int) $attribute->fresh()->stock);
     }
 
@@ -1071,7 +1072,9 @@ class ShopRuntimeTest extends TestCase
         $this->assertEquals(8000, $items->sum('used_point_amount'));
         $this->assertEquals($order->grand_total + 8000, $items->sum('line_total') + $items->sum('shipping_amount_snapshot'));
         $this->assertSame(9, (int) $shopProduct->fresh()->stock);
-        $first = $items->first();
+        // Match the stock assertion to the listing being cancelled, independent of cart row ordering.
+        $first = $items->firstWhere('shop_channel_product_id', $shopProduct->id);
+        $this->assertNotNull($first);
         $this->post(route('front.shop.order.item.status', $first->id), ['action' => 'cancel', 'reason' => 'Changed mind'])->assertRedirect();
         $this->assertSame(['channel' => 0, 'me9' => 0], $wallet->balances($user->id, $shop->id));
         $this->actingAs($admin, 'admin')->postJson(route('channel.order.claim.action'), [
@@ -1083,8 +1086,9 @@ class ShopRuntimeTest extends TestCase
         $this->assertEquals($first->point_usage_snapshot, $wallet->balances($user->id, $shop->id));
         $this->assertSame(10, (int) $shopProduct->fresh()->stock);
 
-        $second = $items->last();
-        foreach (['shipping', 'delivered'] as $status) {
+        $second = $items->first(fn ($item) => $item->id !== $first->id);
+        $this->assertNotNull($second);
+        foreach (['ready_to_ship', 'shipping', 'delivered'] as $status) {
             $this->postJson('/channel/order/status/update', ['order_id' => $order->id, 'item_ids' => [$second->id],
                 'status' => $status, 'courier_name' => 'CJ', 'tracking_number' => '123456789'], ['X-Requested-With' => 'XMLHttpRequest'])
                 ->assertOk()->assertJson(['status' => true]);
@@ -1199,18 +1203,19 @@ class ShopRuntimeTest extends TestCase
     {
         [, $admin, $shop, , $listing, $user, $order] = $this->checkoutWithPoints();
         $item = $order->orders_products()->sole();
+        $this->actingAs($admin, 'admin')->postJson(route('channel.order.cancel.request'), ['order_id'=>$order->id,'item_ids'=>[$item->id],'reason'=>'Cancel','detail_reason'=>'Cancel'])->assertOk();
         \App\Models\PointTransaction::creating(function ($entry) {
             if ($entry->type === 'refund') {
                 throw new \RuntimeException('Private database failure details');
             }
         });
         try {
-            $this->actingAs($admin, 'admin')->postJson(route('channel.order.cancel.request'), [
-                'order_id' => $order->id, 'item_ids' => [$item->id], 'reason' => 'Cancel', 'detail_reason' => 'Cancel',
+            $this->actingAs($admin, 'admin')->postJson(route('channel.order.claim.action'), [
+                'order_id' => $order->id, 'item_ids' => [$item->id], 'action'=>'cancel_approve',
             ])->assertStatus(500)->assertDontSee('Private database failure details');
-            $this->assertSame(OrderItemStatus::PAID, $item->fresh()->status_code);
+            $this->assertSame(OrderItemStatus::CANCEL_REQUESTED, $item->fresh()->status_code);
             $this->assertNull($item->fresh()->financial_reversed_at);
-            $this->assertDatabaseCount('order_claims', 0);
+            $this->assertDatabaseCount('order_claims', 1);
             $this->assertSame(9, (int) $listing->fresh()->stock);
             $this->assertSame(['channel' => 0, 'me9' => 0], app(\App\Services\CustomerPointService::class)->balances($user->id, $shop->id));
         } finally {
@@ -1223,13 +1228,13 @@ class ShopRuntimeTest extends TestCase
         [, $admin, , , , , $order] = $this->checkoutWithPoints();
         $item = $order->orders_products()->sole();
         $this->post(route('front.shop.order.item.status', $item->id), ['action' => 'cancel', 'reason' => 'Buyer reason'])->assertRedirect();
-        $this->actingAs($admin, 'admin')->postJson(route('channel.order.cancel.request'), [
-            'order_id' => $order->id, 'item_ids' => [$item->id], 'reason' => 'Seller reason', 'detail_reason' => 'Approved',
+        $this->actingAs($admin, 'admin')->postJson(route('channel.order.claim.action'), [
+            'order_id' => $order->id, 'item_ids' => [$item->id], 'action'=>'cancel_approve',
         ])->assertOk()->assertJson(['status' => true]);
         $this->assertSame('completed', OrderClaim::sole()->status);
         $this->assertSame('Buyer reason', OrderClaim::sole()->reason);
-        $this->postJson(route('channel.order.cancel.request'), [
-            'order_id' => $order->id, 'item_ids' => [$item->id], 'reason' => 'Retry', 'detail_reason' => 'Retry',
+        $this->postJson(route('channel.order.claim.action'), [
+            'order_id' => $order->id, 'item_ids' => [$item->id], 'action'=>'cancel_approve',
         ])->assertUnprocessable();
         $this->assertDatabaseCount('order_claims', 1);
         $this->assertSame(2, \App\Models\PointTransaction::where('type', 'refund')->count());
@@ -1293,6 +1298,7 @@ class ShopRuntimeTest extends TestCase
         $this->assertSame($attribute->id, (int) $item->stock_attribute_id);
         $this->actingAs($admin, 'admin')->postJson(route('channel.order.cancel.request'), ['order_id' => $item->order_id, 'item_ids' => [$item->id], 'reason' => 'Test cancel', 'detail_reason' => 'Test'], ['X-Requested-With' => 'XMLHttpRequest'])
             ->assertOk()->assertJson(['status' => true]);
+        $this->withHeaders(['X-Requested-With'=>'XMLHttpRequest'])->postJson(route('channel.order.claim.action'),['order_id'=>$item->order_id,'item_ids'=>[$item->id],'action'=>'cancel_approve'])->assertOk();
         $this->assertSame(2, (int) $attribute->fresh()->stock);
         DB::transaction(fn () => app(\App\Services\CustomerPointService::class)->reverseItem($item->fresh()));
         $this->assertSame(2, (int) $attribute->fresh()->stock);
@@ -1521,17 +1527,17 @@ class ShopRuntimeTest extends TestCase
         $this->assertSame(1, $response->viewData('shops')->first()->shop_channel_products_count);
         foreach (['channel.shop_product01', 'channel.shop_product02'] as $route) {
             $response = $this->get(route($route, ['shop_id' => $shop->id]));
-            $response->assertOk()->assertSee('id="view_product_name"', false)
+            $response->assertOk()->assertSee('id="catalog-detail-dialog"', false)
                 ->assertSee(route('channel.shop_info', ['id' => $shop->id]), false)
                 ->assertDontSee('Me9-Shop-0032022');
         }
         $dom = new \DOMDocument;
         @$dom->loadHTML('<?xml encoding="utf-8" ?>'.$response->getContent());
-        $button = (new \DOMXPath($dom))->query('//button[@data-product]')->item(0);
-        $this->assertNotNull($button);
-        $data = json_decode($button->getAttribute('data-product'), true, 512, JSON_THROW_ON_ERROR);
-        $this->assertSame($name, $data['name']);
-        $this->assertSame('0개', $data['stock_text']);
+        $stateNode=(new \DOMXPath($dom))->query('//script[@id="catalog-state"]')->item(0);
+        $this->assertNotNull($stateNode);
+        $data=json_decode($stateNode->textContent,true,512,JSON_THROW_ON_ERROR)['listings'][0];
+        $this->assertSame($name,$data['name']);
+        $this->assertSame('0개',$data['stockText']);
     }
 
     public function test_product_minimum_and_maximum_quantity_are_enforced_in_cart_and_checkout(): void

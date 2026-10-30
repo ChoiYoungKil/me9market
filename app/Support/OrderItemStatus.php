@@ -4,6 +4,8 @@ namespace App\Support;
 
 class OrderItemStatus
 {
+    public const AWAITING_PAYMENT = 'awaiting_payment';
+
     public const PAID = 'paid';
 
     public const READY_TO_SHIP = 'ready_to_ship';
@@ -56,6 +58,7 @@ class OrderItemStatus
     public static function labels(): array
     {
         return [
+            self::AWAITING_PAYMENT => '입금대기',
             self::PAID => '결제완료',
             self::READY_TO_SHIP => '배송대기',
             self::SHIPPING => '배송중',
@@ -80,6 +83,8 @@ class OrderItemStatus
     {
         $status = trim((string) $status);
         $map = [
+            '입금대기' => self::AWAITING_PAYMENT,
+            '결제대기중' => self::AWAITING_PAYMENT,
             'New' => self::PAID,
             'Payment Captured' => self::PAID,
             '결제완료' => self::PAID,

@@ -159,6 +159,7 @@ class ChannelRoutesTest extends TestCase
         $this->actingAs($admin, 'admin')->post('/channel/settings/order-manager/store', [
             'status' => 1,
             'email' => 'orders-manager@example.com',
+            'email_check_token'=>app(\App\Services\ChannelOrderManagers::class)->emailProof($admin,'orders-manager@example.com',null),
             'name' => 'Orders Manager',
             'phone' => '01012345678',
             'return_postcode' => '04524',
@@ -244,6 +245,7 @@ class ChannelRoutesTest extends TestCase
         $this->actingAs($admin, 'admin')->post("/channel/settings/order-manager/{$ownManager->id}/update", [
             'status' => 0,
             'email' => 'updated-own-manager@example.com',
+            'email_check_token'=>app(\App\Services\ChannelOrderManagers::class)->emailProof($admin,'updated-own-manager@example.com',$ownManager),
             'name' => 'Updated Own Manager',
             'phone' => '01011110001',
             'return_postcode' => '06236',
@@ -365,7 +367,11 @@ class ChannelRoutesTest extends TestCase
     {
         list($vendor, $admin) = $this->createSetup();
 
+        $member=\App\Models\User::factory()->create(['member_number'=>'M1001','name'=>'Sub Manager','email'=>'sub-manager@example.com','status'=>1]);
+        $updatedMember=\App\Models\User::factory()->create(['member_number'=>'M1002','name'=>'Updated Sub','email'=>'updated-sub-manager@example.com','status'=>1]);
         $this->actingAs($admin, 'admin')->post('/channel/settings/sub-accounts/store', [
+            'member_id'=>$member->id,
+            'member_token'=>app(\App\Services\ChannelSubAccounts::class)->proof($admin,$member),
             'status' => 1,
             'member_no' => 'M1001',
             'email' => 'sub-manager@example.com',
@@ -381,7 +387,6 @@ class ChannelRoutesTest extends TestCase
         $this->assertDatabaseHas('admins', [
             'vendor_id' => $vendor->id,
             'type' => 'subadmin',
-            'email' => 'sub-manager@example.com',
             'name' => 'Sub Manager',
             'status' => 1,
         ]);
@@ -393,6 +398,8 @@ class ChannelRoutesTest extends TestCase
         $account = ChannelSubAccount::where('vendor_id', $vendor->id)->firstOrFail();
 
         $this->actingAs($admin, 'admin')->post("/channel/settings/sub-accounts/{$account->id}/update", [
+            'member_id'=>$updatedMember->id,
+            'member_token'=>app(\App\Services\ChannelSubAccounts::class)->proof($admin,$updatedMember),
             'status' => 0,
             'member_no' => 'M1002',
             'email' => 'updated-sub-manager@example.com',
@@ -405,7 +412,6 @@ class ChannelRoutesTest extends TestCase
 
         $this->assertDatabaseHas('admins', [
             'id' => $account->admin_id,
-            'email' => 'updated-sub-manager@example.com',
             'name' => 'Updated Sub',
             'status' => 0,
         ]);
@@ -701,5 +707,19 @@ class ChannelRoutesTest extends TestCase
             'id' => $ownJointId,
             'product_id' => $product->id,
         ]);
+    }
+    public function test_joint_order_link_filters_campaign_when_product_is_reused(): void
+    {
+        [$vendor,$admin,$shop,$product,$listing]=$this->createSetup();
+        $campaigns=[];$orders=[];
+        for($i=0;$i<2;$i++){
+            $campaigns[]=DB::table('joint_purchases')->insertGetId(['product_id'=>$product->id,'min_quantity'=>10,'current_quantity'=>0,'discount_price'=>120,'start_date'=>now()->toDateString(),'end_date'=>now()->addWeek()->toDateString(),'status'=>1,'created_at'=>now(),'updated_at'=>now()]);
+            $order=Order::forceCreate(['user_id'=>0,'name'=>'Review buyer','address'=>'Review','city'=>'Review','state'=>'Review','country'=>'KR','pincode'=>'00000','mobile'=>'01000000000','email'=>'joint-order@example.test','shipping_charges'=>0,'coupon_code'=>'','coupon_amount'=>0,'order_status'=>'New','payment_method'=>'COD','payment_gateway'=>'common_pg','grand_total'=>120]);
+            OrdersProduct::forceCreate(['order_id'=>$order->id,'user_id'=>0,'vendor_id'=>$vendor->id,'admin_id'=>$admin->id,'shop_channel_id'=>$shop->id,'shop_channel_product_id'=>$listing->id,'joint_purchase_id'=>$campaigns[$i],'product_id'=>$product->id,'product_code'=>$product->product_code,'product_name'=>$product->product_name,'product_color'=>'Blue','product_size'=>'Default','product_price'=>120,'product_qty'=>1,'item_status'=>'New','status_code'=>'paid']);
+            $orders[]=$order;
+        }
+        $this->actingAs($admin,'admin')->get('/channel/order/joint/list?joint_purchase_id='.$campaigns[0].'&search_type=product_code&keyword='.$product->product_code)
+            ->assertOk()->assertViewHas('orders',fn($rows)=>$rows->total()===1&&(int)$rows->first()->id===$orders[0]->id)
+            ->assertSee('name="joint_purchase_id" value="'.$campaigns[0].'"',false);
     }
 }

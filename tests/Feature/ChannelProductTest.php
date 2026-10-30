@@ -21,7 +21,7 @@ class ChannelProductTest extends TestCase
         $vendor->mobile = '010-1234-5678';
         $vendor->email = 'vendor@example.com';
         $vendor->status = 1;
-        $vendor->commission = 0;
+        $vendor->commission = 10;
         $vendor->confirm = 'Yes';
         $vendor->save();
 
@@ -155,7 +155,7 @@ class ChannelProductTest extends TestCase
             'admin_id' => 999,
             'admin_type' => 'vendor',
             'product_name' => 'Public Product',
-            'product_code' => 'PUB123',
+            'product_code' => 'PUB123', 'is_public'=>'Yes',
             'product_color' => 'Red',
             'product_price' => 200.0,
             'product_discount' => 0.0,
@@ -217,7 +217,7 @@ class ChannelProductTest extends TestCase
             'admin_id' => 999,
             'admin_type' => 'vendor',
             'product_name' => 'Fixed Shared Product',
-            'product_code' => 'FIXED123',
+            'product_code' => 'FIXED123', 'is_public'=>'Yes',
             'product_color' => 'Black',
             'product_price' => 10000,
             'product_discount' => 0,
@@ -257,7 +257,7 @@ class ChannelProductTest extends TestCase
             'admin_id' => 999,
             'admin_type' => 'vendor',
             'product_name' => 'Partial Product',
-            'product_code' => 'PART123',
+            'product_code' => 'PART123', 'is_partial'=>'Yes',
             'product_color' => 'Green',
             'product_price' => 150.0,
             'product_discount' => 0.0,
@@ -412,7 +412,9 @@ class ChannelProductTest extends TestCase
             'message' => '판매 요청이 성공적으로 허용 처리되었습니다.',
         ]);
 
-        $this->assertEquals(1, $shopProduct->fresh()->status);
+        $this->assertEquals(0, $shopProduct->fresh()->status);
+        $this->assertSame('approved',$shopProduct->fresh()->approval_status);
+        $this->assertNull($shopProduct->fresh()->listed_at);
     }
 
     public function test_own_pg_channel_blocks_shared_products_and_stores_snapshot()
@@ -479,5 +481,105 @@ class ChannelProductTest extends TestCase
             ->assertSee('middle_category_choices', false)
             ->assertSee('minor_category_choices', false)
             ->assertSee('category-more', false);
+    }
+    private function baseReviewPayload(): array
+    {
+        $section = \App\Models\Section::forceCreate(['name'=>'Review section','status'=>1]);
+        $major = \App\Models\Category::forceCreate(['section_id'=>$section->id,'parent_id'=>0,'category_name'=>'Review major','category_image'=>'','url'=>'review-major','status'=>1]);
+        $brand = \App\Models\Brand::forceCreate(['name'=>'Review brand','status'=>1]);
+        return ['product_code'=>'REVIEW-109','product_name'=>'Review product','major_category_id'=>$major->id,'brand_id'=>$brand->id,
+            'product_price'=>10000,'sale_scope'=>'both','tax_type'=>'taxable','price_constraint_enabled'=>1,'price_constraint_type'=>'fixed',
+            'price_fixed'=>1,'profit_share_type'=>'base_percent','profit_share_value'=>10,'purchase_limit_enabled'=>0,'stock_usage'=>'unused',
+            'detail_display_type'=>'text','detail_text'=>'<p><strong>Safe description</strong><script>alert(1)</script></p>',
+            'order_manager_enabled'=>0,'shipping_policy_type'=>'free','shipping_payment_type'=>'prepaid','status'=>0];
+    }
+
+    public function test_stop_notice_requires_three_days_and_never_automatically_stops_product(): void
+    {
+        [, $admin, $shop, $product] = $this->createSetup();
+        $this->travelTo(\Illuminate\Support\Carbon::parse('2026-10-31 10:00:00','Asia/Seoul'));
+        $this->actingAs($admin,'admin');
+        $this->postJson('/channel/product/base/stop-notice/'.$product->id,['stop_notice_at'=>'2026-11-02'])
+            ->assertUnprocessable()->assertJsonValidationErrors('stop_notice_at');
+        $this->postJson('/channel/product/base/stop-notice/'.$product->id,['stop_notice_at'=>'2026-11-03'])->assertJsonPath('status',true);
+        $this->assertEquals(1,$product->fresh()->status);
+        ShopChannelProduct::forceCreate(['shop_channel_id'=>$shop->id,'product_id'=>$product->id,'product_type'=>'own','status'=>1,'approval_status'=>'approved','listed_at'=>now(),'product_price'=>100,'selling_price'=>120,'profit'=>20]);
+        $this->postJson('/channel/product/base/delete/'.$product->id,[],['X-Requested-With'=>'XMLHttpRequest'])->assertJsonPath('status',false);
+        $this->assertModelExists($product);
+        $this->travelTo(\Illuminate\Support\Carbon::parse('2026-11-03 00:01:00','Asia/Seoul'));
+        $this->postJson('/channel/product/base/delete/'.$product->id,[],['X-Requested-With'=>'XMLHttpRequest'])->assertJsonPath('status',true);
+        $this->travelBack();
+    }
+
+    public function test_base_registration_supports_both_sharing_modes_and_derives_price_on_server(): void
+    {
+        [, $admin] = $this->createSetup();$data=$this->baseReviewPayload();$this->actingAs($admin,'admin');
+        $this->postJson(route('channel.product.base.store'),$data+['reward_points'=>100])
+            ->assertUnprocessable()->assertJsonValidationErrors('reward_points');
+        $this->post(route('channel.product.base.store'),$data)->assertRedirect()->assertSessionHasNoErrors();
+        $product=Product::where('product_code','REVIEW-109')->firstOrFail();
+        $this->assertEquals('Yes',$product->is_public);$this->assertEquals('Yes',$product->is_partial);
+        $this->getJson('/channel/product/base/detail/'.$product->id)->assertOk()->assertJsonPath('product.detail_html',fn($html)=>!str_contains($html,'<script')&&str_contains($html,'<strong>'));
+        $this->assertEquals(11000,$product->price_fixed);$this->assertEquals(0,$product->status);$this->assertNull($product->reward_points);
+        $this->assertStringNotContainsString('<script',$product->detail_text);$this->assertStringContainsString('<strong>',$product->detail_text);
+        $policy=app(\App\Services\OrderSettlementPolicy::class)->capture(null,null,$product);
+        $this->assertSame('fixed',$policy['profit_share_type']);$this->assertEquals(1000,$policy['profit_share_value']);
+    }
+
+    public function test_image_limit_counts_representative_and_replacement_does_not_add_sixth_image(): void
+    {
+        [, $admin] = $this->createSetup();$data=$this->baseReviewPayload();$this->actingAs($admin,'admin');
+        $image=fn()=>\Illuminate\Http\UploadedFile::fake()->image('review.png',32,32);
+        $this->postJson(route('channel.product.base.store'),$data+['slot_images'=>[$image(),$image(),$image(),$image(),$image()]])
+            ->assertUnprocessable()->assertJsonValidationErrors('slot_images');
+        $this->post(route('channel.product.base.store'),$data+['product_image'=>$image(),'slot_images'=>[$image(),$image(),$image(),$image()]])->assertSessionHasNoErrors();
+        $product=Product::where('product_code','REVIEW-109')->firstOrFail();$files=$product->images->pluck('image')->all();
+        try {
+            $this->assertSame(5,$product->images()->count());
+            $this->post(route('channel.product.base.update',$product->id),$data+['product_image'=>$image()])->assertSessionHasNoErrors();
+            $this->assertSame(5,$product->images()->count());
+        } finally {
+            foreach(array_unique(array_merge($files,$product->images()->pluck('image')->all())) as $file)
+                foreach(['large','medium','small'] as $size) @unlink(public_path('front/images/product_images/'.$size.'/'.$file));
+        }
+    }
+
+    public function test_copy_preserves_options_and_images_but_never_copies_shop_listings(): void
+    {
+        [, $admin, $shop, $product] = $this->createSetup();
+        \App\Models\ProductsImage::forceCreate(['product_id'=>$product->id,'image'=>'review-original.png','status'=>1]);
+        \App\Models\ProductsAttribute::forceCreate(['product_id'=>$product->id,'sku'=>'REVIEW-SKU','size'=>'Small','price'=>90,'price_adjustment'=>-10,'option_name'=>'Size','option_type'=>'price','stock'=>7,'status'=>1]);
+        $this->actingAs($admin,'admin')->postJson('/channel/product/base/copy/'.$product->id)->assertJsonPath('status',true);
+        $copy=Product::where('id','!=',$product->id)->latest('id')->firstOrFail();
+        $this->assertSame(1,$copy->images()->count());$this->assertEquals('review-original.png',$copy->images()->first()->image);
+        $this->assertSame(1,$copy->attributes()->count());$this->assertEquals(-10,$copy->attributes()->first()->price_delta);
+        $this->assertEquals(0,$copy->status);$this->assertNull($copy->stop_notice_at);
+        $this->assertNotEquals('REVIEW-SKU',$copy->attributes()->first()->sku);$this->assertSame(0,$copy->shopChannelProducts()->count());
+    }
+
+    public function test_shared_management_lists_only_current_vendors_added_products_and_searches_actual_price(): void
+    {
+        [, $admin, $shop, $own] = $this->createSetup();
+        $supplier=Vendor::forceCreate(['name'=>'Supplier review','email'=>'supplier-review@example.test','mobile'=>'01000000000','status'=>1,'commission'=>5]);
+        $shared=$own->replicate();$shared->vendor_id=$supplier->id;$shared->product_code='SHARED-109';$shared->is_public='Yes';$shared->is_partial='Yes';
+        $shared->price_constraint_enabled=1;$shared->price_constraint_type='fixed';$shared->price_fixed=8000;$shared->save();
+        $this->actingAs($admin,'admin')->get('/channel/product/public')->assertOk()->assertViewHas('products',fn($rows)=>$rows->total()===0);
+        $mapping=ShopChannelProduct::forceCreate(['shop_channel_id'=>$shop->id,'product_id'=>$shared->id,'product_type'=>'public','status'=>1,'approval_status'=>'approved','listed_at'=>now(),'product_price'=>100,'selling_price'=>8000,'profit'=>2000]);
+        $this->get('/channel/product/public?seller=Supplier&price_min=7000&price_max=9000')->assertOk()->assertViewHas('products',fn($rows)=>$rows->total()===1);
+        $this->get('/channel/product/partial')->assertOk()->assertViewHas('products',fn($rows)=>$rows->total()===0);
+        $mapping->update(['product_type'=>'partial','listed_at'=>null]);
+        $this->get('/channel/product/partial')->assertOk()->assertViewHas('products',fn($rows)=>$rows->total()===0);
+        $mapping->update(['listed_at'=>now()]);
+        $this->get('/channel/product/partial')->assertOk()->assertViewHas('products',fn($rows)=>$rows->total()===1);
+    }
+
+    public function test_only_full_administrator_can_publish_default_refund_information(): void
+    {
+        [, $admin] = $this->createSetup();$this->actingAs($admin,'admin');
+        $this->post('/admin/refund-policies/default',['content'=>'Review default'])->assertForbidden();
+        $this->assertDatabaseCount('platform_refund_policies',0);
+        $admin->type='admin';$admin->vendor_id=0;$admin->save();
+        $this->post('/admin/refund-policies/default',['content'=>'Review default'])->assertRedirect()->assertSessionHasNoErrors();
+        $this->assertSame('Review default',\App\Models\PlatformRefundPolicy::currentContent());
     }
 }

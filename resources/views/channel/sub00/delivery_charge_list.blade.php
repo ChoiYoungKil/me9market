@@ -1,193 +1,23 @@
 @extends('layouts.channel')
-
-@php
-    $dep1_id = "00";
-@endphp
-
-@section('content')
-<div id="contents">
-    <div class="row">
-        <div class="box box1">
-            <div class="page_info">
-                <div class="ttl">배송비설정 관리</div>
-                <ul class="dep">
-                    <li>HOME</li>
-                    <li>배송비설정 관리</li>
-                </ul>
-            </div>
-            <div class="conbx">
-                <div class="con_w">
-                    @if(session('flash_message_success'))
-                        <div class="alert alert-success">{{ session('flash_message_success') }}</div>
-                    @endif
-
-                    <div class="list_top1 btn">
-                        <div class="count">총 <strong>{{ $charges->total() }}</strong> 건</div>
-                        <div class="btn_bx">
-                            <a href="{{ url()->current() }}" class="btn01 col5 pop_btn" data-pop="pop_delivery_create">배송비 등록</a>
-                        </div>
-                    </div>
-                    <div class="tb01 ovS">
-                        <table>
-                            <colgroup>
-                                <col width="120px">
-                                <col width="120px">
-                                <col width="">
-                                <col width="150px">
-                                <col width="150px">
-                                <col width="120px">
-                                <col width="120px">
-                                <col width="150px">
-                            </colgroup>
-                            <thead>
-                                <tr>
-                                    <th>배송구분</th>
-                                    <th>상태</th>
-                                    <th>배송명</th>
-                                    <th>지정택배사</th>
-                                    <th>배송비 유형</th>
-                                    <th>배송비 결제</th>
-                                    <th>상품수</th>
-                                    <th>관리</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($charges as $charge)
-                                    <tr>
-                                        <td>사용자</td>
-                                        <td>{{ $charge->status ? '사용' : '중지' }}</td>
-                                        <td class="t_l">{{ $charge->name }}</td>
-                                        <td class="t_l">{{ $charge->courier ?: '자체배송' }}</td>
-                                        <td class="t_l">{{ $shippingTypes[$charge->shipping_type] ?? $charge->shipping_type }}</td>
-                                        <td>{{ $paymentTypes[$charge->payment_type] ?? $charge->payment_type }}</td>
-                                        <td>{{ number_format($charge->product_count) }}</td>
-                                        <td>
-                                            <a href="{{ url()->current() }}" class="btn02 col5 pop_btn" data-pop="pop_delivery_view_{{ $charge->id }}">보기</a>
-                                            <a href="{{ url()->current() }}" class="btn02 col7 mt5 pop_btn" data-pop="pop_delivery_edit_{{ $charge->id }}">수정</a>
-                                            <form method="POST" action="{{ route('channel.delivery.delete', $charge->id) }}" style="display:inline;" onsubmit="return confirm('배송비 설정을 삭제하시겠습니까?');">
-                                                @csrf
-                                                <button type="submit" class="btn02 mt5">삭제</button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="8" class="no_data" style="padding: 80px 0;">등록된 배송비 설정이 없습니다.</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="page_bx1">
-                        {{ $charges->links() }}
-                    </div>
-
-                    <div class="popup_bx" data-id="pop_delivery_create">
-                        <div class="pop_w">
-                            <div class="pop_inner">
-                                <div class="pop_con">
-                                    <div class="close_btn close1">닫기</div>
-                                    <div class="page_info type2">
-                                        <div class="ttl">배송비 등록</div>
-                                    </div>
-                                    <form method="POST" action="{{ route('channel.delivery.store') }}">
-                                        @csrf
-                                        @include('channel.sub00.inc.delivery_charge_form', ['charge' => null])
-                                        <div class="btm_btn mt10">
-                                            <button type="submit">배송비 등록</button>
-                                            <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    @foreach($charges as $charge)
-                        <div class="popup_bx" data-id="pop_delivery_view_{{ $charge->id }}">
-                            <div class="pop_w">
-                                <div class="pop_inner">
-                                    <div class="pop_con">
-                                        <div class="close_btn close1">닫기</div>
-                                        <div class="page_info type2">
-                                            <div class="ttl">배송비 정보</div>
-                                        </div>
-                                        <div class="conbx">
-                                            <div class="con_w">
-                                                <div class="tb01">
-                                                    <table>
-                                                        <tbody class="textL">
-                                                            <tr><th class="w160"><span>상태</span></th><td>{{ $charge->status ? '사용' : '중지' }}</td></tr>
-                                                            <tr><th class="w160"><span>배송비 명칭</span></th><td>{{ $charge->name }}</td></tr>
-                                                            <tr><th class="w160"><span>지정택배사</span></th><td>{{ $charge->courier ?: '자체배송' }}</td></tr>
-                                                            <tr><th class="w160"><span>배송비 유형</span></th><td>{{ $shippingTypes[$charge->shipping_type] ?? $charge->shipping_type }}</td></tr>
-                                                            <tr><th class="w160"><span>배송비 결제</span></th><td>{{ $paymentTypes[$charge->payment_type] ?? $charge->payment_type }}</td></tr>
-                                                            <tr><th class="w160"><span>기본 배송비</span></th><td>{{ number_format($charge->base_fee) }} 원</td></tr>
-                                                            <tr><th class="w160"><span>무료 조건</span></th><td>{{ $charge->free_order_amount ? number_format($charge->free_order_amount) . ' 원 이상' : '-' }} / {{ $charge->free_order_quantity ? number_format($charge->free_order_quantity) . ' 개 이상' : '-' }}</td></tr>
-                                                            @php($rules = $charge->calculation_rules ?? [])
-                                                            @if($charge->shipping_type === 'variable')
-                                                                <tr><th>반복 조건</th><td>{{ $rules['repeat_every'] ?? '' }} {{ ($rules['basis'] ?? 'quantity') === 'amount' ? '원' : '개' }}마다 {{ number_format($rules['repeat_fee'] ?? 0) }}원 / {{ !empty($rules['start_at_one']) ? '1부터 시작' : '기준값부터 시작' }}</td></tr>
-                                                            @endif
-                                                            @if($charge->shipping_type === 'tiered')
-                                                                <tr><th>구간</th><td>@foreach($rules['tiers'] ?? [] as $tier)<p>{{ number_format($tier['min']) }} 이상 {{ $tier['max'] !== null ? number_format($tier['max']).' 미만' : '' }}: {{ number_format($tier['fee']) }}원</p>@endforeach</td></tr>
-                                                            @endif
-                                                            <tr><th>지역 배송</th><td>권역: {{ ['none' => '추가금 없음', 'two' => '2권역', 'three' => '3권역'][$rules['region_mode'] ?? 'none'] }} / 제주 {{ !empty($rules['block_jeju']) ? '제한' : '가능' }} / 도서산간 {{ !empty($rules['block_remote']) ? '제한' : '가능' }}</td></tr>
-                                                            @if(($rules['region_mode'] ?? 'none') !== 'none')<tr><th>지역 추가금</th><td>제주 {{ number_format($rules['jeju_fee'] ?? 0) }}원 / 도서산간 {{ number_format(($rules['region_mode'] ?? '') === 'two' ? ($rules['jeju_fee'] ?? 0) : ($rules['remote_fee'] ?? 0)) }}원 / 그 외 {{ number_format($rules['mainland_fee'] ?? 0) }}원</td></tr>@endif
-
-                                                            <tr><th class="w160"><span>메모</span></th><td>{!! nl2br(e($charge->memo ?: '-')) !!}</td></tr>
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="btm_btn mt10">
-                                            <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="popup_bx" data-id="pop_delivery_edit_{{ $charge->id }}">
-                            <div class="pop_w">
-                                <div class="pop_inner">
-                                    <div class="pop_con">
-                                        <div class="close_btn close1">닫기</div>
-                                        <div class="page_info type2">
-                                            <div class="ttl">배송비 수정</div>
-                                        </div>
-                                        <form method="POST" action="{{ route('channel.delivery.update', $charge->id) }}">
-                                            @csrf
-                                            @include('channel.sub00.inc.delivery_charge_form', ['charge' => $charge])
-                                            <div class="btm_btn mt10">
-                                                <button type="submit">배송비 수정</button>
-                                                <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-@endsection
-
-@push('scripts')
-<script type="text/javascript">
-    $(".pop_btn").click(function () {
-        var popId = $(this).attr("data-pop");
-        $(".popup_bx[data-id='" + popId + "']").stop().fadeIn(300);
-        $(".popup_bx[data-id='" + popId + "']").scrollTop(0);
-        return false;
-    });
-    $(".popup_bx .close_btn").click(function () {
-        $(this).parents(".popup_bx").stop().fadeOut(300);
-        return false;
-    });
-</script>
+@section('page_type','sub')
+@php($dep1_id='00')
+@push('styles')
+<link rel="stylesheet" href="/channel_assets/css/order-workspace.css?v={{ filemtime(public_path('channel_assets/css/order-workspace.css')) }}">
+<link rel="stylesheet" href="/channel_assets/css/delivery-policies.css?v={{ filemtime(public_path('channel_assets/css/delivery-policies.css')) }}">
 @endpush
+@section('content')
+<div id="contents"><div class="order-workspace delivery-workspace" data-delivery-active-form="{{ $activeForm }}">
+<div class="order-page-heading"><div><p>환경설정</p><h1>배송비 설정 관리</h1></div><button class="primary" type="button" data-delivery-open="delivery-create">배송비 등록</button></div>
+@if(session('flash_message_success'))<section class="order-panel" role="status">{{ session('flash_message_success') }}</section>@endif
+@if($errors->any())<section class="order-panel delivery-error" role="alert">{{ $errors->first() }}</section>@endif
+<section class="order-panel"><form action="{{ route('channel.delivery.list') }}" method="GET" class="order-search-row"><label class="grow">배송비 명칭<input name="keyword" value="{{ $keyword }}" placeholder="배송비 명칭 검색"></label><button class="primary" type="submit">검색</button><a class="order-button" href="{{ route('channel.delivery.list') }}">초기화</a></form></section>
+<section class="order-panel"><div class="order-toolbar"><h2>배송비 설정 목록</h2><p>총 <strong>{{ $charges->total() }}</strong> 건</p></div>
+<div class="order-table-scroll" tabindex="0" role="region" aria-label="배송비 설정 목록"><table class="order-table"><thead><tr><th>배송구분</th><th>상태</th><th>배송비 명칭</th><th>지정택배사</th><th>배송비 유형</th><th>배송비 결제</th><th>연결 상품수</th><th>관리</th></tr></thead><tbody>
+@forelse($charges as $charge)<tr><td>사용자</td><td><span class="order-state">{{ $charge->status ? '사용' : '중지' }}</span></td><td>{{ $charge->name }}</td><td>{{ $charge->courier ?: '자체배송' }}</td><td>{{ $shippingTypes[$charge->shipping_type] ?? $charge->shipping_type }}</td><td>{{ $paymentTypes[$charge->payment_type] ?? $charge->payment_type }}</td><td>{{ number_format($charge->linked_product_count) }}</td><td><div class="delivery-actions"><a class="order-button" href="{{ route('channel.delivery.show',$charge->id) }}" data-delivery-view>보기</a><button type="button" data-delivery-open="delivery-edit-{{ $charge->id }}">수정</button><form method="POST" action="{{ route('channel.delivery.copy',$charge->id) }}">@csrf<button type="submit">복사</button></form><form method="POST" action="{{ route('channel.delivery.delete',$charge->id) }}" data-delivery-delete>@csrf<button type="submit" @disabled($charge->linked_product_count > 0) title="{{ $charge->linked_product_count > 0 ? '상품에서 사용 중인 정책은 삭제할 수 없습니다.' : '배송비 설정 삭제' }}">삭제</button></form></div></td></tr>
+@empty<tr><td colspan="8" class="order-empty">등록된 배송비 설정이 없습니다.</td></tr>@endforelse
+</tbody></table></div>{{ $charges->links() }}</section></div></div>
+<dialog id="delivery-create" class="order-dialog delivery-dialog" aria-labelledby="delivery-create-title"><div class="order-dialog-heading"><h2 id="delivery-create-title">배송비 등록</h2><button type="button" data-delivery-close>창닫기</button></div><form method="POST" action="{{ route('channel.delivery.store') }}" data-delivery-form data-preview-url="{{ route('channel.delivery.preview') }}">@csrf @include('channel.sub00.inc.channel_delivery_form',['charge'=>null])</form></dialog>
+@foreach($charges as $charge)<dialog id="delivery-edit-{{ $charge->id }}" class="order-dialog delivery-dialog" aria-labelledby="delivery-edit-title-{{ $charge->id }}"><div class="order-dialog-heading"><h2 id="delivery-edit-title-{{ $charge->id }}">배송비 수정</h2><button type="button" data-delivery-close>창닫기</button></div><form method="POST" action="{{ route('channel.delivery.update',$charge->id) }}" data-delivery-form data-preview-url="{{ route('channel.delivery.preview') }}">@csrf @include('channel.sub00.inc.channel_delivery_form',['charge'=>$charge])</form></dialog>@endforeach
+<dialog id="delivery-view" class="order-dialog delivery-dialog" aria-labelledby="delivery-view-title"><div class="order-dialog-heading"><h2 id="delivery-view-title">배송비 정보</h2><button type="button" data-delivery-close>창닫기</button></div><div data-delivery-details aria-live="polite"></div></dialog>
+@endsection
+@push('scripts')<script src="/channel_assets/js/delivery-policies.js?v={{ filemtime(public_path('channel_assets/js/delivery-policies.js')) }}" defer></script>@endpush

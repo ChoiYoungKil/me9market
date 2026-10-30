@@ -661,8 +661,8 @@ class UserController extends Controller
         DB::transaction(function () use ($vendor,$enabled) {
             $vendor->use_own_pg=$enabled;$vendor->save();
             foreach (ShopChannel::where('vendor_id',$vendor->id)->get() as $shop) {
-                $shop->use_own_pg=$enabled;
-                foreach (['pg_provider','pg_merchant_id','pg_site_code','pg_client_key','pg_secret_key'] as $field) $shop->$field=$vendor->$field;
+                if (!$enabled) $shop->use_own_pg=false;
+                elseif ($shop->use_own_pg) foreach (['pg_provider','pg_merchant_id','pg_site_code','pg_client_key','pg_secret_key'] as $field) $shop->$field=$vendor->$field;
                 $shop->save();
             }
         });

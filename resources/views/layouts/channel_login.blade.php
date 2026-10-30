@@ -19,11 +19,11 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
     <script src="{{ asset('channel_assets/js/slick.min.js') }}"></script>
     <script src="{{ asset('channel_assets/js/common.js') }}"></script>
-    @yield('styles')
     <link href="{{ asset('common/portal.css').'?v='.filemtime(public_path('common/portal.css')) }}" rel="stylesheet">
+    @yield('styles')
 </head>
 
-<body class="portal portal-login" id="main">
+<body class="portal portal-login @yield('body_class')" id="main">
     @yield('content')
     @yield('scripts')
 </body>

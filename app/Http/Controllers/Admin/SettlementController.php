@@ -21,10 +21,16 @@ class SettlementController extends Controller
     {
         Session::put('page', 'settlements');
 
+        $request->validate(['period'=>['nullable','string',\Illuminate\Validation\Rule::in(array_keys($calculator->periodOptions()))]]);
         $period = $calculator->normalizePeriod($request->query('period'));
         $periodOptions = $calculator->periodOptions();
-        $previewRows = $calculator->preview($period);
-        $runs = SettlementRun::where('period', $period)
+        $shopId=$request->integer('shop_channel_id') ?: null;
+        $shops=\App\Models\ShopChannel::with('vendor')->orderBy('channel_code')->get();
+        $selectedShop=$shopId ? $shops->firstWhere('id',$shopId) : null;
+        if($shopId && !$selectedShop)abort(404);
+        $hasSelection=$request->filled('period') && $selectedShop;
+        $previewRows = $calculator->preview($period,null,$shopId);
+        $runs = SettlementRun::where('period', $period)->when($shopId,fn($q)=>$q->where('shop_channel_id',$shopId))
             ->orderBy('vendor_name')
             ->orderBy('shop_channel_name')
             ->get()
@@ -40,7 +46,7 @@ class SettlementController extends Controller
         });
 
         $previewKeys = $previewRows->pluck('settlement_key')->all();
-        $runs->except($previewKeys)->each(function (SettlementRun $run) use (&$rows) {
+        $runs->reject(fn (SettlementRun $run) => in_array($run->settlement_key, $previewKeys, true))->each(function (SettlementRun $run) use (&$rows) {
             $rows->push([
                 'settlement_key' => $run->settlement_key,
                 'settlement_role' => $run->settlement_role ?? 'seller',
@@ -89,21 +95,23 @@ class SettlementController extends Controller
         ];
 
         $executions = SettlementExecution::with(['vendor', 'shopChannel', 'settlementRun'])
-            ->where('period', $period)
+            ->where('period', $period)->when($shopId,fn($q)=>$q->where('shop_channel_id',$shopId))
             ->latest('executed_at')
             ->latest('id')
             ->get();
 
-        return view('admin.settlements.index', compact('period', 'periodOptions', 'rows', 'totals', 'executions'));
+        return view('admin.settlements.index', compact('period', 'periodOptions', 'rows', 'totals', 'executions','shops','selectedShop','hasSelection'));
     }
 
     public function generate(Request $request, SettlementCalculator $calculator)
     {
+        $request->validate(['period'=>['required',\Illuminate\Validation\Rule::in(array_keys($calculator->periodOptions()))],'shop_channel_id'=>'nullable|integer|exists:shop_channels,id']);
         $period = $calculator->normalizePeriod($request->input('period'));
-        $runs = $calculator->generate($period, Auth::guard('admin')->id());
+        $shop=$request->filled('shop_channel_id') ? \App\Models\ShopChannel::findOrFail($request->integer('shop_channel_id')) : null;
+        $runs = $calculator->generate($period, Auth::guard('admin')->id(),null,$shop?->id);
 
         return redirect()
-            ->route('admin.settlements.index', ['period' => $period])
+            ->route('admin.settlements.index', ['period' => $period, 'shop_channel_id' => $shop?->id])
             ->with('success_message', $period.' 정산 자료 '.$runs->count().'건을 생성했습니다.');
     }
 
@@ -124,6 +132,7 @@ class SettlementController extends Controller
     {
         Session::put('page', 'settlements');
 
+        $request->validate(['period'=>['nullable','string',\Illuminate\Validation\Rule::in(array_keys($calculator->periodOptions()))]]);
         $period = $calculator->normalizePeriod($request->query('period'));
         $vendorId = (int) $request->query('vendor_id');
 
@@ -167,7 +176,9 @@ class SettlementController extends Controller
     public function storeExecution(Request $request)
     {
         $data = $request->validate([
-            'period' => 'required|string|size:7',
+            'period' => ['required',\Illuminate\Validation\Rule::in(array_keys(app(SettlementCalculator::class)->periodOptions()))],
+            'shop_channel_id'=>'nullable|integer|exists:shop_channels,id',
+            'recipient_vendor_id'=>'nullable|integer|exists:vendors,id',
             'settlement_run_id' => 'nullable|integer|exists:settlement_runs,id',
             'title' => 'required|string|max:255',
             'amount' => 'required|numeric|min:0',
@@ -180,42 +191,44 @@ class SettlementController extends Controller
             ? SettlementRun::find($data['settlement_run_id'])
             : null;
 
-        $attachmentPath = null;
-        $attachmentName = null;
-        if ($request->hasFile('attachment')) {
-            $attachment = $request->file('attachment');
-            $attachmentPath = $attachment->store('settlement_executions', 'public');
-            $attachmentName = $attachment->getClientOriginalName();
+        $shop=!empty($data['shop_channel_id']) ? \App\Models\ShopChannel::findOrFail($data['shop_channel_id']) : $run?->shopChannel;
+        if (!$shop || ($run && ($run->period!==$data['period'] || (int)$run->shop_channel_id!==$shop->id))) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['shop_channel_id'=>'정산월과 대상 채널이 일치하는 집행 내역을 입력해 주세요.']);
         }
-
-        SettlementExecution::create([
-            'period' => $data['period'],
-            'settlement_run_id' => $run?->id,
-            'vendor_id' => $run?->vendor_id,
-            'shop_channel_id' => $run?->shop_channel_id,
-            'title' => $data['title'],
-            'amount' => $data['amount'],
-            'executed_at' => $data['executed_at'] ?? now(),
-            'registered_by' => Auth::guard('admin')->id(),
-            'memo' => $data['memo'] ?? null,
-            'attachment_path' => $attachmentPath,
-            'attachment_name' => $attachmentName,
-        ]);
-
-        return redirect()
-            ->route('admin.settlements.index', ['period' => $data['period']])
-            ->with('success_message', '정산 집행 내역을 등록했습니다.');
+        $recipient=(int)($data['recipient_vendor_id'] ?? $run?->vendor_id ?? $shop->vendor_id);
+        if (($run && (int)$run->vendor_id!==$recipient) || ($recipient!==(int)$shop->vendor_id && app(SettlementCalculator::class)->preview($data['period'],$recipient,$shop->id)->isEmpty())) {
+            throw \Illuminate\Validation\ValidationException::withMessages(['recipient_vendor_id'=>'선택 채널의 정산 대상 판매자를 확인해 주세요.']);
+        }
+        $attachmentPath=null;
+        try {
+            $attachment=$request->file('attachment');
+            if($attachment) {
+                $attachmentPath=$attachment->store('settlement_executions','local');
+                if(!$attachmentPath)throw new \RuntimeException('Attachment storage failed');
+            }
+            \Illuminate\Support\Facades\DB::transaction(fn()=>SettlementExecution::create([
+                'period'=>$data['period'],'settlement_run_id'=>$run?->id,'vendor_id'=>$recipient,'shop_channel_id'=>$shop->id,
+                'title'=>$data['title'],'amount'=>$data['amount'],'executed_at'=>$data['executed_at']??now(),
+                'registered_by'=>Auth::guard('admin')->id(),'memo'=>$data['memo']??null,'attachment_disk'=>'local',
+                'attachment_path'=>$attachmentPath,'attachment_name'=>$attachment?->getClientOriginalName(),
+            ]));
+        } catch (\Throwable $exception) {
+            if($attachmentPath)Storage::disk('local')->delete($attachmentPath);
+            throw $exception;
+        }
+        return redirect()->route('admin.settlements.index',['period'=>$data['period'],'shop_channel_id'=>$shop->id])
+            ->with('success_message','정산 집행 내역을 등록했습니다.');
     }
 
     public function downloadExecutionAttachment($id)
     {
         $execution = SettlementExecution::findOrFail($id);
 
-        if (! $execution->attachment_path || ! Storage::disk('public')->exists($execution->attachment_path)) {
+        if (! $execution->attachment_path || ! Storage::disk($execution->attachment_disk ?: 'public')->exists($execution->attachment_path)) {
             abort(404);
         }
 
-        return Storage::disk('public')->download($execution->attachment_path, $execution->attachment_name ?: basename($execution->attachment_path));
+        return Storage::disk($execution->attachment_disk ?: 'public')->download($execution->attachment_path, $execution->attachment_name ?: basename($execution->attachment_path));
     }
 
     public function payoutDetail($id)
@@ -287,6 +300,24 @@ class SettlementController extends Controller
             ['주문번호', '상품명', '상태', 'PG구분', '반품배송비', '교환배송비', '기타추가배송비', '추가배송비 합계', '택배사', '송장번호', '처리일'],
             $this->extraShippingRows($settlement)
         );
+    }
+
+    public function workbook(Request $request,$period,SettlementCalculator $calculator)
+    {
+        $request->merge(['period'=>$period]);
+        $data=$request->validate(['period'=>['required',\Illuminate\Validation\Rule::in(array_keys($calculator->periodOptions()))],'shop_channel_id'=>'required|integer|exists:shop_channels,id','vendor_id'=>'nullable|integer|exists:vendors,id','kind'=>'required|in:orders,shipping,payout,billing']);
+        $shop=\App\Models\ShopChannel::findOrFail($data['shop_channel_id']);
+        $admin=Auth::guard('admin')->user();
+        if(!in_array($admin->type,['superadmin','admin'],true) && (int)$admin->vendor_id!==(int)$shop->vendor_id)abort(404);
+        $reportVendor=$request->integer('vendor_id') ?: $shop->vendor_id;
+        $report=app(\App\Services\SettlementReport::class);
+        if($data['kind']==='shipping')return $report->download('settlement_shipping_'.$period.'.xlsx',$report::SHIPPING_HEADERS,$report->shipping($period,$reportVendor,$shop->id));
+        $rows=$report->rows($calculator->items($period,$reportVendor,$shop->id));
+        if(in_array($data['kind'],['payout','billing'],true)){
+            [$headers,$rows]=$report->amountRows($calculator->items($period,$reportVendor,$shop->id),$data['kind']);
+            if(!$request->boolean('download'))return view('admin.settlements.report_amount',compact('headers','rows','period','shop','data'));
+        }else $headers=$report::HEADERS;
+        return $report->download('settlement_'.$data['kind'].'_'.$period.'.xlsx',$headers,$rows);
     }
 
     private function normalizeShopChannelId($value): ?int
@@ -605,7 +636,7 @@ class SettlementController extends Controller
             fputcsv($handle, $headers);
 
             foreach ($rows as $row) {
-                fputcsv($handle, $row);
+                fputcsv($handle, array_map(fn($value)=>is_string($value)&&preg_match('/^[=+@\-\t\r]/u',$value)?"'".$value:$value,$row));
             }
 
             fclose($handle);

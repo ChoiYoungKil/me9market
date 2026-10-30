@@ -909,4 +909,99 @@ class ChannelSettlementTest extends TestCase
             ->get(route('admin.settlements.export', $run->id))
             ->assertNotFound();
     }
+    private function reviewLine($admin,$shop,$product,array $policyChanges=[],array $changes=[]): OrdersProduct
+    {
+        $order=Order::forceCreate(['user_id'=>0,'name'=>'QA buyer','address'=>'QA address','city'=>'Seoul','state'=>'Seoul','country'=>'KR','pincode'=>'00000','mobile'=>'01000000000','email'=>'qa168@example.test','shipping_charges'=>2500,'order_status'=>'New','payment_method'=>'QA mock','payment_gateway'=>'Me9 Mock Payment','grand_total'=>12500]);
+        $policy=['product_type'=>'own','supplier_vendor_id'=>$product->vendor_id,'supplier_vendor_name'=>'QA','is_fixed_shared'=>false,'reward_points'=>0,'payment_gateway_type'=>'me9_pg','settlement_type'=>1,'settlement_rate'=>5,'profit_share_type'=>'fixed','profit_share_value'=>0];
+        return OrdersProduct::forceCreate(array_merge(['order_id'=>$order->id,'user_id'=>0,'vendor_id'=>$admin->vendor_id,'admin_id'=>$admin->id,'shop_channel_id'=>$shop->id,'product_id'=>$product->id,'product_code'=>'QA168','product_name'=>'QA settlement','product_color'=>'Default','product_size'=>'M','product_price'=>10000,'selling_price'=>10000,'supply_price'=>10000,'product_qty'=>1,'line_total'=>10000,'paid_line_total_snapshot'=>10000,'shipping_amount_snapshot'=>2500,'used_point_amount'=>0,'point_usage_snapshot'=>['channel'=>0,'me9'=>0],'status_code'=>'confirmed','item_status'=>'구매확정','confirmed_at'=>now(),'settlement_policy_snapshot'=>array_merge($policy,$policyChanges)],$changes));
+    }
+
+    public function test_own_and_common_pg_are_separate_and_generation_does_not_overwrite_either(): void
+    {
+        [$vendor,$admin,$shop,$product]=$this->createSetup();
+        $this->reviewLine($admin,$shop,$product);
+        $this->reviewLine($admin,$shop,$product,['payment_gateway_type'=>'own_pg']);
+        $calculator=app(SettlementCalculator::class);$period=now()->format('Y-m');
+        $rows=$calculator->preview($period,$vendor->id);
+        $this->assertCount(2,$rows);$this->assertCount(2,$rows->pluck('settlement_key')->unique());
+        foreach([1,2]as$i)$calculator->generate($period,$admin->id,$vendor->id,$shop->id);
+        $this->assertDatabaseCount('settlement_runs',2);$this->assertDatabaseCount('settlement_items',2);
+    }
+
+    public function test_extra_shipping_includes_completed_return_and_excludes_own_pg_and_other_vendors(): void
+    {
+        [$vendor,$admin,$shop,$product]=$this->createSetup();
+        $common=$this->reviewLine($admin,$shop,$product,[],['status_code'=>'returned','item_status'=>'반품완료','return_shipping_fee'=>2500]);
+        $own=$this->reviewLine($admin,$shop,$product,['payment_gateway_type'=>'own_pg'],['status_code'=>'returned','item_status'=>'반품완료','return_shipping_fee'=>3000]);
+        foreach([$common,$own]as$item)\App\Models\OrderClaim::create(['order_id'=>$item->order_id,'order_product_id'=>$item->id,'vendor_id'=>$vendor->id,'user_id'=>0,'type'=>'return','reason'=>'QA','status'=>'completed']);
+        $rows=app(\App\Services\SettlementReport::class)->shipping(now()->format('Y-m'),$vendor->id);
+        $this->assertCount(1,$rows);$this->assertEquals(2500,$rows->first()[8]);
+        $this->assertCount(0,app(\App\Services\SettlementReport::class)->shipping(now()->format('Y-m'),$vendor->id+999));
+    }
+
+    public function test_xlsx_is_readable_and_channel_identifiers_are_not_spreadsheet_formulas(): void
+    {
+        [, $admin,$shop,$product]=$this->createSetup();$shop->channel_code='=1+1';$shop->save();
+        $this->reviewLine($admin,$shop,$product);
+        $response=$this->actingAs($admin,'admin')->get('/channel/settlement/export?period='.now()->format('Y-m'));
+        $response->assertOk()->assertHeader('Content-Type','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        $path=tempnam(sys_get_temp_dir(),'qa168');file_put_contents($path,$response->streamedContent());
+        try{$sheet=\PhpOffice\PhpSpreadsheet\IOFactory::load($path)->getActiveSheet();$this->assertSame('=1+1',$sheet->getCell('B2')->getValue());$this->assertSame('s',$sheet->getCell('B2')->getDataType());$this->assertEquals(11810,$sheet->getCell('Q2')->getValue());}finally{unlink($path);}
+    }
+
+    public function test_execution_targets_channel_and_settlement_month_and_attachment_is_private(): void
+    {
+        [$vendor,$admin,$shop,$product]=$this->createSetup();
+        \Illuminate\Support\Facades\Storage::fake('local');\Illuminate\Support\Facades\Storage::fake('public');
+        $admin->type='superadmin';$admin->save();$period=now()->format('Y-m');$title='QA168 execution record';
+        $this->actingAs($admin,'admin')->post('/admin/settlements/executions',['period'=>$period,'shop_channel_id'=>$shop->id,'title'=>$title,'amount'=>1000,'executed_at'=>now()->addMonth()->toDateString(),'attachment'=>\Illuminate\Http\UploadedFile::fake()->create('proof.pdf',1,'application/pdf')])->assertRedirect();
+        $execution=\App\Models\SettlementExecution::sole();$this->assertSame($vendor->id,(int)$execution->vendor_id);$this->assertSame('local',$execution->attachment_disk);
+        \Illuminate\Support\Facades\Storage::disk('local')->assertExists($execution->attachment_path);\Illuminate\Support\Facades\Storage::disk('public')->assertMissing($execution->attachment_path);
+        $admin->type='vendor';$admin->save();$this->actingAs($admin,'admin')->get('/channel/settlement/list?period='.$period)->assertOk()->assertSee($title);
+        $this->get('/channel/settlement/executions/'.$execution->id.'/download')->assertOk();
+        $other=$admin->replicate();$other->email='other168@example.test';$other->vendor_id=$vendor->id+999;$other->save();
+        $this->actingAs($other,'admin')->get('/channel/settlement/executions/'.$execution->id.'/download')->assertNotFound();
+    }
+
+    public function test_execution_rejects_run_from_another_settlement_month(): void
+    {
+        [$vendor,$admin,$shop,$product]=$this->createSetup();$this->reviewLine($admin,$shop,$product);
+        $run=app(SettlementCalculator::class)->generate(now()->format('Y-m'),$admin->id)->first();$admin->type='superadmin';$admin->save();
+        $this->actingAs($admin,'admin')->postJson('/admin/settlements/executions',['period'=>now()->startOfMonth()->subMonth()->format('Y-m'),'shop_channel_id'=>$shop->id,'settlement_run_id'=>$run->id,'title'=>'QA','amount'=>1000])->assertUnprocessable();
+        $this->assertDatabaseCount('settlement_executions',0);
+    }
+
+    public function test_amount_report_preserves_point_wallet_split_and_own_pg_sign(): void
+    {
+        [$vendor,$admin,$shop,$product]=$this->createSetup();$this->reviewLine($admin,$shop,$product,['payment_gateway_type'=>'own_pg'],['used_point_amount'=>3000,'point_usage_snapshot'=>['channel'=>1000,'me9'=>2000],'sms_count'=>2,'sms_fee'=>100]);
+        $rows=app(SettlementCalculator::class)->items(now()->format('Y-m'),$vendor->id);$report=app(\App\Services\SettlementReport::class);
+        [, $payout]=$report->amountRows($rows,'payout');[, $billing]=$report->amountRows($rows,'billing');
+        $this->assertEquals(1000,$payout->first()[5]);$this->assertEquals(2000,$payout->first()[6]);$this->assertEquals(-3000,$payout->first()[10]);$this->assertEquals(100,$billing->first()[7]);
+    }
+    public function test_admin_scoped_summary_and_workbook_use_the_selected_recipient_vendor(): void
+    {
+        [$vendor,$admin,$shop,$product]=$this->createSetup();$supplier=$vendor->replicate();$supplier->email='supplier168@example.test';$supplier->name='QA supplier168';$supplier->save();
+        $this->reviewLine($admin,$shop,$product,['product_type'=>'public','is_fixed_shared'=>true,'supplier_vendor_id'=>$supplier->id,'profit_share_type'=>'fixed','profit_share_value'=>1500]);
+        $admin->type='superadmin';$admin->save();$period=now()->format('Y-m');$query='?period='.$period.'&shop_channel_id='.$shop->id;
+        $this->actingAs($admin,'admin')->get('/admin/settlements'.$query)->assertOk()->assertSee('정산 집행 등록')->assertViewHas('rows',fn($rows)=>$rows->count()===2);
+        $this->post('/admin/settlements/generate',['period'=>$period,'shop_channel_id'=>$shop->id])->assertRedirect(route('admin.settlements.index',['period'=>$period,'shop_channel_id'=>$shop->id]));
+        $this->assertDatabaseCount('settlement_runs',2);
+        $this->get('/admin/settlements'.$query)->assertOk()->assertViewHas('rows',fn($rows)=>$rows->count()===2);
+        $response=$this->get('/admin/settlements/workbook/'.$period.'?shop_channel_id='.$shop->id.'&vendor_id='.$supplier->id.'&kind=orders')->assertOk();
+        $path=tempnam(sys_get_temp_dir(),'qa174');file_put_contents($path,$response->streamedContent());
+        try{$sheet=\PhpOffice\PhpSpreadsheet\IOFactory::load($path)->getActiveSheet();$this->assertEquals(10310,$sheet->getCell('Q2')->getValue());}finally{unlink($path);}
+        $this->get('/admin/settlements/workbook/'.$period.'?shop_channel_id='.$shop->id.'&vendor_id='.$supplier->id.'&kind=billing')->assertOk()->assertSee('채널 청구액 상세 목록');
+        $this->post('/admin/settlements/executions',['period'=>$period,'shop_channel_id'=>$shop->id,'recipient_vendor_id'=>$supplier->id,'title'=>'Supplier execution','amount'=>10310])->assertRedirect();
+        $this->assertDatabaseHas('settlement_executions',['shop_channel_id'=>$shop->id,'vendor_id'=>$supplier->id,'amount'=>10310]);
+        $unrelated=$vendor->replicate();$unrelated->email='unrelated168@example.test';$unrelated->save();
+        $this->postJson('/admin/settlements/executions',['period'=>$period,'shop_channel_id'=>$shop->id,'recipient_vendor_id'=>$unrelated->id,'title'=>'Wrong recipient','amount'=>1000])->assertUnprocessable();
+        $this->assertDatabaseCount('settlement_executions',1);
+    }
+
+    public function test_invalid_period_cannot_silently_generate_current_month_records(): void
+    {
+        [, $admin,$shop]=$this->createSetup();$admin->type='superadmin';$admin->save();
+        $this->actingAs($admin,'admin')->postJson('/admin/settlements/generate',['period'=>'2099-01','shop_channel_id'=>$shop->id])->assertUnprocessable();
+        $this->assertDatabaseCount('settlement_runs',0);
+    }
 }

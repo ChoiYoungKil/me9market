@@ -16,6 +16,16 @@ class Order extends Model
         return $this->hasMany(OrdersProduct::class, 'order_id');
     }
 
+    public function statusLogs()
+    {
+        return $this->hasMany(OrdersLog::class)->orderBy('id');
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');

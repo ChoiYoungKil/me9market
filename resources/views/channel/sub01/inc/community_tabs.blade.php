@@ -1,0 +1,1 @@
+<nav class="shop-tabs" aria-label="Shop 채널 상세 메뉴"><a href="{{ route('channel.shop_info',['id'=>$shopId]) }}">Shop채널 정보</a><a href="{{ route('channel.shop_product01',['shop_id'=>$shopId]) }}">판매상품</a><a href="{{ route('channel.shop_community',['shop_id'=>$shopId]) }}" aria-current="page">커뮤니티</a></nav>

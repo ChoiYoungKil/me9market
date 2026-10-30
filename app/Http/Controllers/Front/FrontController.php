@@ -565,7 +565,8 @@ class FrontController extends Controller
         }
 
         $policy = \App\Models\ShopCancelRefundPolicy::where('vendor_id', $shopProduct->product->vendor_id)
-            ->where('status', 1)->find($shopProduct->product->cancel_refund_policy_id);
+            ->where('status', 'active')->find($shopProduct->product->cancel_refund_policy_id);
+        $refundContent = $policy?->content ?: \App\Models\PlatformRefundPolicy::currentContent();
         $inquiries = \App\Models\Contact::where('shop_channel_id', $shop->id)
             ->where('product_id', $shopProduct->product_id)
             ->when(auth()->check(), fn ($query) => $query->where('user_id', auth()->id()),
@@ -573,7 +574,7 @@ class FrontController extends Controller
             ->latest()->limit(20)->get();
         $reviews = $shopProduct->product->approvedRatings()->latest()->limit(20)->get();
 
-        return view('shop.product_details', compact('shop', 'shopProduct', 'policy', 'inquiries', 'reviews'));
+        return view('shop.product_details', compact('shop', 'shopProduct', 'policy', 'refundContent', 'inquiries', 'reviews'));
     }
 
     public function shopJointPurchases()
@@ -613,7 +614,9 @@ class FrontController extends Controller
                     ->where('shop_channel_products.approval_status', '=', 'approved');
             })
             ->select('joint_purchases.*', 'products.product_name', 'products.product_code', 'products.product_price')
-            ->where('joint_purchases.status', 1);
+            ->where('joint_purchases.status', 1)->whereNull('joint_purchases.deleted_at')
+            ->where(fn($q)=>$q->whereNull('joint_purchases.start_date')->orWhereDate('joint_purchases.start_date','<=',now('Asia/Seoul')->toDateString()))
+            ->where(fn($q)=>$q->whereNull('joint_purchases.end_date')->orWhereDate('joint_purchases.end_date','>=',now('Asia/Seoul')->toDateString()));
     }
 
     public function shopNotices(Request $request)
@@ -649,10 +652,10 @@ class FrontController extends Controller
         $shop = app(ShopChannelRuntime::class)->currentChannel();
         $notice = ShopChannelNotice::where('shop_channel_id', $shop->id)->where('status', 1)->findOrFail($id);
         abort_unless($notice->attachment, 404);
-        $path = public_path('uploads/notices/'.basename($notice->attachment));
-        abort_unless(is_file($path), 404);
+        $path=app(\App\Services\ShopCommunity::class)->path($notice->attachment);
+        abort_unless($path,404);
 
-        return response()->download($path);
+        return response()->download($path,$notice->attachment_name?:basename($path),['X-Content-Type-Options'=>'nosniff']);
     }
 
 }

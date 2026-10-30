@@ -21,6 +21,9 @@ class OrdersProduct extends Model
         'admin_id',
         'product_id',
         'distributor_id',
+        'recipient_name',
+        'recipient_mobile',
+        'recipient_address',
         'product_code',
         'product_name',
         'product_color',
@@ -158,7 +161,7 @@ class OrdersProduct extends Model
     {
         $normalized = OrderItemStatus::normalize($status);
         if (in_array($normalized, [OrderItemStatus::CANCEL_REQUESTED, OrderItemStatus::RETURN_REQUESTED, OrderItemStatus::EXCHANGE_REQUESTED], true)
-            && in_array($this->normalized_status, [OrderItemStatus::PAID, OrderItemStatus::READY_TO_SHIP, OrderItemStatus::SHIPPING, OrderItemStatus::DELIVERED], true)) {
+            && in_array($this->normalized_status, [OrderItemStatus::AWAITING_PAYMENT, OrderItemStatus::PAID, OrderItemStatus::READY_TO_SHIP, OrderItemStatus::SHIPPING, OrderItemStatus::DELIVERED], true)) {
             $this->claim_previous_status = $this->normalized_status;
         }
         $this->status_code = $normalized;

@@ -58,7 +58,7 @@
             'status' => 1,
         ]];
     }
-    $selectedSaleScope = old('sale_scope', $product->sale_scope ?? (($product->is_partial === 'Yes') ? 'affiliate' : (($product->is_public === 'Yes') ? 'public' : 'own')));
+    $selectedSaleScope = old('sale_scope', $product->is_public === 'Yes' && $product->is_partial === 'Yes' ? 'both' : ($product->is_partial === 'Yes' ? 'affiliate' : ($product->is_public === 'Yes' ? 'public' : 'own')));
     $selectedTaxType = old('tax_type', $product->tax_type ?? 'taxable');
     $priceConstraintEnabled = (string) old('price_constraint_enabled', (int) ($product->price_constraint_enabled ?? 0));
     $priceConstraintType = old('price_constraint_type', $product->price_constraint_type ?? 'range');
@@ -166,7 +166,7 @@
         .category-choice-list button:hover { border-color:#344054; background:#f8fafc; }
         .category-choice-list .category-more { font-weight:700; color:#175cd3; }
     </style>
-    <div id="contents">
+    <div id="contents" class="product-manager-page">
         <div class="row">
             <div class="box box1">
                 <div class="page_info">
@@ -235,7 +235,7 @@
                                                         </select>
                                                     </li>
                                                     <li>
-                                                        <select name="middle_category_id" id="middle_category_id" required style="{{ $selectedMiddleCategoryId ? '' : 'display:none;' }}">
+                                                        <select name="middle_category_id" id="middle_category_id" style="{{ $selectedMiddleCategoryId ? '' : 'display:none;' }}">
                                                             <option value="">중분류</option>
                                                         </select>
                                                     </li>
@@ -280,32 +280,9 @@
                                                 <input type="color" name="product_color" value="{{ $selectedProductColor }}" title="상품 색상 선택" style="width:48px; height:34px; padding:2px; border:1px solid #ddd; background:#fff; vertical-align:middle;">
                                             </td>
                                         </tr>
+
                                         <tr>
-                                            <th>판매범위</th>
-                                            <td colspan="3">
-                                                <ul class="chk01">
-                                                    <li>
-                                                        <input type="radio" name="sale_scope" id="sale_scope_own" value="own" {{ $selectedSaleScope === 'own' ? 'checked' : '' }}>
-                                                        <label for="sale_scope_own">자사</label>
-                                                    </li>
-                                                    <li>
-                                                        <input type="radio" name="sale_scope" id="sale_scope_public" value="public" {{ $selectedSaleScope === 'public' ? 'checked' : '' }}>
-                                                        <label for="sale_scope_public">공개</label>
-                                                    </li>
-                                                    <li>
-                                                        <input type="radio" name="sale_scope" id="sale_scope_affiliate" value="affiliate" {{ $selectedSaleScope === 'affiliate' ? 'checked' : '' }}>
-                                                        <label for="sale_scope_affiliate">제휴</label>
-                                                    </li>
-                                                </ul>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <th>지급 포인트</th>
-                                            <td>
-                                                <input type="text" name="reward_points" value="{{ old('reward_points', $product->reward_points ?? 0) }}" inputmode="numeric" pattern="[0-9]*" class="w160"> P
-                                            </td>
-                                            <th>과세구분</th>
-                                            <td>
+                                            <th>과세구분</th><td colspan="3">
                                                 <ul class="chk01">
                                                     <li>
                                                         <input type="radio" name="tax_type" id="tax_type_taxable" value="taxable" {{ $selectedTaxType === 'taxable' ? 'checked' : '' }}>
@@ -382,9 +359,18 @@
                                     <colgroup>
                                         <col width="180px"><col width=""><col width="180px"><col width="">
                                     </colgroup>
-                                    <tbody>
+                                    <tbody><tr>
+                                            <th>공유구분</th>
+                                            <td colspan="3">
+                                                <input type="hidden" name="sale_scope" id="sale_scope" value="{{ $selectedSaleScope }}">
+                                                <ul class="chk01">
+                                                    <li><input type="checkbox" id="share_public" @checked(in_array($selectedSaleScope,['public','both']))><label for="share_public">공유상품</label></li>
+                                                    <li><input type="checkbox" id="share_affiliate" @checked(in_array($selectedSaleScope,['affiliate','both']))><label for="share_affiliate">제휴상품</label></li>
+                                                </ul><p class="help">두 항목을 모두 해제하면 자사 채널에서만 판매합니다.</p>
+                                            </td>
+                                        </tr>
 	                                        <tr>
-	                                            <th>판매금액 제약</th>
+	                                            <th>공유 판매가격 설정</th>
 	                                            <td colspan="3">
 	                                                <div class="field-line">
 	                                                    <ul class="chk01">
@@ -401,11 +387,11 @@
 	                                                        <ul class="chk01">
 	                                                            <li>
 	                                                                <input type="radio" name="price_constraint_type" id="price_constraint_range" value="range" {{ $priceConstraintType === 'range' ? 'checked' : '' }}>
-	                                                                <label for="price_constraint_range">범위 제한</label>
+	                                                                <label for="price_constraint_range">위탁판매 (범위)</label>
 	                                                            </li>
 	                                                            <li>
 	                                                                <input type="radio" name="price_constraint_type" id="price_constraint_fixed" value="fixed" {{ $priceConstraintType === 'fixed' ? 'checked' : '' }}>
-	                                                                <label for="price_constraint_fixed">고정 금액</label>
+	                                                                <label for="price_constraint_fixed">상품판매 (고정)</label>
 	                                                            </li>
 	                                                        </ul>
 	                                                        <span class="price-range-fields inline-fields">
@@ -413,7 +399,7 @@
 	                                                            <input type="text" name="price_max" value="{{ old('price_max', $product->price_max ?? '') }}" inputmode="decimal"> 원 이하
 	                                                        </span>
 	                                                        <span class="price-fixed-field inline-fields">
-	                                                            <input type="text" name="price_fixed" value="{{ old('price_fixed', $product->price_fixed ?? '') }}" inputmode="decimal"> 원
+	                                                            <input type="text" name="price_fixed" readonly value="{{ old('price_fixed', $product->price_fixed ?? '') }}" inputmode="decimal"> 원
 	                                                        </span>
 	                                                    </div>
 	                                                </div>
@@ -426,7 +412,8 @@
 	                                                    <select name="profit_share_type" id="profit_share_type" class="compact-select">
 	                                                        <option value="none" {{ $selectedProfitShareType === 'none' ? 'selected' : '' }}>사용안함</option>
 	                                                        <option value="fixed" {{ $selectedProfitShareType === 'fixed' ? 'selected' : '' }}>정액</option>
-	                                                        <option value="percent" {{ $selectedProfitShareType === 'percent' ? 'selected' : '' }}>정률</option>
+	                                                        <option value="base_percent" @selected($selectedProfitShareType === 'base_percent')>비율비용 (상품가격 기준 %)</option>
+                                                            @if($selectedProfitShareType === 'percent')<option value="percent" selected>기존 정률 (판매가 기준 %)</option>@endif
 	                                                    </select>
 	                                                    <span id="profit_share_value_wrap" class="inline-fields">
 	                                                        <input type="text" name="profit_share_value" id="profit_share_value" value="{{ old('profit_share_value', $product->profit_share_value ?? '') }}" inputmode="decimal">
@@ -457,6 +444,7 @@
                                     </tbody>
                                 </table>
                             </div>
+                            <p id="price-calculation-preview" class="policy-preview" role="status"></p>
                             @foreach(['sale_scope', 'tax_type', 'reward_points', 'price_constraint_enabled', 'price_constraint_type', 'price_min', 'price_max', 'price_fixed', 'profit_share_type', 'profit_share_value', 'purchase_limit_enabled', 'purchase_min_qty', 'purchase_max_qty'] as $field)
                                 @error($field)
                                     <p class="fcol1 mt10">{{ $message }}</p>
@@ -638,14 +626,14 @@
 	                                                            <label for="order_manager_enabled">사용</label>
 	                                                        </li>
 	                                                    </ul>
-	                                                    <select name="distributor_id" id="order_manager_select" class="order-manager-select">
+	                                                    <select name="distributor_id" aria-label="발주 담당자 선택" id="order_manager_select" class="order-manager-select">
 	                                                        <option value="">발주 담당자 선택</option>
 	                                                        @foreach($orderManagers ?? [] as $manager)
 	                                                            <option value="{{ $manager->id }}" {{ (string) $selectedDistributorId === (string) $manager->id ? 'selected' : '' }}>
 	                                                                {{ $manager->name }}{{ !empty($manager->email) ? ' (' . $manager->email . ')' : '' }}
 	                                                            </option>
 	                                                        @endforeach
-	                                                    </select>
+	                                                    </select><button type="button" id="find-order-manager">담당찾기</button>
 	                                                </div>
 	                                            </td>
 	                                        </tr>
@@ -663,7 +651,7 @@
                                                             @foreach(\App\Models\ChannelDeliveryCharge::where('vendor_id', Auth::guard('admin')->user()->vendor_id)->where('status', 1)->get() as $deliveryPolicy)
                                                                 <option value="{{ $deliveryPolicy->id }}" {{ (string) old('shipping_policy_id', $product->shipping_policy_id ?? '') === (string) $deliveryPolicy->id ? 'selected' : '' }}>{{ $deliveryPolicy->name }}</option>
                                                             @endforeach
-                                                        </select>shipping_policy_name ?? '') }}" class="w160" placeholder="정책명">
+                                                        </select><input type="text" name="shipping_policy_name" value="{{ old('shipping_policy_name',$product->shipping_policy_name??'') }}" class="w160" placeholder="정책명">
 	                                                </div>
 	                                            </td>
                                             <th>결제 방식</th>
@@ -702,7 +690,7 @@
 	                                                        <option value="">기본 안내 사용</option>
 	                                                        @foreach($cancelRefundPolicies ?? [] as $policy)
 	                                                            <option value="{{ $policy->id }}" {{ (string) $selectedCancelRefundPolicyId === (string) $policy->id ? 'selected' : '' }}>
-	                                                                {{ $policy->name }} / {{ $policy->type === 'exchange' ? '교환' : ($policy->type === 'return' ? '반품' : '취소') }}
+	                                                                {{ $policy->name }}
 	                                                            </option>
 	                                                        @endforeach
 	                                                    </select>
@@ -712,7 +700,8 @@
 	                                        </tr>
                                     </tbody>
                                 </table>
-                            </div>
+                            <div id="selected-policy-preview" class="policy-preview policy-rich-text" role="status"></div>
+</div>
                             @foreach(['order_manager_enabled', 'distributor_id', 'shipping_policy_type', 'shipping_policy_name', 'shipping_policy_id', 'shipping_payment_type', 'shipping_base_fee', 'shipping_free_threshold', 'cancel_refund_policy_id'] as $field)
                                 @error($field)
                                     <p class="fcol1 mt10">{{ $message }}</p>
@@ -740,10 +729,10 @@
                                             </td>
                                         </tr>
                                         <tr>
-                                            <th>추가 이미지</th>
+                                            <th>추가 이미지 (대표 포함 최대 5개)</th>
                                             <td>
-                                                <div id="additional_image_grid" data-max-count="20" style="display:grid; grid-template-columns:repeat(5, 104px); gap:10px;">
-                                                    @for($slot = 0; $slot < 20; $slot++)
+                                                <div id="additional_image_grid" data-max-count="4" style="display:grid; grid-template-columns:repeat(4, 104px); gap:10px;">
+                                                    @for($slot = 0; $slot < 4; $slot++)
                                                         @php
                                                             $slotImage = $additionalImages->get($slot);
                                                             $slotImageUrl = $slotImage ? asset('front/images/product_images/small/' . $slotImage->image) : '';
@@ -758,7 +747,7 @@
                                                     @endfor
                                                 </div>
                                                 <div class="mt10" style="font-size:12px; color:#666;">
-                                                    등록/선택 <strong id="additional_image_total">{{ $existingAdditionalImageCount }}</strong>/20개
+                                                    등록/선택 <strong id="additional_image_total">{{ $existingAdditionalImageCount }}</strong>/4개 (추가 이미지)
                                                     <span id="additional_image_new_count" style="color:#888;">(신규 0개)</span>
                                                 </div>
                                             </td>
@@ -787,13 +776,14 @@
                             <a href="{{ route('channel.product_own') }}" class="col5" style="display:inline-flex; align-items:center; justify-content:center; width:130px; max-width:130px; height:44px; line-height:1; margin:0;">목록으로</a>
                             <button type="submit" class="btn01 col2" style="display:inline-flex; align-items:center; justify-content:center; width:130px; height:44px; border:none; border-radius:5px; background:#1d6d43; color:#fff; cursor:pointer; font-weight:700; font-size:14px; line-height:1;">{{ $isCreate ? '상품 등록' : '수정' }}</button>
                         </div>
-                    </form>
+                    </form><dialog id="order-manager-dialog" class="manager-dialog"><h2>발주담당자 찾기</h2><label>담당자명 또는 이메일 <input type="search" id="manager-query"></label><button type="button" id="manager-search">검색</button><div id="manager-results">@foreach($orderManagers??[] as $manager)<div data-manager-row data-search="{{ mb_strtolower($manager->name.' '.$manager->email) }}"><span>{{ $manager->name }} ({{ $manager->email }})</span><button type="button" data-select-manager="{{ $manager->id }}">선택</button></div>@endforeach</div><p id="manager-empty" hidden>검색 결과가 없습니다.</p><button type="button" id="manager-close">닫기</button></dialog>
                 </div>
             </div>
         </div>
     </div>
 @endsection
 
+@push('styles')<link rel="stylesheet" href="/common/policy-rich-text.css?v={{ filemtime(public_path('common/policy-rich-text.css')) }}"><link rel="stylesheet" href="{{ asset('channel_assets/css/shop-configuration.css') }}?v={{ filemtime(public_path('channel_assets/css/shop-configuration.css')) }}"><link rel="stylesheet" href="{{ asset('channel_assets/css/product-form.css') }}?v={{ filemtime(public_path('channel_assets/css/product-form.css')) }}">@endpush
 @push('scripts')
 <script src="https://cdn.ckeditor.com/4.22.1/full/ckeditor.js"></script>
 <script>
@@ -881,7 +871,7 @@
 	            return;
 	        }
 
-	        finalCategoryInput.value = minorSelect && minorSelect.value ? minorSelect.value : (middleSelect && middleSelect.value ? middleSelect.value : '');
+	        finalCategoryInput.value = minorSelect && minorSelect.value ? minorSelect.value : (middleSelect && middleSelect.value ? middleSelect.value : majorSelect.value);
     }
 
     function normalizeText(value) {
@@ -1097,7 +1087,9 @@
 	    }
 
 	    function updatePriceConstraint() {
-	        var enabled = selectedRadioValue('price_constraint_enabled') === '1';
+	        var shared=document.getElementById('sale_scope').value!=='own';
+            if(!shared)document.getElementById('price_constraint_disabled').checked=true;
+            var enabled = shared && selectedRadioValue('price_constraint_enabled') === '1';
 	        var detail = document.getElementById('price_constraint_detail');
 	        setGroupEnabled(detail, enabled);
 	        if (!enabled) {
@@ -1125,7 +1117,7 @@
 	        var active = priceConstraintEnabled && typeSelect.value !== 'none';
 	        valueWrap.style.display = active ? 'inline' : 'none';
 	        valueInput.disabled = !active;
-	        unit.textContent = typeSelect.value === 'percent' ? '%' : '원';
+	        unit.textContent = ['percent','base_percent'].includes(typeSelect.value) ? '%' : '원';
 	    }
 
 	    function updatePurchaseLimit() {
@@ -1135,7 +1127,8 @@
 	    function updateStockUsage() {
 	        var enabled = selectedRadioValue('stock_usage') === 'used';
 	        document.querySelectorAll('.stock-column').forEach(function (element) {
-	            element.classList.toggle('disabled-control', !enabled);
+	            element.hidden=!enabled;
+                element.classList.toggle('disabled-control', !enabled);
 	            element.querySelectorAll('input, select, textarea').forEach(function (field) {
 	                field.disabled = !enabled;
 	            });
@@ -1155,6 +1148,7 @@
 	        }
 	        var enabled = selectedRadioValue('order_manager_enabled') === '1';
 	        select.style.display = enabled ? '' : 'none';
+            var findButton=document.getElementById('find-order-manager');if(findButton)findButton.hidden=!enabled;
 	        select.disabled = !enabled;
 	    }
 
@@ -1239,6 +1233,16 @@
 	        });
 	    }
 
+
+        function updateOptionTypes(){document.querySelectorAll('.product-option-row').forEach(function(row){var type=row.querySelector('[name="option_types[]"]')?.value;var price=row.querySelector('[name="option_prices[]"]');if(price){price.disabled=type!=='price';price.closest('td').classList.toggle('disabled-control',type!=='price');}});}
+        document.querySelector('#product_option_body')?.addEventListener('change',updateOptionTypes);
+        document.querySelector('#add_option_row')?.addEventListener('click',()=>setTimeout(updateOptionTypes,0));
+        updateOptionTypes();
+        var refundPolicies = @json(($cancelRefundPolicies??collect())->mapWithKeys(fn($p)=>[$p->id=>app(\App\Services\RefundPolicyContent::class)->render($p->content)]));
+        var refundSelect=document.querySelector('[name="cancel_refund_policy_id"]');
+        function previewRefund(){var box=document.getElementById('selected-policy-preview');if(box)box.innerHTML=refundPolicies[refundSelect?.value]||refundPolicies['']||'총관리자가 등록한 기본 안내가 없습니다. 총관리자에게 등록을 요청해 주세요.';}
+        refundPolicies['']=@json(app(\App\Services\RefundPolicyContent::class)->render($defaultRefundPolicy??''));
+        refundSelect?.addEventListener('change',previewRefund);previewRefund();
 	    var mainInput = document.getElementById('product_image_input');
     var mainPreview = document.getElementById('product_main_preview');
     var mainSlot = document.querySelector('.main-image-slot');
@@ -1339,4 +1343,5 @@
     updateCounts();
 });
 </script>
+<script src="{{ asset('channel_assets/js/product-form.js') }}?v=20261031"></script>
 @endpush

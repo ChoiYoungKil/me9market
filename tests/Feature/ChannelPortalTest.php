@@ -151,6 +151,12 @@ class ChannelPortalTest extends TestCase
         $vendor->name = 'Certified Vendor';
         $vendor->mobile = '010-1234-5678';
         $vendor->email = 'certified-vendor@example.com';
+        $vendor->use_own_pg = true;
+        $vendor->pg_provider = 'toss';
+        $vendor->pg_merchant_id = 'merchant-ver3';
+        $vendor->pg_site_code = 'site-ver3';
+        $vendor->pg_client_key = 'client-ver3';
+        $vendor->pg_secret_key = 'secret-ver3';
         $vendor->status = 1;
         $vendor->commission = 0;
         $vendor->confirm = 'Yes';
