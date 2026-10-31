@@ -74,6 +74,14 @@ class StoryboardTestbedTest extends TestCase
         $this->assertTrue($pages[172]['admin']);
         $this->assertSame('/channel/settings/refund', $pages[207]['path']);
         $response->assertSee('PPT 208번')->assertSee('검수 대상 제외');
+        $response->assertSee('시연 과정·결과 보기')->assertSee('실제 시연 순서와 확인 결과')
+            ->assertSee('자동 테스트 기록')->assertSee('미시연·보류·추가 확인')
+            ->assertSee('검색된 기록 모두 펼치기')->assertSee('기록 모두 접기');
+        $this->assertSame(208, substr_count($response->getContent(), 'data-review-history='));
+        $this->assertSame('2026-10-27', $pages[14]['history']['date']);
+        $this->assertSame('2026-10-31', $pages[205]['history']['date']);
+        $this->assertStringContainsString('명칭 누락', $pages[205]['history']['cases'][0]['action']);
+        $this->assertStringContainsString('필수 입력 차단', $pages[205]['history']['cases'][0]['outcome']);
         $this->assertSame($member->id, $response->viewData('accounts')->firstWhere('key', 'member')['id']);
         $this->assertSame('MemberTestOnly', $response->viewData('accounts')->firstWhere('key', 'member')['password']);
         $response->assertSee('비밀번호')->assertSee('MemberTestOnly');
@@ -90,6 +98,34 @@ class StoryboardTestbedTest extends TestCase
         $this->assertSame('/mypage/order/list', $pages[63]['path']);
         $this->assertDatabaseCount('users', 0);
         $this->assertDatabaseCount('orders', 0);
+    }
+
+    public function test_history_preserves_manual_limits_and_does_not_invent_demonstrations_for_excluded_slides(): void
+    {
+        $pages = collect(app(StoryboardReview::class)->pages(null))->keyBy('number');
+        foreach ($pages as $page) {
+            $history = $page['history'];
+            $this->assertNotEmpty($history['sources']);
+            $this->assertNotEmpty($history['limitations']);
+            if (in_array($page['status'], ['document', 'excluded'], true)) {
+                $this->assertSame([], $history['cases']);
+            } else {
+                $this->assertNotEmpty($history['cases']);
+                foreach ($history['cases'] as $case) {
+                    $this->assertNotEmpty($case['action']);
+                    $this->assertNotEmpty($case['outcome']);
+                }
+            }
+        }
+        $this->assertStringContainsString('실제 신규 소셜 재가입은 하지 않았다', implode(' ', $pages[29]['history']['limitations']));
+        $this->assertStringContainsString('최종 변경을 실행하지 않고', $pages[39]['history']['cases'][1]['outcome']);
+        $this->assertStringContainsString('Google 실제 콜백', implode(' ', $pages[67]['history']['limitations']));
+        $this->assertStringContainsString('실제 삭제 확정은 브라우저에서 하지 않고', implode(' ', $pages[129]['history']['limitations']));
+        $this->assertSame('PPT 154~163번 연속 시연 기록', $pages[159]['history']['scope']);
+        $this->assertStringContainsString('회원번호·대표이메일', $pages[35]['steps']);
+        $this->assertDatabaseCount('users', 0);
+        $this->assertDatabaseCount('orders', 0);
+        $this->assertDatabaseCount('order_claims', 0);
     }
 
     public function test_accounts_are_selected_from_this_servers_database_by_signup_method_and_real_owner_link(): void

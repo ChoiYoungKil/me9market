@@ -48,7 +48,7 @@ class StoryboardReview
             32 => ['Step1 기본정보', '/register/step1', '기본정보 입력·저장·취소·다음 단계 이동 확인'],
             33 => ['Step2 회원사 정보', '/register/step2', '회원사 정보·검수용 서류·저장·취소 후 Step3 이동 확인'],
             34 => ['Step3 판매자 정보', '/register/step3', '검수용 정산정보·서류 저장·승인 요청·전체관리자 승인 후 인증 상태 확인'],
-            35 => ['일반회원 아이디 찾기', '/find/id', '이름·가입 이메일로 아이디 찾기. 불일치 정보 거부 확인'],
+            35 => ['일반회원 아이디 찾기', '/find/id', '회원번호·대표이메일로 아이디 찾기. 불일치 정보 거부 확인'],
             36 => ['비밀번호 찾기 / 임시비밀번호 메일', '/find/pw', 'PPT 방식의 임시비밀번호 메일과 로그인 확인. 재발급 시 현재 비밀번호가 바뀌므로 검수 계정으로 직접 진행'],
             37 => ['회원 마이페이지', '/mypage/main', '본인 주문·포인트·문의·방문 채널·승인 상태·바로가기 저장과 반응형 확인'],
             38 => ['회원정보 수정', '/mypage/profile', '생년월일·연락처·선택동의·PG 정보 입력폼과 저장 확인'],
@@ -98,7 +98,7 @@ class StoryboardReview
             82 => ['Shop 채널 등록화면 사용기간', '/channel/shop/list', '목록·검색·QR과 등록/수정/정보보기의 설정·이미지·운영기간 저장 확인'],
             83 => ['Shop 채널 등록화면 로고 사용여부', '/channel/shop/list', '목록·검색·QR과 등록/수정/정보보기의 설정·이미지·운영기간 저장 확인'],
             84 => ['Shop 채널 등록화면메인 배너 사용여부', '/channel/shop/list', '목록·검색·QR과 등록/수정/정보보기의 설정·이미지·운영기간 저장 확인'],
-            85 => ['Shop 채널 등록화면 OG 사용여부', '/channel/shop/list', '목록·검색·QR과 등록/수정/정보보기의 설정·이미지·운영기간 저장 확인'],
+            85 => ['Shop 채널 등록화면 구매현황 문자알림', '/channel/shop/list', '구매·구매확정·취소·반품 문자와 치환 미리보기·300자 입력 제한 확인'],
             86 => ['Shop 채널 등록화면 OG 사용여부', '/channel/shop/list', '목록·검색·QR과 등록/수정/정보보기의 설정·이미지·운영기간 저장 확인'],
             87 => ['PG 사용 설정', '/channel/shop/list', '실제 검수 계정은 PG 정보가 없어 사용 선택 비활성화·정보관리 안내 확인. 정식 PG 연결 후 활성 상태 추가 확인'],
             88 => ['모니터링 관리자 설정', '/channel/shop/list', '사용/미사용 및 이름·아이디 저장 확인. 별도 모니터링 계정 로그인은 추가 확인'],
@@ -232,11 +232,13 @@ class StoryboardReview
         if ($order) {
             $definitions[64][1] = '/mypage/order/view?id='.$order->id;
         }
+        $histories = app(StoryboardReviewHistory::class)->all();
         $pages = [];
         foreach ($definitions as $number => [$title, $path, $steps]) {
             $status = in_array($number, $documentPages, true) ? 'document' : (in_array($number, [81, 188, 190, 191], true) ? 'excluded' : (in_array($number, [39, 73], true) ? 'deferred' : (in_array($number, [60, 67, 72, 87, 88, 89], true) ? 'partial' : 'reviewed')));
             $pages[] = compact('number', 'title', 'path', 'steps', 'status') + [
                 'admin' => in_array($number, [173, 174], true),
+                'history' => $histories[$number],
                 'status_label' => ['excluded' => '검수 대상 제외', 'document' => '문서/구분', 'deferred' => '실제 변경 보류', 'partial' => '추가 확인 있음', 'reviewed' => '시연 확인 기록'][$status],
                 'note' => in_array($number, [61, 62, 63], true) ? 'PPT 설명 제목은 찜 목록으로 복사되어 있어 화면 ID와 주문 탭 흐름으로 구분했습니다.' : '',
             ];
