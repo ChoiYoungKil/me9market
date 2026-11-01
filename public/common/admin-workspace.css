@@ -126,3 +126,12 @@
 
 /* 기본 취소/환불 안내: 에디터 위아래 및 저장 버튼 여백 */
 .admin-default-refund-form .refund-editor-field{margin-top:24px}.admin-default-refund-form .refund-editor-field>label{display:block;margin:0 0 16px;font-size:13px;font-weight:600}.admin-default-refund-form .refund-editor-actions{display:flex;align-items:center;margin-top:24px}
+
+/* An explicit dashboard button in both admin navigation areas. */
+.portal-admin #header .t_menu .admin-dashboard-home{display:inline-flex;align-items:center;justify-content:center;padding:7px 12px;border:1px solid #7184bf;border-radius:5px;background:#304361;color:#fff;font-size:13px;line-height:20px;white-space:nowrap}
+.portal-admin #header .t_menu .admin-dashboard-home:hover,
+.portal-admin #header .t_menu .admin-dashboard-home.on{background:#4b6cf7;border-color:#4b6cf7;color:#fff}
+.portal-admin #l_menu .dep1_wrap>.dep1>a.admin-dashboard-home{display:flex;align-items:center;justify-content:center;box-sizing:border-box;height:42px;min-height:42px;margin:0 0 12px;padding:8px 12px;border:1px solid #cbd8f2;border-radius:5px;background:#eef3ff!important;color:#3653bb;font-size:14px;line-height:24px}
+.portal-admin #l_menu .dep1_wrap>.dep1>a.admin-dashboard-home:hover,
+.portal-admin #l_menu .dep1_wrap>.dep1>a.admin-dashboard-home[aria-current=page]{background:#4b6cf7!important;border-color:#4b6cf7;color:#fff}
+.portal-admin a.admin-dashboard-home:focus-visible{outline:2px solid #92a8f6;outline-offset:2px}

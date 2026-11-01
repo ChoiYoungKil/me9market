@@ -19,7 +19,7 @@ $statusLabels=['all'=>'전체','pending'=>'승인대기','approved'=>'승인완�
 @foreach($typeLabels as $value=>$label)
 <option value="{{ $value }}" @selected($type===$value)>{{ $label }}</option>
 @endforeach
-</select></label><button class="admin-btn primary">검색</button><a class="admin-btn" href="{{ route('admin.channel_points.index') }}">초기화</a></form></section>
+</select></label><button class="admin-btn primary">검색</button><a class="admin-btn admin-button-reset" href="{{ route('admin.channel_points.index') }}">초기화</a></form></section>
 <div class="admin-toolbar"><p>총 <strong>{{ number_format($transactions->total()) }}</strong>건</p></div>
 <div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>번호</th><th>등록일</th><th>판매자 / 채널</th><th style="width:110px">구분</th><th style="width:100px">상태</th><th>포인트</th><th>처리 내역</th><th>관리</th></tr></thead><tbody>
 @forelse($transactions as $transaction)
@@ -31,7 +31,7 @@ $statusLabels=['all'=>'전체','pending'=>'승인대기','approved'=>'승인완�
 @endif
 </td></tr>
 @empty
-<tr><td colspan="8" class="admin-empty">포인트 내역이 없습니다.</td></tr>
+@include('components.table-empty-row', ['columns' => 8])
 @endforelse
 </tbody></table></div><div class="admin-pagination">{{ $transactions->withQueryString()->onEachSide(2)->links('admin.shared.pagination') }}</div>
 @foreach($transactions->where('status','pending') as $transaction)

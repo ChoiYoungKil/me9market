@@ -206,9 +206,7 @@
                                             </td>
                                         </tr>
                                     @empty
-                                        <tr>
-                                            <td colspan="8" class="t_c" style="padding: 50px 0;">등록된 Shop 채널이 없습니다.</td>
-                                        </tr>
+                                        @include('components.table-empty-row', ['columns' => 8])
                                     @endforelse
                                 </tbody>
                             </table>

@@ -57,7 +57,7 @@
                     <td><div class="options-row-actions"><button type="button" class="admin-btn small primary" data-dialog-open="product-image-{{ $image->id }}">크게 보기</button><button type="button" class="admin-btn small danger" data-admin-delete="{{ url('admin/delete-image/'.$image->id) }}">삭제</button></div></td>
                 </tr>
             @empty
-                <tr><td colspan="5" class="admin-empty">등록된 추가 이미지가 없습니다. 위에서 이미지를 선택해 등록해 주세요.</td></tr>
+                @include('components.table-empty-row', ['columns' => 5])
             @endforelse
             </tbody>
         </table></div>

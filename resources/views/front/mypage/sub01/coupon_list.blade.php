@@ -91,11 +91,7 @@
                                             </td>
                                         </tr>
                                     @empty
-                                        <tr>
-                                            <td colspan="6" style="padding: 60px 0; color: #999;">
-                                                보유한 쿠폰이 없습니다.
-                                            </td>
-                                        </tr>
+                                        @include('components.table-empty-row', ['columns' => 6])
                                     @endforelse
                                 </tbody>
                             </table>

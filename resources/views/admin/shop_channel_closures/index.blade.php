@@ -11,7 +11,7 @@
                 @endforeach
             </select></label>
             <label class="admin-closure-keyword">검색어<input type="search" name="keyword" value="{{ $keyword }}" placeholder="채널명 · 채널코드 · 판매자" maxlength="100"></label>
-            <div class="admin-actions"><button type="submit" class="admin-btn primary">검색</button><a href="{{ route('admin.shop_channel_closures.index') }}" class="admin-btn">초기화</a></div>
+            <div class="admin-actions"><button type="submit" class="admin-btn primary">검색</button><a href="{{ route('admin.shop_channel_closures.index') }}" class="admin-btn admin-button-reset">초기화</a></div>
         </form>
     </section>
     <div class="admin-toolbar"><p>운영중지 요청 목록 <strong>{{ number_format($channels->total()) }}</strong>건</p><span class="admin-help">승인대기 요청부터 표시합니다.</span></div>
@@ -41,7 +41,7 @@
                     </td>
                 </tr>
             @empty
-                <tr><td colspan="8" class="admin-empty">검색 조건에 맞는 운영중지 요청이 없습니다.</td></tr>
+                @include('components.table-empty-row', ['columns' => 8])
             @endforelse
             </tbody>
         </table>

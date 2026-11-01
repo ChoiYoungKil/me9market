@@ -17,7 +17,8 @@
 <div class="order-table-scroll" tabindex="0"><table class="order-table"><thead><tr><th>No</th><th>상태</th><th>회원번호</th><th>회원아이디</th><th>회원명</th><th>이용기간</th><th>권한</th><th>관리</th></tr></thead><tbody>
 @forelse($accounts as $account)
 <tr><td>{{ $accounts->firstItem()+$loop->index }}</td><td><span class="order-state">{{ $account->access_status }}</span></td><td>{{ $account->member?->member_number ?: $account->member_no ?: '-' }}</td><td>{{ $account->member?->username ?: $account->member?->email ?: $account->admin?->email }}</td><td>{{ $account->member?->name ?: $account->admin?->name }}</td><td class="subaccount-period">{{ $account->started_at?->format('Y.m.d H:i') ?: '-' }} ~ {{ $account->ended_at?->format('Y.m.d H:i') ?: '-' }}</td><td>@forelse($account->permissions ?? [] as $permission)<span class="subaccount-permission">{{ $permissionLabels[$permission] ?? $permission }}</span>@empty - @endforelse</td><td><div class="subaccount-actions"><button type="button" data-dialog-open="subaccount-view-{{ $account->id }}">보기</button><button type="button" data-dialog-open="subaccount-edit-{{ $account->id }}">수정</button></div></td></tr>
-@empty<tr><td colspan="8" class="order-empty">등록된 서브관리자가 없습니다.</td></tr>
+@empty
+@include('components.table-empty-row', ['columns' => 8])
 @endforelse
 </tbody></table></div>{{ $accounts->links() }}</section>
 </div>

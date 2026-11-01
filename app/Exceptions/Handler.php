@@ -66,6 +66,12 @@ class Handler extends ExceptionHandler
                     ->with('error_message', '화면의 유효시간이 지났습니다. 다시 입력해 주세요.')
                     ->withInput($request->only('login_id', 'phone', 'save_id'));
             }
+            if ($request->routeIs('mypage.channel_admin')) {
+                // Restart with a fresh form; never replay a role switch or bypass CSRF.
+                return redirect()->route(\Illuminate\Support\Facades\Auth::guard('web')->check()
+                    ? 'mypage.dashboard' : 'front.member.login')
+                    ->with('error_message', '화면의 유효시간이 지났습니다. 새로 열린 화면에서 채널관리자를 다시 선택해 주세요.');
+            }
             if (! $request->routeIs('admin.login.submit')) {
                 return null;
             }

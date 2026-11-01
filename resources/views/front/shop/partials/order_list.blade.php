@@ -6,6 +6,6 @@
     @endforeach
 </article>
 @empty
-    <div class="shop-empty">조회된 내역이 없습니다.<div class="shop-actions"><a class="shop-btn" href="{{ route('front.shop.order.confirm') }}">주문조회</a></div></div>
+    <div class="shop-empty list-empty-state">등록된 자료가 없습니다.</div><div class="shop-actions"><a class="shop-btn" href="{{ route('front.shop.order.confirm') }}">주문조회</a></div>
 @endforelse
 @include('shop.partials.pagination', ['paginator' => $orders])

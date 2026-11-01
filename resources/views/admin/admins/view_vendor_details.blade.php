@@ -136,7 +136,7 @@
                                                                         <label for="status_0">미인증</label>
                                                                     </li>
                                                                 </ul>
-                                                                <button type="submit" class="btn01 ml20">인증 상태 변경</button>
+                                                                <button type="submit" class="btn01 col5 ml20">인증 상태 변경</button>
                                                             </form>
                                                         </td>
                                                     </tr>
@@ -197,7 +197,7 @@
                                                                 <div class="r_btn_w">
                                                                     <input type="hidden" name="vendor_id" value="{{ $vendorDetails['vendor_id'] }}">
                                                                     <input class="w100" type="text" name="commission" value="{{ $vendorDetails['vendor_personal']['commission'] ?? '' }}" required>
-                                                                    <button type="submit" class="btn01 ml10">수정</button>
+                                                                    <button type="submit" class="btn01 col5 ml10">수정</button>
                                                                 </div>
                                                             </form>
                                                         </td>

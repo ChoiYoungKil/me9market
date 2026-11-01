@@ -118,9 +118,7 @@
                                                 <td style="text-align: left; padding-left: 20px;">{{ $history['description'] }}</td>
                                             </tr>
                                         @empty
-                                            <tr>
-                                                <td colspan="7" class="no_data" style="padding: 100px 0; color: #aaaaaa;">포인트 이력 내역이 없습니다.</td>
-                                            </tr>
+                                            @include('components.table-empty-row', ['columns' => 7])
                                         @endforelse
                                     </tbody>
                                 </table>

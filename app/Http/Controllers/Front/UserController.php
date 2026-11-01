@@ -380,8 +380,9 @@ class UserController extends Controller
         $portal=app(\App\Services\MemberPortal::class);
         $shortcuts=$portal->shortcuts(); $selectedShortcuts=$user->mypage_shortcuts ?? ['profile','delivery','orders'];
         $subAccounts=$portal->subAccounts($user);
+        $canManageChannel=app(\App\Services\ChannelMemberAccess::class)->canOpen($user, $subAccounts);
         return view('front.mypage.index', compact('user', 'inquiries', 'ordersCount', 'confirmedCount', 'cancelCount', 'returnCount',
-            'recentOrders','visited','statusCounts','shortcuts','selectedShortcuts','subAccounts'));
+            'recentOrders','visited','statusCounts','shortcuts','selectedShortcuts','subAccounts','canManageChannel'));
     }
 
     public function saveMypageShortcuts(Request $request)
@@ -398,7 +399,12 @@ class UserController extends Controller
             $sub=app(\App\Services\MemberPortal::class)->subAccounts(Auth::user())->firstWhere('id',(int)$request->input('sub_account_id'));
             abort_unless($sub,403);$admin=$sub->admin;
         } else {
-            $admin=app(\App\Services\MemberPortal::class)->owner(Auth::user());
+            try {
+                $admin = app(\App\Services\ChannelMemberAccess::class)->administratorFor(Auth::user());
+            } catch (ValidationException $exception) {
+                return redirect()->route('mypage.dashboard')
+                    ->with('error_message', collect($exception->errors())->flatten()->first());
+            }
         }
         Auth::guard('admin')->login($admin);$request->session()->regenerate();
         return redirect()->route('channel.index');

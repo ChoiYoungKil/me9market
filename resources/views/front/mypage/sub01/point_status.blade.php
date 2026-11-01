@@ -11,7 +11,8 @@
     @forelse($pointsList as $point)<tr><td>{{ $point['no'] }}</td><td class="member-channel-name"><strong>{{ $point['seller_name'] }}</strong><small>{{ $point['channel_name'] }} ({{ $point['channel_code'] }})</small></td><td>{{ $point['status'] }}</td><td>{{ number_format($point['available_points']) }} P</td><td>
     @if($shopChannelsByVendor->get($point['vendor_id'])?->isNotEmpty())<button type="button" class="member-list-outline point-shop-open" data-vendor="{{ $point['vendor_id'] }}" aria-label="{{ $point['channel_name'] }} Shop 채널 보기">보기</button>@else Shop 채널 없음 @endif
     </td><td>@if($point['can_convert'])<button type="button" class="member-list-primary point-convert-open" data-shop="{{ $point['shop_channel_id'] }}" data-points="{{ number_format($point['available_points']) }}">전환</button>@else<span class="member-muted">전환 불가</span>@endif</td></tr>
-    @empty<tr><td colspan="6">채널 포인트 내역이 없습니다.</td></tr>@endforelse
+    @empty
+@include('components.table-empty-row', ['columns' => 6])@endforelse
     </tbody></table></div></div>
 </section></div></div>
 <div class="popup_bx" id="point-convert-modal" role="dialog" aria-modal="true" aria-labelledby="point-convert-title"><div class="pop_w"><div class="pop_inner"><div class="pop_con w560"><button class="close_btn close1" type="button" aria-label="전환 창 닫기">닫기</button><h2 id="point-convert-title" class="ttl01">포인트 전환</h2><p class="member-convert-message"><strong id="point-convert-amount"></strong> P를 Me9 포인트로 전환하시겠습니까?</p><form method="post" action="{{ route('mypage.point.convert') }}">@csrf<input type="hidden" name="shop_channel_id" id="point-convert-shop"><div class="btm_btn"><button type="submit" class="btn_submit">확인</button><button type="button" class="col3 close_btn">취소</button></div></form></div></div></div></div>

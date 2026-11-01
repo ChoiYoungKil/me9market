@@ -59,14 +59,16 @@
         <div class="tb01 ovS category-list-table"><table><colgroup><col style="width:20%"><col><col><col style="width:110px"><col style="width:160px"></colgroup>
             <thead><tr><th>대분류</th><th>중분류</th><th>소분류</th><th>상태</th><th>관리</th></tr></thead>
             <tbody>
-                @foreach($categories as $major)
+                @forelse($categories as $major)
                     @forelse($major->subCategories as $middle)
                         @include('channel.sub02.partials.category_row', ['node' => $middle, 'parentMiddle' => null])
                         @foreach($middle->subCategories as $minor)
                             @include('channel.sub02.partials.category_row', ['node' => $minor, 'parentMiddle' => $middle])
                         @endforeach
                     @empty<tr><td class="category-parent">{{ $major->category_name }}</td><td colspan="4" class="category-empty">등록된 중분류가 없습니다.</td></tr>@endforelse
-                @endforeach
+                @empty
+                    @include('components.table-empty-row', ['columns' => 5])
+                @endforelse
             </tbody>
         </table></div>
     </section></div>

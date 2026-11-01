@@ -9,7 +9,7 @@
         @forelse($notices as $index => $notice)
             <li><a href="{{ route('cs.notice.view', ['id' => $notice->id]) }}"><span class="market-notice-index">{{ $notice->is_important ? '공지' : str_pad($notices->total() - ($notices->currentPage() - 1) * $notices->perPage() - $index, 2, '0', STR_PAD_LEFT) }}</span><span class="market-notice-subject">{{ $notice->title }}</span><time datetime="{{ $notice->created_at->toDateString() }}">{{ $notice->created_at->format('Y-m-d') }}</time><span aria-hidden="true">↗</span></a></li>
         @empty
-            <li class="market-empty"><span aria-hidden="true">↗</span><h2>등록된 데이터가 없습니다.</h2><p>새로운 소식이 등록되면 이곳에서 안내해 드립니다.</p></li>
+            <li class="market-empty list-empty-state">등록된 자료가 없습니다.</li>
         @endforelse
     </ul>
     @include('partials.market-pagination', ['paginator' => $notices])

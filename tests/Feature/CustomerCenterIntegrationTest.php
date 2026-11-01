@@ -32,8 +32,8 @@ class CustomerCenterIntegrationTest extends TestCase
 
     public function test_customer_center_does_not_create_sample_data_on_front_access()
     {
-        $this->get('/notice')->assertStatus(200)->assertSee('등록된 데이터가 없습니다.');
-        $this->get('/faq')->assertStatus(200)->assertSee('검색 결과가 없습니다.');
+        $this->get('/notice')->assertStatus(200)->assertSee('등록된 자료가 없습니다.');
+        $this->get('/faq')->assertStatus(200)->assertSee('등록된 자료가 없습니다.');
 
         $this->assertDatabaseCount('notices', 0);
         $this->assertDatabaseCount('faqs', 0);

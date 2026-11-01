@@ -11,9 +11,9 @@ $(document).ready(function() {
         },
         language: {
             lengthMenu: '목록 _MENU_개', search: '검색', searchPlaceholder: '검색어 입력',
-            info: '전체 _TOTAL_개 중 _START_~_END_개', infoEmpty: '등록된 항목이 없습니다.',
-            infoFiltered: '(전체 _MAX_개에서 검색)', zeroRecords: '검색 결과가 없습니다.',
-            emptyTable: '등록된 항목이 없습니다.', loadingRecords: '불러오는 중…', processing: '처리 중…',
+            info: '전체 _TOTAL_개 중 _START_~_END_개', infoEmpty: '',
+            infoFiltered: '(전체 _MAX_개에서 검색)', zeroRecords: '등록된 자료가 없습니다.',
+            emptyTable: '등록된 자료가 없습니다.', loadingRecords: '불러오는 중…', processing: '처리 중…',
             paginate: {first: '처음', last: '마지막', next: '다음', previous: '이전'},
             aria: {sortAscending: ': 오름차순 정렬', sortDescending: ': 내림차순 정렬'}
         }
@@ -25,7 +25,7 @@ $(document).ready(function() {
     $('#sections').DataTable(settingListOptions);    // in sections.blade.php
     $('#categories').DataTable(settingListOptions);  // in categories.blade.php
     $('#brands').DataTable(settingListOptions);      // in brands.blade.php
-    $('#products').DataTable(settingListOptions);    // in products.blade.php
+    $('#products').DataTable({...settingListOptions, language: {...settingListOptions.language, zeroRecords: '등록된 상품이 없습니다.', emptyTable: '등록된 상품이 없습니다.'}});    // in products.blade.php
     $('#banners').DataTable(settingListOptions);     // in banners.blade.php
     $('#filters').DataTable(settingListOptions);     // in filters.blade.php
     $('#coupons').DataTable(settingListOptions);     // in admin/coupons/coupons.blade.php

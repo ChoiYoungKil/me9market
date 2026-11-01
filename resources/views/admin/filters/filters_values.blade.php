@@ -5,14 +5,14 @@
     @include('admin.shared.messages')
     <section class="admin-panel admin-setting-panel">
 <table id="filters" class="admin-table">
-<colgroup><col style="width:64px"><col style="width:90px"><col style="width:180px"><col><col style="width:100px"></colgroup>
+<colgroup><col style="width:64px"><col style="width:90px"><col style="width:180px"><col><col style="width:100px"><col style="width:100px"></colgroup>
                                     <thead>
                                         <tr>
                                             <th>번호</th>
                                             <th>필터 번호</th>
                                             <th>필터명</th>
                                             <th>필터값</th>
-                                            <th>상태</th>
+                                            <th>상태</th><th>관리</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -35,6 +35,7 @@
                                                         </a>
                                                     @endif
                                                 </td>
+                                                <td><a class="admin-btn primary" href="{{ url('admin/add-edit-filter-value/'.$filter['id']) }}">수정</a></td>
                                             </tr>
                                         @endforeach
                                     </tbody>

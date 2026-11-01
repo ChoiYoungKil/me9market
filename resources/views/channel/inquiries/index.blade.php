@@ -110,9 +110,7 @@
                                             <td><a href="{{ route('channel.inquiries.show', $inquiry->id) }}" class="btn02">보기</a></td>
                                         </tr>
                                     @empty
-                                        <tr>
-                                            <td colspan="9" class="no_data">등록된 상품문의가 없습니다.</td>
-                                        </tr>
+                                        @include('components.table-empty-row', ['columns' => 9])
                                     @endforelse
                                 </tbody>
                             </table>

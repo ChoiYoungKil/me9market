@@ -1,98 +1,25 @@
-@extends('admin.layout.layout')
-
-
+@extends('layouts.admin')
 @section('content')
-    <div class="main-panel admin-workspace admin-setting-form">
-        <div class="content-wrapper">
-            <div class="row">
-                <div class="col-md-12 grid-margin">
-                    <div class="row">
-                        <div class="col-12 col-xl-8 mb-4 mb-xl-0">
-
-                            <h4 class="card-title">필터값 관리</h4>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-6 grid-margin stretch-card">
-                    <div class="card">
-                        <div class="card-body">
-                            <h4 class="card-title">{{ $title }}</h4>
-
-
-                            {{-- Our Bootstrap error code in case of wrong current password or the new password and confirm password are not matching: --}}
-                            {{-- Determining If An Item Exists In The Session (using has() method): https://laravel.com/docs/9.x/session#determining-if-an-item-exists-in-the-session --}}
-                            @if (Session::has('error_message')) <!-- Check AdminController.php, updateAdminPassword() method -->
-                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                <strong>오류:</strong> {{ Session::get('error_message') }}
-                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                            @endif
-
-
-
-                            {{-- Displaying Laravel Validation Errors: https://laravel.com/docs/9.x/validation#quick-displaying-the-validation-errors --}}
-                            @if ($errors->any())
-                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-
-                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                            @endif
-
-
-
-                            {{-- Displaying The Validation Errors: https://laravel.com/docs/9.x/validation#quick-displaying-the-validation-errors AND https://laravel.com/docs/9.x/blade#validation-errors --}}
-                            {{-- Determining If An Item Exists In The Session (using has() method): https://laravel.com/docs/9.x/session#determining-if-an-item-exists-in-the-session --}}
-                            {{-- Our Bootstrap success message in case of updating admin password is successful: --}}
-                            @if (Session::has('success_message')) <!-- Check AdminController.php, updateAdminPassword() method -->
-                                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                    <strong>안내:</strong> {{ Session::get('success_message') }}
-                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                    </button>
-                                </div>
-                            @endif
-
-
-
-                            <form class="forms-sample"   @if (empty($filter['id'])) action="{{ url('admin/add-edit-filter-value') }}" @else action="{{ url('admin/add-edit-filter-value/' . $filter['id']) }}" @endif   method="post" enctype="multipart/form-data">  <!-- If the id is not passed in from the route, this measn 'Add a new Filter Values', but if the id is passed in from the route, this means 'Edit the Filter Values' --> <!-- Using the enctype="multipart/form-data" to allow uploading files (images) -->
-                                @csrf
-
-                                <div class="form-group">
-
-                                    {{-- Note: Dynamic Filters are applied to `categories` (parent categories and subcategories (child categories)), and not `sections`! --}}
-                                    <label for="filter_id">필터 선택</label>
-                                    <select name="filter_id" id="filter_id" class="form-control text-dark"> {{-- We used the Square Brackets [] in name="cat_ids[]" is an array because we used the "multiple" HTML attribute to be able to choose multiple categories at the same time --}}
-                                        <option value="">필터 선택</option>
-                                        @foreach ($filters as $filter) {{-- subcategories or child categories --}} {{-- Check FilterController.php --}}
-                                            <option value="{{ $filter['id'] }}">{{ $filter['filter_name'] }}</option> {{-- subcategories or child categories --}}
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="filter_value">필터값</label>
-                                    <input type="text" class="form-control" id="filter_value" placeholder="필터값을 입력해 주세요" name="filter_value"  @if (!empty($filter['filter_value'])) value="{{ $filter['filter_value'] }}" @else value="{{ old('filter_value') }}" @endif>  {{-- Repopulating Forms (using old() method): https://laravel.com/docs/9.x/validation#repopulating-forms --}}
-                                </div>
-                                <button type="submit" class="btn btn-primary mr-2">저장</button>
-                                <button type="reset"  class="btn btn-light">입력 초기화</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- content-wrapper ends -->
-        @include('admin.layout.footer')
-        <!-- partial -->
-    </div>
+<div id="contents" class="admin-workspace admin-legacy admin-account-editor admin-simple-setting-editor admin-filter-value-editor">
+    <div class="page_info"><h1 class="ttl">{{ $title }}</h1><ul class="dep"><li>홈</li><li>상품 관리</li><li>필터값 관리</li><li>{{ $title }}</li></ul></div>
+    @include('admin.shared.messages')
+    <form method="post" action="{{ url('admin/add-edit-filter-value'.($filter->id ? '/'.$filter->id : '')) }}">
+        @csrf
+        <section class="f_w">
+            <h2 class="f_ttl">필터값 정보</h2>
+            <div class="tb01"><table class="two"><colgroup><col><col><col><col></colgroup><tbody>
+                <tr><th><label for="filter_id">필터 선택</label></th><td colspan="3">
+                    <select name="filter_id" id="filter_id" class="w300" required>
+                        <option value="">필터를 선택해 주세요</option>
+                        @foreach($filters as $availableFilter)
+                            <option value="{{ $availableFilter['id'] }}" @selected((string) old('filter_id', $filter->filter_id) === (string) $availableFilter['id'])>{{ $availableFilter['filter_name'] }}</option>
+                        @endforeach
+                    </select>
+                </td></tr>
+                <tr><th><label for="filter_value">필터값</label></th><td colspan="3"><input type="text" class="w300" id="filter_value" name="filter_value" value="{{ old('filter_value', $filter->filter_value) }}" placeholder="필터값을 입력해 주세요" required></td></tr>
+            </tbody></table></div>
+        </section>
+        <div class="admin-modal-footer account-editor-footer"><a class="admin-btn" href="{{ url('admin/filters-values') }}">취소</a><button class="admin-btn" type="reset">입력 초기화</button><button class="admin-btn primary" type="submit">저장</button></div>
+    </form>
+</div>
 @endsection

@@ -37,7 +37,8 @@
         </section>
         <section class="dashboard-panel dashboard-chart" aria-labelledby="category-sales-title"><h2 id="category-sales-title">품목별 판매량</h2><p class="dashboard-caption">{{ $yearFrom->format('Y.m.d') }} ~ {{ $yearTo->format('Y.m.d') }} · 단위: 개</p>
             <div class="dashboard-chart-wrap"><canvas id="dashboard-category-chart" role="img" aria-label="올해 품목별 월 판매수량 꺾은선 그래프"></canvas>@if($categorySeries->isEmpty())<p class="dashboard-chart-empty">집계된 판매 내역이 없습니다.</p>@endif</div>
-            <details class="dashboard-chart-values"><summary>품목별 월 수량 보기</summary><div class="dashboard-table-scroll"><table><caption class="dashboard-sr-only">올해 품목별 월 판매수량</caption><thead><tr><th>품목</th>@foreach(range(1,12) as $month)<th>{{ $month }}월</th>@endforeach</tr></thead><tbody>@forelse($categorySeries as $series)<tr><th>{{ $series['label'] }}</th>@foreach($series['data'] as $quantity)<td>{{ number_format($quantity) }}</td>@endforeach</tr>@empty<tr><td colspan="13">집계된 판매 내역이 없습니다.</td></tr>@endforelse</tbody></table></div></details>
+            <details class="dashboard-chart-values"><summary>품목별 월 수량 보기</summary><div class="dashboard-table-scroll"><table><caption class="dashboard-sr-only">올해 품목별 월 판매수량</caption><thead><tr><th>품목</th>@foreach(range(1,12) as $month)<th>{{ $month }}월</th>@endforeach</tr></thead><tbody>@forelse($categorySeries as $series)<tr><th>{{ $series['label'] }}</th>@foreach($series['data'] as $quantity)<td>{{ number_format($quantity) }}</td>@endforeach</tr>@empty
+@include('components.table-empty-row', ['columns' => 13])@endforelse</tbody></table></div></details>
         </section>@endif
     </div>
     @if($canViewOrders)<p class="dashboard-sales-note">판매수량은 취소·반품 완료 상품과 교환 재발송 수량을 제외합니다.</p>
@@ -49,11 +50,13 @@
                 <td>{{ $items->contains(fn ($item) => (bool) $item->joint_purchase_id) ? ($items->contains(fn ($item) => !$item->joint_purchase_id) ? '일반 / 공동구매' : '공동구매') : '일반' }}</td>
                 <td>{{ $items->map(fn ($item) => $item->shopChannel?->channel_name ?: '채널 정보 없음')->unique()->implode(' / ') }}</td>
                 <td><a href="{{ route('channel.order.list', ['dashboard'=>1, 'order_type'=>'all', 'order_id'=>$order->id]) }}">{{ $items->first()?->product_name ?: '상품정보 없음' }}@if($items->count() > 1) 외 {{ $items->count() - 1 }}건@endif</a></td><td>{{ $order->buyer_name ?: $order->name }}</td></tr>
-        @empty<tr><td colspan="6" class="dashboard-empty">최근 주문 내역이 없습니다.</td></tr>@endforelse
+        @empty
+@include('components.table-empty-row', ['columns' => 6])@endforelse
         </tbody></table></div></section>
         <section class="dashboard-panel"><div class="dashboard-panel-heading"><h2>고객 문의사항</h2><a href="{{ route('channel.inquiries.index') }}">전체보기</a></div><div class="dashboard-table-scroll"><table><caption class="dashboard-sr-only">최근 고객 문의 5건</caption><thead><tr><th>번호</th><th>제목</th><th>등록일</th></tr></thead><tbody>
         @forelse($recentInquiries as $inquiry)<tr><td>{{ $inquiry->id }}</td><td><a href="{{ route('channel.inquiries.show', $inquiry->id) }}">{{ $inquiry->subject }}</a></td><td>{{ $inquiry->created_at->format('Y.m.d') }}</td></tr>
-        @empty<tr><td colspan="3" class="dashboard-empty">등록된 문의사항이 없습니다.</td></tr>@endforelse
+        @empty
+@include('components.table-empty-row', ['columns' => 3])@endforelse
         </tbody></table></div></section>
     </div>@endif
 </div>

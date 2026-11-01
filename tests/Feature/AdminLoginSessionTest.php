@@ -122,6 +122,19 @@ class AdminLoginSessionTest extends TestCase
         }
     }
 
+    public function test_stale_member_channel_form_returns_to_mypage_without_switching_admin_or_replaying_input(): void
+    {
+        $user = \App\Models\User::factory()->create(['type' => 'general', 'status' => 1]);
+        $this->actingAs($user, 'web')->withSession(['_token' => 'fresh-member-token'])
+            ->post(route('mypage.channel_admin'), ['_token' => 'old-tab-token', 'sub_account_id' => 99999])
+            ->assertRedirect(route('mypage.dashboard'))->assertSessionHas('error_message')
+            ->assertSessionMissing('_old_input.sub_account_id');
+        $this->assertGuest('admin');
+        $this->assertDatabaseCount('admins', 0);
+        $this->postJson(route('mypage.channel_admin'), ['_token' => 'old-tab-token'])->assertStatus(419);
+        $this->assertGuest('admin');
+    }
+
     public function test_admin_portal_rejects_missing_or_forged_csrf_tokens(): void
     {
         $admin = $this->administrator();

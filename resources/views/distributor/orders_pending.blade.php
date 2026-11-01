@@ -278,6 +278,7 @@
         }
     </style>
     <link rel="stylesheet" href="{{ asset('common/distributor.css') }}">
+<link rel="stylesheet" href="{{ asset('common/empty-state.css').'?v='.filemtime(public_path('common/empty-state.css')) }}">
 </head>
 <body>
 
@@ -382,9 +383,7 @@
                             </td>
                         </tr>
                     @empty
-                        <tr>
-                            <td colspan="11" style="text-align: center; color: var(--text-muted); padding: 40px;">발주 대기 주문상품이 없습니다.</td>
-                        </tr>
+                        @include('components.table-empty-row', ['columns' => 11])
                     @endforelse
                 </tbody>
             </table>

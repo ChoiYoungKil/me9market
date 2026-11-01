@@ -17,6 +17,7 @@
     @stack('styles')
     <link rel="stylesheet" href="{{ asset('common/social.css').'?v='.filemtime(public_path('common/social.css')) }}">
     @env('local')<script src="{{ asset('me9market/js/preview-live.js') }}" defer></script>@endenv
+    <link rel="stylesheet" href="{{ asset('common/empty-state.css').'?v='.filemtime(public_path('common/empty-state.css')) }}">
 </head>
 <body id="@yield('page_type', 'sub')" class="shop-runtime @hasSection('shop_auth') shop-auth-page @endif" @if(request()->isMethod('post')) data-preview-preserve="true" @endif>
 <div id="skipNavi"><a href="#container">본문 바로가기</a></div>

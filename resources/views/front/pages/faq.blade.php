@@ -8,7 +8,7 @@
         @forelse($faqs as $faq)
             <details class="market-faq-item" name="market-faq"><summary><span>{{ $faq->category }}</span><strong>{{ $faq->question }}</strong><span class="faq-plus" aria-hidden="true">+</span></summary><div class="market-faq-answer">{!! app(\App\Services\RefundPolicyContent::class)->render($faq->answer) !!}</div></details>
         @empty
-            <div class="market-empty"><span aria-hidden="true">?</span><h2>검색 결과가 없습니다.</h2><p>다른 검색어로 찾아보거나 제휴·문의를 이용해 주세요.</p></div>
+            <div class="market-empty list-empty-state">등록된 자료가 없습니다.</div>
         @endforelse
     </div>
     @include('partials.market-pagination', ['paginator' => $faqs])

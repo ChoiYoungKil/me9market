@@ -4,11 +4,11 @@
 <script src="{{ asset('common/admin-editor.js') }}?v={{ filemtime(public_path('common/admin-editor.js')) }}"></script>
 @endpush
 @section('content')
-<div id="contents" class="admin-workspace admin-legacy"><div class="con_bx" style="padding:32px">
-    <h1 style="font-size:24px;margin-bottom:24px">취소/환불안내</h1>
+<div id="contents" class="admin-workspace admin-legacy admin-refund-settings"><div class="con_bx" style="padding:32px">
+    <h1>취소/환불안내</h1>
     @if(session('success_message'))<p role="status">{{ session('success_message') }}</p>@endif
-    <form class="admin-default-refund-form" method="POST" action="{{ route('admin.refund_policies.default') }}" style="padding:24px;border:1px solid #ddd;border-radius:8px;margin-bottom:24px">
-        @csrf<h2 style="font-size:18px;margin-bottom:16px">Me9 기본 취소/환불 안내</h2>
+    <form class="admin-default-refund-form" method="POST" action="{{ route('admin.refund_policies.default') }}">
+        @csrf<h2>Me9 기본 취소/환불 안내</h2>
         <p>상품등록에서 기본 안내를 선택한 상품에 표시됩니다.</p>
         <div class="refund-editor-field">
             <label for="default-refund-content">안내 내용</label>
@@ -17,13 +17,13 @@
         </div>
         <div class="refund-editor-actions"><button type="submit" class="admin-btn primary">기본 안내 저장</button></div>
     </form>
-    <form method="GET" style="display:flex;gap:8px;margin-bottom:24px"><label>정책명 <input name="search" value="{{ request('search') }}" maxlength="200"></label><button type="submit">검색</button></form>
+    <form method="GET" class="admin-refund-filter"><label>정책명 <input name="search" value="{{ request('search') }}" maxlength="200"></label><button type="submit" class="admin-btn primary">검색</button></form>
     @forelse($policies as $policy)
-        <details style="padding:16px 0;border-bottom:1px solid #ddd">
+        <details class="admin-refund-policy">
             <summary>{{ $policy->vendor?->name }} · {{ $policy->name }} · {{ $policy->status === 'active' ? '사용' : '미사용' }}</summary>
             <div style="white-space:pre-wrap;overflow-wrap:anywhere;padding:16px 0">{!! app(\App\Services\RefundPolicyContent::class)->render($policy->content) !!}</div>
         </details>
-    @empty<p>등록된 정책이 없습니다.</p>@endforelse
+    @empty<p class="list-empty-state">등록된 자료가 없습니다.</p>@endforelse
     <div class="admin-pagination">{{ $policies->withQueryString()->onEachSide(2)->links('admin.shared.pagination') }}</div>
 </div></div>
 @endsection

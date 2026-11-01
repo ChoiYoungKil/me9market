@@ -38,6 +38,7 @@
     <link rel="stylesheet" href="{{ asset('common/social.css').'?v='.filemtime(public_path('common/social.css')) }}">
     <link rel="stylesheet" href="{{ asset('mypage_assets/css/market-mypage.css').'?v='.filemtime(public_path('mypage_assets/css/market-mypage.css')) }}">
     @env('local')<script src="{{ asset('me9market/js/preview-live.js') }}" defer></script>@endenv
+    <link rel="stylesheet" href="{{ asset('common/empty-state.css').'?v='.filemtime(public_path('common/empty-state.css')) }}">
 </head>
 
 <body class="portal portal-mypage" id="@yield('page_type', 'main')" data-mypage-user-id="{{ Auth::id() }}" @if(request()->isMethod('post')) data-preview-preserve="true" @endif>
@@ -57,7 +58,7 @@
 
                 <div class="t_menu">
                     <ul>
-                        <li><form class="mypage-channel-launch" action="{{ route('mypage.channel_admin') }}" method="post">@csrf<button type="submit">채널관리자</button></form></li>
+                        @if($mypageCanManageChannel)<li><form class="mypage-channel-launch" action="{{ route('mypage.channel_admin') }}" method="post">@csrf<button type="submit" title="회원사 또는 배정받은 서브관리 채널로 이동합니다">채널관리자</button></form></li>@endif
                         <li><a href="{{ route('mypage.profile') }}">{{ Auth::user()->name ?? 'User' }}</a></li>
                         <li><a href="{{ url('/mypage/points/status') }}">총 포인트 ({{ number_format($mypagePointTotal) }})</a></li>
                         <li>
@@ -85,7 +86,7 @@
                             @forelse($mypageSubAccounts as $account)
                                 <li><form action="{{ route('mypage.channel_admin') }}" method="post">@csrf<input type="hidden" name="sub_account_id" value="{{ $account->id }}"><button type="submit">{{ $account->vendor?->vendorbusinessdetails?->shop_name ?? '배정된 회원사' }}</button></form></li>
                             @empty
-                                <li>배정된 관리채널이 없습니다.</li>
+                                <li>현재 이용 가능한 관리채널이 없습니다.</li>
                             @endforelse
                         </ul>
                     </div>

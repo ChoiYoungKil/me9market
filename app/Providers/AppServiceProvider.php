@@ -31,13 +31,16 @@ class AppServiceProvider extends ServiceProvider
 
         \Illuminate\Support\Facades\View::composer('layouts.mypage', function ($view) {
             $userId = \Illuminate\Support\Facades\Auth::id();
+            $member = $userId ? \App\Models\User::findOrFail($userId) : null;
+            $subAccounts = $member ? app(\App\Services\MemberPortal::class)->subAccounts($member) : collect();
             $vendorIds = \App\Models\VisitedChannel::where('user_id', $userId)->pluck('vendor_id');
             $shopIds = \App\Models\PointTransaction::where('user_id', $userId)->whereNotNull('shop_channel_id')->pluck('shop_channel_id');
             $channels = \App\Models\ShopChannel::where(function ($query) use ($vendorIds, $shopIds) {
                 $query->whereIn('vendor_id', $vendorIds)->orWhereIn('id', $shopIds);
             })->orderByDesc('id')->get();
             $view->with('mypageChannels', $channels)
-                ->with('mypageSubAccounts', $userId ? app(\App\Services\MemberPortal::class)->subAccounts(\App\Models\User::findOrFail($userId)) : collect())
+                ->with('mypageSubAccounts', $subAccounts)
+                ->with('mypageCanManageChannel', $member && app(\App\Services\ChannelMemberAccess::class)->canOpen($member, $subAccounts))
                 ->with('mypagePointTotal', \App\Models\PointTransaction::where('user_id', $userId)->sum('points'));
         });
 

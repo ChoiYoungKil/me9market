@@ -240,9 +240,7 @@
                                             </tr>
                                         @endforeach
                                     @else
-                                        <tr>
-                                            <td colspan="7" class="no_data">등록된 자주묻는질문이 없습니다.</td>
-                                        </tr>
+                                        @include('components.table-empty-row', ['columns' => 7])
                                     @endif
                                 </tbody>
                             </table>

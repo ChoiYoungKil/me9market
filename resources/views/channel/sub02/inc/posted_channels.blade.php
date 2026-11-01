@@ -27,7 +27,7 @@
                                 <td><a href="{{ $entryUrl }}" target="_blank" rel="noopener">{{ $postedChannel->channel_code }}</a></td>
                             </tr>
                         @empty
-                            <tr><td colspan="6">게시된 채널이 없습니다.</td></tr>
+                            @include('components.table-empty-row', ['columns' => 6])
                         @endforelse
                     </tbody>
                 </table></div>

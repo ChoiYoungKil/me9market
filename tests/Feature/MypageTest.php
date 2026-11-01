@@ -40,7 +40,7 @@ class MypageTest extends TestCase
         $this->actingAs($user)
             ->get(route('mypage.coupon'))
             ->assertOk()
-            ->assertSee('보유한 쿠폰이 없습니다.')
+            ->assertSee('등록된 자료가 없습니다.')
             ->assertDontSee('WELCOME2026')
             ->assertDontSee('SUMMER5000');
     }

@@ -152,9 +152,7 @@
                                         </td>
                                     </tr>
                                 @empty
-                                    <tr>
-                                        <td colspan="4" class="textC" style="padding: 40px 0; color: #888;">구매 진행 중인 상품이 없습니다.</td>
-                                    </tr>
+                                    @include('components.table-empty-row', ['columns' => 4])
                                 @endforelse
                             </tbody>
                         </table>

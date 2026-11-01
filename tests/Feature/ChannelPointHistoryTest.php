@@ -36,7 +36,7 @@ class ChannelPointHistoryTest extends TestCase
         [$admin] = $this->owner();
         $this->actingAs($admin, 'admin')->get('/channel/settings/points')->assertOk()
             ->assertViewHas('summary', fn ($summary) => $summary['balance'] === 0 && $summary['distributed'] === 0 && $summary['consumed'] === 0)
-            ->assertSee('검색 조건에 맞는 포인트 내역이 없습니다.')
+            ->assertSee('등록된 자료가 없습니다.')
             ->assertDontSee('포인트 구매')->assertDontSee('환급 요청');
     }
 
@@ -120,7 +120,7 @@ class ChannelPointHistoryTest extends TestCase
         $this->entry($shop, 'earn', 500, extra: ['description' => '<script>alert(189)</script>']);
         $this->actingAs($admin, 'admin')->get('/channel/settings/points')->assertOk()
             ->assertDontSee('<script>alert(189)</script>', false)->assertSee('&lt;script&gt;alert(189)&lt;/script&gt;', false);
-        $this->get('/channel/settings/points?history=use')->assertOk()->assertSee('검색 조건에 맞는 포인트 내역이 없습니다.');
+        $this->get('/channel/settings/points?history=use')->assertOk()->assertSee('등록된 자료가 없습니다.');
         $this->assertDatabaseCount('point_transactions', 1);
         $this->assertSame(500, (int) PointTransaction::sum('points'));
     }

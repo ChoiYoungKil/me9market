@@ -29,7 +29,8 @@
         </td><td class="member-channel-name">@if($shop)<small>[{{ $shop->channel_code }}]</small>@endif<strong>{{ $channelName }}</strong>@if($shop?->og_description)<p>{{ $shop->og_description }}</p>@endif</td>
         <td>@if($visitUrl)<a href="{{ $visitUrl }}" class="member-channel-url">{{ $visitUrl }}</a>@else<span>채널 주소 확인 불가</span>@endif</td>
         <td><div class="member-row-actions">@if($visitUrl)<a href="{{ $visitUrl }}" class="member-list-primary">방문</a>@endif<form method="post" action="{{ route('mypage.visited_channels.delete', $visit->id) }}" onsubmit="return confirm('이 방문 기록을 삭제하시겠습니까?');">@csrf<button type="submit" class="member-list-outline">삭제</button></form></div></td></tr>
-    @empty<tr><td colspan="5">{{ request('search') ? '검색된 방문 채널이 없습니다.' : '방문한 채널 내역이 없습니다.' }}</td></tr>@endforelse
+    @empty
+@include('components.table-empty-row', ['columns' => 5])@endforelse
     </tbody></table></div></div>
     @if($visitedChannels->lastPage()>1)<nav class="page_bx1" aria-label="방문 채널 목록 페이지">@foreach($visitedChannels->getUrlRange(1,$visitedChannels->lastPage()) as $page=>$url)<a class="num {{ $page===$visitedChannels->currentPage()?'on':'' }}" href="{{ $url }}">{{ $page }}</a>@endforeach</nav>@endif
 </section></div></div>

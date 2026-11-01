@@ -79,9 +79,7 @@
                                             @endforeach
                                         </tr>
                                     @empty
-                                        <tr>
-                                            <td colspan="{{ $mode === 'billing' ? 10 : 14 }}" class="no_data">상세 내역이 없습니다.</td>
-                                        </tr>
+                                        @include('components.table-empty-row', ['columns' => $mode === 'billing' ? 10 : 14])
                                     @endforelse
                                 </tbody>
                             </table>

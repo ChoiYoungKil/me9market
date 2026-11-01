@@ -40,6 +40,7 @@
 
     @stack('styles')
     <link href="{{ asset('common/portal.css').'?v='.filemtime(public_path('common/portal.css')) }}" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('common/empty-state.css').'?v='.filemtime(public_path('common/empty-state.css')) }}">
 </head>
 
 <body class="portal portal-channel" id="@yield('page_type', 'main')">

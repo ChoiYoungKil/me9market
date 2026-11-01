@@ -4,11 +4,36 @@ namespace App\Services;
 
 use App\Models\Admin;
 use App\Models\User;
+use App\Models\Vendor;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class ChannelMemberAccess
 {
+    public function canOpen(User $user, ?Collection $assignments = null): bool
+    {
+        if ((int) $user->status !== 1 || $user->temporaryPasswordIsExpired()) {
+            return false;
+        }
+        $assignments ??= app(MemberPortal::class)->subAccounts($user);
+        if ($assignments->contains(fn ($assignment) => $assignment->admin && $assignment->admin->confirm !== 'No')) {
+            return true;
+        }
+        if (! $user->vendor_id || ! in_array($user->type, ['company', 'vendor'], true)) {
+            return false;
+        }
+        $vendor = Vendor::find($user->vendor_id);
+        if (! $vendor?->company_terms_accepted_at) {
+            return false;
+        }
+        $admin = Admin::where('vendor_id', $vendor->id)->where('type', 'vendor')->first();
+
+        // Rendering a member page must never create a channel administrator.
+        return $admin ? (int) $admin->status === 1 && $admin->confirm !== 'No'
+            : ! Admin::where('email', $user->email)->exists();
+    }
+
     public function administratorFor(User $user): Admin
     {
         if ((int) $user->status !== 1 || $user->temporaryPasswordIsExpired()) {

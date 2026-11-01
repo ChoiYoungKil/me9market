@@ -530,9 +530,9 @@
                                     @endif
                                 </div>
                             @empty
-                                <div class="no_data"
-                                    style="padding: 100px 0; text-align: center; border-bottom: 1px solid #ddd;">
-                                    주문 내역이 없습니다.
+                                <div class="no_data list-empty-state"
+                                    style="border-bottom: 1px solid #ddd;">
+                                    등록된 자료가 없습니다.
                                 </div>
                             @endforelse
                         </div>

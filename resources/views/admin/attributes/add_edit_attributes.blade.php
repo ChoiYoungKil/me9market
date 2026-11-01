@@ -65,7 +65,7 @@
                         <td><div class="options-row-actions"><button class="admin-btn small {{ $attribute->status ? 'primary' : '' }}" type="button" data-option-status="{{ $attribute->id }}" data-active="{{ $attribute->status ? '1' : '0' }}" aria-label="{{ $attribute->size }} {{ $attribute->status ? '판매중지로 변경' : '판매중으로 변경' }}">{{ $attribute->status ? '판매중' : '판매중지' }}</button><button class="admin-btn small danger" type="button" data-admin-delete="{{ url('admin/delete-attribute/'.$attribute->id) }}">삭제</button></div></td>
                     </tr>
                 @empty
-                    <tr><td colspan="6" class="admin-empty">등록된 옵션이 없습니다. 위에서 옵션을 추가해 주세요.</td></tr>
+                    @include('components.table-empty-row', ['columns' => 6])
                 @endforelse
                 </tbody>
             </table></div>

@@ -192,9 +192,7 @@
                                                 </td>
                                             </tr>
                                         @empty
-                                            <tr>
-                                                <td colspan="4" class="no_data" style="padding: 100px 0;">찜한 상품이 없습니다.</td>
-                                            </tr>
+                                            @include('components.table-empty-row', ['columns' => 4, 'kind' => 'product'])
                                         @endforelse
                                     </tbody>
                                 </table>

@@ -207,9 +207,7 @@
                                             </tr>
                                         @endforeach
                                     @else
-                                        <tr>
-                                            <td colspan="8" class="no_data">등록된 공지사항이 없습니다.</td>
-                                        </tr>
+                                        @include('components.table-empty-row', ['columns' => 8])
                                     @endif
                                 </tbody>
                             </table>

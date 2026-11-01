@@ -153,6 +153,23 @@ class AdminRoutesTest extends TestCase
         return [$admin, $vendor, $section, $category, $brand, $product, $banner, $coupon, $user, $order, $subscriber, $vendorAdmin];
     }
 
+    public function test_filter_value_edit_keeps_its_parent_selection_and_saved_value(): void
+    {
+        [$admin, , , $category] = $this->createSetup();
+        $parent = \App\Models\ProductsFilter::forceCreate(['cat_ids' => (string) $category->id, 'filter_name' => '재질', 'filter_column' => 'review_material', 'status' => 1]);
+        \App\Models\ProductsFilter::forceCreate(['cat_ids' => (string) $category->id, 'filter_name' => '형태', 'filter_column' => 'review_shape', 'status' => 1]);
+        $value = \App\Models\ProductsFiltersValue::forceCreate(['filter_id' => $parent->id, 'filter_value' => '선택된 필터값 검수', 'status' => 1]);
+        $response = $this->actingAs($admin, 'admin')->get('/admin/add-edit-filter-value/'.$value->id)->assertOk();
+        $document = new \DOMDocument;
+        @$document->loadHTML('<?xml encoding="UTF-8">'.$response->getContent());
+        $xpath = new \DOMXPath($document);
+        $selected = $xpath->query('//select[@name="filter_id"]/option[@selected]');
+        $this->assertSame(1, $selected->length);
+        $this->assertSame((string) $parent->id, $selected->item(0)->getAttribute('value'));
+        $this->assertSame('선택된 필터값 검수', $xpath->query('//input[@name="filter_value"]')->item(0)->getAttribute('value'));
+        $this->get('/admin/filters-values')->assertOk()->assertSee(url('admin/add-edit-filter-value/'.$value->id));
+    }
+
     public function test_admin_shipping_uses_current_vendor_policies_and_shared_validation(): void
     {
         [$admin, $vendor, , , , $product, , , , , , $vendorAdmin] = $this->createSetup();

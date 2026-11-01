@@ -20,7 +20,7 @@
                 <a href="{{ route($joint ? 'shop.joint_purchases_list' : 'shop.products_list', array_merge(request()->except('page'), ['sort'=>$key])) }}" @if(request('sort', $joint ? 'deadline' : 'latest') === $key) aria-current="page" @endif>{{ $label }}</a>
             @endforeach
         </nav>
-        <div class="shop-product-grid">@forelse($products as $shopProduct) @include('shop.partials.product_card') @empty<div class="shop-empty">조회된 상품이 없습니다.</div>@endforelse</div>
+        <div class="shop-product-grid">@forelse($products as $shopProduct) @include('shop.partials.product_card') @empty<div class="shop-empty list-empty-state">등록된 상품이 없습니다.</div>@endforelse</div>
         @include('shop.partials.pagination', ['paginator' => $products])
     </div></div></div>
 </div></div>

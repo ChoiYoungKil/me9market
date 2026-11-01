@@ -167,11 +167,7 @@
                                             </td>
                                         </tr>
                                     @empty
-                                        <tr>
-                                            <td colspan="8" class="t_c" style="padding: 50px 0;">
-                                                추가 가능한 지사 상품이 없습니다.
-                                            </td>
-                                        </tr>
+                                        @include('components.table-empty-row', ['columns' => 8, 'kind' => 'product'])
                                     @endforelse
                                 </tbody>
                             </table>

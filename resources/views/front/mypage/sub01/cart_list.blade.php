@@ -201,10 +201,7 @@
                                                 </td>
                                             </tr>
                                         @empty
-                                            <tr>
-                                                <td colspan="6" class="no_data" style="padding: 100px 0;">장바구니에 담긴 상품이 없습니다.
-                                                </td>
-                                            </tr>
+                                            @include('components.table-empty-row', ['columns' => 6, 'kind' => 'product'])
                                         @endforelse
                                     </tbody>
                                 </table>

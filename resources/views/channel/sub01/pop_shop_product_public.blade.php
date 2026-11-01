@@ -110,11 +110,7 @@
                                             </td>
                                         </tr>
                                     @empty
-                                        <tr>
-                                            <td colspan="9" class="t_c" style="padding: 50px 0;">
-                                                추가 가능한 공유상품이 없습니다.
-                                            </td>
-                                        </tr>
+                                        @include('components.table-empty-row', ['columns' => 9, 'kind' => 'product'])
                                     @endforelse
                                 </tbody>
                             </table>

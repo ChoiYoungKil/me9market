@@ -1,0 +1,69 @@
+
+#commerce-dashboard-page{min-width:0}
+#commerce-dashboard-page *{letter-spacing:0}
+#container #container_w #contents.commerce-dashboard{display:block}
+@media(max-width:1100px){
+    #commerce-dashboard-page #header{height:auto;min-height:60px;padding:12px 16px;display:flex;align-items:center;flex-wrap:wrap;gap:12px}
+    #commerce-dashboard-page #header .logo{position:static;flex:0 0 155px}
+    #commerce-dashboard-page #header .r_bx{position:static;margin-left:auto;max-width:100%}
+    #commerce-dashboard-page #header .r_bx .name{overflow-wrap:anywhere;word-break:normal}
+    #commerce-dashboard-page #header .t_menu{order:3;width:100%;height:36px;padding:0;overflow-x:auto;white-space:nowrap}
+    #commerce-dashboard-page #header .t_menu > ul > li{margin-right:24px}
+    #commerce-dashboard-page #container #l_menu{width:200px;padding:0 12px}
+    #commerce-dashboard-page #container #container_w{width:calc(100% - 200px);padding:24px 16px}
+}
+@media(max-width:700px){
+    #commerce-dashboard-page #container{display:block}
+    #commerce-dashboard-page #container #container_w,#commerce-dashboard-page #container #l_menu{width:100%}
+    #commerce-dashboard-page #l_menu .con1{padding:16px 0}
+    #commerce-dashboard-page #l_menu .con1 .con_w{margin-bottom:0}
+    #commerce-dashboard-page #l_menu .dep1_wrap{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+    #commerce-dashboard-page #l_menu .con1 .con_w .dep1{margin:0}
+    #commerce-dashboard-page #l_menu .con1 .con_w .dep1 > a{font-size:13px;padding-right:12px}
+    #commerce-dashboard-page #l_menu .con1 .con_w .dep2_wrap{padding:0 8px;border-radius:4px}
+    #commerce-dashboard-page #l_menu .con_w:has(.dep1_wrap.type2){display:none}
+}
+
+/* Match channel dashboard cards, headings and tables while retaining admin data. */
+.portal-admin #contents.commerce-dashboard{width:100%;max-width:none;min-width:0;font-size:13px;line-height:1.6;color:#333}
+.portal-admin #contents.commerce-dashboard *{box-sizing:border-box}
+.portal-admin #contents.commerce-dashboard .admin-dashboard-heading{position:relative;display:flex;align-items:center;justify-content:center;min-height:96px;padding:28px 30px;margin-bottom:20px;border-radius:12px;background:#fff}
+.portal-admin #contents.commerce-dashboard h1{font-size:20px;font-weight:700;color:#4b6cf7;line-height:1.5;margin:0}
+.portal-admin #contents.commerce-dashboard .admin-dashboard-heading nav{position:absolute;right:30px;display:flex;align-items:center;gap:10px;color:#888;font-size:12px}
+.portal-admin #contents.commerce-dashboard .admin-dashboard-heading nav>*+*::before{content:'·';margin-right:10px;color:#b6bdc9}
+.portal-admin #contents.commerce-dashboard .admin-dashboard-heading nav strong{font-weight:600;color:#555}
+.portal-admin #contents.commerce-dashboard .admin-dashboard-status{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));overflow:hidden;background:#fff;border-radius:12px;margin:0 0 20px}
+.portal-admin #contents.commerce-dashboard .admin-dashboard-metric{display:flex;flex-direction:column;justify-content:center;gap:12px;min-width:0;padding:22px 10px;text-align:center;border-right:1px solid #edf0f5;border-bottom:1px solid #edf0f5;text-decoration:none;color:#555}
+.portal-admin #contents.commerce-dashboard a.admin-dashboard-metric:hover{background:#f2f5ff}
+.portal-admin #contents.commerce-dashboard .admin-dashboard-metric>span{font-size:12px;line-height:1.6;overflow-wrap:anywhere}
+.portal-admin #contents.commerce-dashboard .admin-dashboard-metric strong{font-size:26px;font-weight:700;color:#4b6cf7;font-variant-numeric:tabular-nums;line-height:1.2}
+.portal-admin #contents.commerce-dashboard .admin-dashboard-metric small{font-size:12px;color:#3653bb;margin-left:5px}
+.portal-admin #contents.commerce-dashboard .dashboard-period{margin:0 0 14px;text-align:right;color:#667386;font-size:12px}
+.portal-admin #contents.commerce-dashboard .admin-grid{gap:20px;margin-bottom:20px}
+.portal-admin #contents.commerce-dashboard .admin-dashboard-overview{grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(240px,.85fr)}
+.portal-admin #contents.commerce-dashboard .admin-dashboard-lists{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)}
+.portal-admin #contents.commerce-dashboard .admin-dashboard-lists>.span-2{grid-column:auto}
+.portal-admin #contents.commerce-dashboard .admin-panel{min-width:0;padding:24px;border:0;border-radius:12px;background:#fff;box-shadow:none}
+.portal-admin #contents.commerce-dashboard h2{font-size:16px;font-weight:700;color:#4b6cf7;line-height:1.5;margin:0 0 20px}
+.portal-admin #contents.commerce-dashboard .dashboard-chart{height:300px;margin-bottom:16px}
+.portal-admin #contents.commerce-dashboard .dashboard-table{overflow:auto;max-width:100%}
+.portal-admin #contents.commerce-dashboard table{width:100%;min-width:320px;border-collapse:collapse;table-layout:fixed;font-size:13px;line-height:1.6}
+.portal-admin #contents.commerce-dashboard table th{background:#4b6cf7;color:#fff;font-weight:700;text-align:center;white-space:nowrap}
+.portal-admin #contents.commerce-dashboard table th,
+.portal-admin #contents.commerce-dashboard table td{padding:12px 10px;border:1px solid #e2e6ef;vertical-align:middle;overflow-wrap:anywhere}
+.portal-admin #contents.commerce-dashboard table td{background:#fff;text-align:center}
+.portal-admin #contents.commerce-dashboard table a{color:#3653bb;text-decoration:none}
+.portal-admin #contents.commerce-dashboard table a:hover{text-decoration:underline}
+.portal-admin #contents.commerce-dashboard .admin-queue a{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 12px;margin-bottom:10px;border:1px solid #dfe6f5;border-radius:5px;background:#f8faff;color:#3653bb;font-size:13px}
+.portal-admin #contents.commerce-dashboard .admin-queue a:hover{border-color:#4b6cf7;background:#eef3ff}
+.portal-admin #contents.commerce-dashboard .admin-queue strong{font-size:16px;color:#4b6cf7;white-space:nowrap;font-variant-numeric:tabular-nums}
+.portal-admin #contents.commerce-dashboard .admin-help{font-size:12px;line-height:1.8;color:#667386;margin:16px 0 0}
+.portal-admin #contents.commerce-dashboard a:focus-visible{outline:2px solid #92a8f6;outline-offset:2px}
+@media(max-width:1400px){.portal-admin #contents.commerce-dashboard .admin-dashboard-status{grid-template-columns:repeat(4,minmax(0,1fr))}.portal-admin #contents.commerce-dashboard .admin-dashboard-overview{grid-template-columns:repeat(2,minmax(0,1fr))}.portal-admin #contents.commerce-dashboard .admin-dashboard-overview>.admin-panel:last-child{grid-column:1/-1}}
+@media(max-width:1000px){.portal-admin #contents.commerce-dashboard .admin-dashboard-heading{flex-direction:column;gap:10px;padding:24px 20px}.portal-admin #contents.commerce-dashboard .admin-dashboard-heading nav{position:static}.portal-admin #contents.commerce-dashboard .admin-dashboard-lists{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:750px){.portal-admin #contents.commerce-dashboard .admin-dashboard-overview{grid-template-columns:minmax(0,1fr)}.portal-admin #contents.commerce-dashboard .admin-dashboard-status{grid-template-columns:repeat(2,minmax(0,1fr))}.portal-admin #contents.commerce-dashboard .admin-panel{padding:16px}.portal-admin #contents.commerce-dashboard .admin-dashboard-metric{padding:18px 10px}.portal-admin #contents.commerce-dashboard .dashboard-period{text-align:left}}
+
+.portal-admin #contents.commerce-dashboard .admin-chart-legend{display:flex;align-items:flex-start;flex-wrap:wrap;gap:8px 16px;max-height:112px;overflow:auto;margin:0 0 18px;padding:0;list-style:none}
+.portal-admin #contents.commerce-dashboard .admin-chart-legend>li{display:inline-flex;align-items:center;gap:6px;max-width:100%;font-size:12px;font-weight:400;line-height:18px;color:#667386}
+.portal-admin #contents.commerce-dashboard .admin-chart-swatch{display:inline-block;flex:0 0 10px;width:10px;height:10px;border-radius:2px;background:var(--legend-color)}
+.portal-admin #contents.commerce-dashboard .admin-chart-legend-label{max-width:270px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

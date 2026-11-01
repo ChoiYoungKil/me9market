@@ -161,7 +161,7 @@ class ChannelRefundPolicyTest extends TestCase
         }
         $this->actingAs($owner, 'admin')->get(route('channel.refund.list', ['keyword' => 'QA205']))->assertOk()->assertViewHas('policies', fn ($rows) => $rows->total() === 21 && $rows->count() === 20 && $rows->first()->id === $last->id && str_contains($rows->url(2), 'keyword=QA205'));
         $this->get(route('channel.refund.list', ['keyword' => 'QA205', 'page' => 2]))->assertOk()->assertViewHas('policies', fn ($rows) => $rows->count() === 1 && $rows->first()->id === $first->id);
-        $this->get(route('channel.refund.list', ['keyword' => 'missing']))->assertOk()->assertSee('검색 조건에 맞는 취소/환불안내가 없습니다.');
+        $this->get(route('channel.refund.list', ['keyword' => 'missing']))->assertOk()->assertSee('등록된 자료가 없습니다.');
     }
 
     public function test_product_selector_offers_only_active_policies_owned_by_the_seller(): void

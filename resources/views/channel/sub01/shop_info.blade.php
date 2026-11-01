@@ -66,7 +66,8 @@
 @unless($shop->is_public)
 <dialog id="detail-private-dialog"><h2>{{ $shop->channel_code }} 비공개 접속인원관리</h2><p>접속가능인원 {{ $shop->privateAccesses->count() }}명</p><p class="shop-help">명단 변경은 정보수정의 인원관리에서 진행할 수 있습니다.</p>
 <div class="table-scroll"><table><thead><tr><th>No</th><th>Shop 채널코드</th><th>핸드폰 번호</th><th>입장 코드</th><th>등록일</th></tr></thead><tbody>
-@forelse($shop->privateAccesses as $access)<tr><td>{{ $loop->iteration }}</td><td>{{ $shop->channel_code }}</td><td>{{ $access->phone }}</td><td>{{ $access->entry_code }}</td><td>{{ $access->created_at?->format('Y-m-d H:i') }}</td></tr>@empty<tr><td colspan="5">등록된 접속인원이 없습니다.</td></tr>@endforelse
+@forelse($shop->privateAccesses as $access)<tr><td>{{ $loop->iteration }}</td><td>{{ $shop->channel_code }}</td><td>{{ $access->phone }}</td><td>{{ $access->entry_code }}</td><td>{{ $access->created_at?->format('Y-m-d H:i') }}</td></tr>@empty
+@include('components.table-empty-row', ['columns' => 5])@endforelse
 </tbody></table></div><div class="shop-actions"><a href="{{ route('channel.info_update',$shop->id) }}">정보수정</a><button type="button" data-detail-close class="secondary">닫기</button></div></dialog>
 @endunless
 <div class="shop-actions"><a href="{{ route('channel.info_update',$shop->id) }}">정보수정</a><a href="{{ route('channel.shop.open',$shop->id) }}" target="_blank" rel="noopener">Shop채널보기</a><a href="{{ route('channel.shop_list') }}" class="secondary">목록</a></div>

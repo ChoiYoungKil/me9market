@@ -8,18 +8,19 @@
         <label>판매자 <select name="vendor_id"><option value="">전체 판매자</option>@foreach($vendors as $vendor)<option value="{{ $vendor->id }}" @selected((string) request('vendor_id') === (string) $vendor->id)>{{ $vendor->name }}</option>@endforeach</select></label>
         <label>정책명 <input name="search" value="{{ request('search') }}" maxlength="100"></label><button class="btn02" type="submit">검색</button>
     </form>
-    <div class="list_top1"><div class="count">총 <strong>{{ $charges->total() }}</strong> 건</div><a class="btn02" href="#new-delivery-policy">배송비 등록</a></div>
+    <div class="list_top1"><div class="count">총 <strong>{{ $charges->total() }}</strong> 건</div><a class="btn02 col5" href="#new-delivery-policy">배송비 등록</a></div>
     <div class="tb01 ovS delivery-policy-list"><table><colgroup><col style="width:16%"><col style="width:39%"><col style="width:11%"><col style="width:5%"><col style="width:7%"><col style="width:10%"><col style="width:4%"><col style="width:8%"></colgroup><thead><tr><th>판매자</th><th>정책명</th><th>유형</th><th>결제</th><th>기본 배송비</th><th>무료 조건</th><th>상태</th><th>관리</th></tr></thead><tbody>
     @forelse($charges as $charge)
         <tr><td>{{ $charge->vendor?->name }}</td><td class="policy-name" title="{{ $charge->name }}">{{ $charge->name }}</td><td>{{ \App\Services\DeliveryPolicyRules::shippingTypes()[$charge->shipping_type] ?? $charge->shipping_type }}</td><td>{{ \App\Services\DeliveryPolicyRules::paymentTypes()[$charge->payment_type] ?? $charge->payment_type }}</td><td>{{ number_format($charge->base_fee) }}원</td><td>{{ $charge->free_order_amount ? number_format($charge->free_order_amount).'원 이상' : '' }} {{ $charge->free_order_quantity ? number_format($charge->free_order_quantity).'개 이상' : '' }}</td><td>{{ $charge->status ? '사용' : '중지' }}</td><td><a class="admin-btn primary" href="{{ route('admin.shipping.edit', $charge->id) }}">수정</a></td></tr>
-    @empty<tr><td colspan="8">등록된 배송비 정책이 없습니다.</td></tr>@endforelse
+    @empty
+@include('components.table-empty-row', ['columns' => 8])@endforelse
     </tbody></table></div>
     <div class="admin-pagination">{{ $charges->withQueryString()->onEachSide(2)->links('admin.shared.pagination') }}</div>
     <section id="new-delivery-policy" class="delivery-editor"><h2>배송비 등록</h2>
         <form method="POST" action="{{ route('admin.shipping.store') }}">@csrf
             <label class="delivery-vendor">판매자 <select name="vendor_id" required><option value="">판매자를 선택하세요</option>@foreach($vendors as $vendor)<option value="{{ $vendor->id }}" @selected((string) old('vendor_id') === (string) $vendor->id)>{{ $vendor->name }}</option>@endforeach</select></label>
             @include('channel.sub00.inc.delivery_charge_form', ['charge' => null, 'shippingTypes' => \App\Services\DeliveryPolicyRules::shippingTypes(), 'paymentTypes' => \App\Services\DeliveryPolicyRules::paymentTypes()])
-            <div class="btm_btn"><button class="btn02" type="submit">등록</button></div>
+            <div class="btm_btn"><button class="btn02 col5" type="submit">등록</button></div>
         </form>
     </section>
 </div></div></div>

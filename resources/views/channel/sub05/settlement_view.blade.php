@@ -38,7 +38,7 @@
             @forelse($orders as $item)
                 <tr><td>{{ optional($item->confirmed_at)->format('Y-m-d') }}</td><td>{{ $item->order_no }}</td><td class="order-product-name"><strong>{{ $item->product_name }}</strong><small>{{ $item->product_code }}</small></td><td>{{ $item->quantity }}</td><td>{{ $roleLabels[$item->settlement_role ?? 'seller'] ?? ($item->settlement_role ?? 'seller') }}</td><td>{{ $pgLabels[$item->payment_gateway_type ?? 'me9_pg'] ?? '공용PG' }}</td><td>{{ number_format($item->invoice_sales_amount ?? $item->gross_sales_amount) }} 원</td><td>{{ number_format($item->invoice_purchase_amount ?? 0) }} 원</td><td>{{ number_format($item->point_deposit_amount ?? 0) }} / {{ number_format($item->point_used_amount ?? 0) }} P</td><td>{{ number_format($item->sms_postpaid_amount ?? 0) }} 원</td><td><strong>{{ number_format($item->payout_amount ?? $item->settlement_amount) }} 원</strong>@if(($item->payment_gateway_type ?? 'me9_pg')==='own_pg')<small>자사PG 결제분 제외, 포인트분만 지급</small>@endif</td></tr>
             @empty
-                <tr><td colspan="11" class="order-empty">내역이 없습니다.</td></tr>
+                @include('components.table-empty-row', ['columns' => 11])
             @endforelse
             </tbody>
             @if($orders->total()>0)

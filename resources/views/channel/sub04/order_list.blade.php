@@ -55,7 +55,8 @@
             </tr>
             @endforeach
             @endforeach
-        @empty<tr><td colspan="40" class="order-empty">등록된 데이터가 없습니다.</td></tr>@endforelse
+        @empty
+@include('components.table-empty-row', ['columns' => 40])@endforelse
         </tbody></table></div>
         <div class="page_bx1">{{ $orders->links() }}</div>
     </section>

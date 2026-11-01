@@ -19,6 +19,7 @@
     <noscript><style>.market-sub .home-header{position:relative;height:auto;flex-wrap:wrap;padding:25px;gap:20px}.market-sub .home-menu{display:flex;position:static;height:auto;width:100%;padding:0;flex-wrap:wrap}.market-sub .home-menu-toggle{display:none}.market-sub .market-content{padding-top:0}</style></noscript>
     @env('local')<script src="{{ asset('me9market/js/preview-live.js') }}" defer></script>@endenv
     @stack('styles')
+<link rel="stylesheet" href="{{ asset('common/empty-state.css').'?v='.filemtime(public_path('common/empty-state.css')) }}">
 </head>
 <body id="sub" class="home-page market-sub" data-home-theme="light" @if(request()->isMethod('post')) data-preview-preserve="true" @endif>
     <a class="home-skip" href="#market-content">본문 바로가기</a>

@@ -16,7 +16,7 @@
             @forelse($jointPurchases as $joint)
                 @include('shop.partials.joint_card', ['joint' => $joint])
             @empty
-                <div style="background: #fff; border: 1px solid #d9dee7; border-radius: 8px; padding: 18px;">진행중인 공동구매가 없습니다.</div>
+                <div class="list-empty-state">등록된 상품이 없습니다.</div>
             @endforelse
         </div>
     </main>

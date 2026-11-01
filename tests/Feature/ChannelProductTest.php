@@ -65,6 +65,30 @@ class ChannelProductTest extends TestCase
         return [$vendor, $admin, $shop, $product];
     }
 
+    public function test_empty_catalog_rows_span_every_heading_without_creating_a_phantom_column(): void
+    {
+        [, $admin] = $this->createSetup();
+        $this->actingAs($admin, 'admin');
+
+        foreach (['own' => 8, 'public' => 9, 'partial' => 9] as $scope => $columns) {
+            $response = $this->get('/channel/product/'.$scope.'?q=NO-MATCH-EMPTY-ROW');
+            $response->assertOk()->assertViewHas('products', fn ($rows) => $rows->total() === 0)
+                ->assertSee('등록된 상품이 없습니다.')->assertDontSee('@include(');
+            $document = new \DOMDocument;
+            @$document->loadHTML('<?xml encoding="UTF-8">'.$response->getContent());
+            $xpath = new \DOMXPath($document);
+            $table = '(//*[@id="product-management"]//table)[1]';
+            $this->assertSame($columns, $xpath->query($table.'/thead/tr/th')->length, $scope);
+            $cells = $xpath->query($table.'/tbody/tr/td');
+            $this->assertSame(1, $cells->length, $scope);
+            $this->assertSame((string) $columns, $cells->item(0)->getAttribute('colspan'), $scope);
+        }
+
+        $this->get('/channel/product/own')->assertOk()
+            ->assertViewHas('products', fn ($rows) => $rows->total() === 1)
+            ->assertDontSee('등록된 상품이 없습니다.');
+    }
+
     public function test_posted_channel_popup_uses_approved_product_channels_and_local_qr(): void
     {
         [, $admin, $shop, $product] = $this->createSetup();
@@ -85,7 +109,7 @@ class ChannelProductTest extends TestCase
 
         $listing->update(['approval_status' => 'pending']);
         $this->get('/channel/product/own')->assertOk()
-            ->assertSee('게시된 채널이 없습니다.')
+            ->assertSee('등록된 자료가 없습니다.')
             ->assertDontSee('data:image/png;base64,', false);
     }
 

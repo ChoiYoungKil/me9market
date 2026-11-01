@@ -21,7 +21,7 @@ class MemberVisitedChannelsTest extends TestCase
         VisitedChannel::create(['user_id'=>$other->id,'vendor_id'=>$vendor->id,'shop_channel_id'=>$private->id]);
         $this->actingAs($user)->get(route('mypage.visited_channels'))->assertOk()->assertSee('생활용품')->assertSee('문구')->assertSee(route('shop.enter','qa-home'))->assertSee('data:image/png;base64,',false)->assertDontSee('다른 회원만 방문');
         $this->get(route('mypage.visited_channels',['search'=>'문구']))->assertOk()->assertSee('문구')->assertDontSee('생활용품');
-        $this->get(route('mypage.visited_channels',['search'=>'없음']))->assertOk()->assertSee('검색된 방문 채널이 없습니다.');
+        $this->get(route('mypage.visited_channels',['search'=>'없음']))->assertOk()->assertSee('등록된 자료가 없습니다.');
     }
 
     public function test_individual_and_all_deletion_only_remove_the_logged_in_members_visits(): void

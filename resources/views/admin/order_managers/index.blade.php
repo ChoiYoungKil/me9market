@@ -38,7 +38,7 @@
                         @include('admin.shared.messages')
 
                         <form method="GET" action="{{ route('admin.order_managers.index') }}" class="tb01" style="margin-bottom:15px;">
-                            <table>
+                            <table class="admin-order-manager-table">
                                 <colgroup>
                                     <col width="160px">
                                     <col width="">
@@ -83,7 +83,7 @@
                                 <colgroup>
                                     <col width="80px">
                                     <col width="90px">
-                                    <col width="220px">
+                                    <col width="340px">
                                     <col width="">
                                     <col width="140px">
                                     <col width="130px">
@@ -145,9 +145,7 @@
                                             </td>
                                         </tr>
                                     @empty
-                                        <tr>
-                                            <td colspan="9" class="no_data">등록된 발주사가 없습니다.</td>
-                                        </tr>
+                                        @include('components.table-empty-row', ['columns' => 9])
                                     @endforelse
                                 </tbody>
                             </table>
@@ -226,7 +224,7 @@
                                                 </div>
                                             </div>
                                             <div class="btm_btn mt10">
-                                                <button type="submit">발주사 등록</button>
+                                                <button type="submit" class="admin-btn primary">발주사 등록</button>
                                                 <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                                             </div>
                                         </form>
@@ -313,7 +311,7 @@
                                                     </div>
                                                 </div>
                                                 <div class="btm_btn mt10">
-                                                    <button type="submit">발주사 수정</button>
+                                                    <button type="submit" class="admin-btn primary">발주사 수정</button>
                                                     <a href="{{ url()->current() }}" class="col5 close_btn">닫기</a>
                                                 </div>
                                             </form>

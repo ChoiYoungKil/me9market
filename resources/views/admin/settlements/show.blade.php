@@ -107,7 +107,7 @@
                             @if(!$isPreview)
                                 <a href="{{ route('admin.settlements.payout', $settlement->id) }}" class="btn02" target="_blank">지급액 상세</a>
                                 <a href="{{ route('admin.settlements.billing', $settlement->id) }}" class="btn02" target="_blank">청구액 상세</a>
-                                <a href="{{ route('admin.settlements.export', $settlement->id) }}" class="btn02">상세 엑셀</a>
+                                <a href="{{ route('admin.settlements.export', $settlement->id) }}" class="btn02 admin-button-export">상세 엑셀</a>
                                 <a href="{{ route('admin.settlements.extra_shipping.export', $settlement->id) }}" class="btn02">추가배송비 엑셀</a>
                             @endif
                             <a href="{{ route('admin.settlements.index', ['period' => $settlement->period]) }}" class="btn02 col5">목록</a>
@@ -170,9 +170,7 @@
                                             <td class="t_r">{{ number_format($item->admin_amount) }}원</td>
                                         </tr>
                                     @empty
-                                        <tr>
-                                            <td colspan="13" class="no_data">정산 상세 품목이 없습니다.</td>
-                                        </tr>
+                                        @include('components.table-empty-row', ['columns' => 13])
                                     @endforelse
                                 </tbody>
                                 @if($items->total() > 0)

@@ -40,6 +40,8 @@
     <link href="{{ asset('common/portal.css').'?v='.filemtime(public_path('common/portal.css')) }}" rel="stylesheet">
 <link rel="stylesheet" href="{{ asset('common/admin-workspace.css').'?v='.filemtime(public_path('common/admin-workspace.css')) }}">
 <script defer src="{{ asset('common/admin-workspace.js').'?v='.filemtime(public_path('common/admin-workspace.js')) }}"></script>
+    <link rel="stylesheet" href="{{ asset('common/empty-state.css').'?v='.filemtime(public_path('common/empty-state.css')) }}">
+    <link rel="stylesheet" href="{{ asset('common/admin-channel-theme.css').'?v='.filemtime(public_path('common/admin-channel-theme.css')) }}">
 </head>
 
 <body class="portal portal-admin" id="@yield('page_type', 'main')">
@@ -68,6 +70,7 @@
             @endphp
             <div class="t_menu">
                 <ul>
+                    <li><a href="{{ route('admin.dashboard') }}" class="admin-dashboard-home {{ request()->routeIs('admin.dashboard') ? 'on' : '' }}" @if(request()->routeIs('admin.dashboard')) aria-current="page" @endif>대시보드 홈</a></li>
                     <li><a href="{{ url('admin/update-admin-details') }}" class="{{ $isSettings ? 'on' : '' }}">환경설정</a></li>
                     <li><a href="{{ url('admin/users') }}" class="{{ $isUserManagement ? 'on' : '' }}">회원관리</a></li>
                 <li><a href="{{ url('admin/products') }}" class="{{ $isProductManagement ? 'on' : '' }}">상품관리</a>

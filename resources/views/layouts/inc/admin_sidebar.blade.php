@@ -14,7 +14,7 @@ if (request()->is('admin/products')) {
 }
 $full=in_array(Auth::guard('admin')->user()?->type,['admin','superadmin'],true);
 $groups=[
- ['대시보드','dashboard','admin/dashboard',[]],
+ ['대시보드 홈','dashboard','admin/dashboard',[]],
  ['회원관리','members',null,[['회원 리스트','users','admin/users'],['판매자 승인 대기','seller-review','admin/users?seller_status=pending'],['관리자/판매자','admins','admin/admins']]],
  ['Shop 채널','channels',null,[['운영중지 승인','shop-channel-closures','admin/shop-channel-closures']]],
  ['상품관리','products',null,[['상품 목록','products','admin/products'],['상품 갤러리','products-gallery','admin/products?view=gallery'],['분류관리','categories','admin/categories'],['상품 설정','configuration',null,[['섹션','sections','admin/sections'],['브랜드','brands','admin/brands'],['필터','filters','admin/filters'],['배너','banners','admin/banners'],['리뷰','ratings','admin/ratings'],['쿠폰','coupons','admin/coupons']]]]],
@@ -34,7 +34,7 @@ $activeKeys=['members'=>['users','seller-review','admins','add_edit_user','add_e
 @if($full || in_array($key,['dashboard','products','orders'],true))
 @php($active=in_array($current,$activeKeys[$key]??[$key],true))
 <li class="dep1 {{ $children?'arrow':'' }} {{ $active?'on':'' }}">
-@if($path)<a href="{{ url($path) }}"
+@if($path)<a href="{{ url($path) }}" @if($key==='dashboard') class="admin-dashboard-home" @endif
 @if($active) aria-current="page"
 @endif>{{ $label }}</a>
 @else<a href="{{ url()->current() }}" aria-expanded="{{ $active?'true':'false' }}">{{ $label }}</a>

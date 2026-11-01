@@ -14,7 +14,8 @@
 @forelse($products as $listing)
 @php $p=$listing->product; @endphp
 @if($p)<tr><td>Me9-Shop-{{ str_pad($listing->id,7,'0',STR_PAD_LEFT) }}</td><td>{{ ['own'=>'자사','public'=>'공유','partial'=>'제휴'][$listing->product_type]??'-' }}</td><td class="product-name">@include('channel.sub01.inc.catalog_product_name',['catalogProduct'=>$p,'showCode'=>true])</td><td>{{ $stopped?'판매중지':'판매' }}</td><td>{{ $listing->stock!==null?number_format($listing->stock).'개':($p->stock_usage==='used'?number_format($p->attributes()->where('status',1)->sum('stock')).'개':'수량제한없음') }}</td><td>{{ number_format($listing->selling_price) }}원</td><td>{{ number_format($listing->reward_points??$p->reward_points??0) }} Point</td><td><button type="button" data-listing-view="{{ $listing->id }}">보기</button><a href="{{ route('channel.product.edit',$listing->id) }}" class="catalog-edit">관리</a><button type="button" data-listing-status="{{ $listing->id }}" data-next-status="{{ $stopped?1:0 }}">{{ $stopped?'판매재개':'판매중지' }}</button></td></tr>@endif
-@empty<tr><td colspan="8">{{ $stopped?'판매중지된 상품이 없습니다.':'등록된 판매상품이 없습니다.' }}</td></tr>@endforelse
+@empty
+@include('components.table-empty-row', ['columns' => 8, 'kind' => 'product'])@endforelse
 </tbody></table></div>{{ $products->withQueryString()->links() }}</section>
 <dialog id="catalog-dialog"><h2>판매상품 추가</h2><nav class="shop-tabs" aria-label="추가할 상품 구분">
 @foreach(['own'=>'자사상품','public'=>'공유상품','partial'=>'제휴상품'] as $type=>$label)
@@ -29,7 +30,8 @@
 @if($catalogType!=='own')<td><label><input type="checkbox" data-favorite="{{ $p->id }}" @checked(in_array($p->id,$catalogFavorites)) aria-label="{{ $p->product_name }} 관심상품"></label></td>@endif
 <td>@if($catalogType==='partial')<p>{{ ['new'=>'판매요청','pending'=>'판매요청중','approved'=>'판매허용','rejected'=>'요청거부'][$state] }}</p>@if($state==='pending')<button disabled>승인 대기</button>@else<button type="button" data-add-product="{{ $p->id }}" data-mode="{{ $state==='approved'?'add':'request' }}">{{ $state==='approved'?'추가하기':($state==='rejected'?'재요청하기':'판매요청하기') }}</button>@endif
 @else<button type="button" data-add-product="{{ $p->id }}" data-mode="add">추가하기</button>@endif</td></tr>
-@empty<tr><td colspan="8">조건에 맞는 상품이 없습니다.</td></tr>@endforelse
+@empty
+@include('components.table-empty-row', ['columns' => 8, 'kind' => 'product'])@endforelse
 </tbody></table></div>{{ $catalogProducts->links() }}<div class="shop-actions"><button type="button" data-close-dialog>닫기</button></div></dialog>
 <dialog id="catalog-product-dialog"><h2 data-product-title>판매 상품 정보</h2><p class="shop-feedback error" data-product-error role="alert" hidden></p><div data-product-information></div><form id="catalog-add-form"><div class="shop-fields"><label>판매 금액 설정 (원)<input name="selling_price" type="number" min="0" step="1" required></label><label>지급 포인트 설정<input name="reward_points" type="number" min="0" step="1" value="0" @readonly($shop->use_own_pg)></label><div class="wide" data-price-preview role="status"></div><label class="wide">Shop 배송비 정책<select name="shipping_policy_id" required><option value="">배송비 정책을 선택해 주세요</option>
 @foreach($deliveryPolicies as $deliveryPolicy)

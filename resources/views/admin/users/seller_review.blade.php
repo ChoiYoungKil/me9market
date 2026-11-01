@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 @section('content')
-<div id="contents" data-review-member-id="{{ $user->id }}">
+<div id="contents" class="admin-workspace admin-legacy" data-review-member-id="{{ $user->id }}">
     <div class="row"><div class="box box1">
         <div class="page_info"><div class="ttl">판매자 승인 검토</div><ul class="dep"><li>홈</li><li>회원 관리</li><li>판매자 승인</li></ul></div>
         <div class="conbx"><div class="con_w seller-review">

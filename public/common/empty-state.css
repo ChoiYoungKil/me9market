@@ -1,0 +1,29 @@
+/* Shared empty lists: keep headings intact and give the notice breathing room. */
+body table tbody > tr.portal-empty-row > td.portal-empty-cell {
+    box-sizing: border-box;
+    height: 200px !important;
+    padding: 24px !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    white-space: normal !important;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.6;
+    color: #777;
+}
+body .list-empty-state {
+    box-sizing: border-box;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    width: 100%;
+    grid-column: 1 / -1;
+    padding: 24px !important;
+    margin: 0;
+    text-align: center !important;
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.6;
+    color: #777;
+}

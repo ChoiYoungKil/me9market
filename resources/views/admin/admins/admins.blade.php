@@ -19,7 +19,7 @@
                                 <div class="admin-account-search-actions">
                                     <button type="button" id="arrow1" class="admin-btn" aria-expanded="{{ request()->filled('status')?'true':'false' }}" aria-controls="admin-account-status"><span>상세 검색</span></button>
                                     <button type="submit" class="admin-btn primary">검색</button>
-                                    <a href="{{ url('admin/admins') }}" class="admin-btn">초기화</a>
+                                    <a href="{{ url('admin/admins') }}" class="admin-btn admin-button-reset">초기화</a>
                                 </div>
                             </div>
                             <div id="admin-account-status" class="arrowbx admin-account-status" data-arrowbx="arrow1" @if(!request()->filled('status')) style="display:none" @endif>
@@ -43,14 +43,14 @@
                     <td><a class="updateAdminStatus" id="admin-{{ $admin->id }}" admin_id="{{ $admin->id }}" href="javascript:void(0)" title="계정 상태 변경"><span class="admin-status {{ $admin->status?'enabled':'disabled' }}">{{ $admin->status?'활성':'비활성' }}</span></a></td>
                     <td><div class="admin-row-actions">
                     @if($admin->type==='vendor')
-                        <a class="admin-btn primary" href="{{ url('admin/view-vendor-details/'.$admin->id) }}">상세</a>
+                        <a class="admin-btn" href="{{ url('admin/view-vendor-details/'.$admin->id) }}">상세</a>
                     @endif
-                        <a class="admin-btn {{ $admin->type==='vendor'?'':'primary' }}" href="{{ url('admin/add-edit-admin/'.$admin->id) }}">수정</a>
+                        <a class="admin-btn primary" href="{{ url('admin/add-edit-admin/'.$admin->id) }}">수정</a>
                         <a class="admin-btn danger confirmDelete" href="{{ url('admin/delete-admin/'.$admin->id) }}" module="admin" moduleid="{{ $admin->id }}">삭제</a>
                     </div></td>
                 </tr>
             @empty
-                <tr><td colspan="7" class="admin-empty">검색된 관리자/판매자가 없습니다.</td></tr>
+                @include('components.table-empty-row', ['columns' => 7])
             @endforelse
             </tbody>
         </table>

@@ -57,6 +57,6 @@
 @elseif($tab==='history')
 <section class="admin-panel"><h2>처리 이력</h2><div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>시각</th><th>상품번호</th><th>처리 상태</th><th>담당자</th></tr></thead><tbody>
 @forelse($order->statusLogs as $log)<tr><td>{{ $log->created_at?->format('Y-m-d H:i:s') }}</td><td>{{ $log->order_item_id }}</td><td>{{ $log->order_status }}</td><td>{{ $log->actor ?: '이전 기록(담당자 미기록)' }}</td></tr>
-@empty<tr><td colspan="4" class="admin-empty">처리 이력이 없습니다.</td></tr>
+@empty@include('components.table-empty-row', ['columns' => 4])
 @endforelse</tbody></table></div></section>
 @endif

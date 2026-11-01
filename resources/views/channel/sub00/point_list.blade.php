@@ -55,7 +55,8 @@
                 <td class="point-amount {{ $transaction->points >= 0 ? 'point-credit' : 'point-debit' }}">{{ $transaction->points > 0 ? '+' : '' }}{{ number_format($transaction->points) }} Point</td>
                 <td class="point-description"><strong>{{ $transaction->user?->name ?: '회원정보 없음' }}</strong><p>{{ $transaction->description ?: ($typeLabels[$transaction->type] ?? '포인트 조정') }}</p><small>{{ $transaction->shopChannel?->channel_name ?: '-' }}@if($transaction->order_id) · 주문번호 {{ $transaction->order_id }}@endif</small></td>
             </tr>
-        @empty<tr><td colspan="5" class="order-empty">검색 조건에 맞는 포인트 내역이 없습니다.</td></tr>
+        @empty
+@include('components.table-empty-row', ['columns' => 5])
         @endforelse
         </tbody></table></div>
         {{ $transactions->links() }}

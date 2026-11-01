@@ -93,9 +93,7 @@
                                         </td>
                                     </tr>
                                 @empty
-                                    <tr>
-                                        <td colspan="3">등록된 추가 배송지가 없습니다.</td>
-                                    </tr>
+                                    @include('components.table-empty-row', ['columns' => 3])
                                 @endforelse
                             </tbody>
                         </table>

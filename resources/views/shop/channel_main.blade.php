@@ -28,7 +28,7 @@
             <div class="shop-featured" id="shop-featured" data-product-carousel>
             <button type="button" class="shop-btn small" data-products-prev aria-label="이전 상품">‹</button>
             <div class="shop-product-track" data-product-track tabindex="0" aria-label="키워드별 상품">
-                @forelse($products as $shopProduct) @include('shop.partials.product_card') @empty<div class="shop-empty">판매중인 상품이 없습니다.</div>@endforelse
+                @forelse($products as $shopProduct) @include('shop.partials.product_card') @empty<div class="shop-empty list-empty-state">등록된 상품이 없습니다.</div>@endforelse
             </div>
             <button type="button" class="shop-btn small" data-products-next aria-label="다음 상품">›</button>
             </div>
