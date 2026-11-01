@@ -72,6 +72,29 @@ class Handler extends ExceptionHandler
                     ? 'mypage.dashboard' : 'front.member.login')
                     ->with('error_message', '화면의 유효시간이 지났습니다. 새로 열린 화면에서 채널관리자를 다시 선택해 주세요.');
             }
+            $loginForms = [
+                'front.member.login.submit' => ['front.member.login', ['login_id'], 'error_message'],
+                'channel.login.submit' => ['channel.login', ['login_id'], 'error_message'],
+                'distributor.login.submit' => ['distributor.login', ['email', 'name'], 'flash_message_error'],
+            ];
+            foreach ($loginForms as $submitRoute => [$formRoute, $fields, $messageKey]) {
+                if (! $request->routeIs($submitRoute)) {
+                    continue;
+                }
+                // Another tab can rotate the session token. Require fresh credentials;
+                // never retry the expired POST or retain passwords and security codes.
+                $input = [];
+                foreach ($fields as $field) {
+                    $value = $request->input($field);
+                    if (is_string($value)) {
+                        $input[$field] = mb_substr($value, 0, $field === 'name' ? 100 : 255);
+                    }
+                }
+
+                return redirect()->route($formRoute)
+                    ->with($messageKey, '로그인 화면의 유효시간이 지났습니다. 비밀번호를 다시 입력해 주세요.')
+                    ->withInput($input);
+            }
             if (! $request->routeIs('admin.login.submit')) {
                 return null;
             }

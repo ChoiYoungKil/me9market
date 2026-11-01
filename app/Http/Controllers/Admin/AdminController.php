@@ -121,7 +121,8 @@ class AdminController extends Controller
         $pages = app(\App\Services\StoryboardReview::class)->pages($member, $shopChannel);
         $reviewedAt = \App\Services\StoryboardReview::REVIEWED_AT;
         $operationalChecks=app(\App\Services\StoryboardReviewHistory::class)->operationalChecks();
-        return response()->view('admin.storyboard_testbed', compact('accounts', 'shopChannel', 'frontUrl', 'adminUrl', 'pages', 'reviewedAt','operationalChecks'))
+        $productionReview=app(\App\Services\StoryboardReviewHistory::class)->productionReview();
+        return response()->view('admin.storyboard_testbed', compact('accounts', 'shopChannel', 'frontUrl', 'adminUrl', 'pages', 'reviewedAt','operationalChecks','productionReview'))
             ->header('Cache-Control', 'private, no-store')->header('Referrer-Policy', 'no-referrer');
     }
 

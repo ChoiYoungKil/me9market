@@ -113,6 +113,35 @@
 <main>
     <div class="notice">전체 관리자 전용 검수 화면입니다. 링크를 열어도 현재 로그인 계정은 자동 전환되지 않습니다. 계정 생성·클레임 접수·탈퇴는 각 화면에서 직접 진행합니다.</div>
 
+    <section class="review-summary" id="production-review" aria-label="운영환경 재검수 결과">
+        <h2>운영환경 재검수 · {{ $productionReview['date'] }}</h2>
+        <p class="bad">{{ $productionReview['verdict'] }}</p>
+        <p>{{ $productionReview['environment'] }}</p>
+        <p>{{ $productionReview['scope_note'] }}</p>
+        <h3>발견 사항과 현재 상태</h3>
+        <ul>@foreach($productionReview['findings'] as $finding)
+            <li><strong>[{{ $finding['status'] }}] {{ $finding['title'] }}</strong><p>{{ $finding['evidence'] }}</p><p>{{ $finding['next_step'] }}</p></li>
+        @endforeach</ul>
+        <details class="review-log">
+            <summary>운영에서 실제 수행한 조작·결과와 미시연 범위</summary>
+            <div class="review-log-body">
+                @foreach($productionReview['checks'] as $check)
+                    <h4>{{ $check['scope'] }} · {{ $check['status'] }}</h4>
+                    <p><strong>확인 방법:</strong> {{ $check['method'] }}</p>
+                    <p><strong>조작:</strong> {{ $check['action'] }}</p>
+                    <p><strong>결과:</strong> {{ $check['outcome'] }}</p>
+                    <p class="review-note">{{ $check['limits'] }}</p>
+                @endforeach
+                <h4>운영 DB에 남긴 검수 자료</h4>
+                <ul>@foreach($productionReview['review_data'] as $item)<li>{{ $item }}</li>@endforeach</ul>
+                <h4>운영에서 완료하지 않은 항목</h4>
+                <ul>@foreach($productionReview['not_executed'] as $item)<li>{{ $item }}</li>@endforeach</ul>
+                <p>{{ $productionReview['automation'] }}</p>
+            </div>
+        </details>
+        <p><a class="open" href="#admin-operations">이전 로컬 검수 기록 보기</a></p>
+    </section>
+
     <h2>현재 서버 DB에 등록된 검수 계정</h2>
     <p>활성 계정을 가입 방식과 회원·관리자 연결 정보로 구분합니다. 비밀번호는 기존 검수 서버 설정값이 선택한 DB 계정과 일치할 때 표시합니다. 계정의 비밀번호를 바꾸지 않습니다.</p>
     <form method="get" action="{{ route('admin.storyboard_testbed') }}">
@@ -133,7 +162,7 @@
                         <dt>이름</dt><dd>{{ $account['name'] ?: '-' }}</dd>
                         <dt>아이디</dt><dd>{{ $account['login_id'] }}</dd>
                         <dt>비밀번호</dt><dd>{{ $account['key'] === 'social' ? '소셜 인증 사용' : ($account['password'] !== '' ? $account['password'] : '기존 비밀번호 / 서버 설정 확인') }}</dd>
-                        @if($account['key'] !== 'social')<dt>인증정보</dt><dd class="{{ $account['password_matches'] ? 'ok' : ($account['password_configured'] ? 'bad' : '') }}">{{ $account['password_matches'] ? '일치' : ($account['password_configured'] ? '선택 계정과 설정 비밀번호 불일치' : '검수 비밀번호 미설정') }}</dd>@endif
+                        @if($account['key'] !== 'social')<dt>인증정보</dt><dd class="{{ $account['password_matches'] ? 'ok' : ($account['password_configured'] && $account['exists'] ? 'bad' : '') }}">{{ !$account['exists'] ? '선택 가능한 계정 없음' : ($account['password_matches'] ? '일치' : ($account['password_configured'] ? '선택 계정과 설정 비밀번호 불일치' : '검수 비밀번호 미설정')) }}</dd>@endif
                         <dt>이메일</dt><dd>{{ $account['email'] ?: '-' }}</dd>
                         @if($account['member_number'])<dt>회원번호</dt><dd>{{ $account['member_number'] }}</dd>@endif
                         @if($account['providers'])<dt>소셜 연결</dt><dd>{{ $account['providers'] }}</dd>@endif
@@ -161,7 +190,8 @@
             </div>
             <a class="button" href="{{ $frontUrl }}/shop-channel/enter/{{ urlencode($shopChannel->channel_code) }}" target="_blank" rel="noopener noreferrer">활성 채널 열기</a>
         @else
-            <p class="bad">현재 활성 Shop 채널이 없습니다.</p>
+            <p class="bad">선택한 회원 연결 채널관리자에 해당하는 활성 Shop 채널이 없습니다.</p>
+            <p>이 안내는 운영 DB 전체에 Shop 채널이 없다는 뜻이 아닙니다. 회원 연결과 기존 채널관리자 직접 로그인을 구분해 확인해 주세요.</p>
         @endif
     </section>
 

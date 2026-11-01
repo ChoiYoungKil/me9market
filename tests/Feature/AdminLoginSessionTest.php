@@ -78,6 +78,44 @@ class AdminLoginSessionTest extends TestCase
         $this->assertGuest('admin');
     }
 
+    public function test_stale_member_channel_and_distributor_logins_restart_without_replaying_credentials(): void
+    {
+        foreach ([
+            ['/member/login', 'error_message', ['login_id' => 'review-member']],
+            ['/channel/login', 'error_message', ['login_id' => 'review-channel']],
+            ['/distributor/login', 'flash_message_error', ['email' => 'review@example.test', 'name' => 'Review partner']],
+        ] as [$path, $messageKey, $identity]) {
+            $this->withSession(['_token' => 'fresh-token'])->post($path, $identity + [
+                '_token' => 'old-tab-token', 'password' => 'NeverRetainThisPassword', 'otp' => 'NeverRetainThisCode',
+            ])->assertRedirect($path)->assertSessionHas($messageKey)
+                ->assertSessionMissing('_old_input.password')->assertSessionMissing('_old_input.otp');
+            foreach ($identity as $field => $value) {
+                $this->assertSame($value, session('_old_input.'.$field));
+            }
+            $this->assertGuest('web');
+            $this->assertGuest('admin');
+            $this->assertNull(session('distributor_id'));
+            $this->get($path)->assertOk()->assertSee('로그인 화면의 유효시간이 지났습니다.')
+                ->assertDontSee('NeverRetainThisPassword')->assertDontSee('NeverRetainThisCode');
+            $this->postJson($path, ['_token' => 'old-tab-token'])->assertStatus(419);
+        }
+        $this->assertDatabaseCount('users', 0);
+        $this->assertDatabaseCount('admins', 0);
+        $this->assertDatabaseCount('distributors', 0);
+    }
+
+    public function test_stale_portal_login_does_not_flash_malformed_or_unbounded_identity_input(): void
+    {
+        $this->withSession(['_token' => 'fresh-token'])->post('/channel/login', [
+            '_token' => 'old-tab-token', 'login_id' => ['invalid'], 'password' => 'DoNotRetain',
+        ])->assertRedirect('/channel/login')->assertSessionMissing('_old_input.login_id')
+            ->assertSessionMissing('_old_input.password');
+        $this->post('/distributor/login', ['_token' => 'old-tab-token', 'name' => str_repeat('x', 1000)])
+            ->assertRedirect('/distributor/login')->assertSessionHas('_old_input.name', str_repeat('x', 100));
+        $this->assertGuest('admin');
+        $this->assertNull(session('distributor_id'));
+    }
+
     public function test_login_form_is_not_cached_and_admin_entry_redirects_to_protected_dashboard(): void
     {
         $response = $this->get('/admin/login')->assertOk();

@@ -4,6 +4,11 @@ namespace App\Services;
 
 class StoryboardReviewHistory
 {
+    public function productionReview(): array
+    {
+        return json_decode(file_get_contents(resource_path('storyboard/production-review.json')), true, 512, JSON_THROW_ON_ERROR);
+    }
+
     public function operationalChecks(): array
     {
         $archive=json_decode(file_get_contents(resource_path('storyboard/review-history.json')),true,512,JSON_THROW_ON_ERROR);

@@ -39,6 +39,23 @@ class CustomerCenterIntegrationTest extends TestCase
         $this->assertDatabaseCount('faqs', 0);
     }
 
+    public function test_published_legacy_faq_categories_are_navigable_and_private_categories_are_not_exposed(): void
+    {
+        Faq::create(['category'=>'환불/반품', 'question'=>'반품 접수 안내', 'answer'=>'운영 답변', 'order'=>1, 'status'=>1]);
+        Faq::create(['category'=>'회원정보', 'question'=>'회원정보 안내', 'answer'=>'운영 답변', 'order'=>2, 'status'=>1]);
+        Faq::create(['category'=>'비공개 분류', 'question'=>'비공개 질문', 'answer'=>'비공개 답변', 'order'=>3, 'status'=>0]);
+        $response = $this->get('/faq')->assertOk()->assertDontSee('비공개 분류');
+        $document = new \DOMDocument();
+        @$document->loadHTML('<?xml encoding="utf-8" ?>'.$response->getContent());
+        $xpath = new \DOMXPath($document);
+        $this->assertSame(1, $xpath->query('//nav[@aria-label="질문 분류"]/a[text()="환불/반품"]')->length);
+        $this->assertSame(1, $xpath->query('//nav[@aria-label="질문 분류"]/a[text()="회원정보"]')->length);
+        $this->get('/faq?'.http_build_query(['category'=>'환불/반품']))->assertOk()
+            ->assertSee('반품 접수 안내')->assertDontSee('회원정보 안내');
+        $this->getJson('/faq?search_value[]=invalid')->assertUnprocessable()->assertJsonValidationErrors('search_value');
+        $this->getJson('/faq?category[]=invalid')->assertUnprocessable()->assertJsonValidationErrors('category');
+    }
+
     public function test_front_notice_uses_admin_notice_data_only()
     {
         $admin = $this->admin();

@@ -396,7 +396,7 @@
                                 </div>
                                 <div class="right_bx">
                                     <div class="period_btn_wrap">
-                                        <a href="javascript:void(0);" class="btn02 on" data-period="1">1개월</a>
+                                        <a href="javascript:void(0);" class="btn02" data-period="1">1개월</a>
                                         <a href="javascript:void(0);" class="btn02" data-period="3">3개월</a>
                                         <a href="javascript:void(0);" class="btn02" data-period="6">6개월</a>
                                         <a href="javascript:void(0);" class="btn02" data-period="12">1년</a>
@@ -410,6 +410,10 @@
                                 </div>
                             </div>
                         </div>
+
+                        @if(!$startDate && !$endDate)
+                            <p class="order-period-hint">조회 기간을 선택하지 않으면 전체 주문을 표시합니다.</p>
+                        @endif
 
                         <!-- 리스트 -->
                         <div class="order_list_wrap">
@@ -953,8 +957,8 @@
                 $("#end_date").val(formatDate(endDate));
             }
 
-            // Initialize with 1 month default
-            if (!$("#start_date").val() && !$("#end_date").val()) setDateRange(1);
+            // Keep displayed dates consistent with the server's applied filter.
+            // Date presets are proposals until the user submits the search.
 
             $(".period_btn_wrap .btn02").click(function (e) {
                 e.preventDefault();

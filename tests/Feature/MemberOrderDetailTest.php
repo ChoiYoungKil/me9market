@@ -33,6 +33,23 @@ class MemberOrderDetailTest extends TestCase
         ]);
     }
 
+    public function test_order_period_controls_match_the_applied_filter_for_historical_orders(): void
+    {
+        $user = User::factory()->create();
+        $order = $this->orderFor($user);
+        $order->forceFill(['created_at'=>now()->subMonths(6)])->save();
+        $this->itemFor($order, OrderItemStatus::PAID, '이전 기간 주문 상품');
+        $response = $this->actingAs($user)->get(route('mypage.order.list'))->assertOk()
+            ->assertSee('이전 기간 주문 상품')->assertSee('조회 기간을 선택하지 않으면 전체 주문을 표시합니다.');
+        $document = new \DOMDocument();
+        @$document->loadHTML('<?xml encoding="utf-8" ?>'.$response->getContent());
+        $xpath = new \DOMXPath($document);
+        $this->assertSame('', $xpath->evaluate('string(//input[@id="start_date"]/@value)'));
+        $this->assertSame('', $xpath->evaluate('string(//input[@id="end_date"]/@value)'));
+        $this->get(route('mypage.order.list', ['start_date'=>now()->subMonth()->toDateString(),'end_date'=>now()->toDateString()]))
+            ->assertOk()->assertDontSee('이전 기간 주문 상품');
+    }
+
     public function test_detail_shows_replacement_shipping_without_charging_for_the_replacement(): void
     {
         $user = User::factory()->create();

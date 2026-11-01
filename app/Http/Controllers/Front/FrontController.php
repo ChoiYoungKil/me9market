@@ -85,6 +85,16 @@ class FrontController extends Controller
 
     public function faq(Request $request)
     {
+        $request->validate([
+            'category' => 'nullable|string|max:100',
+            'search_type' => 'nullable|in:question,answer,both',
+            'search_value' => 'nullable|string|max:255',
+            'page' => 'nullable|integer|min:1',
+        ]);
+        // Include categories already published by administrators, including legacy names.
+        $categories = collect(['주문/배송', '결제', '회원', '상품', '포인트', '기타'])
+            ->merge(Faq::where('status', 1)->whereNotNull('category')->distinct()->orderBy('category')->pluck('category'))
+            ->filter(fn ($category) => trim($category) !== '' && $category !== '전체')->unique()->values();
         $query = Faq::where('status', 1)->orderBy('order', 'asc')->orderBy('created_at', 'desc');
 
         // 카테고리 필터
@@ -112,7 +122,7 @@ class FrontController extends Controller
 
         $faqs = $query->paginate(10)->withQueryString(); // 한 페이지에 10개
 
-        return view('front.pages.faq', compact('faqs'));
+        return view('front.pages.faq', compact('faqs', 'categories'));
     }
 
     public function contact()
