@@ -10,6 +10,7 @@
                             <div class="f_ttl">상위 분류</div>
                             <div class="tb01">
                                 <table class="two">
+                                    <colgroup><col><col><col><col></colgroup>
                                     <tbody class="textL">
                                         <tr>
                                             <th class="w160"><span>상위 분류 선택</span></th>

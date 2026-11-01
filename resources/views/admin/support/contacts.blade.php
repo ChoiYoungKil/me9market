@@ -1,86 +1,21 @@
 @extends('layouts.admin')
-
 @section('content')
-    <div id="contents">
-        <div class="row">
-            <div class="box box1">
-                <div class="page_info">
-                    <div class="ttl">제휴/문의 관리</div>
-                    <ul class="dep">
-                        <li>홈</li>
-                        <li>고객센터</li>
-                        <li>제휴/문의</li>
-                    </ul>
-                </div>
-                <div class="conbx">
-                    <div class="con_w">
-                        <div class="list_top1">
-                            <div class="count">총 <strong>{{ count($contacts) }}</strong> 개</div>
-                        </div>
-
-                        @if (Session::has('success_message'))
-                            <div class="alert alert-success alert-dismissible fade show" role="alert" style="margin-top: 10px;">
-                                <strong>성공:</strong> {{ Session::get('success_message') }}
-                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                        @endif
-
-                        <div class="tb01 ovS">
-                            <table class="table table-bordered">
-                                <colgroup>
-                                    <col width="50px">
-                                    <col width="100px">
-                                    <col width="150px">
-                                    <col width="">
-                                    <col width="120px">
-                                    <col width="100px">
-                                    <col width="150px">
-                                </colgroup>
-                                <thead>
-                                    <tr>
-                                        <th>번호</th>
-                                        <th>이름</th>
-                                        <th>이메일</th>
-                                        <th>제목</th>
-                                        <th>등록일</th>
-                                        <th>상태</th>
-                                        <th>관리</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($contacts as $contact)
-                                        <tr>
-                                            <td>{{ $contact->id }}</td>
-                                            <td>{{ $contact->name }}</td>
-                                            <td>{{ $contact->email }}</td>
-                                            <td style="text-align: left;">{{ Str::limit($contact->subject, 50) }}</td>
-                                            <td>{{ date('Y-m-d H:i', strtotime($contact->created_at)) }}</td>
-                                            <td>
-                                                @if($contact->status == 'pending')
-                                                    <span style="color:red">대기중</span>
-                                                @elseif($contact->status == 'processing')
-                                                    <span style="color:orange">처리중</span>
-                                                @else
-                                                    <span style="color:green">완료</span>
-                                                @endif
-                                            </td>
-                                            <td>
-                                                <a href="{{ url('admin/view-contact/'.$contact->id) }}" class="btn02">보기</a>
-                                                <a href="JavaScript:void(0)" class="btn02 confirmDelete" module="contact" moduleid="{{ $contact->id }}" style="color:red">삭제</a>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                    @if(count($contacts) == 0)
-                                        <tr><td colspan="7" class="no_data">등록된 문의가 없습니다.</td></tr>
-                                    @endif
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+<div id="contents" class="admin-workspace"><h1>제휴/문의 관리</h1>
+@include('admin.shared.messages')
+<section class="admin-panel"><form class="admin-filter" method="get"><label>제목 / 회사 / 이름<input type="search" name="keyword" maxlength="100" value="{{ request('keyword') }}"></label><label>처리 상태<select name="status"><option value="">전체</option>
+@foreach(['pending'=>'대기중','processing'=>'처리중','completed'=>'완료'] as $value=>$label)
+<option value="{{ $value }}" @selected(request('status')===$value)>{{ $label }}</option>
+@endforeach
+</select></label><label>목록 개수<select name="per_page">
+@foreach([10,20,50,100] as $count)
+<option value="{{ $count }}" @selected(request('per_page',20)==$count)>{{ $count }}개</option>
+@endforeach
+</select></label><button class="admin-btn primary">검색</button><a class="admin-btn" href="{{ route('admin.contacts') }}">초기화</a></form></section>
+<div class="admin-toolbar"><p>총 <strong>{{ number_format($contacts->total()) }}</strong>건</p></div><div class="admin-table-wrap"><table class="admin-table"><thead><tr><th>번호</th><th>회사 / 이름</th><th>제목</th><th>등록일</th><th>처리 상태</th><th>답변</th><th>관리</th></tr></thead><tbody>
+@forelse($contacts as $contact)
+<tr><td>{{ $contact->id }}</td><td>{{ $contact->company }}<br>{{ $contact->name }}<br><small>{{ $contact->email }}</small></td><td class="text-left">{{ $contact->subject }}</td><td>{{ $contact->created_at?->format('Y-m-d H:i') }}</td><td><span class="admin-status">{{ ['pending'=>'대기중','processing'=>'처리중','completed'=>'완료'][$contact->status]??$contact->status }}</span></td><td>{{ $contact->admin_reply?'답변 등록':'미답변' }}</td><td class="nowrap"><a class="admin-btn primary" href="{{ url('admin/view-contact/'.$contact->id) }}">보기 / 답변</a></td></tr>
+@empty
+<tr><td colspan="7" class="admin-empty">검색된 문의가 없습니다.</td></tr>
+@endforelse
+</tbody></table></div><div class="admin-pagination">{{ $contacts->withQueryString()->onEachSide(2)->links('admin.shared.pagination') }}</div></div>
 @endsection

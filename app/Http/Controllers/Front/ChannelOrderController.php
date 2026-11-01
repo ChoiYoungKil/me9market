@@ -17,6 +17,26 @@ use Illuminate\Validation\ValidationException;
 
 class ChannelOrderController extends Controller
 {
+    private ?int $administratorVendorContext = null;
+
+    /** Full administrators reuse the same claim rules without switching the authenticated account. */
+    public function handleForAdministrator(Request $request, int $vendorId, string $operation)
+    {
+        abort_unless($request->routeIs('admin.order.workspace.process') && in_array(Auth::guard('admin')->user()?->type, ['admin','superadmin'], true), 403);
+        $this->administratorVendorContext = $vendorId;
+        try {
+            return match ($operation) {
+                'action' => $this->claimAction($request),
+                'cancel' => $this->requestCancel($request),
+                'return' => $this->requestReturn($request),
+                'exchange' => $this->requestExchange($request),
+                default => abort(404),
+            };
+        } finally {
+            $this->administratorVendorContext = null;
+        }
+    }
+
     // 주문 상태 업데이트 (예: 송장 입력)
     public function updateStatus(Request $request)
     {
@@ -42,7 +62,7 @@ class ChannelOrderController extends Controller
 
             // Vendor ID check
             $vendor_id = $this->currentVendorId();
-            if (! $vendor_id) {
+            if ($vendor_id === null) {
                 return response()->json(['status' => false, 'message' => '로그인이 필요합니다.'], 401);
             }
 
@@ -120,7 +140,7 @@ class ChannelOrderController extends Controller
             }
 
             $vendor_id = $this->currentVendorId();
-            if (! $vendor_id) {
+            if ($vendor_id === null) {
                 return response()->json(['status' => false, 'message' => '로그인이 필요합니다.'], 401);
             }
 
@@ -201,7 +221,7 @@ class ChannelOrderController extends Controller
             }
 
             $vendor_id = $this->currentVendorId();
-            if (! $vendor_id) {
+            if ($vendor_id === null) {
                 return response()->json(['status' => false, 'message' => '로그인이 필요합니다.'], 401);
             }
 
@@ -282,7 +302,7 @@ class ChannelOrderController extends Controller
             }
 
             $vendor_id = $this->currentVendorId();
-            if (! $vendor_id) {
+            if ($vendor_id === null) {
                 return response()->json(['status' => false, 'message' => '로그인이 필요합니다.'], 401);
             }
 
@@ -362,7 +382,7 @@ class ChannelOrderController extends Controller
         ]);
 
         $vendorId = $this->currentVendorId();
-        if (! $vendorId) {
+        if ($vendorId === null) {
             return response()->json(['status' => false, 'message' => '로그인이 필요합니다.'], 401);
         }
 
@@ -620,6 +640,7 @@ class ChannelOrderController extends Controller
 
     private function currentVendorId(): ?int
     {
+        if ($this->administratorVendorContext !== null) return $this->administratorVendorContext;
         $admin = Auth::guard('admin')->user();
 
         return $admin?->vendor_id ? (int) $admin->vendor_id : null;

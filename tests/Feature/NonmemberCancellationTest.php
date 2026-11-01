@@ -152,8 +152,8 @@ class NonmemberCancellationTest extends TestCase
         [$order, $item] = $this->fixture();
         $this->withSession(['nonmember_order_id'=>$order->id])
             ->post('/nonmember/order/claim', $this->payload($order, $item))->assertSessionHasNoErrors();
-        $this->actingAs($this->admin(), 'admin')->get('/admin/orders/'.$order->id)
-            ->assertOk()->assertSee('취소 신청 내역')->assertSee('접수 대기')
+        $this->actingAs($this->admin(), 'admin')->get('/admin/orders/'.$order->id.'?tab=claims')
+            ->assertOk()->assertSee('취소 신청 ·')->assertSee('접수 대기')
             ->assertSee('중복 주문으로 취소 요청합니다.')->assertSee('취소요청');
     }
 

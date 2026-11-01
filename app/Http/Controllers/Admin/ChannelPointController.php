@@ -15,6 +15,7 @@ class ChannelPointController extends Controller
     {
         Session::put('page', 'channel-points');
 
+        $request->validate(['status'=>'nullable|in:all,pending,approved,rejected','type'=>'nullable|in:all,purchase,customer_payback,first_visit,sms,refund']);
         $status = $request->query('status', 'all');
         $type = $request->query('type', 'all');
 
@@ -38,6 +39,7 @@ class ChannelPointController extends Controller
             'approved_refund' => abs((int) ChannelPointTransaction::where('status', 'approved')->where('type', ChannelPointService::TYPE_REFUND)->sum('points')),
             'approved_payback' => abs((int) ChannelPointTransaction::where('status', 'approved')->where('type', ChannelPointService::TYPE_CUSTOMER_PAYBACK)->sum('points')),
             'approved_sms' => abs((int) ChannelPointTransaction::where('status', 'approved')->where('type', ChannelPointService::TYPE_SMS)->sum('points')),
+            'approved_first_visit' => abs((int) ChannelPointTransaction::where('status', 'approved')->where('type', ChannelPointService::TYPE_FIRST_VISIT)->sum('points')),
             'approved_balance' => ChannelPointTransaction::where('status', 'approved')->sum('points'),
         ];
 

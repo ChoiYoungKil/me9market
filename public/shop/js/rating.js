@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function () {
         group.querySelector('.me9-rating-stars').addEventListener('pointerleave', function () { paint(selected()); });
         inputs.forEach(function (input) { input.addEventListener('change', function () { paint(selected()); }); });
         group.querySelector('.me9-rating-clear').addEventListener('click', function () { inputs.forEach(function (input) { input.checked = false; }); paint(''); });
+        group.closest('form')?.addEventListener('reset',function(){queueMicrotask(function(){paint(selected());});});
         paint(selected());
     });
 });

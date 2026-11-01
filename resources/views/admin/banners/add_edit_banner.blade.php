@@ -1,117 +1,73 @@
-@extends('admin.layout.layout')
-
+@extends('layouts.admin')
 
 @section('content')
-    <div class="main-panel">
-        <div class="content-wrapper">
-            <div class="row">
-                <div class="col-md-12 grid-margin">
-                    <div class="row">
-                        <div class="col-12 col-xl-8 mb-4 mb-xl-0">
-                            <h4 class="card-title">Home Page Banners</h4>
-                        </div>
-
-                    </div>
-                </div>
+<div id="contents" class="admin-workspace admin-legacy admin-account-editor admin-simple-setting-editor admin-banner-editor">
+    <div class="page_info"><h1 class="ttl">{{ $title }}</h1><ul class="dep"><li>홈</li><li>상품 관리</li><li>배너 관리</li><li>{{ $title }}</li></ul></div>
+    @include('admin.shared.messages')
+    <form id="banner-editor-form" method="post" action="{{ url('admin/add-edit-banner'.($banner->id ? '/'.$banner->id : '')) }}" enctype="multipart/form-data">
+        @csrf
+        <div id="board"><div class="write02"><div class="f_bx">
+            <section class="f_w">
+                <h2 class="f_ttl">배너 정보</h2>
+                <div class="tb01"><table class="two">
+                    <colgroup><col><col><col><col></colgroup>
+                    <tbody class="textL"><tr>
+                        <th><label for="type">배너 유형</label></th>
+                        <td><select class="w300" name="type" id="type" required>
+                            <option value="">선택해 주세요</option>
+                            <option value="Slider" @selected(old('type', $banner->type) === 'Slider')>슬라이드</option>
+                            <option value="Fix" @selected(old('type', $banner->type) === 'Fix')>고정</option>
+                        </select></td>
+                        <th><label for="title">배너 제목</label></th>
+                        <td><input class="w300" type="text" name="title" id="title" value="{{ old('title', $banner->title) }}" placeholder="배너 제목을 입력해 주세요" maxlength="255"></td>
+                    </tr></tbody>
+                </table></div>
+            </section>
+            <section class="f_w">
+                <h2 class="f_ttl">배너 이미지</h2>
+                <div class="tb01"><table class="two">
+                    <colgroup><col><col><col><col></colgroup>
+                    <tbody class="textL"><tr>
+                        <th><label for="image">이미지 파일</label></th>
+                        <td colspan="3">
+                            <div class="fileBox">
+                                <input class="fileName" id="banner-image-filename" type="text" value="" placeholder="이미지 파일을 선택해 주세요" readonly aria-label="선택한 이미지 파일명">
+                                <label for="image" class="btn_file admin-btn">파일 선택</label>
+                                <input class="uploadBtn" type="file" name="image" id="image" accept="image/jpeg,image/png,image/webp" @required(!$banner->image) aria-describedby="banner-image-help">
+                            </div>
+                            <p class="admin-help" id="banner-image-help">JPG, PNG, WEBP · 최대 5MB · 가로·세로 최대 8,192px · 저장 크기: 슬라이드 1,920×720px / 고정 1,920×450px</p>
+                            <p class="admin-alert error" id="banner-image-error" role="alert" hidden></p>
+                            <figure class="banner-image-preview" id="banner-image-preview" data-current-src="{{ $banner->image ? asset('front/images/banner_images/'.$banner->image) : '' }}" @if(!$banner->image) hidden @endif>
+                                <img id="banner-preview-image" @if($banner->image) src="{{ asset('front/images/banner_images/'.$banner->image) }}" @endif alt="배너 이미지 미리보기">
+                                <figcaption id="banner-preview-caption">등록된 이미지</figcaption>
+                            </figure>
+                            @if($banner->image)
+                                <a class="admin-btn" target="_blank" rel="noopener" href="{{ asset('front/images/banner_images/'.$banner->image) }}">기존 이미지 보기</a>
+                            @endif
+                        </td>
+                    </tr></tbody>
+                </table></div>
+            </section>
+            <section class="f_w">
+                <h2 class="f_ttl">연결 및 이미지 설명</h2>
+                <div class="tb01"><table class="two">
+                    <colgroup><col><col><col><col></colgroup>
+                    <tbody class="textL">
+                        <tr><th><label for="link">연결 주소</label></th><td colspan="3"><input class="wFull" type="text" name="link" id="link" value="{{ old('link', $banner->link) }}" placeholder="연결 주소를 입력해 주세요" maxlength="2048"></td></tr>
+                        <tr><th><label for="alt">이미지 설명</label></th><td colspan="3"><input class="wFull" type="text" name="alt" id="alt" value="{{ old('alt', $banner->alt) }}" placeholder="이미지를 설명하는 문구를 입력해 주세요" maxlength="255"><p class="admin-help">이미지가 표시되지 않을 때 제공하는 대체 텍스트입니다.</p></td></tr>
+                    </tbody>
+                </table></div>
+            </section>
+            <div class="admin-modal-footer account-editor-footer">
+                <a class="admin-btn" href="{{ url('admin/banners') }}">취소</a>
+                <button class="admin-btn" type="reset">입력 초기화</button>
+                <button class="admin-btn primary" type="submit">저장</button>
             </div>
-            <div class="row">
-                <div class="col-md-6 grid-margin stretch-card">
-                    <div class="card">
-                        <div class="card-body">
-                            <h4 class="card-title">{{ $title }}</h4>
-
-
-                            {{-- Our Bootstrap error code in case of wrong current password or the new password and confirm password are not matching: --}}
-                            {{-- Determining If An Item Exists In The Session (using has() method): https://laravel.com/docs/9.x/session#determining-if-an-item-exists-in-the-session --}}
-                            @if (Session::has('error_message')) <!-- Check AdminController.php, updateAdminPassword() method -->
-                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                    <strong>Error:</strong> {{ Session::get('error_message') }}
-                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                    </button>
-                                </div>
-                            @endif
-
-
-
-                            {{-- Displaying Laravel Validation Errors: https://laravel.com/docs/9.x/validation#quick-displaying-the-validation-errors --}}    
-                            @if ($errors->any())
-                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-
-                                    @foreach ($errors->all() as $error)
-                                        <li>{{ $error }}</li>
-                                    @endforeach
-
-                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                    </button>
-                                </div>
-                            @endif
-
-
-
-                            {{-- Displaying The Validation Errors: https://laravel.com/docs/9.x/validation#quick-displaying-the-validation-errors AND https://laravel.com/docs/9.x/blade#validation-errors --}}
-                            {{-- Determining If An Item Exists In The Session (using has() method): https://laravel.com/docs/9.x/session#determining-if-an-item-exists-in-the-session --}}
-                            {{-- Our Bootstrap success message in case of updating admin password is successful: --}}
-                            @if (Session::has('success_message')) <!-- Check AdminController.php, updateAdminPassword() method -->
-                                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                    <strong>Success:</strong> {{ Session::get('success_message') }}
-                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                    </button>
-                                </div>
-                            @endif
-                
-
-                            
-                            <form class="forms-sample"   @if (empty($banner['id'])) action="{{ url('admin/add-edit-banner') }}" @else action="{{ url('admin/add-edit-banner/' . $banner['id']) }}" @endif   method="post" enctype="multipart/form-data"> <!-- If the id is not passed in from the route, this measn 'Add a new Banner', but if the id is passed in from the route, this means 'Edit the Banner' --> <!-- Using the enctype="multipart/form-data" to allow uploading files (images) -->
-                                @csrf
-
-                                <div class="form-group"> 
-                                    <label for="type">Banner Type</label>
-                                    <select class="form-control" id="type" name="type" required>
-                                        <option value="">Select</option>
-                                        <option  @if (!empty($banner['type']) && $banner['type'] == 'Slider') selected @endif  value="Slider">Slider</option>
-                                        <option  @if (!empty($banner['type']) && $banner['type'] == 'Fix')    selected @endif  value="Fix">Fix</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="image">Banner Image</label>
-                                    <input type="file" class="form-control" id="image" name="image">
-                                    {{-- Show the admin image if exists --}}
-                                        <a target="_blank" href="{{ url('admin/images/photos/' . Auth::guard('admin')->user()->image) }}">View Image</a> {{-- Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances --}} <!-- We used    target="_blank"    to open the image in another separate page -->
-                                        <input type="hidden" name="current_banner_image" value="{{ Auth::guard('admin')->user()->image }}"> <!-- to send the current admin image url all the time with all the requests --> {{-- Accessing Specific Guard Instances: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances --}}
-
-
-                                    {{-- Show the banner image, if any (if exits) --}}
-                                    @if (!empty($banner['image']))
-                                        <a target="_blank" href="{{ url('front/images/banner_images/' . $banner['image']) }}">View Banner Image</a>
-                                    @endif
-                                </div>
-                                <div class="form-group">
-                                    <label for="link">Banner Link</label>
-                                    <input type="text" class="form-control" id="link" placeholder="Enter Banner Link" name="link" @if (!empty($banner['link'])) value="{{ $banner['link'] }}" @else value="{{ old('link') }}" @endif> 
-                                </div>
-                                <div class="form-group">
-                                    <label for="title">Banner Title</label>
-                                    <input type="text" class="form-control" id="title" placeholder="Enter Banner Title" name="title" @if (!empty($banner['title'])) value="{{ $banner['title'] }}" @else value="{{ old('title') }}" @endif> 
-                                </div>
-                                <div class="form-group">
-                                    <label for="alt">Banner Alternate Text (Alt for SEO)</label>
-                                    <input type="text" class="form-control" id="alt" placeholder="Enter Banner Alternate Text" name="alt" @if (!empty($banner['alt'])) value="{{ $banner['alt'] }}" @else value="{{ old('alt') }}" @endif> 
-                                </div>
-                                <button type="submit" class="btn btn-primary mr-2">Submit</button>
-                                <button type="reset"  class="btn btn-light">Cancel</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- content-wrapper ends -->
-
-        @include('admin.layout.footer')
-        <!-- partial -->
-
-    </div>
+        </div></div></div>
+    </form>
+</div>
 @endsection
+
+@push('scripts')
+<script src="{{ asset('common/admin-banner-editor.js') }}?v={{ filemtime(public_path('common/admin-banner-editor.js')) }}"></script>
+@endpush

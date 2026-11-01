@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Http\Middleware\VerifyCsrfToken;
 use App\Models\Admin;
+use App\Models\Distributor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
@@ -83,5 +84,54 @@ class AdminLoginSessionTest extends TestCase
         $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));
         $this->get('/admin/')->assertRedirect('/admin/dashboard');
         $this->get('/admin/dashboard')->assertRedirect('/admin/login');
+    }
+
+    public function test_stale_shop_forms_restart_with_channel_context_without_replaying_codes_or_passwords(): void
+    {
+        $this->withSession(['_token' => 'current-token']);
+        $this->post(route('shop.login.submit'), ['_token' => 'stale-token', 'channel' => 'AUTH-Shop', 'login_id' => 'review-user', 'password' => 'DoNotRetain'])
+            ->assertRedirect(route('shop.login', ['channel' => 'AUTH-Shop']))->assertSessionMissing('_old_input.password');
+        $this->post(route('shop.gate.submit'), ['_token' => 'stale-token', 'channel' => 'AUTH-Shop', 'phone' => '01000002120', 'entry_code' => 'DoNotRetain'])
+            ->assertRedirect(route('shop.gate', ['channel' => 'AUTH-Shop']))->assertSessionMissing('_old_input.entry_code');
+        $this->postJson(route('shop.login.submit'), ['_token' => 'stale-token'])->assertStatus(419);
+        $this->postJson(route('shop.gate.submit'), ['_token' => 'stale-token'])->assertStatus(419);
+        $this->assertGuest();
+        $this->assertDatabaseCount('users', 0);
+    }
+
+    public function test_admin_portal_buttons_share_csrf_token_but_rotate_session_ids(): void
+    {
+        $admin = $this->administrator();
+        $manager = Distributor::create(['name' => 'Portal session review', 'email' => 'portal-session@example.test',
+            'password' => Hash::make('ExistingTestPassword'), 'status' => 1]);
+        $this->actingAs($admin, 'admin')->get('/admin/order-managers')->assertOk();
+        $session = $this->app['session.store'];
+        $formToken = $session->token();
+        foreach (['pending', 'completed', 'pending'] as $destination) {
+            $previousId = $session->getId();
+            // Reuse the token from the original list, as a back-cached form or
+            // an already open admin tab would, with the real CSRF middleware enabled.
+            $this->post(route('admin.order_managers.portal', $manager->id), [
+                '_token' => $formToken, 'destination' => $destination,
+            ])->assertRedirect(route('distributor.orders.'.$destination))
+                ->assertSessionHas('distributor_id', $manager->id);
+            $this->assertNotSame($previousId, $session->getId());
+            $this->assertSame($formToken, $session->token());
+            $this->assertAuthenticatedAs($admin, 'admin');
+            $this->get(route('distributor.orders.'.$destination))->assertOk()->assertSee($manager->name);
+        }
+    }
+
+    public function test_admin_portal_rejects_missing_or_forged_csrf_tokens(): void
+    {
+        $admin = $this->administrator();
+        $manager = Distributor::create(['name' => 'Protected portal review', 'email' => 'protected-portal@example.test',
+            'password' => Hash::make('ExistingTestPassword'), 'status' => 1]);
+        $this->actingAs($admin, 'admin')->withSession(['_token' => 'valid-portal-token']);
+        foreach ([[], ['_token' => 'forged-token']] as $payload) {
+            $this->post(route('admin.order_managers.portal', $manager->id), $payload)
+                ->assertStatus(419)->assertSessionMissing('distributor_id');
+        }
+        $this->assertAuthenticatedAs($admin, 'admin');
     }
 }

@@ -1,11 +1,11 @@
 @extends('layouts.admin')
 
 @section('content')
-    <div id="contents">
+    <div id="contents" class="admin-workspace admin-legacy admin-account-editor">
         <div class="row">
             <div class="box box1">
                 <div class="page_info">
-                    <div class="ttl">{{ $title }}</div>
+                    <h1 class="ttl">{{ $title }}</h1>
                     <ul class="dep">
                         <li>홈</li>
                         <li>회원 관리</li>
@@ -41,22 +41,6 @@
                         </button>
                     </div>
                 @endif
-
-                <style>
-                    .f_ttl {
-                        font-size: 20px !important;
-                        font-weight: 800 !important;
-                        color: #111 !important;
-                        margin-bottom: 25px !important;
-                        border-left: 5px solid #3470f7;
-                        padding-left: 15px;
-                    }
-
-                    .tb01 table tbody th {
-                        background-color: #f9f9fb;
-                        width: 180px;
-                    }
-                </style>
 
                 <div class="conbx">
                     <div class="con_w">
@@ -106,7 +90,7 @@
 
                                         <!-- 상세 정보 (Step 1) -->
                                         <div class="f_w mt40">
-                                            <div class="f_ttl">상세 정보 (Step 1)</div>
+                                            <div class="f_ttl">회원 기본 정보</div>
                                             <div class="tb01 type2">
                                                 <table class="two">
                                                     <colgroup>
@@ -144,7 +128,8 @@
                                                                 <div class="r_btn_w w457">
                                                                     <div class="tel_bx">
                                                                         @php
-                                                                            $mobileParts = !empty($user['mobile']) ? explode('-', $user['mobile']) : ['', '', ''];
+                                                                            $mobileDigits = preg_replace('/\D/', '', (string) old('mobile', $user['mobile'] ?? ''));
+                                                                            $mobileParts = strlen($mobileDigits) >= 10 ? [substr($mobileDigits,0,3),substr($mobileDigits,3,-4),substr($mobileDigits,-4)] : ['', '', ''];
                                                                             $m1 = $mobileParts[0] ?? '010';
                                                                             $m2 = $mobileParts[1] ?? '';
                                                                             $m3 = $mobileParts[2] ?? '';
@@ -159,10 +144,10 @@
                                                                         </select>
                                                                         <span>-</span>
                                                                         <input type="text" class="tel1" name="mobile_2"
-                                                                            required="required" value="{{ $m2 }}">
+                                                                            required="required" value="{{ old('mobile_2',$m2) }}">
                                                                         <span>-</span>
                                                                         <input type="text" class="tel2" name="mobile_3"
-                                                                            required="required" value="{{ $m3 }}">
+                                                                            required="required" value="{{ old('mobile_3',$m3) }}">
                                                                     </div>
                                                                     <a href="javascript:alert('본인인증 서비스는 준비중입니다.');"
                                                                         class="btn01 col2">본인인증</a>
@@ -238,17 +223,17 @@
 
                                         <!-- 회원사/판매자 정보 (Step 2 & 3) -->
                                         <div id="company_info_section" style="{{ ($uType == 'company' || $uType == 'vendor') ? '' : 'display:none;' }}">
-                                            
+
                                             <!-- 회원사 정보 (Step 2) -->
                                             <div class="f_w mt40">
-                                                <div class="f_ttl">회원사 정보 (Step 2)</div>
+                                                <div class="f_ttl">회원사 정보</div>
                                                 <div class="tb01 type2">
                                                     <table class="two">
                                                         <tbody class="textL">
                                                             <tr>
                                                                 <th class="w160"><span>상호명</span></th>
                                                                 <td>
-                                                                    <input type="text" name="shop_name" class="w300" 
+                                                                    <input type="text" name="shop_name" class="w300"
                                                                         value="{{ $businessDetails->shop_name ?? old('shop_name') }}">
                                                                 </td>
                                                                 <th class="w160"><span>사업자 구분</span></th>
@@ -282,7 +267,7 @@
                                                                 </td>
                                                                 <th class="w160"><span>회원사 연락처</span></th>
                                                                 <td>
-                                                                    <input type="text" name="shop_mobile" class="w300" 
+                                                                    <input type="text" name="shop_mobile" class="w300"
                                                                         value="{{ $businessDetails->shop_mobile ?? old('shop_mobile') }}">
                                                                 </td>
                                                             </tr>
@@ -290,12 +275,12 @@
                                                                 <th class="w160"><span>회원사 주소지</span></th>
                                                                 <td colspan="3">
                                                                     <div class="addr_bx">
-                                                                        <input type="text" name="shop_zipcode" id="shop_zipcode" class="addr1 off" placeholder="우편번호" 
+                                                                        <input type="text" name="shop_zipcode" id="shop_zipcode" class="addr1 off" placeholder="우편번호"
                                                                             value="{{ $businessDetails->shop_pincode ?? '' }}" readonly>
                                                                         <a href="javascript:;" onclick="execDaumPostcodeShop()" class="btn01">우편번호찾기</a>
-                                                                        <input type="text" name="shop_address1" id="shop_address1" class="addr2 off" placeholder="주소" 
+                                                                        <input type="text" name="shop_address1" id="shop_address1" class="addr2 off" placeholder="주소"
                                                                             value="{{ $businessDetails->shop_address ?? '' }}" readonly>
-                                                                        <input type="text" name="shop_address2" id="shop_address2" class="addr3 off" placeholder="상세주소" 
+                                                                        <input type="text" name="shop_address2" id="shop_address2" class="addr3 off" placeholder="상세주소"
                                                                             value="{{ $businessDetails->shop_address_detail ?? '' }}">
                                                                     </div>
                                                                 </td>
@@ -307,7 +292,7 @@
 
                                             <!-- 회원사 판매권한 정보 (Step 3) -->
                                             <div class="f_w mt40">
-                                                <div class="f_ttl">회원사 판매권한 정보 (Step 3)</div>
+                                                <div class="f_ttl">판매자 인증·정산 정보</div>
                                                 <div class="tb01 type2">
                                                     <table class="two">
                                                         <tbody class="textL">
@@ -337,12 +322,12 @@
                                                                 <td colspan="3">
                                                                     <div class="fileBox">
                                                                         <input type="text" class="fileName" readonly="readonly" placeholder="사업자등록증 이미지">
-                                                                        <label for="uploadLicense" class="btn_file">찾아보기</label>
+                                                                        <label for="uploadLicense" class="btn_file admin-btn">찾아보기</label>
                                                                         <input type="file" id="uploadLicense" class="uploadBtn" name="address_proof_image">
                                                                     </div>
                                                                     @if(!empty($businessDetails->address_proof_image))
                                                                         <div style="margin-top: 10px;">
-                                                                            <a target="_blank" href="{{ route('admin.member.document', ['vendor'=>$businessDetails->vendor_id, 'kind'=>'license']) }}" style="color:blue; text-decoration:underline;">[기존 등록증 보기]</a>
+                                                                            <a target="_blank" href="{{ route('admin.member.document', ['vendor'=>$businessDetails->vendor_id, 'kind'=>'license']) }}" class="admin-btn">사업자등록증 다운로드</a>
                                                                         </div>
                                                                     @endif
                                                                 </td>
@@ -353,17 +338,20 @@
                                                                     <div class="bank_bx" style="display: flex; gap: 10px;">
                                                                         <select name="bank_name" class="w150">
                                                                             <option value="">은행선택</option>
-                                                                            @php 
-                                                                                $banks = ['국민은행', '신한은행', '우리은행', '하나은행', '농협은행', 'IBK기업은행', '수협은행', 'SC제일은행', '씨티은행', '대구은행', '부산은행', '광주은행', '제주은행', '전북은행', '경남은행', '새마을금고', '신협', '우체국', '케이뱅크', '카카오뱅크', '토스뱅크']; 
+                                                                            @php
+                                                                                $banks = ['국민은행', '신한은행', '우리은행', '하나은행', '농협은행', 'IBK기업은행', '수협은행', 'SC제일은행', '씨티은행', '대구은행', '부산은행', '광주은행', '제주은행', '전북은행', '경남은행', '새마을금고', '신협', '우체국', '케이뱅크', '카카오뱅크', '토스뱅크'];
                                                                                 $currentBank = $businessDetails->bank_name ?? ($bankDetails->bank_name ?? ''); // Handle both naming conventions
                                                                             @endphp
+                                                                            @php($currentBank = old('bank_name', $bankDetails->bank_name ?? ''))
+                                                                            @if($currentBank && !in_array($currentBank,$banks,true))<option value="{{ $currentBank }}" selected>{{ $currentBank }}</option>
+                                                                            @endif
                                                                             @foreach($banks as $bank)
                                                                                 <option value="{{ $bank }}" {{ $currentBank == $bank ? 'selected' : '' }}>{{ $bank }}</option>
                                                                             @endforeach
                                                                         </select>
-                                                                        <input type="text" name="account_number" class="w300" placeholder="계좌번호 (‘-’없이 숫자만 입력)" 
+                                                                        <input type="text" name="account_number" class="w300" placeholder="계좌번호 (‘-’없이 숫자만 입력)"
                                                                             value="{{ $businessDetails->bank_account_number ?? ($bankDetails->bank_account_number ?? '') }}">
-                                                                        <input type="text" name="account_holder_name" class="w150" placeholder="예금주" 
+                                                                        <input type="text" name="account_holder_name" class="w150" placeholder="예금주"
                                                                             value="{{ $businessDetails->bank_account_holder_name ?? ($bankDetails->bank_account_holder_name ?? '') }}">
                                                                     </div>
                                                                 </td>
@@ -373,12 +361,12 @@
                                                                 <td colspan="3">
                                                                     <div class="fileBox">
                                                                         <input type="text" class="fileName" readonly="readonly" placeholder="통장사본 이미지">
-                                                                        <label for="uploadBankbook" class="btn_file">찾아보기</label>
+                                                                        <label for="uploadBankbook" class="btn_file admin-btn">찾아보기</label>
                                                                         <input type="file" id="uploadBankbook" class="uploadBtn" name="bank_copy_image">
                                                                     </div>
                                                                     @if(!empty($businessDetails->bank_copy_image) || !empty($bankDetails->bank_copy_image))
                                                                         <div style="margin-top: 10px;">
-                                                                            <a target="_blank" href="{{ route('admin.member.document', ['vendor'=>$businessDetails->vendor_id ?? $bankDetails->vendor_id, 'kind'=>'bankbook']) }}" style="color:blue; text-decoration:underline;">[기존 통장사본 보기]</a>
+                                                                            <a target="_blank" href="{{ route('admin.member.document', ['vendor'=>$businessDetails->vendor_id ?? $bankDetails->vendor_id, 'kind'=>'bankbook']) }}" class="admin-btn">통장사본 다운로드</a>
                                                                         </div>
                                                                     @endif
                                                                 </td>
@@ -391,9 +379,9 @@
 
                                     </div>
                                 </div>
-                                <div class="btm_btn center mt40" style="display: flex; justify-content: center; gap: 10px;">
-                                    <a href="{{ url('admin/users') }}" class="btn01 col3">취소</a>
-                                    <button type="submit" class="btn01 col5">저장</button>
+                                <div class="admin-modal-footer account-editor-footer">
+                                    <a href="{{ url('admin/users') }}" class="admin-btn">취소</a>
+                                    <button type="submit" class="admin-btn primary">저장</button>
                                 </div>
                             </div>
                         </form>
@@ -402,7 +390,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- 다음 우편번호 레이어 -->
     <div id="daumPostcodeLayer" style="display:none;position:fixed;overflow:hidden;z-index:10000;-webkit-overflow-scrolling:touch; border:1px solid #333; background:#fff;">
         <img src="//t1.daumcdn.net/postcode/resource/images/close.png" id="btnCloseLayer" style="cursor:pointer;position:absolute;right:-3px;top:-3px;z-index:1" onclick="closeDaumPostcode()" alt="닫기 버튼">

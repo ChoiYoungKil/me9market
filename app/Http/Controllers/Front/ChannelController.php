@@ -1343,7 +1343,7 @@ class ChannelController extends Controller
                     'is_exchange_replacement' => (bool) $item->is_exchange_replacement,
                     'recipient_name' => $item->recipient_name,
                     'recipient_mobile' => $item->recipient_mobile,
-                    'recipient_address' => $item->recipient_address,
+                    'recipient_address' => $item->recipient_address ? trim(($item->recipient_postcode ? '['.$item->recipient_postcode.'] ' : '').$item->recipient_address.' '.$item->recipient_address_detail) : null,
                     'product_url' => $item->shop_channel_product_id ? route('shop.product_details', $item->shop_channel_product_id).'?shop_id='.$item->shop_channel_id : null,
                     'shop_name' => $item->shopChannel?->channel_name ?? 'Me9 Market',
                     'can_manage' => (int) $item->vendor_id === (int) Auth::guard('admin')->user()->vendor_id,

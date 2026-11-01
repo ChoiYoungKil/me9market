@@ -12,8 +12,8 @@
     <table style="width:100%; border-top:1px solid #111; border-collapse:collapse; text-align:left; font-size:14px;">
         <tr><th style="padding:12px 0; width:100px;">수신자명</th><td>{{ $order->name }}</td></tr>
         <tr><th style="padding:12px 0;">휴대전화</th><td>{{ $order->mobile }}</td></tr>
-        <tr><th style="padding:12px 0;">이메일</th><td style="word-break:break-all;">{{ $order->email }}</td></tr>
-        <tr><th style="padding:12px 0;">배송지주소</th><td>{{ $order->pincode }} {{ $order->address }} {{ $order->city }} {{ $order->state }}</td></tr>
+        <tr><th style="padding:12px 0;">이메일</th><td style="word-break:break-all;">{{ $order->recipient_email ?: $order->email }}</td></tr>
+        <tr><th style="padding:12px 0;">배송지주소</th><td>{{ $order->pincode }} {{ $order->address }} {{ $order->address_detail }} {{ $order->city }} {{ $order->state }}</td></tr>
         @if($order->delivery_memo)<tr><th style="padding:12px 0;">배송 메모</th><td>{{ $order->delivery_memo }}</td></tr>@endif
     </table>
     <h2 style="font-size:18px; margin-top:28px;">주문상품</h2>

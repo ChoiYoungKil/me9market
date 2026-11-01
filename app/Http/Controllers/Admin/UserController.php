@@ -42,7 +42,9 @@ class UserController extends Controller
         // 사이드바 '회원 관리' 탭 활성화
         Session::put('page', 'users');
 
+        $request->validate(['search_value'=>'nullable|string|max:100','search_type'=>'nullable|in:id,name,email,mobile','start_date'=>'nullable|date_format:Y-m-d','end_date'=>['nullable','date_format:Y-m-d',\Illuminate\Validation\Rule::when($request->filled('start_date'),'after_or_equal:start_date')],'status'=>'nullable|array|max:2','status.*'=>'in:0,1','per_page'=>'nullable|in:10,20,50,100','seller_status'=>'nullable|in:pending','export'=>'nullable|in:1']);
         $query = User::query();
+        if($request->query('seller_status')==='pending')$query->whereIn('vendor_id',Vendor::whereNotNull('seller_requested_at')->whereNull('seller_approved_at')->select('id'));
 
         // Search Filter
         if ($request->has('search_value') && $request->search_value != '') {
@@ -79,7 +81,9 @@ class UserController extends Controller
             $query->whereIn('status', $request->status);
         }
 
-        $users = $query->orderBy('id', 'desc')->paginate(10);
+        $query->orderByDesc('id');
+        if($request->boolean('export'))return app(\App\Services\AdminListExport::class)->download($query,'회원목록',['회원번호'=>'id','아이디'=>'username','이름'=>'name','이메일'=>'email','연락처'=>'mobile','가입일'=>'created_at','상태'=>fn($u)=>$u->status?'활성':'비활성']);
+        $users = $query->paginate((int)$request->input('per_page',10))->withQueryString();
         $sellerApprovals = Vendor::whereIn('id', $users->pluck('vendor_id')->filter())->get()->keyBy('id');
         
         return view('admin.users.users')->with(compact('users', 'sellerApprovals'));

@@ -1,113 +1,55 @@
-@extends('admin.layout.layout')
-
+@extends('layouts.admin')
 
 @section('content')
-    <style>
-        .h200 {
-            height: 200px;
-        }
-    </style>
-    <div class="main-panel">
-        <div class="content-wrapper">
-            <div class="row">
-                <div class="col-md-12 grid-margin">
-                    <div class="row">
-                        <div class="col-12 col-xl-8 mb-4 mb-xl-0">
-                            <h4 class="card-title">Filters</h4>
-                        </div>
-
-                    </div>
-                </div>
+@php($selectedCategories = array_map('strval', (array) old('cat_ids', array_filter(explode(',', $filter->cat_ids ?? '')))))
+<div id="contents" class="admin-workspace admin-legacy admin-account-editor admin-filter-editor">
+    <div class="page_info"><h1 class="ttl">{{ $title }}</h1><ul class="dep"><li>홈</li><li>상품 관리</li><li>필터 관리</li><li>{{ $title }}</li></ul></div>
+    @include('admin.shared.messages')
+    <form method="post" action="{{ url('admin/add-edit-filter'.($filter->id ? '/'.$filter->id : '')) }}">
+        @csrf
+        <div id="board"><div class="write02"><div class="f_bx">
+            <section class="f_w">
+                <h2 class="f_ttl">적용 분류</h2>
+                <div class="tb01"><table class="two">
+                    <colgroup><col><col><col><col></colgroup>
+                    <tbody><tr>
+                        <th><label for="cat_ids">분류 선택</label></th>
+                        <td colspan="3">
+                            <select name="cat_ids[]" id="cat_ids" multiple size="10" required aria-describedby="filter-category-help">
+                                @foreach($categories as $section)
+                                    @if(count($section['categories']))
+                                        <optgroup label="{{ $section['name'] }}">
+                                            @foreach($section['categories'] as $category)
+                                                @include('admin.filters.partials.category_options', ['category' => $category, 'depth' => 0])
+                                            @endforeach
+                                        </optgroup>
+                                    @endif
+                                @endforeach
+                            </select>
+                            <p class="admin-help" id="filter-category-help">필터를 적용할 분류를 선택해 주세요. 여러 분류는 Command(Mac) 또는 Ctrl(Windows) 키를 누른 채 선택할 수 있습니다.</p>
+                        </td>
+                    </tr></tbody>
+                </table></div>
+            </section>
+            <section class="f_w filter-information">
+                <h2 class="f_ttl">필터 정보</h2>
+                <div class="tb01"><table class="two">
+                    <colgroup><col><col><col><col></colgroup>
+                    <tbody>
+                        <tr><th><label for="filter_name">필터명</label></th><td colspan="3"><input class="w300" type="text" name="filter_name" id="filter_name" value="{{ old('filter_name', $filter->filter_name) }}" placeholder="예: 소재, 화면 크기" required></td></tr>
+                        <tr><th><label for="filter_column">연결 항목 코드</label></th><td colspan="3">
+                            <input class="w300" type="text" name="filter_column" id="filter_column" value="{{ old('filter_column', $filter->filter_column) }}" pattern="[a-z_]+" maxlength="64" placeholder="예: material, screen_size" required aria-describedby="filter-column-help">
+                            <p class="admin-help" id="filter-column-help">영문 소문자와 밑줄만 입력해 주세요.</p>
+                        </td></tr>
+                    </tbody>
+                </table></div>
+            </section>
+            <div class="admin-modal-footer account-editor-footer">
+                <a class="admin-btn" href="{{ url('admin/filters') }}">취소</a>
+                <button type="reset" class="admin-btn">입력 초기화</button>
+                <button type="submit" class="admin-btn primary">저장</button>
             </div>
-            <div class="row">
-                <div class="col-md-6 grid-margin stretch-card">
-                    <div class="card">
-                        <div class="card-body">
-                            <h4 class="card-title">{{ $title }}</h4>
-
-
-                            {{-- Our Bootstrap error code in case of wrong current password or the new password and confirm password are not matching: --}}
-                            {{-- Determining If An Item Exists In The Session (using has() method): https://laravel.com/docs/9.x/session#determining-if-an-item-exists-in-the-session --}}
-                            @if (Session::has('error_message')) <!-- Check AdminController.php, updateAdminPassword() method -->
-                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                <strong>Error:</strong> {{ Session::get('error_message') }}
-                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                            @endif
-
-
-
-                            {{-- Displaying Laravel Validation Errors: https://laravel.com/docs/9.x/validation#quick-displaying-the-validation-errors --}}    
-                            @if ($errors->any())
-                                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-
-                                    @foreach ($errors->all() as $error)
-                                        <li>{{ $error }}</li>
-                                    @endforeach
-
-                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                    </button>
-                                </div>
-                            @endif
-
-
-
-                            {{-- Displaying The Validation Errors: https://laravel.com/docs/9.x/validation#quick-displaying-the-validation-errors AND https://laravel.com/docs/9.x/blade#validation-errors --}}
-                            {{-- Determining If An Item Exists In The Session (using has() method): https://laravel.com/docs/9.x/session#determining-if-an-item-exists-in-the-session --}}
-                            {{-- Our Bootstrap success message in case of updating admin password is successful: --}}
-                            @if (Session::has('success_message')) <!-- Check AdminController.php, updateAdminPassword() method -->
-                                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                    <strong>Success:</strong> {{ Session::get('success_message') }}
-                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                    </button>
-                                </div>
-                            @endif
-
-
-                            
-                            <form class="forms-sample"   @if (empty($filter['id'])) action="{{ url('admin/add-edit-filter') }}" @else action="{{ url('admin/add-edit-filter/' . $filter['id']) }}" @endif   method="post" enctype="multipart/form-data">  <!-- If the id is not passed in from the route, this measn 'Add a new Filter', but if the id is passed in from the route, this means 'Edit the Filter' --> <!-- Using the enctype="multipart/form-data" to allow uploading files (images) -->
-                                @csrf
-
-                                <div class="form-group">
-
-                                    {{-- Note: Dynamic Filters are applied to `categories` (parent categories and subcategories (child categories)), and not `sections`! --}}
-                                    <label for="cat_ids">Select Category</label>
-                                    <select name="cat_ids[]" id="cat_ids" class="form-control text-dark h200" multiple> {{-- We used the Square Brackets [] in name="cat_ids[]" is an array because we used the "multiple" HTML attribute to be able to choose multiple categories at the same time --}}
-                                        <option value="">Select Category</option>
-                                        @foreach ($categories as $section) {{-- $categories are ALL the `sections` with their related 'parent' categories (if any (if exist)) and subcategories or `child` categories (if any (if exist)) --}} {{-- Check FilterController.php --}}
-                                            <optgroup label="{{ $section['name'] }}"> {{-- sections --}}
-                                                @foreach ($section['categories'] as $category) {{-- parent categories --}} {{-- Check FilterController.php --}}
-                                                    <option value="{{ $category['id'] }}" @if (!empty($filter['category_id'] == $category['id'])) selected @endif>{{ $category['category_name'] }}</option> {{-- parent categories --}}
-                                                    @foreach ($category['sub_categories'] as $subcategory) {{-- subcategories or child categories --}} {{-- Check FilterController.php --}}
-                                                        <option value="{{ $subcategory['id'] }}" @if (!empty($filter['category_id'] == $subcategory['id'])) selected @endif>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--&nbsp;{{ $subcategory['category_name'] }}</option> {{-- subcategories or child categories --}}
-                                                    @endforeach
-                                                @endforeach
-                                            </optgroup>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="filter_name">Filter Name</label>
-                                    <input type="text" class="form-control" id="filter_name" placeholder="Enter Filter Name" name="filter_name"  @if (!empty($filter['filter_name'])) value="{{ $filter['filter_name'] }}" @else value="{{ old('filter_name') }}" @endif>  {{-- Repopulating Forms (using old() method): https://laravel.com/docs/9.x/validation#repopulating-forms --}}
-                                </div>
-                                <div class="form-group">
-                                    <label for="filter_column">Filter Column (small letters only and use underscores/no spaces)</label>
-                                    <input type="text" class="form-control" id="filter_column" placeholder="Enter Filter Column" name="filter_column"  @if (!empty($filter['filter_column'])) value="{{ $filter['filter_column'] }}" @else value="{{ old('filter_column') }}" @endif>  {{-- Repopulating Forms (using old() method): https://laravel.com/docs/9.x/validation#repopulating-forms --}}
-                                </div>
-                                <button type="submit" class="btn btn-primary mr-2">Submit</button>
-                                <button type="reset"  class="btn btn-light">Cancel</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- content-wrapper ends -->
-        @include('admin.layout.footer')
-        <!-- partial -->
-    </div>
+        </div></div></div>
+    </form>
+</div>
 @endsection

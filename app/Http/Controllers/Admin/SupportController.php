@@ -16,6 +16,7 @@ class SupportController extends Controller
     public function notices(Request $request)
     {
         Session::put('page', 'notices');
+        $request->validate(['per_page'=>'nullable|in:20,40,60,80,100','search_type'=>'nullable|in:title,content,both','search_value'=>'nullable|string|max:100']);
         $perPage = $request->get('per_page', 20); // 기본값 20
         
         $query = Notice::orderBy('is_important', 'desc')->orderBy('created_at', 'desc');
@@ -38,67 +39,19 @@ class SupportController extends Controller
             }
         }
 
-        $notices = $query->paginate($perPage);
+        $notices = $query->paginate((int)$perPage)->withQueryString();
 
         return view('admin.support.notices')->with(compact('notices', 'perPage'));
     }
 
     public function addEditNotice(Request $request, $id = null)
     {
-        Session::put('page', 'notices');
-        
-        if ($id == "") {
-            $title = "공지사항 추가";
-            $notice = new Notice;
-        } else {
-            $title = "공지사항 수정";
-            $notice = Notice::find($id);
-        }
-
-        if ($request->isMethod('post')) {
-            $data = $request->all();
-
-            $rules = [
-                'title' => 'required',
-                'content' => 'required',
-                'attachment' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,csv,txt,jpg,jpeg,png|max:10240',
-            ];
-
-            $customMessages = [
-                'title.required' => '제목을 입력해주세요.',
-                'content.required' => '내용을 입력해주세요.',
-            ];
-
-            $this->validate($request, $rules, $customMessages);
-
-            $notice->title = $data['title'];
-            $notice->content = $data['content'];
-            $notice->is_important = isset($data['is_important']) ? 1 : 0;
-            $notice->status = $data['status'] ?? 0; // 라디오 버튼 값 직접 사용
-
-            // 파일 업로드 처리
-            if ($request->hasFile('attachment')) {
-                $file = $request->file('attachment');
-                
-                // 기존 파일 삭제
-                if (!empty($notice->attachment) && file_exists(public_path('admin/attachments/notices/' . $notice->attachment))) {
-                    unlink(public_path('admin/attachments/notices/' . $notice->attachment));
-                }
-
-                // 새 파일 저장
-                $extension = $file->getClientOriginalExtension();
-                $filename = (string) \Illuminate\Support\Str::uuid().'.'.$extension;
-                $file->move(public_path('admin/attachments/notices'), $filename);
-                $notice->attachment = $filename;
-            }
-
-            $notice->save();
-
-            $message = $id == "" ? "공지사항이 추가되었습니다." : "공지사항이 수정되었습니다.";
-            return redirect('admin/notices')->with('success_message', $message);
-        }
-
-        return view('admin.support.add_edit_notice')->with(compact('title', 'notice'));
+        abort_unless(in_array(\Illuminate\Support\Facades\Auth::guard('admin')->user()?->type, ['admin', 'superadmin'], true), 403);
+        $editor = app(AdminPatternController::class);
+        if (!$request->isMethod('post')) return $id ? $editor->editNotice((int)$id) : $editor->forms();
+        if (!$request->has('status')) $request->merge(['status' => 0]);
+        $response = $id ? $editor->updateNotice($request, (int)$id) : $editor->storeNotice($request);
+        return $request->expectsJson() ? $response : redirect('admin/notices')->with('success_message', '공지사항이 저장되었습니다.');
     }
 
     public function deleteNotice($id)
@@ -132,13 +85,14 @@ class SupportController extends Controller
     public function updateNoticeStatus(Request $request)
     {
         if ($request->ajax()) {
+            $request->validate(['notice_id'=>'required|integer|exists:notices,id','status'=>'required|in:노출,비노출']);
             $data = $request->all();
             if ($data['status'] == "노출") {
                 $status = 0;
             } else {
                 $status = 1;
             }
-            Notice::where('id', $data['notice_id'])->update(['status' => $status]);
+            Notice::findOrFail($data['notice_id'])->update(['status' => $status]);
             return response()->json(['status' => $status, 'notice_id' => $data['notice_id']]);
         }
     }
@@ -148,6 +102,7 @@ class SupportController extends Controller
     public function faqs(Request $request)
     {
         Session::put('page', 'faqs');
+        $request->validate(['per_page'=>'nullable|in:20,40,60,80,100','category'=>'nullable|string|max:100','search_type'=>'nullable|in:question,answer,both','search_value'=>'nullable|string|max:100']);
         $perPage = $request->get('per_page', 20); // 기본값 20
         
         $query = Faq::orderBy('order', 'asc')->orderBy('created_at', 'desc');
@@ -175,7 +130,7 @@ class SupportController extends Controller
             }
         }
 
-        $faqs = $query->paginate($perPage);
+        $faqs = $query->paginate((int)$perPage)->withQueryString();
 
         return view('admin.support.faqs')->with(compact('faqs', 'perPage'));
     }
@@ -185,19 +140,20 @@ class SupportController extends Controller
         Session::put('page', 'faqs');
         
         if ($id == "") {
-            $title = "FAQ 추가";
+            $title = "자주묻는질문 추가";
             $faq = new Faq;
         } else {
-            $title = "FAQ 수정";
-            $faq = Faq::find($id);
+            $title = "자주묻는질문 수정";
+            $faq = Faq::findOrFail($id);
         }
 
         if ($request->isMethod('post')) {
             $data = $request->all();
 
             $rules = [
-                'question' => 'required',
-                'answer' => 'required',
+                'question' => 'required|string|max:500',
+                'answer' => 'required|string|max:100000',
+                'category'=>'nullable|string|max:100', 'order'=>'nullable|integer|min:0|max:999', 'status'=>'nullable|in:0,1',
             ];
 
             $customMessages = [
@@ -209,12 +165,14 @@ class SupportController extends Controller
 
             $faq->category = $data['category'] ?? null;
             $faq->question = $data['question'];
-            $faq->answer = $data['answer'];
+            $answer=app(\App\Services\RefundPolicyContent::class)->forStorage($data['answer']);
+            if(trim($answer)==='')throw \Illuminate\Validation\ValidationException::withMessages(['answer'=>'답변을 입력해 주세요.']);
+            $faq->answer = $answer;
             $faq->order = $data['order'] ?? 0;
             $faq->status = (string) ($data['status'] ?? '0') === '1' ? 1 : 0;
             $faq->save();
 
-            $message = $id == "" ? "FAQ가 추가되었습니다." : "FAQ가 수정되었습니다.";
+            $message = $id == "" ? "자주묻는질문이 추가되었습니다." : "자주묻는질문이 수정되었습니다.";
             return redirect('admin/faqs')->with('success_message', $message);
         }
 
@@ -223,63 +181,58 @@ class SupportController extends Controller
 
     public function deleteFaq($id)
     {
-        Faq::where('id', $id)->delete();
-        return redirect()->back()->with('success_message', 'FAQ가 삭제되었습니다.');
+        Faq::findOrFail($id)->delete();
+        return redirect()->back()->with('success_message', '자주묻는질문이 삭제되었습니다.');
     }
 
     public function updateFaqStatus(Request $request)
     {
         if ($request->ajax()) {
+            $request->validate(['faq_id'=>'required|integer|exists:faqs,id','status'=>'required|in:활성,비활성']);
             $data = $request->all();
             if ($data['status'] == "활성") {
                 $status = 0;
             } else {
                 $status = 1;
             }
-            Faq::where('id', $data['faq_id'])->update(['status' => $status]);
+            Faq::findOrFail($data['faq_id'])->update(['status' => $status]);
             return response()->json(['status' => $status, 'faq_id' => $data['faq_id']]);
         }
     }
 
     // ==================== 제휴/문의 (Contact) ====================
     
-    public function contacts()
+    public function contacts(Request $request)
     {
         Session::put('page', 'contacts');
-        $contacts = Contact::orderBy('created_at', 'desc')->get();
-        return view('admin.support.contacts')->with(compact('contacts'));
+        $data=$request->validate(['keyword'=>'nullable|string|max:100','status'=>'nullable|in:pending,processing,completed','per_page'=>'nullable|in:10,20,50,100']);
+        $contacts=Contact::when($request->filled('keyword'), fn($q)=>$q->where(fn($q)=>$q->where('subject','like','%'.$data['keyword'].'%')->orWhere('company','like','%'.$data['keyword'].'%')->orWhere('name','like','%'.$data['keyword'].'%')))
+            ->when($request->filled('status'),fn($q)=>$q->where('status',$data['status']))->latest('id')->paginate((int)($data['per_page']??20))->withQueryString();
+        return view('admin.support.contacts',compact('contacts'));
     }
 
     public function viewContact($id)
     {
         Session::put('page', 'contacts');
-        $contact = Contact::find($id);
-        return view('admin.support.view_contact')->with(compact('contact'));
+        $contact = Contact::findOrFail($id);
+        return view('admin.support.view_contact',compact('contact'));
     }
 
     public function updateContact(Request $request, $id)
     {
-        $contact = Contact::find($id);
-        
-        if ($request->isMethod('post')) {
-            $data = $request->all();
-            
-            $contact->status = $data['status'];
-            $contact->admin_reply = $data['admin_reply'] ?? null;
-            
-            if (!empty($data['admin_reply'])) {
-                $contact->replied_at = now();
-            }
-            
-            $contact->save();
-            
-            return redirect('admin/contacts')->with('success_message', '문의가 수정되었습니다.');
-        }
+        $contact=Contact::findOrFail($id);
+        $data=$request->validate(['status'=>'required|in:pending,processing,completed','admin_reply'=>'nullable|string|max:10000']);
+        $reply=trim($data['admin_reply']??'');
+        $contact->status=$data['status'];
+        if($reply!==trim($contact->admin_reply??'')) $contact->replied_at=$reply!==''?now():null;
+        $contact->admin_reply=$reply!==''?$reply:null;
+        $contact->save();
+        return redirect('admin/contacts')->with('success_message','문의가 수정되었습니다.');
     }
 
     public function deleteContact($id)
     {
-        Contact::where('id', $id)->delete();
+        Contact::findOrFail($id)->delete();
         return redirect()->back()->with('success_message', '문의가 삭제되었습니다.');
     }
 }

@@ -12,3 +12,5 @@
 @endif
 @if($item->shipped_at)<p style="font-size:12px; color:#666;">발송일: {{ $item->shipped_at->format('Y.m.d H:i') }}</p>@endif
 @if($item->delivered_at)<p style="font-size:12px; color:#666;">배송완료일: {{ $item->delivered_at->format('Y.m.d H:i') }}</p>@endif
+
+@include('shared.order_item_recipient', ['shippingItem' => $item, 'shippingOrder' => $item->order])

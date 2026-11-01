@@ -1,16 +1,23 @@
 @extends('layouts.shop')
+@section('shop_auth', '1')
+@push('styles')<link rel="stylesheet" href="{{ asset('shop/css/auth.css') }}?v={{ filemtime(public_path('shop/css/auth.css')) }}">@endpush
+@push('scripts')<script src="{{ asset('shop/js/auth.js') }}?v={{ filemtime(public_path('shop/js/auth.js')) }}" defer></script>@endpush
 @section('content')
-<div id="contents"><div id="login"><div class="box box1"><div class="inner_bx">
-    <img src="{{ asset('shop/images/common/logo.png') }}" class="logo" alt="Me9 Market">
-    <form action="{{ route('shop.login.submit') }}" method="POST"><div class="f_bx">
-        @csrf
-        <input class="mt0" type="text" name="login_id" value="{{ old('login_id') }}" placeholder="아이디 또는 이메일" aria-label="아이디 또는 이메일" autocomplete="username" required maxlength="150">
-        <input type="password" name="password" placeholder="비밀번호" aria-label="비밀번호" autocomplete="current-password" required>
-        <ul class="chk01"><li><input type="checkbox" name="remember" value="1" id="remember" @checked(old('remember'))><label for="remember">로그인 유지</label></li></ul>
-        <button type="submit" class="btn">LOGIN</button>
-        <a href="{{ url('/') }}" class="btn col3">Me9 Market 바로가기</a>
-    </div></form>
-    @include('partials.social_login', ['socialContext' => 'shop'])
-    <div class="shop-member-links"><a href="{{ route('shop.register') }}">간편회원가입</a><a href="{{ route('front.shop.order.confirm') }}">주문조회</a><a href="{{ route('shop.gate') }}">입장코드</a></div>
-</div></div></div></div>
+<div class="shop-auth-wrap"><section class="shop-auth-card" aria-labelledby="shop-login-title">
+    @include('shop.partials.auth_brand')
+    <div class="shop-auth-content"><p class="shop-auth-eyebrow">WELCOME TO SHOP</p><h1 id="shop-login-title">회원 로그인</h1>
+        <p class="shop-auth-description">미구마켓 회원 아이디로 로그인해 주세요.</p>
+        <form action="{{ route('shop.login.submit') }}" method="POST" class="shop-auth-form" data-shop-login>
+            @csrf
+            <input type="hidden" name="channel" value="{{ $shop?->channel_code ?? '' }}">
+            <label for="shop-login-id">아이디 또는 이메일</label><input id="shop-login-id" type="text" name="login_id" value="{{ is_string(old('login_id')) ? old('login_id') : '' }}" placeholder="ID를 입력해 주세요" autocomplete="username" required maxlength="150">
+            <label for="shop-login-password">비밀번호</label><input id="shop-login-password" type="password" name="password" placeholder="PW를 입력해 주세요" autocomplete="current-password" required>
+            <label class="shop-auth-check"><input type="checkbox" name="save_id" value="1" data-save-id @checked(old('save_id'))>아이디 저장</label>
+            <button type="submit" class="shop-auth-primary">LOGIN</button>
+        </form>
+        @include('partials.social_login', ['socialContext' => 'shop'])
+        <button type="button" class="shop-auth-kakao" disabled>카카오 계정으로 로그인 · 연동 대기</button>
+        <a class="shop-auth-market" href="{{ url('/') }}">Me9 Market 바로가기 <span aria-hidden="true">↗</span></a>
+    </div>
+</section></div>
 @endsection

@@ -305,16 +305,19 @@ class SettlementController extends Controller
     public function workbook(Request $request,$period,SettlementCalculator $calculator)
     {
         $request->merge(['period'=>$period]);
-        $data=$request->validate(['period'=>['required',\Illuminate\Validation\Rule::in(array_keys($calculator->periodOptions()))],'shop_channel_id'=>'required|integer|exists:shop_channels,id','vendor_id'=>'nullable|integer|exists:vendors,id','kind'=>'required|in:orders,shipping,payout,billing']);
+        $data=$request->validate(['period'=>['required',\Illuminate\Validation\Rule::in(array_keys($calculator->periodOptions()))],'shop_channel_id'=>'required|integer|exists:shop_channels,id','vendor_id'=>'nullable|integer|exists:vendors,id','kind'=>'required|in:orders,shipping,payout,billing','settlement_role'=>'nullable|in:seller,shared_fixed_supplier,shared_fixed_reseller,shared_free_supplier,shared_free_reseller','payment_gateway_type'=>'nullable|in:me9_pg,own_pg']);
         $shop=\App\Models\ShopChannel::findOrFail($data['shop_channel_id']);
         $admin=Auth::guard('admin')->user();
         if(!in_array($admin->type,['superadmin','admin'],true) && (int)$admin->vendor_id!==(int)$shop->vendor_id)abort(404);
         $reportVendor=$request->integer('vendor_id') ?: $shop->vendor_id;
         $report=app(\App\Services\SettlementReport::class);
         if($data['kind']==='shipping')return $report->download('settlement_shipping_'.$period.'.xlsx',$report::SHIPPING_HEADERS,$report->shipping($period,$reportVendor,$shop->id));
-        $rows=$report->rows($calculator->items($period,$reportVendor,$shop->id));
+        $items=$calculator->items($period,$reportVendor,$shop->id)
+            ->when(!empty($data['settlement_role']),fn($rows)=>$rows->where('settlement_role',$data['settlement_role']))
+            ->when(!empty($data['payment_gateway_type']),fn($rows)=>$rows->where('payment_gateway_type',$data['payment_gateway_type']))->values();
+        $rows=$report->rows($items);
         if(in_array($data['kind'],['payout','billing'],true)){
-            [$headers,$rows]=$report->amountRows($calculator->items($period,$reportVendor,$shop->id),$data['kind']);
+            [$headers,$rows]=$report->amountRows($items,$data['kind']);
             if(!$request->boolean('download'))return view('admin.settlements.report_amount',compact('headers','rows','period','shop','data'));
         }else $headers=$report::HEADERS;
         return $report->download('settlement_'.$data['kind'].'_'.$period.'.xlsx',$headers,$rows);

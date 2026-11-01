@@ -2,7 +2,7 @@
 @section('page_type','sub')
 @push('styles')<link rel="stylesheet" href="/channel_assets/css/order-workspace.css?v={{ filemtime(public_path('channel_assets/css/order-workspace.css')) }}"><link rel="stylesheet" href="/channel_assets/css/settlement-workspace.css?v={{ filemtime(public_path('channel_assets/css/settlement-workspace.css')) }}">@endpush
 @section('content')
-<div id="contents"><div class="order-workspace settlement-workspace">
+<div id="contents" class="admin-workspace admin-legacy"><div class="order-workspace settlement-workspace">
 <div class="order-page-heading"><div><p>전체관리자</p><h1>정산관리</h1></div></div>
 @if(session('success_message'))<section class="order-panel" role="status">{{ session('success_message') }}</section>@endif
 @if($errors->any())<section class="order-panel" role="alert">{{ $errors->first() }}</section>@endif
@@ -13,8 +13,8 @@
 <section class="order-panel"><div class="order-toolbar"><h2>{{ $selectedShop->channel_name }} · {{ $period }}</h2><form method="POST" action="{{ route('admin.settlements.generate') }}">@csrf<input type="hidden" name="period" value="{{ $period }}"><input type="hidden" name="shop_channel_id" value="{{ $selectedShop->id }}"><button type="submit">정산자료 생성/갱신</button></form></div>
 <div class="order-table-scroll" tabindex="0"><table class="order-table"><thead><tr><th>판매자</th><th>정산역할</th><th>주문건수</th><th>매출</th><th>매입</th><th>제공포인트</th><th>SMS 후불</th><th>정산비용</th><th>지급액 상세</th><th>청구액 상세</th><th>엑셀</th></tr></thead><tbody>
 @forelse($rows as $row)
-@php $query=['period'=>$period,'shop_channel_id'=>$selectedShop->id,'vendor_id'=>$row['vendor_id']]; @endphp
-<tr><td>{{ $row['vendor_name'] }}</td><td>{{ ['seller'=>'자사상품 판매자','shared_fixed_supplier'=>'공유상품 제공자(고정가)','shared_fixed_reseller'=>'위탁판매자(고정가)','shared_free_supplier'=>'공유상품 제공자(자유가)','shared_free_reseller'=>'위탁판매자(자유가)'][$row['settlement_role']] ?? $row['settlement_role'] }}</td><td>{{ $row['order_count'] }}건</td>@foreach(['invoice_sales_amount','invoice_purchase_amount','point_deposit_amount','sms_postpaid_amount','payout_amount'] as $key)<td>{{ number_format($row[$key]) }}</td>@endforeach<td><a class="order-button" target="_blank" rel="noopener" href="{{ route('admin.settlements.workbook',$query+['kind'=>'payout']) }}">지급액 보기</a></td><td><a class="order-button" target="_blank" rel="noopener" href="{{ route('admin.settlements.workbook',$query+['kind'=>'billing']) }}">청구액 보기</a></td><td><a class="order-button" href="{{ route('admin.settlements.workbook',$query+['kind'=>'orders']) }}">상세 엑셀</a></td></tr>
+@php $query=['period'=>$period,'shop_channel_id'=>$selectedShop->id,'vendor_id'=>$row['vendor_id'],'settlement_role'=>$row['settlement_role'],'payment_gateway_type'=>$row['payment_gateway_type']]; @endphp
+<tr><td>{{ $row['vendor_name'] }}</td><td>{{ ['seller'=>'자사상품 판매자','shared_fixed_supplier'=>'공유상품 제공자(고정가)','shared_fixed_reseller'=>'위탁판매자(고정가)','shared_free_supplier'=>'공유상품 제공자(자유가)','shared_free_reseller'=>'위탁판매자(자유가)'][$row['settlement_role']] ?? $row['settlement_role'] }}<small style="display:block">{{ $row['payment_gateway_type']==='own_pg'?'자사 PG':'Me9 PG' }}</small></td><td>{{ $row['order_count'] }}건</td>@foreach(['invoice_sales_amount','invoice_purchase_amount','point_deposit_amount','sms_postpaid_amount','payout_amount'] as $key)<td>{{ number_format($row[$key]) }}</td>@endforeach<td><a class="order-button" target="_blank" rel="noopener" href="{{ route('admin.settlements.workbook',$query+['kind'=>'payout']) }}">지급액 보기</a></td><td><a class="order-button" target="_blank" rel="noopener" href="{{ route('admin.settlements.workbook',$query+['kind'=>'billing']) }}">청구액 보기</a></td><td><a class="order-button" href="{{ route('admin.settlements.workbook',$query+['kind'=>'orders']) }}">상세 엑셀</a></td></tr>
 @empty<tr><td colspan="11">정산 내역이 없습니다.</td></tr>@endforelse
 </tbody></table></div>
 </section>

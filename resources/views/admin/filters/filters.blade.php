@@ -1,47 +1,18 @@
 @extends('admin.layout.layout')
-
-
 @section('content')
-    <div class="main-panel">
-        <div class="content-wrapper">
-            <div class="row">
-                <div class="col-lg-12 grid-margin stretch-card">
-                    <div class="card">
-                        <div class="card-body">
-                            <h4 class="card-title">Filters</h4>
-                            <a href="{{ url('admin/filters-values') }}"
-                                style="max-width: 163px; float: right; display: inline-block"
-                                class="btn btn-block btn-primary">View Filter Values</a>
-                            <a href="{{ url('admin/add-edit-filter') }}"
-                                style="max-width: 169px; float: left;  display: inline-block"
-                                class="btn btn-block btn-primary">Add Filter Column</a>
-
-                            {{-- 유효성 검사 오류 표시:
-                            https://laravel.com/docs/9.x/validation#quick-displaying-the-validation-errors 및
-                            https://laravel.com/docs/9.x/blade#validation-errors --}}
-                            {{-- 세션에 항목이 존재하는지 확인(has() 메서드 사용):
-                            https://laravel.com/docs/9.x/session#determining-if-an-item-exists-in-the-session --}}
-                            {{-- 관리자 비밀번호 업데이트 성공 시 Bootstrap 성공 메시지: --}}
-                            @if (Session::has('success_message')) <!-- AdminController.php, updateAdminPassword() 메서드 확인 -->
-                                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                    <strong>Success:</strong> {{ Session::get('success_message') }}
-                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                        <span aria-hidden="true">&times;</span>
-                                    </button>
-                                </div>
-                            @endif
-
-
-                            <div class="table-responsive pt-3">
-                                {{-- DataTable --}}
-                                <table id="filters" class="table table-bordered"> {{-- DataTable에 여기 id 사용 --}}
+<div id="contents" class="admin-workspace admin-settings-list">
+    <div class="admin-toolbar"><h1>필터 관리</h1><div class="admin-actions"><a class="admin-btn primary" href="{{ url('admin/add-edit-filter') }}">필터 등록</a><a class="admin-btn" href="{{ url('admin/filters-values') }}">필터값 관리</a></div></div>
+    @include('admin.shared.messages')
+    <section class="admin-panel admin-setting-panel">
+<table id="filters" class="admin-table">
+<colgroup><col style="width:64px"><col style="width:180px"><col style="width:160px"><col><col style="width:100px"></colgroup>
                                     <thead>
                                         <tr>
-                                            <th>ID</th>
-                                            <th>Filter Name</th>
-                                            <th>Filter Column</th>
-                                            <th>Categories</th>
-                                            <th>Status</th>
+                                            <th>번호</th>
+                                            <th>필터명</th>
+                                            <th>연결 항목</th>
+                                            <th>적용 분류</th>
+                                            <th>상태</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -56,24 +27,20 @@
                                                         // echo '<pre>', var_dump($catIds), '</pre>';
                                                         foreach ($catIds as $key => $catId) {
                                                             $category_name = \App\Models\Category::getCategoryName($catId);
-                                                            echo $category_name . ' ';
+                                                            echo e($category_name) . ' ';
                                                         }
                                                     @endphp
                                                 </td>
                                                 <td>
                                                     @if ($filter['status'] == 1)
                                                         <a class="updateFilterStatus" id="filter-{{ $filter['id'] }}"
-                                                            filter_id="{{ $filter['id'] }}" href="javascript:void(0)"> {{-- HTML 사용자
-                                                            정의 속성 사용. admin/js/custom.js 확인 --}}
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-check"
-                                                                status="Active"></i> {{-- Skydash 관리자 패널 템플릿의 아이콘 --}}
+                                                            filter_id="{{ $filter['id'] }}" href="javascript:void(0)">
+                                                            <i class="admin-setting-status enabled" status="Active">사용</i>
                                                         </a>
-                                                    @else {{-- 관리자 상태가 비활성인 경우 --}}
+                                                    @else
                                                         <a class="updateFilterStatus" id="filter-{{ $filter['id'] }}"
-                                                            filter_id="{{ $filter['id'] }}" href="javascript:void(0)"> {{-- HTML 사용자
-                                                            정의 속성 사용. admin/js/custom.js 확인 --}}
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-outline"
-                                                                status="Inactive"></i> {{-- Skydash 관리자 패널 템플릿의 아이콘 --}}
+                                                            filter_id="{{ $filter['id'] }}" href="javascript:void(0)">
+                                                            <i class="admin-setting-status disabled" status="Inactive">중지</i>
                                                         </a>
                                                     @endif
                                                 </td>
@@ -81,20 +48,6 @@
                                         @endforeach
                                     </tbody>
                                 </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- content-wrapper ends -->
-        <!-- partial:../../partials/_footer.html -->
-        <footer class="footer">
-            <div class="d-sm-flex justify-content-center justify-content-sm-between">
-                <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © 2022. All rights
-                    reserved.</span>
-            </div>
-        </footer>
-        <!-- partial -->
-    </div>
+    </section>
+</div>
 @endsection

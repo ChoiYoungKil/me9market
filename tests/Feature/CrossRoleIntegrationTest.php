@@ -203,7 +203,7 @@ class CrossRoleIntegrationTest extends TestCase
             ->get(route('admin.orders') . '/' . $data['order']->id)
             ->assertOk()
             ->assertSee('Flow Product')
-            ->assertSee('TRK-FLOW-001');
+            ->assertSee('TRK-FLOW-001')->assertSee('Flow Address Updated');
 
         $this->actingAs($data['user'])
             ->get(route('mypage.order.view', ['id' => $data['order']->id]))
@@ -247,7 +247,9 @@ class CrossRoleIntegrationTest extends TestCase
                 ->assertRedirect(route('distributor.login'));
             $this->assertNull(session('distributor_id'));
             $this->actingAs($data['channelAdmin'], 'admin')->post(route('channel.order.manager.portal', $distributor->id))->assertForbidden();
-            $this->actingAs($data['superAdmin'], 'admin')->post(route('admin.order_managers.portal', $distributor->id))->assertForbidden();
+            $this->actingAs($data['superAdmin'], 'admin')->post(route('admin.order_managers.portal', $distributor->id))
+                ->assertRedirect(route('admin.order_managers.index'))->assertSessionHas('error_message')
+                ->assertSessionMissing('distributor_id');
         }
         $distributor->update(['access_started_at' => now()->subHour(), 'access_ended_at' => now()->addHour()]);
         $this->withSession(['distributor_id' => $distributor->id])->get(route('distributor.orders.pending'))->assertOk();

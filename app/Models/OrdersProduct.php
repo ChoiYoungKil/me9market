@@ -24,6 +24,8 @@ class OrdersProduct extends Model
         'recipient_name',
         'recipient_mobile',
         'recipient_address',
+        'recipient_postcode',
+        'recipient_address_detail',
         'product_code',
         'product_name',
         'product_color',

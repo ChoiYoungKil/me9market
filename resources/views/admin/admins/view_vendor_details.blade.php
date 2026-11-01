@@ -1,11 +1,11 @@
 @extends('layouts.admin')
 
 @section('content')
-    <div id="contents">
+    <div id="contents" class="admin-workspace admin-legacy admin-account-editor">
         <div class="row">
             <div class="box box1">
                 <div class="page_info">
-                    <div class="ttl">판매자 상세 정보</div>
+                    <h1 class="ttl">판매자 상세 정보</h1>
                     <ul class="dep">
                         <li>홈</li>
                         <li>관리자 관리</li>
@@ -54,7 +54,7 @@
                                             <table class="two">
                                                 <tbody class="textL">
                                                     <tr>
-                                                        <th class="w160"><span>회원번호</span></th>
+                                                        <th class="w160"><span>계정번호</span></th>
                                                         <td>{{ $vendorDetails['id'] }}</td>
                                                         <th class="w160"><span>가입일</span></th>
                                                         <td>{{ date('Y-m-d H:i:s', strtotime($vendorDetails['created_at'])) }}</td>
@@ -102,6 +102,7 @@
                                                         <th class="w160"><span>회원사 주소지</span></th>
                                                         <td colspan="3">
                                                             {{ $vendorDetails['vendor_business']['shop_address'] ?? '' }}
+                                                            {{ $vendorDetails['vendor_business']['shop_address_detail'] ?? '' }}
                                                             {{ $vendorDetails['vendor_business']['shop_city'] ?? '' }}
                                                             {{ $vendorDetails['vendor_business']['shop_state'] ?? '' }}
                                                             {{ $vendorDetails['vendor_business']['shop_country'] ?? '' }}
@@ -115,7 +116,7 @@
 
                                     {{-- 회원사 판매권한 정보 (Format from Step 3) --}}
                                     <div class="f_w mt40">
-                                        <div class="f_ttl">회원사 판매권한 정보</div>
+                                        <div class="f_ttl">판매자 인증·정산 정보</div>
                                         <div class="tb01 type2">
                                             <table>
                                                 <tbody class="textL">
@@ -143,9 +144,7 @@
                                                         <th class="w160"><span>사업자등록증</span></th>
                                                         <td>
                                                             @if (!empty($vendorDetails['vendor_business']['address_proof_image']))
-                                                                <a href="{{ url('admin/images/proofs/' . $vendorDetails['vendor_business']['address_proof_image']) }}" target="_blank">
-                                                                    <img style="width: 200px" src="{{ url('admin/images/proofs/' . $vendorDetails['vendor_business']['address_proof_image']) }}">
-                                                                </a>
+                                                                <a class="admin-btn" href="{{ route('admin.member.document', ['vendor'=>$vendorDetails['vendor_id'], 'kind'=>'license']) }}">사업자등록증 다운로드</a>
                                                             @else
                                                                 등록된 이미지가 없습니다.
                                                             @endif
@@ -155,8 +154,8 @@
                                                         <th class="w160"><span>정산용 계좌번호</span></th>
                                                         <td>
                                                             @if(!empty($vendorDetails['vendor_bank']))
-                                                                {{ $vendorDetails['vendor_bank']['bank_name'] }} / 
-                                                                {{ $vendorDetails['vendor_bank']['account_number'] }} 
+                                                                {{ $vendorDetails['vendor_bank']['bank_name'] }} /
+                                                                {{ $vendorDetails['vendor_bank']['account_number'] }}
                                                                 (예금주: {{ $vendorDetails['vendor_bank']['account_holder_name'] }})
                                                             @else
                                                                 등록된 계좌 정보가 없습니다.
@@ -166,8 +165,8 @@
                                                     <tr>
                                                         <th class="w160"><span>정산용 통장사본</span></th>
                                                         <td>
-                                                            @if (!empty($vendorDetails['vendor_business']['bank_copy_image']))
-                                                                <a href="{{ route('admin.member.document', ['vendor'=>$vendorDetails['vendor_business']['vendor_id'], 'kind'=>'bankbook']) }}" target="_blank">
+                                                            @if (!empty($vendorDetails['vendor_business']['bank_copy_image']) || !empty($vendorDetails['vendor_bank']['bank_copy_image']))
+                                                                <a href="{{ route('admin.member.document', ['vendor'=>$vendorDetails['vendor_id'], 'kind'=>'bankbook']) }}" class="admin-btn">
                                                                     통장사본 내려받기
                                                                 </a>
                                                             @else
@@ -196,8 +195,8 @@
                                                             <form method="post" action="{{ url('admin/update-vendor-commission') }}">
                                                                 @csrf
                                                                 <div class="r_btn_w">
-                                                                    <input type="hidden" name="vendor_id" value="{{ $vendorDetails['id'] }}">
-                                                                    <input class="w100" type="text" name="commission" value="{{ $vendorDetails['commission'] ?? '' }}" required>
+                                                                    <input type="hidden" name="vendor_id" value="{{ $vendorDetails['vendor_id'] }}">
+                                                                    <input class="w100" type="text" name="commission" value="{{ $vendorDetails['vendor_personal']['commission'] ?? '' }}" required>
                                                                     <button type="submit" class="btn01 ml10">수정</button>
                                                                 </div>
                                                             </form>
@@ -209,8 +208,8 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="btm_btn center mt40">
-                                <a href="{{ url('admin/admins') }}" class="btn01 col3">목록</a>
+                            <div class="admin-modal-footer account-editor-footer">
+                                <a href="{{ url('admin/admins') }}" class="admin-btn">목록</a>
                             </div>
                         </div>
                     </div>

@@ -84,4 +84,33 @@ class ShopCatalogAcceptanceTest extends TestCase
   $this->post('/channel/shop/community/register',array_replace($d,['content'=>'<p><br></p>']))->assertSessionHasErrors('content');
   $this->assertSame(0,ShopChannelNotice::count());
  }
+ public function test_shop_shipping_override_is_owned_per_listing_and_protects_linked_policy(): void {
+  [$v,$a,$s,$p,$supplier]=$this->fixture();
+  $charge=\App\Models\ChannelDeliveryCharge::create(['vendor_id'=>$v->id,'status'=>1,'name'=>'Shop 전용 배송비','shipping_type'=>'conditional','payment_type'=>'prepaid','base_fee'=>4500,'free_order_amount'=>30000]);
+  $foreign=\App\Models\ChannelDeliveryCharge::create(['vendor_id'=>$supplier->vendor_id,'status'=>1,'name'=>'원상품 배송비','shipping_type'=>'fixed','payment_type'=>'prepaid','base_fee'=>9000,'fixed_fee'=>9000]);
+  $p->update(['shipping_policy_id'=>$foreign->id]);
+  $d=['shop_id'=>$s->id,'product_id'=>$p->id,'selling_price'=>8000,'reward_points'=>0,'shipping_policy_id'=>$foreign->id];
+  $this->ajax('/channel/shop/product/public/store',$d)->assertJsonPath('status',false);
+  $this->assertDatabaseCount('shop_channel_products',0);
+  $d['shipping_policy_id']=$charge->id;
+  $this->ajax('/channel/shop/product/public/store',$d)->assertJsonPath('status',true);
+  $l=ShopChannelProduct::firstOrFail();
+  $this->assertEquals($charge->id,$l->shipping_policy_id);
+  $service=app(\App\Services\ShopOrderTotals::class);
+  $item=['id'=>$l->id,'product'=>$p->fresh(),'shop_product'=>$l,'qty'=>1,'line_total'=>8000];
+  $totals=$service->calculate([$item]);
+  $this->assertEquals(4500,$totals['shipping']);
+  $this->assertEquals($charge->id,$totals['shipping_policies'][$l->id]['id']);
+  $this->assertStringContainsString('Shop 전용 배송비 / 4,500원',$service->shippingLabel($p,$l));
+  $item['line_total']=30000;$this->assertEquals(0,$service->calculate([$item])['shipping']);
+  $this->get(route('channel.delivery.list'))->assertViewHas('charges',fn($rows)=>(int)$rows->firstWhere('id',$charge->id)->linked_product_count===1);
+  $this->postJson(route('channel.delivery.delete',$charge->id))->assertUnprocessable();
+  $charge->update(['base_fee'=>5000]);$item['line_total']=8000;
+  $this->assertEquals(5000,$service->calculate([$item])['shipping']);
+  $this->assertEquals(4500,$totals['shipping_policies'][$l->id]['base_fee']);
+  $this->assertEquals($foreign->id,$p->fresh()->shipping_policy_id);
+  $charge->update(['status'=>0]);
+  $this->expectException(\Illuminate\Validation\ValidationException::class);
+  $service->calculate([$item]);
+ }
 }

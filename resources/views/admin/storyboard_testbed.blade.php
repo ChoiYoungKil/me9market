@@ -1,29 +1,6 @@
 @php
     $areas = [
         [
-            'code' => 'RF-03',
-            'title' => 'Shop 채널 페이지',
-            'account' => null,
-            'items' => [
-                ['209-215', '채널 입장', '/shop-channel/gate', '공개·비공개 채널 입장'],
-                ['216-217', '채널 메인', '/shop-channel/main', '배너, 소개, 상품과 공지'],
-                ['218-227', '상품 / 공동구매', '/shop-channel/products', '상품 목록, 상세와 공동구매'],
-                ['228-231', '장바구니 / 주문', '/shop/cart', '장바구니부터 주문 완료'],
-                ['232-243', '주문관리', '/shop/order/details', '주문조회와 클레임 처리'],
-                ['244-246', '채널 공지', '/shop-channel/notices', '채널별 공지 목록과 상세'],
-            ],
-        ],
-        [
-            'code' => 'RF-04',
-            'title' => '발주사',
-            'account' => 'distributor',
-            'items' => [
-                ['247-249', '발주사 로그인', '/distributor/login', '발주 담당자 인증'],
-                ['250-253', '발주 대기', '/distributor/orders/pending', '대기 주문과 송장 엑셀 처리'],
-                ['254-255', '발주 완료', '/distributor/orders/completed', '송장 등록 이후 주문 확인'],
-            ],
-        ],
-        [
             'code' => 'RF-05',
             'title' => '전체 관리자',
             'account' => 'superadmin',
@@ -99,6 +76,7 @@
         .review-table td { line-height:1.65; vertical-align:top; }
         .review-note { display:block; margin-top:6px; color:#7b5920; font-size:12px; }
         .badge { display:inline-block; padding:3px 7px; border-radius:4px; font-size:12px; background:#edf3f7; color:#425669; }
+        .badge.test_db { background:#e8eefc; color:#3551a0; }
         .badge.reviewed { background:#e9f6ef; color:#087443; }
         .badge.excluded { background:#f0f0f3; color:#66717d; }
         .badge.deferred, .badge.partial { background:#fff2db; color:#8b5500; }
@@ -130,7 +108,7 @@
 <body>
 <header>
     <h1>Me9 스토리보드 통합 검수</h1>
-    <p>PPT Ver3.0.0의 실제 슬라이드 번호 기준으로 1~208번 확인 기록과 화면 진입 경로를 정리했습니다.</p>
+    <p>PPT Ver3.0.0의 실제 슬라이드 번호 기준으로 1~271번 확인 기록과 화면 진입 경로를 정리했습니다.</p>
 </header>
 <main>
     <div class="notice">전체 관리자 전용 검수 화면입니다. 링크를 열어도 현재 로그인 계정은 자동 전환되지 않습니다. 계정 생성·클레임 접수·탈퇴는 각 화면에서 직접 진행합니다.</div>
@@ -188,25 +166,27 @@
     </section>
 
     <section class="review-summary" aria-label="검수 범위와 다음 진행">
-        <h2 style="margin-top:0;">PPT 1~208번 확인 기록 · {{ $reviewedAt }}</h2>
+        <h2 style="margin-top:0;">PPT 1~271번 확인 기록 · {{ $reviewedAt }}</h2>
         <p>아래 상태는 해당 날짜의 로컬 수동 시연 기록입니다. 이 화면은 기능을 자동 실행하거나 현재 서버의 합격 여부를 판정하지 않습니다.</p>
         <p><strong>39번:</strong> 사용자 요청으로 실제 비밀번호 변경 보류. <strong>60번:</strong> 4.5점 선택·해제·저장 확인, 마우스 이동만으로 미리보기는 추가 확인 필요.</p>
         <p>취소·반품 환불은 모의 결제 검수 결과입니다. 실 PG 환불·택배사 회수/발송·문자/이메일 실전송은 별도 확인 범위입니다.</p>
         <p><strong>제외:</strong> 81번은 사용자 지시, 188번은 재설계, 190·191번은 삭제 화면으로 제외했습니다. <strong>추가 확인:</strong> 67번 카카오 연동·외부 계정 권한, 72번 운영 PG/수수료, 73번 실제 비밀번호 변경, 87~89번 PG·별도 계정 인증을 완료로 표시하지 않았습니다.</p>
         <p>65~208번의 검수일은 2026-10-31이며 1~64번의 이전 기록은 유지했습니다. 운영 DB 계정·상품·주문이 로컬 검수 데이터와 다를 수 있으므로 해당 서버의 등록 자료를 사용합니다.</p>
-        <p><strong>시연 과정·결과 보기</strong>를 펼치면 당시의 사전 조건, 실제 조작 순서와 확인 결과, 수정 내용, 자동 테스트 및 미시연 범위를 확인할 수 있습니다. 상세 기록 정리일은 2026-11-01이며 새로운 시연을 수행한 날짜는 아닙니다.</p>
+        <p><strong>시연 과정·결과 보기</strong>를 펼치면 당시의 사전 조건, 실제 조작 순서와 확인 결과, 수정 내용, 자동 테스트 및 미시연 범위를 확인할 수 있습니다. 과거 기록 정리일은 2026-11-01입니다. 새로 수행한 시연은 각 번호의 원기록 날짜와 실제 조작 내역으로 구분합니다.</p>
         <p>상세에 적힌 금액·건수·상태는 당시 로컬 검수 사례입니다. 위 계정 선택은 현재 서버의 진입 계정에만 적용되며 과거 시연 기록의 대상이나 결과를 바꾸지 않습니다. 원기록이 여러 번호를 묶은 경우 해당 범위를 그대로 표시했습니다.</p>
-        <p><strong>다음 진행: PPT 209번 Shop 채널.</strong> 각 번호를 먼저 안내하고 화면 동작을 하나씩 확인합니다.</p>
+        <p><strong>209~215번:</strong> 211번 재설계 제외. 212번 휴대폰·입장코드와 213번 일반 로그인은 실제 Chrome 확인. 실제 네이버 인증은 보류했고, 215번 화면 시연과 신규가입 테스트 DB 검증을 구분했습니다. 첨부 DOCX의 수정안·제3자 제공 적용 범위는 확정본으로 간주하지 않습니다.</p>
+        <p><strong>약관 승인 대기:</strong> 215번 약관동의 화면은 첨부 원문으로 정리한 검토본입니다. 사용자 승인 전 실제 Shop 신규가입·운영 반영을 보류합니다. 후속 사용자 지시로 217~231번 검수는 진행했습니다.</p>
+        <p><strong>217~231번:</strong> 실제 Chrome에서 옵션·문의/판매자 답변·자사/공개 장바구니·주문서·모의결제·구매내역을 확인했습니다. 주문서 개인정보 고지는 원문을 유지하고 조항·문단·표와 전문 펼치기를 정리했습니다. 실 PG·외부 이메일 수신·실배송과 실기기 터치 시연은 완료로 표시하지 않았습니다.</p><p><strong>232~246번:</strong> 이름·연락처 조회, 문의·취소/반품/교환 신청, 판매자 승인·모의환불·재발송 후 구매확정, 공지 등록·본문 검색·첨부 다운로드·검색/페이지 복귀를 확인했습니다. 세부 조작/결과는 각 번호 기록에 정리했습니다. 239번 hover 및 실제 외부 연동은 추가 확인 범위입니다.</p><p><strong>247~255번:</strong> 기존 발주사 로그인, 검색·엑셀 다운로드/파일 첨부·송장 처리, 주소 수정·우편번호 검색, 배송중 수정·배송완료 잠금을 실제 Chrome에서 시연했습니다. 잘못된 파일/권한은 별도 테스트 DB 검증으로 구분했습니다. 249번 인증·로고의 PPT 차이는 추가 확인으로 남겼습니다.</p><p><strong>256~271번 전체 관리자:</strong> 로그인·목록·상세·댓글·팝업·로딩과 운영 메뉴 연동을 확인했습니다. 번호별 상세와 아래 운영 메뉴 기록에서 실제 시연·테스트 DB·미시연 범위를 확인해 주세요.</p>
     </section>
-    <h2>1~208번 페이지별 화면과 시연 기록</h2>
+    <h2>1~271번 페이지별 화면과 시연 기록</h2>
     <div class="review-tools">
         <label for="review-search">페이지 검색</label><input id="review-search" type="search" placeholder="예: 58, 반품, 배송지">
-        <label for="review-status">확인 상태</label><select id="review-status"><option value="all">전체</option><option value="reviewed">시연 확인 기록</option><option value="deferred">실제 변경 보류</option><option value="partial">추가 확인 있음</option><option value="document">문서/구분</option><option value="excluded">검수 대상 제외</option></select>
+        <label for="review-status">확인 상태</label><select id="review-status"><option value="all">전체</option><option value="reviewed">시연 확인 기록</option><option value="deferred">실제 변경 보류</option><option value="partial">추가 확인 있음</option><option value="test_db">신규가입 테스트 DB 검증</option><option value="document">문서/구분</option><option value="excluded">검수 대상 제외</option></select>
         <output id="review-count" aria-live="polite">{{ count($pages) }}개 페이지</output>
         <button type="button" id="review-expand">검색된 기록 모두 펼치기</button>
         <button type="button" id="review-collapse">기록 모두 접기</button>
     </div>
-    <section class="section" aria-label="PPT 1~208번 페이지별 검수">
+    <section class="section" aria-label="PPT 1~271번 페이지별 검수">
         <table class="review-table">
             <thead><tr><th>PPT 번호</th><th>화면</th><th>화면 안내와 시연 상세</th><th>확인 기록</th><th>이동</th></tr></thead>
             <tbody>
@@ -228,7 +208,7 @@
                                 </dl>
                                 @if($history['cases'])
                                     <h4>실제 시연 순서와 확인 결과</h4>
-                                    <ol>@foreach($history['cases'] as $case)<li><strong>{{ $case['action'] }}</strong><span class="review-outcome">확인 결과: {{ $case['outcome'] }}</span></li>@endforeach</ol>
+                                    <ol>@foreach($history['cases'] as $case)<li><span class="badge">{{ $case['method'] ?? '브라우저 시연' }}</span> <strong>{{ $case['action'] }}</strong><span class="review-outcome">확인 결과: {{ $case['outcome'] }}</span></li>@endforeach</ol>
                                 @else
                                     <p>이 번호에는 별도 기능 시연 결과를 기록하지 않았습니다. 아래 구분·제외 근거를 확인해 주세요.</p>
                                 @endif
@@ -250,6 +230,9 @@
                                 <p class="review-note">과거 기록입니다. 화면 열기·검색·펼치기만으로 계정이나 주문을 만들거나 같은 처리를 재실행하지 않습니다.</p>
                             </div>
                         </details>
+                        @if($page['number'] === 215 && app()->environment('local') && $shopChannel)
+                            <p><a class="open" href="{{ route('local.preview.shop_signup', ['channel' => $shopChannel->id]) }}" target="_blank" rel="noopener">가입 화면 미리보기 · 실제 가입 아님</a></p>
+                        @endif
                     </td>
                     <td><span class="badge {{ $page['status'] }}">{{ $page['status_label'] }}</span><small class="review-date">원기록 {{ $page['history']['date'] }}</small></td>
                     <td>@if($page['status']==='excluded')<span>대상 제외</span>@else<a class="open" href="{{ ($page['admin'] ? $adminUrl : $frontUrl).$page['path'] }}" target="_blank" rel="noopener noreferrer" aria-label="PPT {{ $page['number'] }}번 {{ $page['title'] }} 진입 화면 열기">진입 화면 열기</a>@endif</td>
@@ -259,8 +242,21 @@
         </table>
         <p id="review-empty" class="no-matches" hidden>검색 조건에 맞는 페이지가 없습니다.</p>
     </section>
-    <h2>209번 이후 다음 검수 대상 진입 링크</h2>
-    <p>아래 영역은 다음 검수 대상입니다. 기존 링크와 번호는 후속 PPT 검수에서 다시 대조하며, 완료 상태를 의미하지 않습니다.</p>
+    <section class="section" id="admin-operations" aria-label="전체 관리자 운영 메뉴 시연 기록">
+        <h2>전체 관리자 운영 메뉴 · 상세 시연 기록</h2>
+        <p>2026-11-01 · 로컬 Chrome 시연. 메뉴별 실제 조작과 결과, 테스트 DB 검증 및 미시연 범위를 구분했습니다.</p>
+        @foreach($operationalChecks as $check)
+        <details class="review-log" style="margin:16px 0;padding:16px;border:1px solid #dbe2ed;border-radius:8px">
+            <summary>{{ $check['title'] }} · 시연 과정·결과 보기</summary>
+            <ol>@foreach($check['cases'] as $case)<li><span class="badge">{{ $case['method'] }}</span> <strong>{{ $case['action'] }}</strong><p>확인 결과: {{ $case['outcome'] }}</p></li>@endforeach</ol>
+            <h4>수정·보강 내용</h4><ul>@foreach($check['corrections'] as $correction)<li>{{ $correction }}</li>@endforeach</ul>
+            <h4>미시연·추가 확인</h4><ul>@foreach($check['limitations'] as $limitation)<li>{{ $limitation }}</li>@endforeach</ul>
+            <a class="open" href="{{ $adminUrl.$check['path'] }}" target="_blank" rel="noopener">진입 화면 열기</a>
+        </details>
+        @endforeach
+    </section>
+    <h2>영역별 주요 화면 진입 링크</h2>
+    <p>아래는 영역별 바로가기입니다. 검수 결과는 번호별 기록과 운영 메뉴 기록을 기준으로 확인해 주세요.</p>
 
     @foreach($areas as $area)
         @php($baseUrl = !empty($area['admin']) ? $adminUrl : $frontUrl)

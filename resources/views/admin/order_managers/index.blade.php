@@ -22,7 +22,7 @@
             font-family: inherit;
         }
     </style>
-    <div id="contents">
+    <div id="contents" class="admin-workspace admin-legacy">
         <div class="row">
             <div class="box box1">
                 <div class="page_info">
@@ -35,16 +35,7 @@
                 </div>
                 <div class="conbx">
                     <div class="con_w">
-                        @if(session('success_message'))
-                            <div style="background:#e8f5e9; color:#1b5e20; padding:12px; margin-bottom:15px; border-radius:4px;">
-                                {{ session('success_message') }}
-                            </div>
-                        @endif
-                        @if($errors->any())
-                            <div style="background:#ffebee; color:#b71c1c; padding:12px; margin-bottom:15px; border-radius:4px;">
-                                {{ $errors->first() }}
-                            </div>
-                        @endif
+                        @include('admin.shared.messages')
 
                         <form method="GET" action="{{ route('admin.order_managers.index') }}" class="tb01" style="margin-bottom:15px;">
                             <table>
@@ -81,11 +72,12 @@
                             <div class="count">총 <strong>{{ number_format($managers->total()) }}</strong> 건</div>
                             <div class="right_bx list-top-actions">
                                 <div class="r_btn_w">
-                                    <a href="{{ url()->current() }}" class="btn02 col5 pop_btn" data-pop="pop_create">발주사 등록</a>
+                                    <a href="{{ url()->current() }}" class="admin-btn primary pop_btn" data-pop="pop_create">발주사 등록</a>
                                 </div>
                             </div>
                         </div>
 
+                        <p class="admin-help">전체 배정 품목수는 취소·반품·교환 이력을 포함합니다. 발주대기·발주완료 목록에는 각 배송 단계에 해당하는 상품만 표시됩니다.</p>
                         <div class="tb01 ovS">
                             <table>
                                 <colgroup>
@@ -107,16 +99,20 @@
                                         <th>발주사/담당자</th>
                                         <th>연락처</th>
                                         <th>관리상품수</th>
-                                        <th>발주품목수</th>
+                                        <th>전체 배정 품목수</th>
                                         <th>등록일</th>
                                         <th>관리</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @forelse($managers as $manager)
+                                        @php
+                                            $portalAvailable = $manager->canAccess();
+                                            $portalReason = '현재 '.$manager->access_status.' 상태입니다. 수정에서 상태와 접속 기간을 확인해 주세요.';
+                                        @endphp
                                         <tr>
                                             <td>{{ $managers->firstItem() + $loop->index }}</td>
-                                            <td>{{ (int) $manager->status === 1 ? '운영' : '중지' }}</td>
+                                            <td>{{ $manager->access_status }}</td>
                                             <td class="textL">
                                                 <div>URL: {{ route('distributor.login') }}</div>
                                                 <div>ID: {{ $manager->email }}</div>
@@ -129,22 +125,23 @@
                                             <td>{{ optional($manager->created_at)->format('Y-m-d H:i') }}</td>
                                             <td class="t_c">
                                                 <div class="order-manager-actions">
-                                                    <a href="{{ url()->current() }}" class="btn02 col5 pop_btn" data-pop="pop_edit_{{ $manager->id }}">수정</a>
+                                                    <a href="{{ url()->current() }}" class="admin-btn primary pop_btn" data-pop="pop_edit_{{ $manager->id }}">수정</a>
                                                     <form method="POST" action="{{ route('admin.order_managers.portal', $manager->id) }}">
                                                         @csrf
                                                         <input type="hidden" name="destination" value="pending">
-                                                        <button type="submit" class="btn02">발주대기</button>
+                                                        <button type="submit" class="admin-btn" @disabled(!$portalAvailable) @if(!$portalAvailable) title="{{ $portalReason }}" aria-describedby="portal-help-{{ $manager->id }}" @endif>발주대기</button>
                                                     </form>
                                                     <form method="POST" action="{{ route('admin.order_managers.portal', $manager->id) }}">
                                                         @csrf
                                                         <input type="hidden" name="destination" value="completed">
-                                                        <button type="submit" class="btn02">발주완료</button>
+                                                        <button type="submit" class="admin-btn" @disabled(!$portalAvailable) @if(!$portalAvailable) title="{{ $portalReason }}" aria-describedby="portal-help-{{ $manager->id }}" @endif>발주완료</button>
                                                     </form>
                                                     <form method="POST" action="{{ route('admin.order_managers.destroy', $manager->id) }}" onsubmit="return confirm('발주사를 삭제하면 연결된 상품/주문 배정이 해제됩니다. 삭제하시겠습니까?');">
                                                         @csrf
-                                                        <button type="submit" class="btn02 col7">삭제</button>
+                                                        <button type="submit" class="admin-btn danger">삭제</button>
                                                     </form>
                                                 </div>
+                                                @if(!$portalAvailable)<p class="admin-help order-manager-portal-help" id="portal-help-{{ $manager->id }}">{{ $portalReason }}</p>@endif
                                             </td>
                                         </tr>
                                     @empty
@@ -156,8 +153,8 @@
                             </table>
                         </div>
 
-                        <div class="page_bx1">
-                            {{ $managers->links() }}
+                        <div class="admin-pagination">
+                            {{ $managers->withQueryString()->onEachSide(2)->links('admin.shared.pagination') }}
                         </div>
 
                         <div class="popup_bx" data-id="pop_create">

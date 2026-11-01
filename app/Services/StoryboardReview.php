@@ -4,14 +4,15 @@ namespace App\Services;
 
 use App\Models\Notice;
 use App\Models\Order;
+use App\Models\ShopChannel;
 use App\Models\User;
 
 class StoryboardReview
 {
-    public const REVIEWED_AT = '2026-10-31';
+    public const REVIEWED_AT = '2026-11-01';
 
     /** Entry links never create records, submit claims, or switch the signed-in account. */
-    public function pages(?User $member): array
+    public function pages(?User $member, ?ShopChannel $reviewShop = null): array
     {
         $definitions = [
             1 => ['표지', '/', 'PPT 문서 표지'],
@@ -222,8 +223,87 @@ class StoryboardReview
             206 => ['취소/환불안내 등록', '/channel/settings/refund', '기본/사용자·상태·필수 명칭·내용 에디터·저장/취소 확인'],
             207 => ['취소/환불안내 수정', '/channel/settings/refund', '서식 편집기·수정 저장/취소·공백 명칭 차단·복사본 개별 수정과 원본 유지 확인'],
             208 => ['취소/환불안내 보기', '/channel/settings/refund', '명칭·설정구분·상태·실제 연결 상품수·굵게/목록 등 서식 표시 확인'],
+            209 => ['Shop 채널 영역 구분', '/shop-channel/gate', 'Shop 채널 영역 구분. 이번 시연은 212·213·215번'],
+            210 => ['Shop 접속화면 구분', '/shop-channel/gate', '접속화면 구분 페이지'],
+            211 => ['입장코드 단독 화면 · 재설계 제외', '/shop-channel/gate', '구조의 변경으로 화면 재설계 표시가 있어 사용자 지시에 따라 제외'],
+            212 => ['비공개 Shop 휴대폰번호·입장코드', '/shop-channel/gate', '미등록 번호·잘못된 코드 거절 → 정상 입장 → 로그아웃 후 직접 접근 차단'],
+            213 => ['Shop 회원·소셜 로그인', '/shop-channel/login', '잘못된 비밀번호·아이디/이메일 로그인·아이디 저장/해제 확인. 실제 네이버 인증은 사용자 요청으로 보류'],
+            214 => ['간편회원 가입절차 구분', '/shop-channel/login', '간편회원가입 구분 페이지. 실제 가입 화면은 215번'],
+            215 => ['Shop 간편 소셜회원가입', '/shop-channel/login', '가입 화면·성별·인증 이메일·첨부 DOCX 원문과 동의 UI 시연. 신규가입 생성·차단은 테스트 DB 검증'],
+            216 => ['Shop 채널 메인 영역 구분', '/shop-channel/main', '메인 구분 슬라이드. 실제 시연은 217번'],
+            217 => ['Shop 채널 메인', '/shop-channel/main', '배너 자동/이전/다음과 연결 URL·키워드별 상품·가로 상품 이동 확인'],
+            218 => ['Shop 상품영역 구분', '/shop-channel/products', '상품영역 구분 슬라이드'],
+            219 => ['Shop 상품 목록', '/shop-channel/products', '대/중/소분류·상품코드/이름 검색·가격 정렬과 공동구매 분리 확인'],
+            220 => ['Shop 상품 상세', '/shop-channel/products', '이미지 전환·옵션 추가금·수량·장바구니/구매하기 확인'],
+            221 => ['Shop 구매옵션', '/shop-channel/products', '하단 고정 구매바·옵션 펼침·행별 수량/삭제 및 상하단 동기화 확인'],
+            222 => ['Shop 판매 정보', '/shop-channel/products', '등록된 상품 고시와 배송비/반품 안내 확인'],
+            223 => ['Shop 상품 Q&A', '/shop-channel/products', '로그인 회원 본인의 문의 목록과 문의하기 확인'],
+            224 => ['Shop 상품 문의하기', '/shop-channel/products', '상품 이미지/분류/이름·제목/질문·에디터·취소/등록 확인'],
+            225 => ['Shop 상품 문의 상세', '/shop-channel/products', '문의 저장·판매자 실제 답변 저장·고객 화면 답변완료/펼친 본문 확인'],
+            226 => ['Shop 공동구매 목록', '/shop-channel/joint-purchases', '공동구매 이름·코드·기간·가격·목록/분류/검색 확인'],
+            227 => ['Shop 공동구매 상세/현황', '/shop-channel/joint-purchases', '옵션 숨김·수량별 개당 혜택·모의주문 후 신청수량/마스킹/신청중 확인'],
+            228 => ['Shop 장바구니', '/shop/cart', '자사/공개 탭·선택·개별/선택 주문·수량 변경 취소/저장·삭제/합계 확인'],
+            229 => ['Shop 주문서 작성', '/shop/order', '회원 고정정보·배송지/수신자 이메일·삭제·배송비·포인트 차감·결제금액/수단·고지/동의 확인'],
+            230 => ['Shop 결제 완료', '/shop/order/complete', '두 결제수단의 로컬 모의결제와 주문/재고/포인트/장바구니 저장 확인. 실 PG 미시연'],
+            231 => ['Shop 주문 내역', '/shop/order/details', '주문번호·일시·배송정보·상품/수량/배송비/주문금액·포인트 반영 결제액 확인'],
+            232 => ['Shop 주문영역 구분', '/shop/order/confirm', '주문영역 구분. 실제 기능은 233번부터'],
+            233 => ['Shop 주문조회', '/shop/order/confirm', '주문자 이름·연락처만 입력 → 불일치 거절 → 일치 시 주문관리 진입'],
+            234 => ['Shop 주문관리', '/shop/order/details', '동일 폭 4개 탭·주문상태/기간/날짜 조회·상태별 버튼 확인'],
+            235 => ['Shop 주문상품 문의', '/shop/order/details', '주문상품 요약·제목/질문 에디터·취소 초기화/문의 저장 확인'],
+            236 => ['Shop 취소신청', '/shop/order/details', '사유선택·기타 필수입력·신청/판매자 승인·모의환불 확인'],
+            237 => ['Shop 반품신청', '/shop/order/details', '자동/수동 회수·반송지/송장·기타사유·회수완료/모의환불 확인'],
+            238 => ['Shop 교환신청', '/shop/order/details', '접수 → 판매자 승인/회수/교환완료 → 재발송 확인'],
+            239 => ['Shop 구매확정', '/shop/order/details', '4.5점 선택/해제·후기·재발송상품 구매확정 확인. hover 미리보기 추가 확인'],
+            240 => ['Shop 취소 목록', '/shop/cancel/details', '요청/완료·사유·모의환불·탭 선택 표시 확인'],
+            241 => ['Shop 반품 목록', '/shop/return/details', '요청/완료·수동송장 수정·반송지·처리상태 필터 확인'],
+            242 => ['Shop 교환 목록', '/shop/exchange/details', '교환·재발송 상품/송장·원상품 연결 확인'],
+            243 => ['Shop 주문 상세', '/shop/order/details', '고객/배송/결제·상품별 반품환불/재발송/구매확정 일시 확인'],
+            244 => ['Shop 공지사항 영역 구분', '/shop-channel/notices', '공지사항 구분 슬라이드'],
+            245 => ['Shop 공지사항 목록', '/shop-channel/notices', '공지 고정·제목/본문 검색·작성자/날짜·페이지·56px 목록 확인'],
+            246 => ['Shop 공지사항 상세', '/shop-channel/notices', '첨부 다운로드·이전/다음 48px·검색어/페이지 유지 복귀 확인'],
+            247 => ['발주사 RF-04 영역 구분', '/distributor/login', '영역 구분 문서. 실제 로그인은249번'],
+            248 => ['발주사 접속화면 구분', '/distributor/login', '접속화면 구분 문서'],
+            249 => ['발주사 로그인', '/distributor/login', '기존 DB 발주사 성명·이메일·비밀번호 입력 → 오류/정상 로그인 확인. PPT 대비 비밀번호 추가 유지·로고 설정 차이는 기록 참조'],
+            250 => ['발주관리 구분', '/distributor/orders/pending', '발주관리 구분 문서'],
+            251 => ['발주 대기 목록', '/distributor/orders/pending', '본인 배정 상품·기간·검색구분·검색어·초기화·페이지·보기/수정 확인'],
+            252 => ['발주 처리하기', '/distributor/orders/pending', '엑셀 다운로드 → 택배사·송장 입력 → 파일 첨부·일괄처리 → 배송중/완료목록 이동. 오류/중복/배정 외 행 전체 차단'],
+            253 => ['발주 대기 상세·수정', '/distributor/orders/pending', '보기/수정 팝업 → 수령인·우편번호 검색·주소·택배사·송장 → 저장/창닫기. 주문상품별 주소 유지'],
+            254 => ['발주 완료 목록', '/distributor/orders/completed', '송장 검색·완료 엑셀 다운로드·보기/수정·배송완료 이후 잠금 확인'],
+            255 => ['발주 완료 상세·수정', '/distributor/orders/completed', '상세/수정 팝업 → 배송중 송장 수정 → 배송완료 → 서버 수정 거부·창닫기 후 목록 갱신'],
+            256 => ['전체 관리자 영역 구분', '/admin/dashboard', '상세 기록의 시연 절차·결과·미시연 범위를 확인해 주세요.'],
+            257 => ['관리자 로그인 구분', '/admin/login', '상세 기록의 시연 절차·결과·미시연 범위를 확인해 주세요.'],
+            258 => ['전체 관리자 로그인', '/admin/login', '상세 기록의 시연 절차·결과·미시연 범위를 확인해 주세요.'],
+            259 => ['관리자 레이아웃 구분', '/admin/dashboard', '상세 기록의 시연 절차·결과·미시연 범위를 확인해 주세요.'],
+            260 => ['대시보드·메뉴·바로가기', '/admin/dashboard', '상세 기록의 시연 절차·결과·미시연 범위를 확인해 주세요.'],
+            261 => ['일반 목록', '/admin/products', '상세 기록의 시연 절차·결과·미시연 범위를 확인해 주세요.'],
+            262 => ['갤러리 목록', '/admin/products?view=gallery', '상세 기록의 시연 절차·결과·미시연 범위를 확인해 주세요.'],
+            263 => ['게시물 상세', '/admin/view', '상세 기록의 시연 절차·결과·미시연 범위를 확인해 주세요.'],
+            264 => ['댓글 수정', '/admin/view', '상세 기록의 시연 절차·결과·미시연 범위를 확인해 주세요.'],
+            265 => ['주문 상세·탭·처리', '/admin/sub01', '상세 기록의 시연 절차·결과·미시연 범위를 확인해 주세요.'],
+            266 => ['소형 레이어', '/admin/sub02', '상세 기록의 시연 절차·결과·미시연 범위를 확인해 주세요.'],
+            267 => ['입력 폼·에디터', '/admin/sub02', '상세 기록의 시연 절차·결과·미시연 범위를 확인해 주세요.'],
+            268 => ['새 창 입력', '/admin/newpage', '상세 기록의 시연 절차·결과·미시연 범위를 확인해 주세요.'],
+            269 => ['대형 팝업', '/admin/sub02', '상세 기록의 시연 절차·결과·미시연 범위를 확인해 주세요.'],
+            270 => ['로딩 진행창', '/admin/loading', '상세 기록의 시연 절차·결과·미시연 범위를 확인해 주세요.'],
+            271 => ['문서 종료', '/admin/dashboard', '상세 기록의 시연 절차·결과·미시연 범위를 확인해 주세요.'],
         ];
-        $documentPages = [1, 2, 3, 4, 5, 6, 8, 10, 12, 14, 19, 27, 65, 66, 68, 71, 74, 109, 127, 137, 167, 177, 182, 187, 192, 204];
+        $documentPages = [1, 2, 3, 4, 5, 6, 8, 10, 12, 14, 19, 27, 65, 66, 68, 71, 74, 109, 127, 137, 167, 177, 182, 187, 192, 204, 209, 210, 214, 216, 218, 232, 244, 247, 248, 250, 256, 257, 259, 271];
+        if ($reviewShop && app(ShopChannelRuntime::class)->isChannelAvailable($reviewShop)) {
+            $privateShop = ShopChannel::where('vendor_id', $reviewShop->vendor_id)->where('status', 1)->where('is_public', 0)
+                ->orderByDesc('id')->limit(100)->get()->first(fn ($shop) => app(ShopChannelRuntime::class)->isChannelAvailable($shop));
+            if ($privateShop) {
+                $definitions[212][1] .= '?channel='.rawurlencode($privateShop->channel_code);
+            }
+            foreach ([213, 215] as $number) {
+                $definitions[$number][1] .= '?channel='.rawurlencode($reviewShop->channel_code);
+            }
+        }
+        if ($reviewShop && app(ShopChannelRuntime::class)->isChannelAvailable($reviewShop)) {
+            $entry = '/shop-channel/enter/'.rawurlencode($reviewShop->channel_code);
+            foreach ([216,217,232] as $number) $definitions[$number][1] = $entry;
+            $listing = $reviewShop->shopChannelProducts()->where('status',1)->where('approval_status','approved')->whereHas('product',fn($q)=>$q->where('status',1))->first();
+            if ($listing) foreach (range(220,225) as $number) $definitions[$number][1] = $entry.'?product='.$listing->id;
+        }
         $notice = Notice::where('status', 1)->latest('id')->first();
         if ($notice) {
             $definitions[16][1] = '/notice/view/'.$notice->id;
@@ -232,14 +312,22 @@ class StoryboardReview
         if ($order) {
             $definitions[64][1] = '/mypage/order/view?id='.$order->id;
         }
+        if ($reviewShop && $member) {
+            $shopOrder = Order::where('user_id',$member->id)->whereHas('orders_products',fn($q)=>$q->where('shop_channel_id',$reviewShop->id))->latest('id')->first();
+            if ($shopOrder) $definitions[243][1] = '/shop/order/view/'.$shopOrder->id;
+        }
+        if ($reviewShop) {
+            $shopNotice=\App\Models\ShopChannelNotice::where('shop_channel_id',$reviewShop->id)->where('status',1)->latest('id')->first();
+            if ($shopNotice) $definitions[246][1] = '/shop-channel/notices/'.$shopNotice->id;
+        }
         $histories = app(StoryboardReviewHistory::class)->all();
         $pages = [];
         foreach ($definitions as $number => [$title, $path, $steps]) {
-            $status = in_array($number, $documentPages, true) ? 'document' : (in_array($number, [81, 188, 190, 191], true) ? 'excluded' : (in_array($number, [39, 73], true) ? 'deferred' : (in_array($number, [60, 67, 72, 87, 88, 89], true) ? 'partial' : 'reviewed')));
+            $status = in_array($number, $documentPages, true) ? 'document' : (in_array($number, [81, 188, 190, 191, 211], true) ? 'excluded' : (in_array($number, [39, 73], true) ? 'deferred' : ($number === 215 ? 'test_db' : (in_array($number, [60, 67, 72, 87, 88, 89, 213, 217, 229, 230, 239, 249, 267], true) ? 'partial' : 'reviewed'))));
             $pages[] = compact('number', 'title', 'path', 'steps', 'status') + [
-                'admin' => in_array($number, [173, 174], true),
+                'admin' => $number >= 256 || in_array($number, [173, 174], true),
                 'history' => $histories[$number],
-                'status_label' => ['excluded' => '검수 대상 제외', 'document' => '문서/구분', 'deferred' => '실제 변경 보류', 'partial' => '추가 확인 있음', 'reviewed' => '시연 확인 기록'][$status],
+                'status_label' => ['excluded' => '검수 대상 제외', 'document' => '문서/구분', 'deferred' => '실제 변경 보류', 'partial' => '추가 확인 있음', 'test_db' => '신규가입 테스트 DB 검증', 'reviewed' => '시연 확인 기록'][$status],
                 'note' => in_array($number, [61, 62, 63], true) ? 'PPT 설명 제목은 찜 목록으로 복사되어 있어 화면 ID와 주문 탭 흐름으로 구분했습니다.' : '',
             ];
         }

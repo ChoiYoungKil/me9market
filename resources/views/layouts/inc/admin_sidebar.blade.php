@@ -1,91 +1,58 @@
-<div id="l_menu">
-    <div class="con_bx">
-        <div class="con1">
-            <div class="con_w">
-                <ul class="dep1_wrap">
-                    <li class="dep1 icon1_1">
-                        <a href="{{ url('admin/dashboard') }}">대시보드</a>
-                    </li>
-                    <li
-                        class="dep1 icon1_2 arrow @if(Session::get('page') == 'users' || Session::get('page') == 'admins' || strpos(Session::get('page'), 'view_') !== false || Session::get('page') == 'add_edit_user' || Session::get('page') == 'add_edit_admin') on @endif">
-                        <a href="{{ url()->current() }}">회원관리</a>
-                        <ul class="dep2_wrap">
-                            <li @if(Session::get('page') == 'users' || Session::get('page') == 'add_edit_user') class="on"
-                            @endif><a href="{{ url('admin/users') }}">회원 리스트</a></li>
-                            <li @if(Session::get('page') == 'admins' || strpos(Session::get('page'), 'view_') !== false || Session::get('page') == 'add_edit_admin') class="on" @endif><a
-                                    href="{{ url('admin/admins') }}">관리자/판매자 리스트</a></li>
-                        </ul>
-                    </li>
-                    <li
-                        class="dep1 icon1_3 arrow @if(in_array(Session::get('page'), ['products', 'categories', 'sections', 'brands', 'filters', 'attributes', 'banners', 'coupons', 'ratings'])) on @endif">
-                        <a href="{{ url()->current() }}">상품관리</a>
-                        <ul class="dep2_wrap">
-                            <li @if(Session::get('page') == 'categories') class="on" @endif><a
-                                    href="{{ url('admin/categories') }}">분류관리</a></li>
-                            <li @if(Session::get('page') == 'products') class="on" @endif><a
-                                    href="{{ url('admin/products') }}">상품 리스트</a></li>
-                            @if(Auth::guard('admin')->user()?->type !== 'vendor')
-                                @foreach(['sections' => '섹션 관리', 'brands' => '브랜드 관리', 'filters' => '필터 관리', 'banners' => '배너 관리', 'ratings' => '리뷰 관리'] as $path => $label)
-                                    <li @class(['on' => Session::get('page') === $path])><a href="{{ url('admin/'.$path) }}">{{ $label }}</a></li>
-                                @endforeach
-                            @endif
-                            <li @class(['on' => Session::get('page') === 'coupons'])><a href="{{ url('admin/coupons') }}">쿠폰 관리</a></li>
-                        </ul>
-                    </li>
-                    <li
-                        class="dep1 icon1_4 arrow @if(in_array(Session::get('page'), ['notices', 'faqs', 'contacts'])) on @endif">
-                        <a href="{{ url()->current() }}">고객센터</a>
-                        <ul class="dep2_wrap">
-                            <li @if(Session::get('page') == 'notices') class="on" @endif><a
-                                    href="{{ url('admin/notices') }}">공지사항</a></li>
-                            <li @if(Session::get('page') == 'faqs') class="on" @endif><a
-                                    href="{{ url('admin/faqs') }}">자주묻는질문</a></li>
-                            <li @if(Session::get('page') == 'contacts') class="on" @endif><a
-                                    href="{{ url('admin/contacts') }}">제휴/문의</a></li>
-                        </ul>
-                    </li>
-                    <li
-                        class="dep1 icon1_5 arrow @if(Session::get('page') == 'order_managers') on @endif">
-                        <a href="{{ url()->current() }}">발주관리</a>
-                        <ul class="dep2_wrap">
-                            <li @if(Session::get('page') == 'order_managers') class="on" @endif><a
-                                    href="{{ route('admin.order_managers.index') }}">발주사 관리</a></li>
-                        </ul>
-                    </li>
-                    <li class="dep1 icon1_5 @if(Session::get('page') == 'channel_points') on @endif">
-                        <a href="{{ route('admin.channel_points.index') }}">포인트관리</a>
-                    </li>
-                    <li class="dep1 icon1_6 {{ Session::get('page') === 'shipping' ? 'on' : '' }}">
-                        <a href="{{ route('admin.shipping.index') }}">배송비설정</a>
-                    </li>
-                    <li class="dep1 icon1_6">
-                        <a href="{{ route('admin.refund_policies') }}">취소/환불안내</a>
-                    </li>
-                    <li class="dep1 icon1_5 @if(Session::get('page') == 'settlements') on @endif">
-                        <a href="{{ route('admin.settlements.index') }}">정산관리</a>
-                    </li>
-                </ul>
-            </div>
-            <div class="con_w">
-                <div class="c_ttl">바로가기 메뉴</div>
-                <ul class="dep1_wrap type2">
-                    <li class="dep1 icon2_1">
-                        <a href="{{ url('admin/orders') }}">주문관리</a>
-                    </li>
-                    <li class="dep1">
-                        <a href="{{ route('home') }}">Me9 market</a>
-                    </li>
-                    <li class="dep1">
-                        <a href="{{ route('shop.monitor.login') }}">Shop 모니터링</a>
-                    </li>
-                    <li class="dep1">
-                        <a href="{{ url('admin/update-admin-details') }}">내 정보</a>
-                    </li>
-                    <li class="dep1">
-                        <a href="{{ url('admin/update-admin-password') }}">비밀번호 변경</a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </div>
-</div>
+
+@php
+$current=Session::get('page');
+if (request()->is('admin/products')) {
+    $current=request()->query('view')==='gallery' ? 'products-gallery' : 'products';
+} elseif (request()->is('admin/users')) {
+    $current=request()->query('seller_status')==='pending' ? 'seller-review' : 'users';
+} elseif (request()->is('admin/add-edit-user','admin/add-edit-user/*')) {
+    $current='users';
+} elseif (request()->routeIs('admin.users.seller_review')) {
+    $current='seller-review';
+} elseif (request()->is('admin/admins','admin/admins/*','admin/add-edit-admin','admin/add-edit-admin/*','admin/view-vendor-details/*')) {
+    $current='admins';
+}
+$full=in_array(Auth::guard('admin')->user()?->type,['admin','superadmin'],true);
+$groups=[
+ ['대시보드','dashboard','admin/dashboard',[]],
+ ['회원관리','members',null,[['회원 리스트','users','admin/users'],['판매자 승인 대기','seller-review','admin/users?seller_status=pending'],['관리자/판매자','admins','admin/admins']]],
+ ['Shop 채널','channels',null,[['운영중지 승인','shop-channel-closures','admin/shop-channel-closures']]],
+ ['상품관리','products',null,[['상품 목록','products','admin/products'],['상품 갤러리','products-gallery','admin/products?view=gallery'],['분류관리','categories','admin/categories'],['상품 설정','configuration',null,[['섹션','sections','admin/sections'],['브랜드','brands','admin/brands'],['필터','filters','admin/filters'],['배너','banners','admin/banners'],['리뷰','ratings','admin/ratings'],['쿠폰','coupons','admin/coupons']]]]],
+ ['주문관리','orders','admin/orders',[]],
+ ['고객센터','support',null,[['공지사항','notices','admin/notices'],['자주묻는질문','faqs','admin/faqs'],['제휴/문의','contacts','admin/contacts']]],
+ ['발주관리','order_managers','admin/order-managers',[]],
+ ['포인트관리','channel_points','admin/channel-points',[]],
+ ['배송비설정','shipping','admin/shipping-charges',[]],
+ ['취소/환불안내','refund_policies','admin/refund-policies',[]],
+ ['정산관리','settlements','admin/settlements',[]],
+ ['처리 이력','activities','admin/activities',[]],
+];
+$activeKeys=['members'=>['users','seller-review','admins','add_edit_user','add_edit_admin','view_vendor_details'],'channels'=>['shop-channel-closures'],'products'=>['products','products-gallery','categories','sections','brands','filters','attributes','banners','coupons','ratings'],'support'=>['notices','faqs','contacts'],'channel_points'=>['channel_points','channel-points']];
+@endphp
+<div id="l_menu"><div class="con_bx"><div class="con1"><div class="con_w"><ul class="dep1_wrap">
+@foreach($groups as [$label,$key,$path,$children])
+@if($full || in_array($key,['dashboard','products','orders'],true))
+@php($active=in_array($current,$activeKeys[$key]??[$key],true))
+<li class="dep1 {{ $children?'arrow':'' }} {{ $active?'on':'' }}">
+@if($path)<a href="{{ url($path) }}"
+@if($active) aria-current="page"
+@endif>{{ $label }}</a>
+@else<a href="{{ url()->current() }}" aria-expanded="{{ $active?'true':'false' }}">{{ $label }}</a>
+@endif
+@if($children)<ul class="dep2_wrap">
+@foreach($children as $child)
+@if($full || in_array($child[1],['products','products-gallery','coupons'],true))
+<li class="{{ $current===$child[1]?'on':'' }}">
+@if($child[2])<a href="{{ url($child[2]) }}" @if($current===$child[1]) aria-current="page" @endif>{{ $child[0] }}</a>
+@else<details
+@if(in_array($current,['sections','brands','filters','banners','ratings','coupons'],true)) open
+@endif><summary>{{ $child[0] }}</summary><ul class="admin-submenu">
+@foreach($child[3] as $leaf)<li class="{{ $current===$leaf[1]?'on':'' }}"><a href="{{ url($leaf[2]) }}">{{ $leaf[0] }}</a></li>
+@endforeach</ul></details>
+@endif</li>
+@endif
+@endforeach</ul>
+@endif</li>
+@endif
+@endforeach
+</ul></div><div class="con_w"><div class="c_ttl">바로가기</div><nav class="admin-shortcuts" aria-label="관리자 바로가기"><a href="{{ url('admin/users?seller_status=pending') }}">판매자 승인 대기</a><a href="{{ url('admin/orders?item_status=cancel_requested') }}">취소 요청</a><a href="{{ url('admin/orders?item_status=return_requested') }}">반품 요청</a><a href="{{ url('admin/orders?item_status=exchange_requested') }}">교환 요청</a><a href="{{ url('admin/shop-channel-closures') }}">채널 운영중지 승인</a><a href="{{ url('admin/content/notices/create') }}">공지 작성</a><a href="{{ route('home') }}">Me9 Market</a><a href="{{ url('admin/update-admin-details') }}">내 정보</a></nav></div></div></div></div>

@@ -3,19 +3,44 @@
 namespace App\Http\Controllers\Dev;
 
 use App\Http\Controllers\Controller;
+use App\Models\ShopChannel;
+use App\Services\ShopSignupDocuments;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Storage;
 
 class PreviewController extends Controller
 {
+    public function shopSignup(Request $request)
+    {
+        abort_unless(app()->environment('local') && in_array($request->ip(), ['127.0.0.1', '::1'], true), 404);
+        $admin = auth('admin')->user();
+        if (! $admin) {
+            $request->session()->put('url.intended', $request->fullUrl());
+
+            return redirect()->route('admin.login');
+        }
+        abort_unless($admin && (int) $admin->status === 1 && in_array($admin->type, ['admin', 'superadmin'], true), 403);
+        $request->validate(['channel' => 'required|integer|min:1']);
+        $shop = ShopChannel::findOrFail($request->integer('channel'));
+
+        return response()->view('shop.social_signup', [
+            'pending' => ['provider' => 'naver', 'name' => '[검수용] 가입 화면', 'email' => 'qa215-preview@example.test'],
+            'shop' => $shop, 'canRegister' => app(ShopSignupDocuments::class)->canRegister(), 'isPreview' => true,
+            'documents' => app(ShopSignupDocuments::class)->all(),
+        ])->header('Cache-Control', 'no-store, private')->header('Referrer-Policy', 'no-referrer');
+    }
+
     public function recoveryMail(Request $request, string $id)
     {
         abort_unless(app()->environment('local') && in_array($request->ip(), ['127.0.0.1', '::1'], true), 404);
         $expires = $request->session()->get('account_recovery_previews.'.$id);
         abort_unless(is_numeric($expires) && now()->timestamp < (int) $expires, 404);
         $path = 'account-recovery-mail/'.$id.'.enc';
-        abort_unless(\Illuminate\Support\Facades\Storage::disk('local')->exists($path), 404);
-        $html = \Illuminate\Support\Facades\Crypt::decryptString(\Illuminate\Support\Facades\Storage::disk('local')->get($path));
+        abort_unless(Storage::disk('local')->exists($path), 404);
+        $html = Crypt::decryptString(Storage::disk('local')->get($path));
         $notice = '<div style="padding:14px 20px;background:#ede4fa;color:#75518d;text-align:center;font:13px/1.7 sans-serif;">로컬 검수 메일함 · 외부 이메일로 발송하지 않은 검수용 메일입니다.</div>';
+
         return response(preg_replace('/(<body[^>]*>)/', '$1'.$notice, $html, 1))
             ->header('Content-Type', 'text/html; charset=UTF-8')->header('Cache-Control', 'no-store, private')
             ->header('Referrer-Policy', 'no-referrer')->header('X-Frame-Options', 'DENY');

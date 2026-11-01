@@ -3,7 +3,7 @@
 @section('page_type', 'sub')
 
 @section('content')
-    <div id="contents">
+    <div id="contents" class="admin-workspace admin-legacy">
         <div class="row">
             <div class="box box1">
                 <div class="page_info">

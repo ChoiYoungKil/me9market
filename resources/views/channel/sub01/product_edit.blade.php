@@ -10,5 +10,10 @@
 <label>판매 가격 (원)<input type="number" min="0" step="1" name="selling_price" required value="{{ old('selling_price',(int)$shopProduct->selling_price) }}" @readonly($shopProduct->product_type!=='own'&&$product->price_constraint_enabled&&$product->price_constraint_type==='fixed')></label>
 <label>지급 포인트<input name="reward_points" type="number" min="0" step="1" value="{{ old('reward_points',$shopProduct->reward_points??$product->reward_points??0) }}" @readonly($shopProduct->shopChannel->use_own_pg)></label>
 <label>채널 재고 수량<input type="number" name="stock" min="0" step="1" value="{{ old('stock',$shopProduct->stock) }}"><small>비워두면 원상품의 재고 설정을 따릅니다.</small></label><label>1회 구매제한수량<input type="number" name="purchase_limit" min="0" step="1" value="{{ old('purchase_limit',$shopProduct->purchase_limit) }}"></label>
+<label>Shop 배송비 정책<select name="shipping_policy_id" required><option value="" disabled @selected(!old('shipping_policy_id',$shopProduct->shipping_policy_id))>배송비 정책을 선택해 주세요</option>
+@foreach($deliveryPolicies as $deliveryPolicy)
+<option value="{{ $deliveryPolicy->id }}" @selected((string)old('shipping_policy_id',$shopProduct->shipping_policy_id)===(string)$deliveryPolicy->id) @disabled(!$deliveryPolicy->status)>{{ $deliveryPolicy->name }}{{ $deliveryPolicy->status?'':' (중지)' }}</option>
+@endforeach
+</select><small><a href="{{ route('channel.delivery.list') }}">배송비 정책 등록·수정</a> · 이 Shop의 상품에 적용할 정책을 선택합니다.</small></label>
 <fieldset><legend>판매상태</legend><label><input type="radio" name="status" value="1" @checked(old('status',$shopProduct->status)==1)>판매</label><label><input type="radio" name="status" value="0" @checked(old('status',$shopProduct->status)==0)>중지</label></fieldset></div><div class="shop-actions"><button type="submit">수정</button><a href="{{ route('channel.shop_product01',['shop_id'=>$shopId]) }}" class="secondary">목록</a></div></form></section></div></div>
 @endsection

@@ -1,163 +1,36 @@
+
 @extends('layouts.admin')
-
 @section('content')
-    <div id="contents">
-        <div class="row">
-            <div class="box box1">
-                <div class="page_info">
-                    <div class="ttl">상품 관리</div>
-                    <ul class="dep">
-                        <li>홈</li>
-                        <li>상품 관리</li>
-                        <li>상품 리스트</li>
-                    </ul>
-                </div>
-                <div class="conbx">
-                    <div class="con_w">
-                        <div class="list_top1">
-                            <div class="count">총 <strong>{{ count($products) }}</strong> 개</div>
-                            <div class="r_btn_w ml20">
-                                <a href="{{ url('admin/add-edit-product') }}" class="btn02">상품 추가</a>
-                            </div>
-                        </div>
-
-                        @if (Session::has('success_message'))
-                            <div class="alert alert-success alert-dismissible fade show" role="alert" style="margin-top: 10px;">
-                                <strong>성공:</strong> {{ Session::get('success_message') }}
-                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                        @endif
-
-                        <div class="tb01 ovS">
-                            <table class="table table-bordered">
-                                <colgroup>
-                                    <col width="60px">
-                                    <col width="200px">
-                                    <col width="120px">
-                                    <col width="100px">
-                                    <col width="120px">
-                                    <col width="150px">
-                                    <col width="150px">
-                                    <col width="100px">
-                                    <col width="80px">
-                                    <col width="200px">
-                                </colgroup>
-                                <thead>
-                                    <tr>
-                                        <th>번호</th>
-                                        <th>상품명</th>
-                                        <th>상품코드</th>
-                                        <th>색상</th>
-                                        <th>이미지</th>
-                                        <th>분류</th>
-                                        <th>섹션</th>
-                                        <th>등록자</th>
-                                        <th>상태</th>
-                                        <th>관리</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @if(count($products) > 0)
-                                        @foreach ($products as $product)
-                                            <tr>
-                                                <td>{{ $product['id'] }}</td>
-                                                <td style="text-align: left;">{{ $product['product_name'] }}</td>
-                                                <td>{{ $product['product_code'] }}</td>
-                                                <td>{{ $product['product_color'] }}</td>
-                                                <td>
-                                                    @if (!empty($product['product_image']))
-                                                        <img style="width:80px; height:80px; object-fit: cover;"
-                                                            src="{{ asset('front/images/product_images/small/' . $product['product_image']) }}">
-                                                    @else
-                                                        <img style="width:80px; height:80px; object-fit: cover;"
-                                                            src="{{ asset('front/images/product_images/small/no-image.png') }}">
-                                                    @endif
-                                                </td>
-                                                <td>{{ $product['category']['category_name'] ?? '카테고리 없음' }}</td>
-                                                <td>{{ $product['section']['name'] ?? '섹션 없음' }}</td>
-                                                <td>
-                                                    @if ($product['admin_type'] == 'vendor')
-                                                        <a target="_blank"
-                                                            href="{{ url('admin/view-vendor-details/' . $product['admin_id']) }}">판매자</a>
-                                                    @else
-                                                        {{ $product['admin_type'] == 'admin' ? '관리자' : '서브관리자' }}
-                                                    @endif
-                                                </td>
-                                                <td>
-                                                    @if ($product['status'] == 1)
-                                                        <a class="updateProductStatus" id="product-{{ $product['id'] }}"
-                                                            product_id="{{ $product['id'] }}" href="javascript:void(0)">
-                                                            <span style="color:green">활성</span>
-                                                        </a>
-                                                    @else
-                                                        <a class="updateProductStatus" id="product-{{ $product['id'] }}"
-                                                            product_id="{{ $product['id'] }}" href="javascript:void(0)">
-                                                            <span style="color:red">비활성</span>
-                                                        </a>
-                                                    @endif
-                                                </td>
-                                                <td>
-                                                    <a title="상품 수정" href="{{ url('admin/add-edit-product/' . $product['id']) }}"
-                                                        class="btn02">수정</a>
-                                                    <a title="속성 추가" href="{{ url('admin/add-edit-attributes/' . $product['id']) }}"
-                                                        class="btn02">속성</a>
-                                                    <a title="이미지 추가" href="{{ url('admin/add-images/' . $product['id']) }}"
-                                                        class="btn02">이미지</a>
-                                                    <a href="JavaScript:void(0)" class="btn02 confirmDelete" module="product"
-                                                        moduleid="{{ $product['id'] }}" style="color: red;">삭제</a>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    @else
-                                        <tr>
-                                            <td colspan="10" class="no_data">등록된 상품이 없습니다.</td>
-                                        </tr>
-                                    @endif
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        $(document).ready(function () {
-            // Update Product Status
-            $(".updateProductStatus").click(function () {
-                var status = $(this).text().trim();
-                var product_id = $(this).attr("product_id");
-
-                $.ajax({
-                    type: 'post',
-                    url: '/admin/update-product-status',
-                    data: { status: status, product_id: product_id },
-                    success: function (resp) {
-                        if (resp['status'] == 0) {
-                            $("#product-" + product_id).html("<span style='color:red'>비활성</span>");
-                        } else if (resp['status'] == 1) {
-                            $("#product-" + product_id).html("<span style='color:green'>활성</span>");
-                        }
-                    }, error: function () {
-                        alert("오류가 발생했습니다.");
-                    }
-                });
-            });
-
-            // Confirm Delete
-            $(".confirmDelete").click(function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                var module = $(this).attr('module');
-                var moduleid = $(this).attr('moduleid');
-                if (!confirm("정말로 삭제하시겠습니까?")) {
-                    return false;
-                }
-                submitAdminDelete("/admin/delete-product/" + moduleid);
-            });
-        });
-    </script>
+@php($isGallery = request('view') === 'gallery')
+<div id="contents" class="admin-workspace"><h1>{{ $isGallery ? '상품 갤러리' : '상품 관리' }}</h1>
+@include('admin.shared.messages')
+<section class="admin-panel"><form method="get" action="{{ route('admin.products') }}" class="admin-filter">
+<label>검색구분<select name="search_type"><option value="all">전체</option><option value="product_name"
+@selected(request('search_type')==='product_name')>상품명</option><option value="product_code"
+@selected(request('search_type')==='product_code')>상품코드</option></select></label><label>검색어<input type="search" name="keyword" value="{{ request('keyword') }}" maxlength="100"></label>
+<label>상태<select name="status"><option value="">전체</option><option value="1"
+@selected(request('status')==='1')>활성</option><option value="0"
+@selected(request('status')==='0')>비활성</option></select></label><label>시작일<input type="date" name="from" value="{{ request('from') }}"></label><label>종료일<input type="date" name="to" value="{{ request('to') }}"></label><label>목록 개수<select name="per_page">
+@foreach([10,20,50,100] as $count)<option value="{{ $count }}"
+@selected(request('per_page',20)==$count)>{{ $count }}개</option>
+@endforeach</select></label><input type="hidden" name="view" value="{{ request('view','table') }}"><button class="admin-btn primary">검색</button><a class="admin-btn" href="{{ route('admin.products', $isGallery ? ['view'=>'gallery'] : []) }}">초기화</a>
+</form></section>
+<div class="admin-toolbar"><p>총 <strong>{{ number_format($products->total()) }}</strong>개</p><div class="admin-actions"><a class="admin-btn" href="{{ request()->fullUrlWithQuery(['view'=>'table','page'=>null,'export'=>null]) }}">목록 보기</a><a class="admin-btn" href="{{ request()->fullUrlWithQuery(['view'=>'gallery','page'=>null,'export'=>null]) }}">갤러리 보기</a><a class="admin-btn" href="{{ request()->fullUrlWithQuery(['export'=>1,'page'=>null]) }}">엑셀 다운로드</a><a href="{{ url('admin/add-edit-product') }}" class="admin-btn primary">상품 추가</a></div></div>
+<form method="post" action="{{ url('admin/lists/products/bulk') }}">
+@csrf
+@if(request('view')==='gallery')
+<div class="admin-gallery">
+@forelse($products as $product)<article><img src="{{ asset('front/images/product_images/small/'.($product->product_image ?: 'no-image.png')) }}" alt="{{ $product->product_name }}"><div class="copy"><label><input type="checkbox" name="ids[]" value="{{ $product->id }}" class="admin-row-check"> {{ $product->product_code }}</label><h2>{{ $product->product_name }}</h2><p>{{ number_format($product->product_price) }}원 · {{ $product->status?'활성':'비활성' }}</p><a class="admin-btn small" href="{{ url('admin/add-edit-product/'.$product->id) }}">수정</a><a class="admin-btn small" href="{{ url('admin/add-images/'.$product->id) }}">이미지</a> <a class="admin-btn small" href="{{ route('admin.products.policies',$product->id) }}">배송·환불 정책</a></div></article>
+@empty<div class="admin-empty">검색된 상품이 없습니다.</div>
+@endforelse</div>
+@else
+<div class="admin-table-wrap"><table class="admin-table"><thead><tr><th><input type="checkbox" data-select-all=".admin-row-check" aria-label="목록 전체 선택"></th><th>번호</th><th>상품명</th><th>상품코드</th><th>분류</th><th>가격</th><th>상태</th><th>관리</th></tr></thead><tbody>
+@forelse($products as $product)<tr><td><input class="admin-row-check" type="checkbox" name="ids[]" value="{{ $product->id }}" aria-label="상품 {{ $product->id }} 선택"></td><td>{{ $product->id }}</td><td class="text-left"><div class="admin-product-info"><img class="admin-product-thumb" src="{{ asset('front/images/product_images/small/'.($product->product_image ?: 'no-image.png')) }}" alt=""><div><strong>{{ $product->product_name }}</strong><small>{{ $product->section?->name }} / {{ $product->category?->category_name }}</small></div></div></td><td>{{ $product->product_code }}</td><td>{{ $product->category?->category_name ?: '분류 없음' }}</td><td>{{ number_format($product->product_price) }}원</td><td><span class="admin-status {{ $product->status?'enabled':'disabled' }}">{{ $product->status?'활성':'비활성' }}</span></td><td class="nowrap"><a class="admin-btn small" href="{{ url('admin/add-edit-product/'.$product->id) }}">수정</a> <a class="admin-btn small" href="{{ route('admin.products.policies',$product->id) }}">배송·환불 정책</a> <a class="admin-btn small" href="{{ url('admin/add-edit-attributes/'.$product->id) }}">옵션</a> <a class="admin-btn small" href="{{ url('admin/add-images/'.$product->id) }}">이미지</a> <button type="button" class="admin-btn small danger" data-admin-delete="{{ url('admin/delete-product/'.$product->id) }}">삭제</button></td></tr>
+@empty<tr><td colspan="8" class="admin-empty">검색된 상품이 없습니다.</td></tr>
+@endforelse</tbody></table></div>
+@endif
+<div class="admin-toolbar admin-bulk-bar"><div class="admin-actions">
+@if(request('view')==='gallery')<label><input type="checkbox" data-select-all=".admin-row-check"> 목록 전체 선택</label>
+@endif<label>선택 상품 상태 <select name="status" required><option value="">선택</option><option value="1">활성</option><option value="0">비활성</option></select></label><button class="admin-btn primary" type="submit">선택 상품 일괄 적용</button></div></div></form>
+<div class="admin-pagination">{{ $products->onEachSide(2)->links('admin.shared.pagination') }}</div></div>
 @endsection

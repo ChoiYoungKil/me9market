@@ -8,10 +8,11 @@ use Illuminate\Validation\ValidationException;
 
 class ShopOrderTotals
 {
-    public function shippingLabel(Product $product): string
+    public function shippingLabel(Product $product, ?\App\Models\ShopChannelProduct $listing = null): string
     {
-        if ($policy = $this->policy($product)) {
-            $label = $policy->name;
+        if ($policy = $this->policy($product, $listing)) {
+            $feeLabel=match($policy->shipping_type){'free'=>'무료배송','fixed'=>number_format($policy->fixed_fee??$policy->base_fee).'원','conditional'=>number_format($policy->base_fee).'원','variable'=>'변동 배송비','tiered'=>'구간별 배송비',default=>number_format($policy->base_fee).'원'};
+            $label = $policy->name.' / '.$feeLabel;
             if ($policy->payment_type === 'cod') {
                 $label = '착불 '.$label;
             }
@@ -40,8 +41,14 @@ class ShopOrderTotals
         return ($product->shipping_payment_type === 'collect' ? '착불 ' : '').$label;
     }
 
-    private function policy(Product $product): ?ChannelDeliveryCharge
+    private function policy(Product $product, ?\App\Models\ShopChannelProduct $listing = null): ?ChannelDeliveryCharge
     {
+        if ($listing?->shipping_policy_id) {
+            $ownerId=$listing->shopChannel?->vendor_id;
+            $policy=ChannelDeliveryCharge::where('vendor_id',$ownerId)->find($listing->shipping_policy_id);
+            if (!$policy || !$policy->status) throw ValidationException::withMessages(['shipping'=>'Shop 관리자의 배송비 정책을 확인해 주세요.']);
+            return $policy;
+        }
         if (! $product->shipping_policy_id && ! $product->shipping_policy_name) {
             return null;
         }
@@ -74,7 +81,7 @@ class ShopOrderTotals
             $item['qty'] = $rows->sum(fn ($row) => $row['qty'] ?? 1);
             $product = $item['product'];
             $fee = 0;
-            $policy = $this->policy($product);
+            $policy = $this->policy($product, $item['shop_product'] ?? null);
             if ($policy) {
                 $shippingPolicies[$item['id']] = $policy->only(['id', 'vendor_id', 'name', 'shipping_type', 'payment_type', 'base_fee', 'fixed_fee', 'free_order_amount', 'free_order_quantity', 'calculation_rules']);
                 $fee = app(DeliveryPolicyCalculator::class)->fee($policy, $item['line_total'], $item['qty'], $destination);

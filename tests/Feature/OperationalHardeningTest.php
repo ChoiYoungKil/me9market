@@ -35,7 +35,10 @@ class OperationalHardeningTest extends TestCase
         \App\Models\Notice::create(['title' => 'Private draft', 'content' => 'Draft', 'status' => 0]);
         $this->get('/')->assertOk()->assertSee('Published notice')->assertDontSee('Private draft')
             ->assertSee('Shop 입장코드')->assertDontSee('123-45-67890')->assertDontSee('abc1234@email.com');
-        $this->get('/shop-channel/gate?channel=example')->assertOk()->assertSee('value="example"', false);
+        $this->get('/shop-channel/gate?channel=example')->assertOk()
+            ->assertSee('현재 입장할 수 있는 Shop 채널이 없습니다.')
+            ->assertDontSee('value="example"', false);
+        $this->assertDatabaseCount('shop_channels', 0);
     }
 
     public function test_demo_data_is_not_created_when_disabled()

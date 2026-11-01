@@ -46,6 +46,7 @@ Route::prefix('shop-monitor')->controller(\App\Http\Controllers\Front\ShopMonito
 // 참고: 웹사이트는 두 가지 주요 섹션으로 구분됩니다: 관리자(Admin) 경로 및 사용자(Frontend) 경로!:
 
 if (app()->environment(['local', 'testing'])) {
+    Route::get('/__preview/shop-signup', [\App\Http\Controllers\Dev\PreviewController::class, 'shopSignup'])->name('local.preview.shop_signup');
     Route::get('/test-route', function() { return 'Test Route OK'; });
 
     Route::get('/session-test', function() {
@@ -84,7 +85,7 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
 
 
     // 'admin/-'으로 시작하며 'admin' 인증 가드를 사용하는 모든 라우트 그룹    // 참고: 이 그룹 내부의 라우트에서는 '/admin' 부분을 제거해야 합니다 (예: Route::get('admin/logout'); 대신 Route::get('logout'); 사용)
-    Route::group(['middleware' => ['admin']], function () { // 'admin' 가드 사용 (auth.php에서 생성됨)
+    Route::group(['middleware' => ['admin', \App\Http\Middleware\RecordAdminActivity::class]], function () { // 'admin' 가드 사용 (auth.php에서 생성됨)
         Route::get('sub01', 'AdminController@sub01')->name('admin.sub01');
         Route::get('sub02', 'AdminController@sub02')->name('admin.sub02');
         Route::get('sub03', 'AdminController@sub03')->name('admin.sub03');
@@ -92,6 +93,24 @@ Route::prefix('/admin')->namespace('App\Http\Controllers\Admin')->group(function
         Route::get('newpage', 'AdminController@newpage')->name('admin.newpage');
         Route::get('loading', 'AdminController@loading')->name('admin.loading');
         Route::get('sub/layer-large', 'AdminController@layerLarge')->name('admin.layer_large');
+        Route::middleware('admin.role:admin,superadmin')->group(function(){
+            Route::match(['get','post'],'products/{id}/policies','ProductsController@policies')->whereNumber('id')->name('admin.products.policies');
+            Route::post('lists/{type}/bulk','AdminBulkController@update')->whereIn('type',['users','products'])->name('admin.lists.bulk');
+            Route::get('content/notices/create','AdminPatternController@forms')->name('admin.content.notices.create');
+            Route::post('content/notices','AdminPatternController@storeNotice')->name('admin.content.notices.store');
+            Route::get('content/notices/{id}/edit','AdminPatternController@editNotice')->whereNumber('id')->name('admin.content.notices.edit');
+            Route::post('content/notices/{id}','AdminPatternController@updateNotice')->whereNumber('id')->name('admin.content.notices.update');
+            Route::get('content/notices/{id}/download','AdminPatternController@downloadNotice')->whereNumber('id')->name('admin.content.notices.download');
+            Route::get('content/notices/{id}','AdminPatternController@showNotice')->whereNumber('id')->name('admin.content.notices.show');
+            Route::post('content/notices/{id}/comments','AdminPatternController@storeComment')->whereNumber('id')->name('admin.content.comments.store');
+            Route::post('content/notices/{id}/comments/{comment}','AdminPatternController@updateComment')->whereNumber(['id','comment'])->name('admin.content.comments.update');
+            Route::get('workspace/summary','AdminPatternController@summary')->name('admin.workspace.summary');
+            Route::get('activities','AdminPatternController@activities')->name('admin.activities');
+            Route::get('activities/{id}','AdminPatternController@activity')->whereNumber('id')->name('admin.activities.show');
+            Route::get('order-workspace/{id}/panel/{tab}','AdminOrderWorkspaceController@panel')->whereNumber('id')->whereIn('tab',['info','products','claims','history'])->name('admin.order.workspace.panel');
+            Route::get('order-workspace/{id}/item/{itemId}/{operation}','AdminOrderWorkspaceController@requestForm')->whereNumber(['id','itemId'])->whereIn('operation',['cancel','return','exchange'])->name('admin.order.workspace.request');
+            Route::post('order-workspace/{id}/{operation}','AdminOrderWorkspaceController@process')->whereNumber('id')->whereIn('operation',['action','cancel','return','exchange'])->name('admin.order.workspace.process');
+        });
         Route::get('dashboard', 'AdminController@dashboard')->name('admin.dashboard'); // 관리자 로그인
         if (config('storyboard.enabled')) {
             Route::get('storyboard-test', 'AdminController@storyboardTestbed')
@@ -377,7 +396,7 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
         Route::post('/login', 'ShopController@loginSubmit')->middleware('throttle:5,1')->name('shop.login.submit');
         Route::post('/logout', 'ShopController@logout')->name('shop.logout');
         Route::get('/gate', 'FrontController@shopGate')->name('shop.gate');
-        Route::post('/gate', 'FrontController@shopGateSubmit')->name('shop.gate.submit');
+        Route::post('/gate', 'FrontController@shopGateSubmit')->middleware('throttle:20,1')->name('shop.gate.submit');
         Route::post('/otp/request', 'FrontController@shopOtpRequest')->middleware('throttle:5,1')->name('shop.otp.request');
         Route::get('/enter/{channelCode}', 'FrontController@shopEnter')->name('shop.enter');
         Route::middleware('shop.channel.access')->group(function () {
@@ -398,11 +417,14 @@ Route::namespace('App\Http\Controllers\Front')->group(function () {
     // Shop 라우트
     Route::prefix('shop')->name('front.shop.')->middleware('shop.channel.access')->group(function () {
         Route::get('/cart', 'ShopController@cart')->name('cart.index');
+        Route::post('/cart/checkout-selection', 'ShopController@selectCheckout')->name('cart.checkout_selection');
+        Route::post('/cart/selection-total', 'ShopController@cartSelectionTotal')->name('cart.selection_total');
         Route::post('/cart/remove-selected', 'ShopController@removeSelectedFromCart')->name('cart.remove_selected');
         Route::post('/cart/add', 'ShopController@addToCart')->name('cart.add');
         Route::post('/cart/update', 'ShopController@updateCart')->name('cart.update');
         Route::post('/cart/remove', 'ShopController@removeFromCart')->name('cart.remove');
         Route::get('/order', 'ShopController@order')->name('order.form');
+        Route::post('/order/remove-item', 'ShopController@removeCheckoutItem')->name('order.remove_item');
         Route::post('/order/shipping-quote', 'ShopController@shippingQuote')->name('order.shipping_quote');
         Route::post('/order', 'ShopController@checkout')->name('order.checkout');
         Route::get('/order/complete', 'ShopController@orderComplete')->name('order.complete');

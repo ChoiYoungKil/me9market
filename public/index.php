@@ -5,6 +5,15 @@ use Illuminate\Http\Request;
 
 define('LARAVEL_START', microtime(true));
 
+// The development server can infer /admin/index.php from the asset directory,
+// even when Laravel's router executes this front controller for /admin/login.
+if (PHP_SAPI === 'cli-server') {
+    $_SERVER['SCRIPT_FILENAME'] = __FILE__;
+    $_SERVER['SCRIPT_NAME'] = '/index.php';
+    $_SERVER['PHP_SELF'] = '/index.php';
+    $_SERVER['ORIG_SCRIPT_NAME'] = '/index.php';
+}
+
 /*
 |--------------------------------------------------------------------------
 | Check If The Application Is Under Maintenance

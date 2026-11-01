@@ -16,7 +16,7 @@
             'me9_pg' => '공용PG',
         ];
     @endphp
-    <div id="contents">
+    <div id="contents" class="admin-workspace admin-legacy">
         <div class="row">
             <div class="box box1">
                 <div class="page_info">
@@ -193,8 +193,8 @@
                             </table>
                         </div>
 
-                        <div class="page_bx1">
-                            {{ $items->links() }}
+                        <div class="admin-pagination">
+                            {{ $items->withQueryString()->onEachSide(2)->links('admin.shared.pagination') }}
                         </div>
                     </div>
                 </div>

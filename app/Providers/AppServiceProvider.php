@@ -13,7 +13,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $this->app->singleton(\App\Services\AdminAuditRecorder::class);
     }
 
     /**
@@ -23,6 +23,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
+        foreach (['created','updated','deleted'] as $event) {
+            \Illuminate\Support\Facades\Event::listen('eloquent.'.$event.': *', function (string $name, array $payload) {
+                app(\App\Services\AdminAuditRecorder::class)->capture($name, $payload[0] ?? null);
+            });
+        }
+
         \Illuminate\Support\Facades\View::composer('layouts.mypage', function ($view) {
             $userId = \Illuminate\Support\Facades\Auth::id();
             $vendorIds = \App\Models\VisitedChannel::where('user_id', $userId)->pluck('vendor_id');

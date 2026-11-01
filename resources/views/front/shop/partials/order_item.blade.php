@@ -1,5 +1,5 @@
 @php
-    $image = $item->product?->product_image ?: $item->product?->images->first()?->image;
+    $image = $item->product?->product_image ?: $item->product?->images->where('status', 1)->first()?->image;
     $imageUrl = $image ? asset('front/images/product_images/small/'.$image) : asset('front/images/product_images/small/no-image.png');
     $latestClaim = $item->claims->sortByDesc('id')->first();
 @endphp
@@ -17,7 +17,7 @@
                 @if($latestClaim)<button class="shop-btn small" type="button" data-dialog="claim-{{ $latestClaim->id }}">{{ ['cancel'=>'취소', 'return'=>'반품', 'exchange'=>'교환'][$claimType] }} 상세</button>@endif
             @else
                 @foreach(['cancel'=>'취소신청', 'return'=>'반품신청', 'exchange'=>'교환신청', 'confirm'=>'구매확정'] as $action=>$label)
-                    @if(\App\Support\OrderItemStatus::customerActionAllowed($action, $item->normalized_status))<button type="button" class="shop-btn small" data-dialog="{{ $action }}-{{ $item->id }}">{{ $label }}</button>@endif
+                    @if(\App\Support\OrderItemStatus::customerActionAllowed($action, $item->normalized_status))<button type="button" class="shop-btn small" data-claim-action="{{ $action }}" data-dialog="{{ $action }}-{{ $item->id }}">{{ $label }}</button>@endif
                 @endforeach
                 <button type="button" class="shop-btn small" data-dialog="inquiry-{{ $item->id }}">문의하기</button>
                 @if($latestClaim && $latestClaim->pickup_method === 'manual')<button type="button" class="shop-btn small" data-dialog="claim-{{ $latestClaim->id }}">송장정보</button>@endif

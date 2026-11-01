@@ -1,11 +1,11 @@
 @extends('layouts.admin')
 
 @section('content')
-    <div id="contents">
+    <div id="contents" class="admin-workspace admin-legacy admin-account-editor admin-category-editor">
         <div class="row">
             <div class="box box1">
                 <div class="page_info">
-                    <div class="ttl">{{ $title }}</div>
+                    <h1 class="ttl">{{ $title }}</h1>
                     <ul class="dep">
                         <li>홈</li>
                         <li>상품 관리</li>
@@ -45,21 +45,6 @@
                     </div>
                 @endif
 
-                <style>
-                    .f_ttl {
-                        font-size: 20px !important;
-                        font-weight: 800 !important;
-                        color: #111 !important;
-                        margin-bottom: 25px !important;
-                        border-left: 5px solid #3470f7;
-                        padding-left: 15px;
-                    }
-
-                    .tb01 table tbody th {
-                        background-color: #f9f9fb;
-                        width: 180px;
-                    }
-                </style>
 
                 <div class="conbx">
                     <div class="con_w">
@@ -76,6 +61,7 @@
                                             <div class="f_ttl">기본 정보</div>
                                             <div class="tb01">
                                                 <table class="two">
+                                                    <colgroup><col><col><col><col></colgroup>
                                                     <tbody class="textL">
                                                         <tr>
                                                             <th class="w160"><span>분류명</span></th>
@@ -111,6 +97,7 @@
                                             <div class="f_ttl">상세 정보</div>
                                             <div class="tb01">
                                                 <table class="two">
+                                                    <colgroup><col><col><col><col></colgroup>
                                                     <tbody class="textL">
                                                         <tr>
                                                             <th class="w160"><span>분류 이미지</span></th>
@@ -118,18 +105,17 @@
                                                                 <div class="fileBox">
                                                                     <input type="text" class="fileName" value="" placeholder="파일을 선택하세요"
                                                                         readonly>
-                                                                    <label for="category_image" class="btn_file">파일
+                                                                    <label for="category_image" class="btn_file admin-btn">파일
                                                                         선택</label>
                                                                     <input type="file" id="category_image"
-                                                                        name="category_image" class="uploadBtn">
+                                                                        name="category_image" class="uploadBtn" accept="image/jpeg,image/png,image/webp">
                                                                 </div>
                                                                 @if (!empty($category['category_image']))
-                                                                    <div style="margin-top: 10px;">
+                                                                    <div class="category-media-actions">
                                                                         <a target="_blank"
-                                                                            href="{{ url('front/images/category_images/' . $category['category_image']) }}">이미지
+                                                                            class="admin-btn primary" rel="noopener" href="{{ url('front/images/category_images/' . $category['category_image']) }}">이미지
                                                                             보기</a>
-                                                                        &nbsp;|&nbsp;
-                                                                        <a href="JavaScript:void(0)" class="confirmDelete"
+                                                                        <a href="JavaScript:void(0)" class="confirmDelete admin-btn danger"
                                                                             module="category-image"
                                                                             moduleid="{{ $category['id'] }}">이미지 삭제</a>
                                                                     </div>
@@ -169,6 +155,7 @@
                                             <div class="f_ttl">SEO 정보</div>
                                             <div class="tb01">
                                                 <table class="two">
+                                                    <colgroup><col><col><col><col></colgroup>
                                                     <tbody class="textL">
                                                         <tr>
                                                             <th class="w160"><span>메타 제목</span></th>
@@ -205,9 +192,9 @@
                                         </div>
 
                                         <!-- 버튼 -->
-                                        <div class="btm_btn center mt40 form-button-row">
-                                            <a href="{{ url('admin/categories') }}" class="btn01 col3">취소</a>
-                                            <button type="submit" class="btn01 col5">저장</button>
+                                        <div class="admin-modal-footer account-editor-footer">
+                                            <a href="{{ url('admin/categories') }}" class="admin-btn">취소</a>
+                                            <button type="submit" class="admin-btn primary">저장</button>
                                         </div>
                                     </div>
                                 </div>
@@ -225,7 +212,7 @@
             var uploadFile = $('.fileBox .uploadBtn');
             uploadFile.on('change', function () {
                 if (window.FileReader) {
-                    var filename = $(this)[0].files[0].name;
+                    var filename = this.files.length ? this.files[0].name : '';
                 } else {
                     var filename = $(this).val().split('/').pop().split('\\').pop();
                 }
@@ -243,7 +230,7 @@
                         $('#appendCategoriesLevel').html(resp);
                     },
                     error: function () {
-                        alert('카테고리 목록을 불러오는데 실패했습니다.');
+                        alert('상위 분류 목록을 불러오지 못했습니다.');
                     }
                 });
             });

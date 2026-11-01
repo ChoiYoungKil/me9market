@@ -7,7 +7,11 @@
         <section id="sec01" aria-label="{{ $shop->channel_name }} 배너">
             <div class="shop-banner-slider" data-carousel>
                 @foreach($shop->banner_images as $banner)
-                    <img class="shop-banner" data-slide src="{{ asset($banner) }}" alt="{{ $shop->channel_name }} 배너 {{ $loop->iteration }}" @if(!$loop->first) hidden loading="lazy" @endif>
+                    <div data-slide @if(!$loop->first) hidden @endif>
+                        @if($shop->banner_links[$loop->index] ?? null)<a href="{{ $shop->banner_links[$loop->index] }}">@endif
+                        <img class="shop-banner" src="{{ asset($banner) }}" alt="{{ $shop->channel_name }} 배너 {{ $loop->iteration }}" @if(!$loop->first) loading="lazy" @endif>
+                        @if($shop->banner_links[$loop->index] ?? null)</a>@endif
+                    </div>
                 @endforeach
                 @if(count($shop->banner_images) > 1)
                     <button type="button" class="shop-slide-arrow prev" data-slide-prev aria-label="이전 배너" title="이전 배너"></button>
@@ -20,9 +24,13 @@
     <section id="sec02">
         <div class="shop-inner">
             <h2 class="top_ttl">HOT TREND</h2>
-            <div class="hashtag_bx"><ul>@foreach($shop->keywords ?? [] as $keyword)<li><a href="{{ route('shop.products_list', ['search'=>$keyword]) }}">#{{ $keyword }}</a></li>@endforeach</ul></div>
-            <div class="shop-product-grid">
+            <div class="hashtag_bx"><ul>@foreach($shop->keywords ?? [] as $tag)<li><a href="{{ route('shop.channel_main', ['keyword'=>$tag]) }}#shop-featured" @if($keyword === $tag) aria-current="true" @endif>#{{ $tag }}</a></li>@endforeach</ul></div>
+            <div class="shop-featured" id="shop-featured" data-product-carousel>
+            <button type="button" class="shop-btn small" data-products-prev aria-label="이전 상품">‹</button>
+            <div class="shop-product-track" data-product-track tabindex="0" aria-label="키워드별 상품">
                 @forelse($products as $shopProduct) @include('shop.partials.product_card') @empty<div class="shop-empty">판매중인 상품이 없습니다.</div>@endforelse
+            </div>
+            <button type="button" class="shop-btn small" data-products-next aria-label="다음 상품">›</button>
             </div>
             <div class="btm_btn"><a class="btn01" href="{{ route('shop.products_list') }}"><span>전체 상품 보기</span></a></div>
         </div>

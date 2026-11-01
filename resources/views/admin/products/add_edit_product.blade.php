@@ -1,11 +1,11 @@
 @extends('layouts.admin')
 
 @section('content')
-    <div id="contents">
+    <div id="contents" class="admin-workspace admin-legacy admin-account-editor admin-product-editor">
         <div class="row">
             <div class="box box1">
                 <div class="page_info">
-                    <div class="ttl">{{ $title }}</div>
+                    <h1 class="ttl">{{ $title }}</h1>
                     <ul class="dep">
                         <li>홈</li>
                         <li>상품 관리</li>
@@ -45,22 +45,6 @@
                     </div>
                 @endif
 
-                <style>
-                    .f_ttl {
-                        font-size: 20px !important;
-                        font-weight: 800 !important;
-                        color: #111 !important;
-                        margin-bottom: 25px !important;
-                        border-left: 5px solid #3470f7;
-                        padding-left: 15px;
-                    }
-
-                    .tb01 table tbody th {
-                        background-color: #f9f9fb;
-                        width: 180px;
-                    }
-                </style>
-
                 <div class="conbx">
                     <div class="con_w">
                         <form @if (empty($product['id'])) action="{{ url('admin/add-edit-product') }}" @else
@@ -76,6 +60,7 @@
                                             <div class="f_ttl">기본 정보</div>
                                             <div class="tb01">
                                                 <table class="two">
+                                                        <colgroup><col><col><col><col></colgroup>
                                                     <tbody class="textL">
                                                         <tr>
                                                             <th class="w160"><span>분류 선택</span></th>
@@ -85,17 +70,7 @@
                                                                     @foreach ($categories as $section)
                                                                         <optgroup label="{{ $section['name'] }}">
                                                                             @foreach ($section['categories'] as $category)
-                                                                                <option value="{{ $category['id'] }}" @if (!empty($product['category_id']) && $product['category_id'] == $category['id'])
-                                                                                selected @endif>
-                                                                                    {{ $category['category_name'] }}
-                                                                                </option>
-                                                                                @foreach ($category['sub_categories'] as $subcategory)
-                                                                                    <option value="{{ $subcategory['id'] }}" @if (!empty($product['category_id']) && $product['category_id'] == $subcategory['id'])
-                                                                                    selected @endif>
-                                                                                        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--
-                                                                                        {{ $subcategory['category_name'] }}
-                                                                                    </option>
-                                                                                @endforeach
+                                                                                @include('admin.products.partials.category_option', ['category' => $category, 'depth' => 0, 'selectedCategory' => old('category_id', $product['category_id'] ?? '')])
                                                                             @endforeach
                                                                         </optgroup>
                                                                     @endforeach
@@ -128,6 +103,7 @@
                                                 <div class="f_ttl">상품 상세 정보</div>
                                                 <div class="tb01">
                                                     <table class="two">
+                                                        <colgroup><col><col><col><col></colgroup>
                                                         <tbody class="textL">
                                                             <tr>
                                                                 <th class="w160"><span>상품명</span></th>
@@ -174,6 +150,7 @@
                                                 <div class="f_ttl">가격 및 무게</div>
                                                 <div class="tb01">
                                                     <table class="two">
+                                                        <colgroup><col><col><col><col></colgroup>
                                                         <tbody class="textL">
                                                             <tr>
                                                                 <th class="w160"><span>상품 가격</span></th>
@@ -210,6 +187,7 @@
                                                 <div class="f_ttl">이미지 및 비디오</div>
                                                 <div class="tb01">
                                                     <table class="two">
+                                                        <colgroup><col><col><col><col></colgroup>
                                                         <tbody class="textL">
                                                             <tr>
                                                                 <th class="w160"><span>상품 이미지</span></th>
@@ -218,18 +196,17 @@
                                                                         <input class="fileName" value=""
                                                                             placeholder="파일을 선택하세요 (권장: 1000x1000)"
                                                                             readonly>
-                                                                        <label for="product_image" class="btn_file">파일
+                                                                        <label for="product_image" class="btn_file admin-btn">파일
                                                                             선택</label>
                                                                         <input type="file" id="product_image"
-                                                                            name="product_image" class="uploadBtn">
+                                                                            name="product_image" class="uploadBtn" accept="image/jpeg,image/png,image/webp">
                                                                     </div>
                                                                     @if (!empty($product['product_image']))
-                                                                        <div style="margin-top: 10px;">
+                                                                        <div class="product-media-actions">
                                                                             <a target="_blank"
-                                                                                href="{{ url('front/images/product_images/large/' . $product['product_image']) }}">이미지
+                                                                                rel="noopener" class="admin-btn primary" href="{{ url('front/images/product_images/large/' . $product['product_image']) }}">이미지
                                                                                 보기</a>
-                                                                            &nbsp;|&nbsp;
-                                                                            <a href="JavaScript:void(0)" class="confirmDelete"
+                                                                            <a href="JavaScript:void(0)" class="confirmDelete admin-btn danger"
                                                                                 module="product-image"
                                                                                 moduleid="{{ $product['id'] }}">이미지 삭제</a>
                                                                         </div>
@@ -241,19 +218,18 @@
                                                                 <td colspan="3">
                                                                     <div class="fileBox">
                                                                         <input class="fileName" value=""
-                                                                            placeholder="파일을 선택하세요 (최대 2MB)" readonly>
-                                                                        <label for="product_video" class="btn_file">파일
+                                                                            placeholder="파일을 선택하세요 (최대 100MB)" readonly>
+                                                                        <label for="product_video" class="btn_file admin-btn">파일
                                                                             선택</label>
                                                                         <input type="file" id="product_video"
-                                                                            name="product_video" class="uploadBtn">
+                                                                            name="product_video" class="uploadBtn" accept=".mp4,.mov,.avi,.webm">
                                                                     </div>
                                                                     @if (!empty($product['product_video']))
-                                                                        <div style="margin-top: 10px;">
+                                                                        <div class="product-media-actions">
                                                                             <a target="_blank"
-                                                                                href="{{ url('front/videos/product_videos/' . $product['product_video']) }}">비디오
+                                                                                rel="noopener" class="admin-btn primary" href="{{ url('front/videos/product_videos/' . $product['product_video']) }}">비디오
                                                                                 보기</a>
-                                                                            &nbsp;|&nbsp;
-                                                                            <a href="JavaScript:void(0)" class="confirmDelete"
+                                                                            <a href="JavaScript:void(0)" class="confirmDelete admin-btn danger"
                                                                                 module="product-video"
                                                                                 moduleid="{{ $product['id'] }}">비디오 삭제</a>
                                                                         </div>
@@ -270,12 +246,12 @@
                                                 <div class="f_ttl">상세 설명</div>
                                                 <div class="tb01">
                                                     <table class="two">
+                                                        <colgroup><col><col><col><col></colgroup>
                                                         <tbody class="textL">
                                                             <tr>
                                                                 <th class="w160"><span>상품 설명</span></th>
                                                                 <td colspan="3">
-                                                                    <textarea name="description" id="description" rows="6"
-                                                                        style="width: 100%; padding: 10px; border: 1px solid #ddd;">{{ $product['description'] ?? '' }}</textarea>
+                                                                    <textarea name="description" id="description" rows="6" data-admin-editor>{{ old('description', $product['description'] ?? '') }}</textarea>
                                                                 </td>
                                                             </tr>
                                                         </tbody>
@@ -288,6 +264,7 @@
                                                 <div class="f_ttl">SEO 정보</div>
                                                 <div class="tb01">
                                                     <table class="two">
+                                                        <colgroup><col><col><col><col></colgroup>
                                                         <tbody class="textL">
                                                             <tr>
                                                                 <th class="w160"><span>메타 제목</span></th>
@@ -329,6 +306,7 @@
                                                 <div class="f_ttl">추가 옵션</div>
                                                 <div class="tb01">
                                                     <table class="two">
+                                                        <colgroup><col><col><col><col></colgroup>
                                                         <tbody class="textL">
                                                             <tr>
                                                                 <th class="w160"><span>추천 상품</span></th>
@@ -363,10 +341,9 @@
                                             </div>
 
                                             <!-- 버튼 -->
-                                            <div class="btm_btn center mt40"
-                                                style="display: flex; justify-content: center; gap: 10px;">
-                                                <a href="{{ url('admin/products') }}" class="btn01 col3">취소</a>
-                                                <button type="submit" class="btn01 col5">저장</button>
+                                            <div class="admin-modal-footer account-editor-footer">
+                                                <a href="{{ url('admin/products') }}" class="admin-btn">취소</a>
+                                                <button type="submit" class="admin-btn primary">저장</button>
                                             </div>
                                     </div>
                                 </div>
@@ -378,13 +355,15 @@
         </div>
     </div>
 
+    <script src="https://cdn.ckeditor.com/4.22.1/full/ckeditor.js"></script>
+    <script src="{{ asset('common/admin-editor.js') }}?v={{ filemtime(public_path('common/admin-editor.js')) }}"></script>
     <script>
         $(document).ready(function () {
             // File upload display
             var uploadFile = $('.fileBox .uploadBtn');
             uploadFile.on('change', function () {
                 if (window.FileReader) {
-                    var filename = $(this)[0].files[0].name;
+                    var filename = this.files.length ? this.files[0].name : '';
                 } else {
                     var filename = $(this).val().split('/').pop().split('\\').pop();
                 }

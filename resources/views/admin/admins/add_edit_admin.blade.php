@@ -1,11 +1,11 @@
 @extends('layouts.admin')
 
 @section('content')
-    <div id="contents">
+    <div id="contents" class="admin-workspace admin-legacy admin-account-editor">
         <div class="row">
             <div class="box box1">
                 <div class="page_info">
-                    <div class="ttl">{{ $title }}</div>
+                    <h1 class="ttl">{{ $title }}</h1>
                     <ul class="dep">
                         <li>홈</li>
                         <li>관리자 관리</li>
@@ -42,17 +42,6 @@
                     </div>
                 @endif
 
-                <style>
-                    .f_ttl {
-                        font-size: 20px !important;
-                        font-weight: 800 !important;
-                        color: #111 !important;
-                        margin-bottom: 25px !important;
-                        border-left: 5px solid #3470f7;
-                        padding-left: 15px;
-                    }
-                </style>
-
                 <div class="conbx">
                     <div class="con_w">
                         <form @if(empty($admin['id'])) action="{{ url('admin/add-edit-admin') }}" @else
@@ -82,7 +71,7 @@
                                                         <tr>
                                                             <th class="w160"><span>구분</span></th>
                                                             <td>
-                                                                <select name="type" id="admin_type" class="w300" @if(!empty($admin['id'])) readonly style="background-color: #e9ecef;" @endif>
+                                                                <select name="type" id="admin_type" class="w300" @if(!empty($admin['id'])) disabled @endif>
                                                                     <option value="">구분 선택</option>
                                                                     <option value="admin" @if(isset($admin['type']) && $admin['type'] == 'admin') selected @endif>관리자</option>
                                                                     <option value="subadmin" @if(isset($admin['type']) && $admin['type'] == 'subadmin') selected @endif>서브 관리자</option>
@@ -97,7 +86,8 @@
                                                                 <div class="r_btn_w w457">
                                                                     <div class="tel_bx">
                                                                         @php
-                                                                            $mobileParts = !empty($admin['mobile']) ? explode('-', $admin['mobile']) : ['', '', ''];
+                                                                            $mobileDigits = preg_replace('/\D/', '', (string) old('mobile', $admin['mobile'] ?? ''));
+                                                                            $mobileParts = strlen($mobileDigits) >= 10 ? [substr($mobileDigits,0,3),substr($mobileDigits,3,-4),substr($mobileDigits,-4)] : ['', '', ''];
                                                                             $m1 = $mobileParts[0] ?? '010';
                                                                             $m2 = $mobileParts[1] ?? '';
                                                                             $m3 = $mobileParts[2] ?? '';
@@ -111,9 +101,9 @@
                                                                             <option value="019" {{ $m1 == '019' ? 'selected' : '' }}>019</option>
                                                                         </select>
                                                                         <span>-</span>
-                                                                        <input type="text" class="tel1" name="mobile_2" required="required" value="{{ $m2 }}">
+                                                                        <input type="text" class="tel1" name="mobile_2" required="required" value="{{ old('mobile_2',$m2) }}">
                                                                         <span>-</span>
-                                                                        <input type="text" class="tel2" name="mobile_3" required="required" value="{{ $m3 }}">
+                                                                        <input type="text" class="tel2" name="mobile_3" required="required" value="{{ old('mobile_3',$m3) }}">
                                                                     </div>
                                                                     <a href="javascript:alert('본인인증 서비스는 준비중입니다.');" class="btn01 col2">본인인증</a>
                                                                 </div>
@@ -144,7 +134,7 @@
                                                             <td colspan="3">
                                                                 <div class="fileBox">
                                                                     <input type="text" class="fileName" readonly="readonly" placeholder="이미지 이름">
-                                                                    <label for="uploadBtn" class="btn_file">찾아보기</label>
+                                                                    <label for="uploadBtn" class="btn_file admin-btn">찾아보기</label>
                                                                     <input type="file" id="uploadBtn" class="uploadBtn" name="image">
                                                                 </div>
                                                                 @if(!empty($admin['image']))
@@ -162,7 +152,7 @@
                                         <div id="vendor_sections" style="{{ ($admin->type == 'vendor') ? '' : 'display:none;' }}">
                                             <!-- 회원사 정보 (Step 2와 동일) -->
                                             <div class="f_w mt40">
-                                                <div class="f_ttl">회원사 정보 (Step 2)</div>
+                                                <div class="f_ttl">회원사 정보</div>
                                                 <div class="tb01 type2">
                                                     <table class="two">
                                                         <tbody class="textL">
@@ -223,7 +213,7 @@
 
                                             <!-- 회원사 판매권한 정보 (Step 3와 동일) -->
                                             <div class="f_w mt40">
-                                                <div class="f_ttl">회원사 판매권한 정보 (Step 3)</div>
+                                                <div class="f_ttl">판매자 인증·정산 정보</div>
                                                 <div class="tb01 type2">
                                                     <table class="two">
                                                         <tbody class="textL">
@@ -248,12 +238,12 @@
                                                                 <td colspan="3">
                                                                     <div class="fileBox">
                                                                         <input type="text" class="fileName" readonly="readonly" placeholder="사업자등록증 이미지">
-                                                                        <label for="uploadLicense" class="btn_file">찾아보기</label>
+                                                                        <label for="uploadLicense" class="btn_file admin-btn">찾아보기</label>
                                                                         <input type="file" id="uploadLicense" class="uploadBtn" name="address_proof_image">
                                                                     </div>
                                                                     @if(!empty($admin->vendorBusiness->address_proof_image))
                                                                         <div style="margin-top: 10px;">
-                                                                            <a target="_blank" href="{{ route('admin.member.document', ['vendor'=>$admin->vendor_id, 'kind'=>'license']) }}" style="color:blue; text-decoration:underline;">[기존 등록증 보기]</a>
+                                                                            <a target="_blank" href="{{ route('admin.member.document', ['vendor'=>$admin->vendor_id, 'kind'=>'license']) }}" class="admin-btn">사업자등록증 다운로드</a>
                                                                         </div>
                                                                     @endif
                                                                 </td>
@@ -265,6 +255,9 @@
                                                                         <select name="bank_name" class="w150">
                                                                             <option value="">은행선택</option>
                                                                             @php $banks = ['국민은행', '신한은행', '우리은행', '하나은행', '농협은행', 'IBK기업은행', '수협은행', 'SC제일은행', '씨티은행', '대구은행', '부산은행', '광주은행', '제주은행', '전북은행', '경남은행', '새마을금고', '신협', '우체국', '케이뱅크', '카카오뱅크', '토스뱅크']; @endphp
+                                                                            @php($currentBank = old('bank_name', $admin->vendorBank->bank_name ?? ''))
+                                                                            @if($currentBank && !in_array($currentBank,$banks,true))<option value="{{ $currentBank }}" selected>{{ $currentBank }}</option>
+                                                                            @endif
                                                                             @foreach($banks as $bank)
                                                                                 <option value="{{ $bank }}" {{ (isset($admin->vendorBank->bank_name) && $admin->vendorBank->bank_name == $bank) ? 'selected' : '' }}>{{ $bank }}</option>
                                                                             @endforeach
@@ -279,12 +272,12 @@
                                                                 <td colspan="3">
                                                                     <div class="fileBox">
                                                                         <input type="text" class="fileName" readonly="readonly" placeholder="통장사본 이미지">
-                                                                        <label for="uploadBankbook" class="btn_file">찾아보기</label>
+                                                                        <label for="uploadBankbook" class="btn_file admin-btn">찾아보기</label>
                                                                         <input type="file" id="uploadBankbook" class="uploadBtn" name="bank_copy_image">
                                                                     </div>
-                                                                    @if(!empty($admin->vendorBank->bank_copy_image))
+                                                                    @if(!empty($admin->vendorBank->bank_copy_image) || !empty($admin->vendorBusiness->bank_copy_image))
                                                                         <div style="margin-top: 10px;">
-                                                                            <a target="_blank" href="{{ route('admin.member.document', ['vendor'=>$admin->vendor_id, 'kind'=>'bankbook']) }}" style="color:blue; text-decoration:underline;">[기존 통장사본 보기]</a>
+                                                                            <a target="_blank" href="{{ route('admin.member.document', ['vendor'=>$admin->vendor_id, 'kind'=>'bankbook']) }}" class="admin-btn">통장사본 다운로드</a>
                                                                         </div>
                                                                     @endif
                                                                 </td>
@@ -297,9 +290,9 @@
 
                                     </div>
                                 </div>
-                                <div class="btm_btn center mt40" style="display: flex; justify-content: center; gap: 10px;">
-                                    <a href="{{ url('admin/admins') }}" class="btn01 col3">취소</a>
-                                    <button type="submit" class="btn01 col5">저장</button>
+                                <div class="admin-modal-footer account-editor-footer">
+                                    <a href="{{ url('admin/admins') }}" class="admin-btn">취소</a>
+                                    <button type="submit" class="admin-btn primary">저장</button>
                                 </div>
                             </div>
                         </form>
@@ -307,7 +300,7 @@
                 </div>
             </div>
         </div>
-    
+
     <!-- 다음 우편번호 레이어 -->
     <div id="daumPostcodeLayer" style="display:none;position:fixed;overflow:hidden;z-index:10000;-webkit-overflow-scrolling:touch; border:1px solid #333; background:#fff;">
         <img src="//t1.daumcdn.net/postcode/resource/images/close.png" id="btnCloseLayer" style="cursor:pointer;position:absolute;right:-3px;top:-3px;z-index:1" onclick="closeDaumPostcode()" alt="닫기 버튼">
@@ -383,7 +376,7 @@
         var uploadFile = $('.fileBox .uploadBtn');
         uploadFile.on('change', function () {
             if (window.FileReader) {
-                var filename = $(this)[0].files[0].name;
+                var filename = this.files.length ? this.files[0].name : '';
             } else {
                 var filename = $(this).val().split('/').pop().split('\\').pop();
             }

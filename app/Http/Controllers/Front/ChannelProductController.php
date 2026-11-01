@@ -45,6 +45,12 @@ class ChannelProductController extends Controller
         return response()->json(['status'=>true]);
     }
 
+    private function listingDeliveryPolicy(Request $request, \App\Models\ShopChannel $shop): ?int
+    {
+        $data = $request->validate(['shipping_policy_id' => ['nullable', 'integer', Rule::exists('channel_delivery_charges', 'id')->where('vendor_id', $shop->vendor_id)->where('status', 1)]]);
+        return !empty($data['shipping_policy_id']) ? (int) $data['shipping_policy_id'] : null;
+    }
+
     public function storeOwnProduct(Request $request)
     {
         if ($request->ajax()) {
@@ -93,6 +99,7 @@ class ChannelProductController extends Controller
                     return response()->json(['status' => false, 'message' => '이미 채널에 추가된 상품입니다.']);
                 }
 
+                $shippingPolicyId = $this->listingDeliveryPolicy($request, $shop);
                 $pricing = $this->resolveShopProductPricing($product, $shop, (float) $data['selling_price'], 'own');
 
                 // Create Mapping
@@ -100,6 +107,7 @@ class ChannelProductController extends Controller
                     'shop_channel_id' => $shop->id,
                     'product_id' => $product->id,
                     'distributor_id' => $product->distributor_id,
+                    'shipping_policy_id' => $shippingPolicyId,
                     'product_type' => 'own',
                     'approval_status' => 'approved',
                     'status' => 1, // 판매중 상태로 등록 (필요시 0으로)
@@ -164,12 +172,14 @@ class ChannelProductController extends Controller
                     return response()->json(['status' => false, 'message' => '이미 채널에 추가된 상품입니다.']);
                 }
 
+                $shippingPolicyId = $this->listingDeliveryPolicy($request, $shop);
                 $pricing = $this->resolveShopProductPricing($product, $shop, (float) $data['selling_price'], 'public');
 
                 \App\Models\ShopChannelProduct::create(array_merge([
                     'shop_channel_id' => $shop->id,
                     'product_id' => $product->id,
                     'distributor_id' => $product->distributor_id,
+                    'shipping_policy_id' => $shippingPolicyId,
                     'product_type' => 'public',
                     'approval_status' => 'approved',
                     'status' => 1,
@@ -240,6 +250,7 @@ class ChannelProductController extends Controller
                     return response()->json(['status' => false, 'message' => '판매 요청이 거부된 상품입니다. 재요청하기로 다시 신청해 주세요.']);
                 }
 
+                $shippingPolicyId = $this->listingDeliveryPolicy($request, $shop);
                 $pricing = $this->resolveShopProductPricing($product, $shop, (float) $data['selling_price'], 'partial');
 
                 $shopProduct = $existingShopProduct ?: new \App\Models\ShopChannelProduct([
@@ -250,6 +261,7 @@ class ChannelProductController extends Controller
 
                 $shopProduct->fill(array_merge([
                     'distributor_id' => $product->distributor_id,
+                    'shipping_policy_id' => $shippingPolicyId,
                     'approval_status' => $existingShopProduct ? 'approved' : 'pending',
                     'listed_at' => $existingShopProduct ? now() : null,
                     'request_reason' => $data['request_reason'] ?? null,
@@ -410,7 +422,8 @@ class ChannelProductController extends Controller
             'shopProduct' => $shopProduct,
             'product' => $shopProduct->product,
             'shopId' => $shopProduct->shop_channel_id,
-            'settlementRate' => $shopProduct->shopChannel->settlement_rate ?? 10
+            'settlementRate' => $shopProduct->shopChannel->settlement_rate ?? 10,
+            'deliveryPolicies'=>\App\Models\ChannelDeliveryCharge::where('vendor_id',$admin->vendor_id)->where(fn($q)=>$q->where('status',1)->orWhere('id',$shopProduct->shipping_policy_id))->orderBy('name')->get()
         ]);
     }
 
@@ -428,6 +441,7 @@ class ChannelProductController extends Controller
 
         abort_unless($shopProduct->approval_status==='approved' && $shopProduct->listed_at,403);
         $request->validate([
+            'shipping_policy_id'=>['nullable','integer',\Illuminate\Validation\Rule::exists('channel_delivery_charges','id')->where('vendor_id',$shop->vendor_id)->where('status',1)],
             'selling_price' => 'required|numeric|min:0',
                 'reward_points'=>'nullable|integer|min:0',
             'stock' => 'nullable|numeric|min:0',
@@ -442,6 +456,7 @@ class ChannelProductController extends Controller
         $shopProduct->stock = $request->input('stock');
         $shopProduct->purchase_limit = $request->input('purchase_limit');
         $shopProduct->status = $request->input('status');
+        if($request->has('shipping_policy_id'))$shopProduct->shipping_policy_id=$request->input('shipping_policy_id')?:null;
         
         $shopProduct->profit = $pricing['profit'];
         $shopProduct->fill($this->settlementSnapshot($shop, $pricing, $pricing['price_decider'] ?? 'seller'));

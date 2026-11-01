@@ -39,7 +39,7 @@ class ShopCatalog
             });
         }
         if($favorites)$q->orderByRaw('CASE WHEN id IN ('.implode(',',array_map('intval',$favorites)).') THEN 0 ELSE 1 END');
-        return ['catalogType'=>$type,'catalogFilters'=>$f,'catalogProducts'=>$q->orderByDesc('id')->paginate(10,['*'],'catalog_page')->withQueryString(),
+        return ['deliveryPolicies'=>\App\Models\ChannelDeliveryCharge::where('vendor_id',$shop->vendor_id)->where('status',1)->orderBy('name')->get(),'catalogType'=>$type,'catalogFilters'=>$f,'catalogProducts'=>$q->orderByDesc('id')->paginate(10,['*'],'catalog_page')->withQueryString(),
             'catalogListings'=>$listings,'catalogFavorites'=>$favorites,'catalogCategories'=>\App\Models\Category::where('status',1)->orderBy('category_name')->get()];
     }
 }

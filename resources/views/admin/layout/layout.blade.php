@@ -8,5 +8,5 @@
     <script src="{{ asset('common/bootstrap-legacy.js').'?v='.filemtime(public_path('common/bootstrap-legacy.js')) }}"></script>
     <script src="{{ asset('admin/vendors/datatables.net/jquery.dataTables.js') }}"></script>
     <script src="{{ asset('admin/vendors/datatables.net-bs4/dataTables.bootstrap4.js') }}"></script>
-    <script src="{{ asset('admin/js/custom.js') }}"></script>
+    <script src="{{ asset('admin/js/custom.js').'?v='.filemtime(public_path('admin/js/custom.js')) }}"></script>
 @endpush

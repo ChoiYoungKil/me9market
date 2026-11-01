@@ -52,7 +52,7 @@ class CategoryController extends Controller
 
 
         if ($id == '') { // $id가 없으면 카테고리 추가
-            $title = '카테고리 추가';
+            $title = '분류 추가';
             $category = new Category();
             // dd($category);
 
@@ -60,7 +60,7 @@ class CategoryController extends Controller
 
             $message = '카테고리가 성공적으로 추가되었습니다!';
         } else { // $id가 라우트/URL 파라미터로 전달된 경우, 카테고리 수정을 의미합니다.
-            $title = '카테고리 수정';
+            $title = '분류 수정';
             $category = Category::find($id);
             // dd($category->parentCategory);
 

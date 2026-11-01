@@ -131,9 +131,14 @@ class OrderManagerController extends Controller
 
         $manager = Distributor::findOrFail($id);
 
-        abort_unless($manager->canAccess(), 403);
+        if (!$manager->canAccess()) {
+            return redirect()->route('admin.order_managers.index')
+                ->with('error_message', '해당 발주사는 '.$manager->access_status.' 상태로 접속할 수 없습니다. 상태와 접속 기간을 확인해 주세요.');
+        }
 
-        $request->session()->regenerate();
+        // Both portal buttons can remain open in another admin tab or the back
+        // cache. Rotate and destroy the session ID without invalidating those forms.
+        $request->session()->migrate(true);
         Session::put('distributor_id', $manager->id);
         Session::put('distributor_name', $manager->name);
         Session::put('distributor_email', $manager->email);

@@ -1,4 +1,24 @@
 document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.shop-dialog form').forEach(function(form) {
+        var reason=form.querySelector('[data-claim-reason]');
+        var pickups=form.querySelectorAll('[data-claim-pickup]');
+        function updateClaimFields(){
+            if(reason){var other=form.querySelector('[data-other-reason]');other.hidden=reason.value!=='other';other.querySelector('textarea').required=!other.hidden;}
+            if(pickups.length){var manual=form.querySelector('[name="pickup_method"]:checked')?.value==='manual';form.querySelector('[data-manual]').hidden=!manual;form.querySelector('[data-automatic]').hidden=manual;}
+        }
+        reason?.addEventListener('change',updateClaimFields);
+        pickups.forEach(function(input){input.addEventListener('change',updateClaimFields);});
+        updateClaimFields();
+        form.closest('dialog').addEventListener('close',function(){form.reset();updateClaimFields();});
+    });
+    document.querySelectorAll('[data-privacy-expand]').forEach(function (button) {
+        button.addEventListener('click', function () {
+            var expanded = button.getAttribute('aria-expanded') !== 'true';
+            button.setAttribute('aria-expanded', String(expanded));
+            button.textContent = expanded ? '접어보기' : '전문 펼쳐보기';
+            document.getElementById(button.getAttribute('aria-controls')).classList.toggle('expanded', expanded);
+        });
+    });
     var searchButton = document.querySelector('.search_btn');
     if (searchButton) searchButton.addEventListener('click', function () {
         var expanded = searchButton.getAttribute('aria-expanded') === 'true';
@@ -10,7 +30,8 @@ document.addEventListener('DOMContentLoaded', function () {
         button.addEventListener('click', function () { document.getElementById(button.dataset.dialog).showModal(); });
     });
     document.querySelectorAll('.shop-dialog').forEach(function (dialog) {
-        dialog.querySelector('[data-close]').addEventListener('click', function () { dialog.close(); });
+        dialog.querySelectorAll('[data-close]').forEach(function(button){button.addEventListener('click', function () { dialog.close(); });});
+        if(dialog.hasAttribute('data-reset-on-close')) dialog.addEventListener('close',function(){dialog.querySelector('form')?.reset();});
         dialog.addEventListener('click', function (event) {
             if (event.target === dialog) {
                 var rect = dialog.getBoundingClientRect();
@@ -50,73 +71,8 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         });
     });
-    document.querySelectorAll('[data-price]').forEach(function (form) {
-        var quantity = form.querySelector('[name="qty"]');
-        var selections = form.querySelector('[data-option-selections]');
-        var optionSelect = form.querySelector('[name="option"]');
-        function selectedPrice() {
-            return Number(form.dataset.price) + Number(optionSelect.selectedOptions[0].dataset.priceAdjustment || 0);
-        }
-        var nextIndex = 0;
-        function updateTotal() {
-            var selectedInputs = selections.querySelectorAll('input[type="number"]');
-            var total = selectedInputs.length ? Array.from(selectedInputs).reduce(function (sum, input) { return sum + Number(input.dataset.unitPrice) * Math.max(0, Number(input.value)); }, 0) : selectedPrice() * Math.max(0, Number(quantity.value));
-            form.querySelector('[data-price-total]').textContent = total.toLocaleString('ko-KR') + '원';
-            var unit = form.querySelector('[data-option-unit-price]');
-            if (unit) unit.textContent = selectedPrice().toLocaleString('ko-KR') + '원';
-        }
-        var addOption = form.querySelector('[data-add-option]');
-        if (addOption) addOption.addEventListener('click', function () {
-            var option = form.querySelector('[name="option"]').value;
-            var existing = Array.from(selections.children).find(function (row) { return row.dataset.option === option; });
-            if (existing) { existing.querySelector('input[type="number"]').focus(); return; }
-            if (selections.children.length >= 20) return;
-            var index = nextIndex++;
-            var row = document.createElement('div');
-            row.className = 'shop-option-row';
-            row.dataset.option = option;
-            var label = document.createElement('label');
-            var title = document.createElement('span');
-            title.textContent = option;
-            var optionInput = document.createElement('input');
-            optionInput.type = 'hidden';
-            optionInput.name = 'options[' + index + '][option]';
-            optionInput.value = option;
-            var count = document.createElement('input');
-            count.className = 'shop-control';
-            count.type = 'number';
-            count.name = 'options[' + index + '][qty]';
-            count.min = '1';
-            count.max = quantity.max;
-            count.value = quantity.value;
-            count.dataset.unitPrice = selectedPrice();
-            count.required = true;
-            label.append(title, count);
-            var remove = document.createElement('button');
-            remove.type = 'button';
-            remove.className = 'shop-dialog-close';
-            remove.textContent = '×';
-            remove.title = option + ' 삭제';
-            remove.setAttribute('aria-label', option + ' 삭제');
-            row.append(optionInput, label, remove);
-            selections.append(row);
-            var baseRow = quantity.closest('.shop-option-row');
-            baseRow.hidden = true;
-            quantity.disabled = true;
-            count.addEventListener('input', updateTotal);
-            remove.addEventListener('click', function () {
-                row.remove();
-                if (!selections.children.length) { baseRow.hidden = false; quantity.disabled = false; }
-                updateTotal();
-            });
-            updateTotal();
-        });
-        if (selections) {
-            selections.addEventListener('input', updateTotal);
-        }
-        quantity.addEventListener('input', updateTotal);
-        optionSelect.addEventListener('change', updateTotal);
-        updateTotal();
+    document.querySelectorAll('[data-option-toggle]').forEach(function(button) {
+        button.addEventListener('click',function(){var expanded=button.getAttribute('aria-expanded')==='true';button.setAttribute('aria-expanded',String(!expanded));var panel=document.getElementById(button.getAttribute('aria-controls'));panel.classList.toggle('collapsed',expanded);panel.inert=expanded;button.querySelector('span').textContent=expanded?'⌄':'⌃';});
     });
     document.querySelectorAll('[data-tabs]').forEach(function (group) {
         var tabs = Array.from(group.querySelectorAll('[role="tab"]'));
@@ -138,6 +94,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 tabs[next].focus();
             });
         });
+        var requested = tabs.find(function(tab){return '#'+tab.getAttribute('aria-controls') === window.location.hash;});
+        if (requested) activate(requested);
     });
     document.querySelectorAll('[data-carousel]').forEach(function (carousel) {
         var slides = Array.from(carousel.querySelectorAll('[data-slide]'));
@@ -157,23 +115,65 @@ document.addEventListener('DOMContentLoaded', function () {
         }
         carousel.querySelector('[data-slide-prev]').addEventListener('click', function () { show(current - 1); });
         carousel.querySelector('[data-slide-next]').addEventListener('click', function () { show(current + 1); });
+        var gesture = null, suppressClickUntil = 0;
+        carousel.querySelectorAll('img').forEach(function(img){img.draggable=false;});
+        carousel.addEventListener('pointerdown', function (event) {
+            if (event.button !== 0 || event.target.closest('button')) return;
+            gesture = {x:event.clientX,y:event.clientY,id:event.pointerId};
+        });
+        window.addEventListener('pointerup', function (event) {
+            if (!gesture || event.pointerId !== gesture.id) return;
+            var dx=event.clientX-gesture.x, dy=event.clientY-gesture.y;
+            if (Math.abs(dx)>40 && Math.abs(dx)>Math.abs(dy)) {
+                show(current+(dx<0?1:-1));
+                suppressClickUntil=Date.now()+500;
+            }
+            gesture=null;
+        });
+        window.addEventListener('pointercancel',function(){gesture=null;});
+        carousel.addEventListener('click',function(event){if(Date.now()<suppressClickUntil){event.preventDefault();event.stopPropagation();}},true);
         pause.addEventListener('click', function () { paused = !paused; syncPause(); });
         syncPause();
         window.setInterval(function () {
             if (!paused && !document.hidden && !carousel.matches(':hover') && !carousel.contains(document.activeElement)) show(current + 1);
         }, 5000);
     });
-    document.querySelectorAll('[data-period]').forEach(function (button) {
-        button.addEventListener('click', function () {
-            var form = button.closest('form');
-            var end = new Date();
-            var start = new Date();
-            start.setMonth(start.getMonth() - Number(button.dataset.period));
-            function localDate(date) {
-                return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
-            }
-            form.querySelector('[name="from"]').value = localDate(start);
-            form.querySelector('[name="to"]').value = localDate(end);
+    document.querySelectorAll('[data-product-carousel]').forEach(function (group) {
+        var track = group.querySelector('[data-product-track]');
+        group.querySelector('[data-products-prev]').addEventListener('click', function () { track.scrollBy({left:-track.clientWidth * .8, behavior:'smooth'}); });
+        group.querySelector('[data-products-next]').addEventListener('click', function () { track.scrollBy({left:track.clientWidth * .8, behavior:'smooth'}); });
+    });
+    document.querySelectorAll('.shop-periods').forEach(function(group){
+        var form=group.closest('form'),buttons=Array.from(group.querySelectorAll('[data-period]'));
+        function localDate(date){return date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0');}
+        function dates(months){var end=new Date(),start=new Date();start.setDate(1);start.setMonth(start.getMonth()-months);start.setDate(Math.min(end.getDate(),new Date(start.getFullYear(),start.getMonth()+1,0).getDate()));return [localDate(start),localDate(end)];}
+        function sync(){buttons.forEach(function(button){var range=dates(Number(button.dataset.period));button.setAttribute('aria-pressed',String(form.elements.from.value===range[0] && form.elements.to.value===range[1]));});}
+        buttons.forEach(function(button){button.addEventListener('click',function(){var range=dates(Number(button.dataset.period));form.elements.from.value=range[0];form.elements.to.value=range[1];sync();});});
+        [form.elements.from,form.elements.to].forEach(function(input){input.addEventListener('input',sync);});sync();
+    });
+    document.querySelectorAll('[data-recipient-phone]').forEach(function (group) {
+        var form = group.closest('form');
+        form.querySelectorAll('[name^="recipient_phone_"]').forEach(function(input) {
+            input.addEventListener('input', function () {
+                form.elements.mobile.value = [form.elements.recipient_phone_prefix.value, form.elements.recipient_phone_middle.value, form.elements.recipient_phone_last.value].join('-');
+                form.elements.mobile.dispatchEvent(new Event('input'));
+            });
+            input.addEventListener('change', function () { input.dispatchEvent(new Event('input')); });
+        });
+    });
+    function setRecipientPhone(form, phone) {
+        form.elements.mobile.value = phone || '';
+        var digits = (phone || '').replace(/\D/g, '');
+        form.elements.recipient_phone_prefix.value = digits.slice(0,3);
+        form.elements.recipient_phone_middle.value = digits.slice(3,-4);
+        form.elements.recipient_phone_last.value = digits.slice(-4);
+    }
+    document.querySelectorAll('[data-email-domain]').forEach(function(select) {
+        select.addEventListener('change', function () {
+            var input = select.closest('form').elements.recipient_email_domain;
+            if (select.value) input.value = select.value;
+            input.readOnly = !!select.value;
+            input.dispatchEvent(new Event('input'));
         });
     });
     document.querySelectorAll('[data-copy-buyer]').forEach(function (checkbox) {
@@ -181,12 +181,17 @@ document.addEventListener('DOMContentLoaded', function () {
         function copyBuyer() {
             if (!checkbox.checked) return;
             form.elements.name.value = form.elements.buyer_name.value;
-            form.elements.mobile.value = form.elements.buyer_mobile.value;
+            setRecipientPhone(form, form.elements.buyer_mobile.value);
+            var email = form.elements.email.value.split('@');
+            form.elements.recipient_email_local.value = email[0] || '';
+            form.elements.recipient_email_domain.value = email[1] || '';
+            form.querySelector('[data-email-domain]').value = '';
+            form.elements.recipient_email_domain.readOnly = false;
         }
         checkbox.addEventListener('change', copyBuyer);
         form.elements.buyer_name.addEventListener('input', copyBuyer);
         form.elements.buyer_mobile.addEventListener('input', copyBuyer);
-        [form.elements.name, form.elements.mobile].forEach(function (input) {
+        [form.elements.name, form.elements.mobile, form.elements.recipient_email_local, form.elements.recipient_email_domain].forEach(function (input) {
             input.addEventListener('input', function () { checkbox.checked = false; });
         });
     });
@@ -197,6 +202,7 @@ document.addEventListener('DOMContentLoaded', function () {
             var address = JSON.parse(data);
             var form = select.closest('form');
             Object.keys(address).forEach(function (key) { form.elements[key].value = address[key] || ''; });
+            setRecipientPhone(form, address.mobile);
             form.querySelector('[data-copy-buyer]').checked = false;
             form.dispatchEvent(new Event('shipping-address-change'));
         });
@@ -237,14 +243,13 @@ document.addEventListener('DOMContentLoaded', function () {
             var total = Number(form.dataset.checkoutTotal);
             var used = inputs.reduce(function (sum, input) { return sum + Math.max(0, Number(input.value) || 0); }, 0);
             inputs.forEach(function (input) { input.setCustomValidity(used > total ? '사용 포인트는 결제금액을 초과할 수 없습니다.' : ''); });
-            form.querySelector('[data-used-points]').textContent = used.toLocaleString('ko-KR') + 'P';
-            form.querySelector('[data-checkout-payable]').textContent = Math.max(0, total - used).toLocaleString('ko-KR') + '원';
+            form.querySelectorAll('[data-checkout-payable]').forEach(function(element){element.textContent = Math.max(0, total - used).toLocaleString('ko-KR') + '원';});
         }
         inputs.forEach(function (input) { input.addEventListener('input', updatePayment); });
         updatePayment();
         if (form.dataset.shippingQuote) {
             var version = 0, pendingQuote = null;
-            var submit = form.querySelector('button[type="submit"]');
+            var submit = form.querySelector('[data-checkout-submit]');
             var checkoutDisabled = submit.disabled;
             var message = form.querySelector('[data-shipping-message]');
             async function quote() {
@@ -265,10 +270,18 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (current !== version) return;
                     if (!response.ok) throw new Error(Object.values(data.errors || {}).flat().join(' ') || '배송비를 확인할 수 없습니다.');
                     form.dataset.checkoutTotal = data.total;
+                    if(form.querySelector('[data-gross-total]'))form.querySelector('[data-gross-total]').textContent=Number(data.total).toLocaleString('ko-KR')+'원';
                     form.elements.expected_total.value = data.total;
-                    form.querySelector('[data-shipping-total]').textContent = Number(data.shipping).toLocaleString('ko-KR') + '원';
+                    inputs.forEach(function(input){if(input.dataset.pointBalance)input.max=Math.max(0,Math.min(Number(input.dataset.pointBalance),Math.floor(data.total)));});
+                    if(form.querySelector('[data-equation-shipping]'))form.querySelector('[data-equation-shipping]').textContent=Number(data.shipping).toLocaleString('ko-KR')+'원';
+                    if(form.querySelector('[data-equation-total]'))form.querySelector('[data-equation-total]').textContent=Number(data.total).toLocaleString('ko-KR')+'원';
                     form.querySelectorAll('[data-item-shipping]').forEach(function (element) {
                         element.textContent = Number(data.shipping_by_item[element.dataset.itemShipping] || 0).toLocaleString('ko-KR') + '원';
+                    });
+                    form.querySelectorAll('[data-shipping-group]').forEach(function (group) {
+                        var fee = Number(data.shipping_by_product[group.dataset.shippingGroup] || 0);
+                        group.querySelector('[data-group-shipping]').textContent = fee.toLocaleString('ko-KR')+'원';
+                        group.querySelector('[data-group-total]').textContent = (Number(group.dataset.groupSubtotal)+fee).toLocaleString('ko-KR')+'원';
                     });
                     updatePayment();
                     message.textContent = '배송비를 반영했습니다. 최종 결제금액을 확인해 주세요.';
@@ -306,4 +319,32 @@ document.addEventListener('DOMContentLoaded', function () {
             finally { otpButton.disabled = false; }
         });
     }
+});
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('[data-category-filter]').forEach(function(form) {
+        var tree = JSON.parse(form.querySelector('[data-category-tree]').textContent);
+        form.querySelectorAll('[data-category-level]').forEach(function(select) {
+            select.addEventListener('change', function() {
+                var level = Number(select.dataset.categoryLevel);
+                for (var next = level + 1; next <= 3; next++) {
+                    var child = form.querySelector('[data-category-level="'+next+'"]');
+                    child.replaceChildren(new Option('전체',''));
+                    if (next === level + 1 && select.value) tree.filter(function(c){return Number(c.parent_id) === Number(select.value);}).forEach(function(c){child.add(new Option(c.category_name,c.id));});
+                }
+            });
+        });
+    });
+});
+document.addEventListener('DOMContentLoaded',function(){
+    var form=document.querySelector('[data-cart-totals-url]');if(!form)return;
+    var version=0;var feedback=document.querySelector('[data-cart-feedback]');
+    async function totals(){var current=++version;try{var response=await fetch(form.dataset.cartTotalsUrl,{method:'POST',headers:{Accept:'application/json','X-CSRF-TOKEN':form.elements._token.value},body:new FormData(form)});var data=await response.json();if(current!==version)return;if(!response.ok)throw new Error('선택 상품 금액을 확인할 수 없습니다.');['subtotal','shipping','total'].forEach(function(key){document.querySelector('[data-cart-'+key+']').textContent=Number(data[key]).toLocaleString('ko-KR')+'원';});document.querySelector('[data-cart-quantity]').textContent=Number(data.quantity);document.querySelector('[data-cart-bar-total]').textContent=Number(data.total).toLocaleString('ko-KR')+'원';feedback.textContent='';}catch(error){if(current===version)feedback.textContent=error.message;}}
+    document.querySelectorAll('.shop-cart-select,[data-select-all=".shop-cart-select"]').forEach(function(input){input.addEventListener('change',totals);});
+    form.addEventListener('submit',function(event){if(!document.querySelector('.shop-cart-select:checked')){event.preventDefault();feedback.textContent='주문하거나 삭제할 상품을 선택해 주세요.';}});
+    totals();
+});
+document.addEventListener('DOMContentLoaded',function(){
+    var form=document.querySelector('[data-mock-checkout]'),dialog=document.getElementById('shop-mock-payment');if(!form||!dialog)return;var approved=false;
+    form.addEventListener('submit',function(event){if(event.submitter&&event.submitter.formAction!==form.action)return;if(approved){approved=false;form.querySelector('[data-checkout-submit]').disabled=true;return;}event.preventDefault();dialog.querySelector('[data-mock-method]').textContent=form.elements.payment_method.value==='BankTransfer'?'실시간계좌이체':'신용카드';dialog.querySelector('[data-mock-amount]').textContent=form.querySelector('[data-checkout-payable]').textContent;dialog.showModal();});
+    dialog.querySelector('[data-mock-confirm]').addEventListener('click',function(){dialog.close();approved=true;form.requestSubmit(form.querySelector('[data-checkout-submit]'));});
 });

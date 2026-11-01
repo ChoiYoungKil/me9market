@@ -44,6 +44,7 @@ class ShopChannelConfiguration
             'use_logo'=>'required|boolean','logo_image'=>'nullable|image|mimes:jpg,jpeg,png,webp|max:5120',
             'use_banner'=>'required|boolean','banner_files'=>'nullable|array|max:5','banner_files.*'=>'image|mimes:jpg,jpeg,png,webp|max:5120',
             'existing_banners'=>'nullable|array|max:5','existing_banners.*'=>['string',Rule::in($existing)],
+            'banner_links'=>'nullable|array|max:5','banner_links.*'=>'nullable|url:http,https|max:2000',
             'use_og'=>'required|boolean','og_title'=>'nullable|required_if:use_og,1|string|max:255','og_description'=>'nullable|required_if:use_og,1|string|max:500',
             'og_image'=>'nullable|image|mimes:jpg,jpeg,png,webp|max:5120','use_own_pg'=>'nullable|boolean',
             'use_purchase_sms'=>'nullable|boolean','purchase_sms_templates'=>'nullable|array',
@@ -92,6 +93,8 @@ class ShopChannelConfiguration
             if($request->filled('password'))$shop->password=$data['password'];
             foreach(['logo_image'=>'logo','og_image'=>'og'] as $field=>$directory){if($request->hasFile($field))$shop->$field=$this->image($request->file($field),$directory,$newFiles);}
             foreach($uploads as $file)$kept[]=$this->image($file,'banner',$newFiles);
+            $oldLinks=array_combine($shop->banner_images??[],array_pad($shop->banner_links??[],count($shop->banner_images??[]),null))?:[];
+            $shop->banner_links=isset($data['banner_links'])?array_slice(array_pad($data['banner_links'],count($kept),null),0,count($kept)):array_map(fn($path)=>$oldLinks[$path]??null,$kept);
             $shop->banner_images=$kept;$shop->og_title=$data['og_title']??null;$shop->og_description=$data['og_description']??null;
             $shop->use_own_pg=$ownPg;
             if($ownPg)foreach(['pg_provider','pg_merchant_id','pg_site_code','pg_client_key','pg_secret_key'] as $field)$shop->$field=$vendor->$field;

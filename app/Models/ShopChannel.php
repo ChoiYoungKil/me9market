@@ -34,6 +34,7 @@ class ShopChannel extends Model
         'logo_image',
         'use_banner',
         'banner_images',
+        'banner_links',
         'use_og',
         'og_title',
         'og_description',
@@ -58,6 +59,7 @@ class ShopChannel extends Model
     protected $casts = [
         'keywords' => 'array',
         'banner_images' => 'array',
+        'banner_links' => 'array',
         'start_at' => 'datetime',
         'end_at' => 'datetime',
         'closure_requested_at' => 'datetime',

@@ -7,9 +7,9 @@
     @if($errors->any())<div class="portal-message error" role="alert">@foreach($errors->all() as $error)<p>{{ $error }}</p>@endforeach</div>@endif
     <form action="{{ route('admin.login.submit') }}" method="POST">@csrf
         <div class="f_bx">
-            <input class="mt0" type="text" name="email" placeholder="아이디를 입력해 주세요" aria-label="아이디" value="{{ old('email') }}" required autofocus autocomplete="username">
+            <input class="mt0" type="text" name="email" placeholder="관리자 이메일을 입력해 주세요" aria-label="아이디(이메일)" value="{{ old('email', request()->cookie('me9_admin_login_id')) }}" required autofocus autocomplete="username">
             <input type="password" name="password" placeholder="비밀번호를 입력해 주세요" aria-label="비밀번호" required autocomplete="current-password">
-            <ul class="chk01"><li><input type="checkbox" id="idSave" name="remember"><label for="idSave">아이디 저장</label></li></ul>
+            <ul class="chk01"><li><input type="checkbox" id="idSave" name="remember" value="1" @checked(old('remember', (bool) request()->cookie('me9_admin_login_id')))><label for="idSave">아이디 저장</label></li></ul>
             <button type="submit" class="btn">LOGIN</button>
         </div>
     </form>

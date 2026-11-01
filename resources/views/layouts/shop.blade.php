@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="{{ asset('common/social.css').'?v='.filemtime(public_path('common/social.css')) }}">
     @env('local')<script src="{{ asset('me9market/js/preview-live.js') }}" defer></script>@endenv
 </head>
-<body id="@yield('page_type', 'sub')" class="shop-runtime" @if(request()->isMethod('post')) data-preview-preserve="true" @endif>
+<body id="@yield('page_type', 'sub')" class="shop-runtime @hasSection('shop_auth') shop-auth-page @endif" @if(request()->isMethod('post')) data-preview-preserve="true" @endif>
 <div id="skipNavi"><a href="#container">본문 바로가기</a></div>
 <div id="wrap">
     <header id="header">
@@ -32,7 +32,7 @@
             </a>
             <button type="button" class="search_btn" aria-label="검색 열기" aria-expanded="false" aria-controls="shop-search"><span></span><span></span></button>
             <form id="shop-search" class="search_bx" action="{{ route('shop.products_list') }}" method="GET" role="search">
-                <input name="search" value="{{ request('search') }}" maxlength="100" aria-label="상품 검색">
+                <input name="search" value="{{ request()->routeIs('shop.products_list','shop.joint_purchases_list') ? request('search') : '' }}" maxlength="100" aria-label="상품 검색">
                 <button class="shop-search-submit" type="submit" title="검색" aria-label="검색"></button>
             </form>
             <div class="r_bx">
@@ -53,6 +53,7 @@
         @if(session('flash_message_error'))
             <div class="shop-message error" role="alert">{{ session('flash_message_error') }}</div>
         @endif
+        @if(session('error_message'))<div class="shop-message error" role="alert">{{ session('error_message') }}</div>@endif
         @if($errors->any())
             <div class="shop-message error" role="alert">{{ $errors->first() }}</div>
         @endif

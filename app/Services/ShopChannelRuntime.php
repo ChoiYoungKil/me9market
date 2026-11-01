@@ -5,10 +5,11 @@ namespace App\Services;
 use App\Mail\ShopOrderConfirmation;
 use App\Models\Order;
 use App\Models\OrdersProduct;
-use App\Models\Product;
+use App\Models\ProductsAttribute;
 use App\Models\ShopChannel;
 use App\Models\ShopChannelPrivateAccess;
 use App\Models\ShopChannelProduct;
+use App\Models\User;
 use App\Models\VisitedChannel;
 use App\Support\OrderItemStatus;
 use Illuminate\Http\Request;
@@ -28,6 +29,8 @@ class ShopChannelRuntime
     private const PRIVATE_ACCESS_KEY = 'shop_channel_private_access_id';
 
     private const MANAGED_CHANNEL_KEY = 'shop_channel_manager';
+
+    private const PRIVATE_PROOF_KEY = 'shop_channel_private_access_proof';
 
     public function seedDemoDataIfAllowed(): ?ShopChannel
     {
@@ -72,14 +75,16 @@ class ShopChannelRuntime
 
         $accessId = Session::get(self::PRIVATE_ACCESS_KEY);
 
-        return $accessId && ShopChannelPrivateAccess::whereKey($accessId)
+        $access = $accessId ? ShopChannelPrivateAccess::whereKey($accessId)
             ->where('shop_channel_id', $shop->id)
-            ->exists();
+            ->first() : null;
+
+        return $access && hash_equals($this->accessProof($access), (string) Session::get(self::PRIVATE_PROOF_KEY, ''));
     }
 
     public function leaveChannel(): void
     {
-        Session::forget([self::CHANNEL_KEY, self::PRIVATE_ACCESS_KEY, self::MANAGED_CHANNEL_KEY, self::CART_KEY]);
+        Session::forget([self::CHANNEL_KEY, self::PRIVATE_ACCESS_KEY, self::PRIVATE_PROOF_KEY, self::MANAGED_CHANNEL_KEY, self::CART_KEY]);
     }
 
     public function enterManagedChannel(ShopChannel $shop): void
@@ -90,7 +95,7 @@ class ShopChannelRuntime
         abort_unless($this->isChannelAvailable($shop), 404);
         Session::forget(self::PRIVATE_ACCESS_KEY);
         Session::put(self::CHANNEL_KEY, $shop->id);
-        Session::put(self::MANAGED_CHANNEL_KEY, ['shop_id'=>$shop->id, 'admin_id'=>$manager->id]);
+        Session::put(self::MANAGED_CHANNEL_KEY, ['shop_id' => $shop->id, 'admin_id' => $manager->id]);
     }
 
     public function enterChannel(string $entryCode): ?ShopChannel
@@ -123,7 +128,9 @@ class ShopChannelRuntime
         ])->save();
 
         Session::put(self::PRIVATE_ACCESS_KEY, $access->id);
+        Session::put(self::PRIVATE_PROOF_KEY, $this->accessProof($access));
         Session::put(self::CHANNEL_KEY, $access->shopChannel->id);
+        Session::regenerate(true);
         $this->recordAuthenticatedVisit($access->shopChannel);
 
         return $access->shopChannel;
@@ -156,7 +163,12 @@ class ShopChannelRuntime
 
     }
 
-    private function isChannelAvailable(ShopChannel $shop): bool
+    private function accessProof(ShopChannelPrivateAccess $access): string
+    {
+        return hash('sha256', $access->id.'|'.$access->phone_normalized.'|'.$access->entry_code);
+    }
+
+    public function isChannelAvailable(ShopChannel $shop): bool
     {
         if ((int) $shop->status !== 1 || $shop->closure_status === 'approved') {
             return false;
@@ -246,6 +258,25 @@ class ShopChannelRuntime
     public function totals(): array
     {
         return app(ShopOrderTotals::class)->calculate($this->cartItems());
+    }
+
+    public function checkoutItems(): array
+    {
+        $items = $this->cartItems();
+        $selection = Session::get('shop_checkout_selection');
+        if (! $selection) return $items;
+        if ((int) $selection['channel_id'] !== (int) $this->currentChannel()->id) return [];
+        return array_values(array_filter($items, fn ($item) => in_array((string)$item['key'], $selection['keys'], true)));
+    }
+
+    public function selectForCheckout(array $keys): void
+    {
+        $available = array_map(fn ($row) => (string)$row['key'], $this->cartItems());
+        $keys = array_values(array_unique(array_map('strval', $keys)));
+        if (! $keys || array_diff($keys, $available)) {
+            throw ValidationException::withMessages(['cart' => '주문할 상품을 선택해 주세요. 삭제되거나 판매 중지된 상품은 다시 확인해 주세요.']);
+        }
+        Session::put('shop_checkout_selection', ['channel_id' => $this->currentChannel()->id, 'keys' => $keys]);
     }
 
     public function addToCart(int $shopProductId, int $qty = 1, string $option = '기본옵션'): void
@@ -398,14 +429,16 @@ class ShopChannelRuntime
         }
 
         $shop = $this->currentChannel();
-        $items = $this->cartItems();
+        $token = $request->input('checkout_token');
+        if ($token && ($previous = $this->previousCheckout($token, $shop))) return $previous;
+        $items = $this->checkoutItems();
         if (empty($items)) {
             abort(422, '장바구니가 비어 있습니다.');
         }
 
-        return DB::transaction(function () use ($request, $shop, $items) {
+        try { return DB::transaction(function () use ($request, $shop, $items, $token) {
             if (Auth::id()) {
-                \App\Models\User::whereKey(Auth::id())->lockForUpdate()->firstOrFail();
+                User::whereKey(Auth::id())->lockForUpdate()->firstOrFail();
             }
             $lockedProducts = ShopChannelProduct::with('product')
                 ->whereIn('id', collect($items)->pluck('id'))
@@ -424,7 +457,7 @@ class ShopChannelRuntime
             }
 
             $quantities = collect($items)->groupBy('id')->map(fn ($rows) => $rows->sum('qty'));
-            $attributes = \App\Models\ProductsAttribute::whereIn('product_id', $lockedProducts->pluck('product_id'))
+            $attributes = ProductsAttribute::whereIn('product_id', $lockedProducts->pluck('product_id'))
                 ->orderBy('id')->lockForUpdate()->get()->groupBy('product_id');
             foreach ($lockedProducts as $lockedProduct) {
                 $lockedProduct->product->setRelation('attributes', $attributes->get($lockedProduct->product_id, collect()));
@@ -453,6 +486,13 @@ class ShopChannelRuntime
             if ($request->filled('expected_total') && abs((float) $request->input('expected_total') - $totals['total']) > 0.01) {
                 throw ValidationException::withMessages(['shipping' => '배송비 또는 상품금액이 변경되었습니다. 최종 금액을 다시 확인해 주세요.']);
             }
+            // The storefront has one point input. Split it only after locking the
+            // member, so concurrent checkouts cannot spend an old wallet balance.
+            if ($request->has('point_use')) {
+                $balances = app(CustomerPointService::class)->balances((int) Auth::id(), (int) $shop->id);
+                $channelPoints = min((int) $request->input('point_use'), max(0, $balances['channel']));
+                $request->merge(['channel_points' => $channelPoints, 'me9_points' => (int) $request->input('point_use') - $channelPoints]);
+            }
             $pointAllocations = app(CustomerPointService::class)->allocateForCheckout(
                 (int) Auth::id(), (int) $shop->id,
                 (int) $request->input('channel_points', 0), (int) $request->input('me9_points', 0), $items, $totals
@@ -460,6 +500,10 @@ class ShopChannelRuntime
             $usedPoints = (int) $request->input('channel_points', 0) + (int) $request->input('me9_points', 0);
 
             $order = new Order;
+            $order->checkout_token = $token;
+            $order->address_detail = $request->input('address_detail');
+            $order->recipient_email = $request->input('recipient_email') ?: $request->input('email');
+            $order->checkout_consent_snapshot = json_encode(['policy' => 'privacy', 'sha256' => hash_file('sha256', resource_path('policies/privacy.json')), 'review_only' => app()->environment(['local','testing']), 'confirmed_at' => now()->toIso8601String()], JSON_THROW_ON_ERROR);
             $order->user_id = Auth::id() ?: 0;
             $order->name = $request->input('name', Auth::user()->name ?? '비회원');
             $order->address = $request->input('address', '서울특별시 중구 세종대로 110');
@@ -470,7 +514,7 @@ class ShopChannelRuntime
             $order->mobile = $request->input('mobile', '010-0000-0000');
             $order->email = $request->input('email', Auth::user()->email ?? 'guest@me9.local');
             $order->buyer_name = $request->input('buyer_name') ?: $order->name;
-            $order->buyer_mobile = $request->input('buyer_mobile') ?: $order->mobile;
+            $order->buyer_mobile = Auth::check() ? (Auth::user()->mobile ?: '') : ($request->input('buyer_mobile') ?: $order->mobile);
             $order->delivery_memo = $request->input('delivery_memo');
             $order->order_confirmed_at = now();
             $order->shipping_charges = $totals['shipping'];
@@ -574,19 +618,34 @@ class ShopChannelRuntime
 
             DB::afterCommit(function () use ($shop, $order, $createdItems) {
                 try {
-                    Mail::to($order->email, $order->name)
-                        ->queue(new ShopOrderConfirmation($shop, $order, $createdItems));
+                    if (app()->environment('local')) {
+                        Mail::mailer('log')->to($order->email, $order->name)->send(new ShopOrderConfirmation($shop, $order, $createdItems));
+                    } else {
+                        Mail::to($order->email, $order->name)->queue(new ShopOrderConfirmation($shop, $order, $createdItems));
+                    }
                 } catch (\Throwable $e) {
                     Log::error('Shop order email failed', ['order_id' => $order->id, 'message' => $e->getMessage()]);
                 }
             });
 
-            app(MemberCart::class)->clear($shop);
+            $cart = app(MemberCart::class)->read($shop);
+            foreach ($items as $item) unset($cart[$item['key']]);
+            app(MemberCart::class)->save($shop, $cart);
+            Session::forget('shop_checkout_selection');
             Session::put('last_shop_order_id', $order->id);
             Session::put('nonmember_order_id', $order->id);
 
             return $order;
-        });
+        }); } catch (\Illuminate\Database\QueryException $exception) {
+            if (($exception->errorInfo[1] ?? null) === 1062 && $token && ($previous = $this->previousCheckout($token, $shop))) return $previous;
+            throw $exception;
+        }
+    }
+
+    private function previousCheckout(string $token, ShopChannel $shop): ?Order
+    {
+        return Order::where('checkout_token', $token)->where('user_id', Auth::id() ?: 0)
+            ->whereHas('orders_products', fn ($query) => $query->where('shop_channel_id', $shop->id))->first();
     }
 
     private function validatePurchasableQuantity(ShopChannelProduct $shopProduct, int $quantity): void

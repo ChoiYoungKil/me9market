@@ -925,7 +925,8 @@ class ChannelSettlementTest extends TestCase
         $rows=$calculator->preview($period,$vendor->id);
         $this->assertCount(2,$rows);$this->assertCount(2,$rows->pluck('settlement_key')->unique());
         foreach([1,2]as$i)$calculator->generate($period,$admin->id,$vendor->id,$shop->id);
-        $this->assertDatabaseCount('settlement_runs',2);$this->assertDatabaseCount('settlement_items',2);
+        $this->assertDatabaseCount('settlement_runs',2);
+        $this->assertDatabaseCount('settlement_items',2);
     }
 
     public function test_extra_shipping_includes_completed_return_and_excludes_own_pg_and_other_vendors(): void
@@ -1003,5 +1004,17 @@ class ChannelSettlementTest extends TestCase
         [, $admin,$shop]=$this->createSetup();$admin->type='superadmin';$admin->save();
         $this->actingAs($admin,'admin')->postJson('/admin/settlements/generate',['period'=>'2099-01','shop_channel_id'=>$shop->id])->assertUnprocessable();
         $this->assertDatabaseCount('settlement_runs',0);
+    }
+    public function test_admin_amount_details_filter_each_role_and_pg_row(): void
+    {
+        [$vendor,$admin,$shop,$product]=$this->createSetup();
+        $supplier=$vendor->replicate();$supplier->email='filter-supplier@example.test';$supplier->save();
+        $this->reviewLine($admin,$shop,$product,['product_type'=>'public','is_fixed_shared'=>true,'supplier_vendor_id'=>$supplier->id,'profit_share_type'=>'fixed','profit_share_value'=>1500]);
+        $this->reviewLine($admin,$shop,$product,['product_type'=>'own','payment_gateway_type'=>'me9_pg']);
+        $admin->type='superadmin';$admin->save();$this->actingAs($admin,'admin');
+        $scope='/admin/settlements/workbook/'.now()->format('Y-m').'?shop_channel_id='.$shop->id.'&vendor_id='.$vendor->id.'&kind=payout';
+        $this->get($scope.'&settlement_role=shared_fixed_reseller&payment_gateway_type=me9_pg')->assertOk()->assertViewHas('rows',fn($rows)=>$rows->count()===1);
+        $this->get($scope.'&settlement_role=shared_fixed_reseller&payment_gateway_type=own_pg')->assertOk()->assertViewHas('rows',fn($rows)=>$rows->isEmpty());
+        $this->getJson($scope.'&settlement_role=invalid')->assertUnprocessable();
     }
 }

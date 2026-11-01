@@ -45,7 +45,7 @@ class MemberCart
         if (Auth::check()) {
             $this->mutate(function () use ($shop,$cart) {
                 $query=MemberShopCart::where('user_id',Auth::id())->where('shop_channel_id',$shop->id);
-                if ($cart) $query->whereNotIn('cart_key',array_keys($cart));
+                if ($cart) $query->whereNotIn('cart_key',array_map('strval',array_keys($cart)));
                 $query->delete();
                 foreach($cart as $key=>$row) {
                     $product=ShopChannelProduct::where('shop_channel_id',$shop->id)->find((int)$key);

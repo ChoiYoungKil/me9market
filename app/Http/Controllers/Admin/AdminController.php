@@ -32,12 +32,12 @@ use Illuminate\Support\Str;
 
 class AdminController extends Controller
 {
-    public function sub01() { return view('admin.sub.sub01'); }
-    public function sub02() { return view('admin.sub.sub02'); }
-    public function sub03() { return view('admin.sub.sub03'); }
-    public function view() { return view('admin.sub.view'); }
-    public function newpage() { return view('admin.sub.newpage'); }
-    public function loading() { return view('admin.sub.loading'); }
+    public function sub01() { return app(\App\Http\Controllers\Admin\AdminPatternController::class)->detail(); }
+    public function sub02() { return app(\App\Http\Controllers\Admin\AdminPatternController::class)->forms(); }
+    public function sub03() { return app(ProductsController::class)->products(request()); }
+    public function view() { return app(\App\Http\Controllers\Admin\AdminPatternController::class)->notice(); }
+    public function newpage() { return app(\App\Http\Controllers\Admin\AdminPatternController::class)->forms(true); }
+    public function loading() { return app(\App\Http\Controllers\Admin\AdminPatternController::class)->loading(); }
 
     public function refundPolicies(Request $request)
     {
@@ -52,8 +52,10 @@ class AdminController extends Controller
     public function saveDefaultRefundPolicy(Request $request)
     {
         $data = $request->validate(['content' => 'required|string|max:30000']);
+        $content = app(\App\Services\RefundPolicyContent::class)->forStorage(trim($data['content']));
+        if ($content === '') throw \Illuminate\Validation\ValidationException::withMessages(['content' => '안내 내용을 입력해 주세요.']);
         \App\Models\PlatformRefundPolicy::updateOrCreate(['id' => 1], [
-            'content' => trim($data['content']), 'updated_by' => Auth::guard('admin')->id(),
+            'content' => $content, 'updated_by' => Auth::guard('admin')->id(),
         ]);
         return back()->with('success_message', '기본 취소/환불 안내가 저장되었습니다.');
     }
@@ -96,7 +98,14 @@ class AdminController extends Controller
             ['labels' => $topCategories->pluck('category_name'), 'values' => $topCategories->pluck('amount')],
         ];
 
-        return view('admin.dashboard', compact('counts', 'totalItems', 'periodStart', 'periodEnd', 'topProducts', 'topCategories', 'recentOrders', 'recentPoints', 'charts'));
+        $statusLabels = \App\Support\OrderItemStatus::labels();
+        foreach ($counts as $code => $count) if (!isset($statusLabels[$code])) $statusLabels[$code] = $code;
+        $workQueue = $vendorId === null ? [
+            'seller' => User::whereIn('vendor_id', Vendor::whereNotNull('seller_requested_at')->whereNull('seller_approved_at')->select('id'))->count(),
+            'closures' => ShopChannel::where('closure_status','requested')->count(),
+            'contacts' => \App\Models\Contact::where(fn($q)=>$q->whereNull('admin_reply')->orWhere('admin_reply',''))->count(),
+        ] : [];
+        return view('admin.dashboard', compact('counts', 'statusLabels', 'workQueue', 'totalItems', 'periodStart', 'periodEnd', 'topProducts', 'topCategories', 'recentOrders', 'recentPoints', 'charts'));
     }
 
     public function storyboardTestbed(Request $request)
@@ -109,9 +118,10 @@ class AdminController extends Controller
         $channelMember = $selection['channelMember'];
         $shopChannel = $channelMember ? ShopChannel::where('status', 1)->where('vendor_id', $channelMember->vendor_id)
             ->orderBy('id')->first(['id', 'channel_name', 'channel_code', 'is_public', 'is_member_only']) : null;
-        $pages = app(\App\Services\StoryboardReview::class)->pages($member);
+        $pages = app(\App\Services\StoryboardReview::class)->pages($member, $shopChannel);
         $reviewedAt = \App\Services\StoryboardReview::REVIEWED_AT;
-        return response()->view('admin.storyboard_testbed', compact('accounts', 'shopChannel', 'frontUrl', 'adminUrl', 'pages', 'reviewedAt'))
+        $operationalChecks=app(\App\Services\StoryboardReviewHistory::class)->operationalChecks();
+        return response()->view('admin.storyboard_testbed', compact('accounts', 'shopChannel', 'frontUrl', 'adminUrl', 'pages', 'reviewedAt','operationalChecks'))
             ->header('Cache-Control', 'private, no-store')->header('Referrer-Policy', 'no-referrer');
     }
 
@@ -161,11 +171,11 @@ class AdminController extends Controller
                         return redirect()->back()->with('error_message', '관리자 계정이 비활성 상태입니다');
                     }
                     // 관리자 로그인 성공 -> 관리자 대시보드로 리다이렉트
-                    return redirect()->intended('/admin/dashboard');
+                    return redirect()->intended('/admin/dashboard')->withCookie($request->boolean('remember') ? cookie('me9_admin_login_id', $user->email, 43200, null, null, $request->isSecure(), true, false, 'lax') : \Illuminate\Support\Facades\Cookie::forget('me9_admin_login_id'));
                 }
 
             } else { // 로그인 정보가 일치하지 않는 경우
-                return redirect()->back()->with('error_message', '이메일 또는 비밀번호가 일치하지 않습니다');
+                return redirect()->back()->withInput($request->only('email','remember'))->with('error_message', '이메일 또는 비밀번호가 일치하지 않습니다');
             }
         }
 
@@ -582,16 +592,15 @@ class AdminController extends Controller
     }
 
     public function admins(Request $request, $type = null) { // $type is the `type` column in the `admins` which can only be: superadmin, admin, subadmin or vendor    // A default value of null (to allow not passing a {type} slug, and in this case, the page will view ALL of the superadmin, admins, subadmins and vendors at the same time)
+        Session::put('page', 'admins');
         $query = Admin::query();
 
         // Type Filter (from URL parameter or Search)
         if (!empty($type)) {
             $query->where('type', $type);
             $title = ucfirst($type) . 's';
-            Session::put('page', 'view_' . strtolower($title));
         } else {
             $title = 'Admins/Subadmins/Vendors';
-            Session::put('page', 'view_all');
         }
 
         // Search Filter
@@ -710,6 +719,7 @@ class AdminController extends Controller
             // Combine mobile number
             if (!empty($data['mobile_1']) && !empty($data['mobile_2']) && !empty($data['mobile_3'])) {
                 $data['mobile'] = $data['mobile_1'] . '-' . $data['mobile_2'] . '-' . $data['mobile_3'];
+                $request->merge(['mobile' => $data['mobile']]);
             }
 
             $rules = [
@@ -718,6 +728,8 @@ class AdminController extends Controller
                 'email' => 'required|email|unique:admins,email,' . $id,
                 'type' => 'required',
                 'image' => 'nullable|image|mimes:jpeg,jpg,png,webp|max:5120',
+                'address_proof_image' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+                'bank_copy_image' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
             ];
 
             if ($id == "") {
@@ -800,31 +812,34 @@ class AdminController extends Controller
                     if ($request->hasFile('address_proof_image')) {
                         $img = $request->file('address_proof_image');
                         if ($img->isValid()) {
-                            $imgName = 'license_' . rand(111, 99999) . '.' . $img->getClientOriginalExtension();
-                            $img->move('front/images/bank_copies/', $imgName);
+                            $imgName = 'license_' . Str::uuid() . '.' . $img->extension();
+                            $img->move(public_path('front/images/bank_copies'), $imgName);
                             $businessData['address_proof_image'] = $imgName;
                         }
                     }
 
-                    VendorsBusinessDetail::updateOrCreate(['vendor_id' => $vendor_id], $businessData);
+                    $business = VendorsBusinessDetail::where('vendor_id', $vendor_id)->first() ?? new VendorsBusinessDetail;
+                    $business->forceFill(['vendor_id' => $vendor_id] + $businessData)->save();
 
                     // 4. Handle Bank Details (Step 3)
                     $bankData = [
                         'bank_name' => $data['bank_name'] ?? '',
                         'account_number' => $data['account_number'] ?? '',
                         'account_holder_name' => $data['account_holder_name'] ?? '',
+                        'bank_ifsc_code' => VendorsBankDetail::where('vendor_id', $vendor_id)->value('bank_ifsc_code') ?? '',
                     ];
 
                     if ($request->hasFile('bank_copy_image')) {
                         $img = $request->file('bank_copy_image');
                         if ($img->isValid()) {
-                            $imgName = 'bankbook_' . rand(111, 99999) . '.' . $img->getClientOriginalExtension();
-                            $img->move('front/images/bank_copies/', $imgName);
-                            $bankData['bank_copy_image'] = $imgName;
+                            $imgName = 'bankbook_' . Str::uuid() . '.' . $img->extension();
+                            $img->move(public_path('front/images/bank_copies'), $imgName);
+                            VendorsBusinessDetail::where('vendor_id', $vendor_id)->update(['bank_copy_image' => $imgName]);
                         }
                     }
 
-                    VendorsBankDetail::updateOrCreate(['vendor_id' => $vendor_id], $bankData);
+                    $bank = VendorsBankDetail::where('vendor_id', $vendor_id)->first() ?? new VendorsBankDetail;
+                    $bank->forceFill(['vendor_id' => $vendor_id] + $bankData)->save();
 
                     \Illuminate\Support\Facades\DB::commit();
                 } catch (\Exception $e) {
@@ -872,6 +887,6 @@ class AdminController extends Controller
     }
 
     public function layerLarge() {
-        return view('admin.sub.layer_large');
+        return app(\App\Http\Controllers\Admin\AdminPatternController::class)->forms(false, true);
     }
 }

@@ -1,209 +1,68 @@
 @extends('layouts.admin')
-
 @section('content')
-    <div id="contents">
-        <div class="row">
-            <div class="box box1">
-                <div class="page_info">
-                    <div class="ttl">관리자/판매자 관리</div>
-                    <ul class="dep">
-                        <li>홈</li>
-                        <li>관리자 관리</li>
-                        <li>관리자/판매자</li>
-                    </ul>
-                </div>
-                <div class="conbx">
-                    <div class="con_w">
-                        <form action="{{ url('admin/admins') }}" method="get">
-                            <div class="tb01">
-                                <table>
-                                    <colgroup>
-                                        <col width="160px">
-                                        <col width="">
-                                        <col width="160px">
-                                        <col width="">
-                                    </colgroup>
-                                    <tbody class="textL">
-                                        <tr>
-                                            <th class="w160"><span>검색 구분</span></th>
-                                            <td colspan="3">
-                                                <div class="r_btn_w">
-                                                    <div class="search_w01">
-                                                        <select name="type">
-                                                            <option value="">전체 유형</option>
-                                                            <option value="admin" @if(request('type') == 'admin') selected
-                                                            @endif>관리자</option>
-                                                            <option value="subadmin" @if(request('type') == 'subadmin')
-                                                            selected @endif>서브 관리자</option>
-                                                            <option value="vendor" @if(request('type') == 'vendor') selected
-                                                            @endif>판매자</option>
-                                                        </select>
-                                                        <input type="text" name="search_value"
-                                                            value="{{ request('search_value') }}"
-                                                            placeholder="이름, 이메일, 연락처">
-                                                    </div>
-                                                    <a id="arrow1" class="btn01 arrow"><span>상세 검색</span></a>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+<div id="contents" class="admin-workspace admin-account-list">
+    <h1>관리자/판매자 관리</h1>
+    @include('admin.shared.messages')
+                        <form action="{{ url('admin/admins') }}" method="get" class="admin-account-search">
+                            <div class="admin-account-search-row">
+                                <label class="admin-account-type">구분
+                                    <select name="type">
+                                        <option value="">전체 유형</option>
+                                        <option value="admin" @selected(request('type')==='admin')>관리자</option>
+                                        <option value="subadmin" @selected(request('type')==='subadmin')>서브 관리자</option>
+                                        <option value="vendor" @selected(request('type')==='vendor')>판매자</option>
+                                    </select>
+                                </label>
+                                <label class="admin-account-keyword">검색어
+                                    <input type="search" name="search_value" value="{{ request('search_value') }}" placeholder="이름, 이메일, 연락처" maxlength="100">
+                                </label>
+                                <div class="admin-account-search-actions">
+                                    <button type="button" id="arrow1" class="admin-btn" aria-expanded="{{ request()->filled('status')?'true':'false' }}" aria-controls="admin-account-status"><span>상세 검색</span></button>
+                                    <button type="submit" class="admin-btn primary">검색</button>
+                                    <a href="{{ url('admin/admins') }}" class="admin-btn">초기화</a>
+                                </div>
                             </div>
-                            <div class="tb01 bN arrowbx" data-arrowbx="arrow1" style="display: none;">
-                                <table>
-                                    <colgroup>
-                                        <col width="160px">
-                                        <col width="">
-                                        <col width="160px">
-                                        <col width="">
-                                    </colgroup>
-                                    <tbody class="textL">
-                                        <tr>
-                                            <th class="w160"><span>상태</span></th>
-                                            <td colspan="3">
-                                                <ul class="chk02">
-                                                    <li>
-                                                        <input type="checkbox" name="status[]" value="1" id="status_active"
-                                                            @if(is_array(request('status')) && in_array(1, request('status'))) checked @endif>
-                                                        <label for="status_active">활성</label>
-                                                    </li>
-                                                    <li>
-                                                        <input type="checkbox" name="status[]" value="0"
-                                                            id="status_inactive" @if(is_array(request('status')) && in_array(0, request('status'))) checked @endif>
-                                                        <label for="status_inactive">비활성</label>
-                                                    </li>
-                                                </ul>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <div class="btm_btn right mt10 search-actions">
-                                <button type="submit" class="btn01">검색</button>
-                                <a href="{{ url('admin/admins') }}" class="btn01 col3">초기화</a>
+                            <div id="admin-account-status" class="arrowbx admin-account-status" data-arrowbx="arrow1" @if(!request()->filled('status')) style="display:none" @endif>
+                                <span>상태</span>
+                                <label><input type="checkbox" name="status[]" value="1" @checked(is_array(request('status')) && in_array(1,request('status')))>활성</label>
+                                <label><input type="checkbox" name="status[]" value="0" @checked(is_array(request('status')) && in_array(0,request('status')))>비활성</label>
                             </div>
                         </form>
-                    </div>
-                </div>
-            </div>
 
-            <div class="box box1">
-                <div class="conbx">
-                    <div class="con_w">
-                        <div class="list_top1">
-                            <div class="count">총
-                                <strong>{{ is_array($admins) ? count($admins) : $admins->total() }}</strong> 명
-                            </div>
-                            <div class="r_btn_w ml20">
-                                <a href="{{ url('admin/add-edit-admin') }}" class="btn02">관리자/판매자 추가</a>
-                            </div>
-                        </div>
-
-                        @if (Session::has('success_message'))
-                            <div class="alert alert-success alert-dismissible fade show" role="alert" style="margin-top: 10px;">
-                                <strong>성공:</strong> {{ Session::get('success_message') }}
-                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                        @endif
-                        @if (Session::has('error_message'))
-                            <div class="alert alert-danger alert-dismissible fade show" role="alert" style="margin-top: 10px;">
-                                <strong>오류:</strong> {{ Session::get('error_message') }}
-                                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                </button>
-                            </div>
-                        @endif
-
-                        <div class="tb01 ovS">
-                            <table class="table table-bordered">
-                                <colgroup>
-                                    <col width="80px">
-                                    <col width="150px">
-                                    <col width="100px">
-                                    <col width="200px">
-                                    <col width="150px">
-                                    <col width="100px">
-                                    <col width="150px">
-                                </colgroup>
-                                <thead>
-                                    <tr>
-                                        <th>번호</th>
-                                        <th>이름</th>
-                                        <th>구분</th>
-                                        <th>이메일</th>
-                                        <th>연락처</th>
-                                        <th>상태</th>
-                                        <th>관리</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @if((is_array($admins) && count($admins) > 0) || (!is_array($admins) && $admins->count() > 0))
-                                        @foreach ($admins as $admin)
-                                            <tr>
-                                                <td>{{ $admin['id'] }}</td>
-                                                <td>{{ $admin['name'] }}</td>
-                                                <td>
-                                                    @if($admin['type'] == 'admin') 관리자
-                                                    @elseif($admin['type'] == 'subadmin') 서브 관리자
-                                                    @elseif($admin['type'] == 'vendor') 판매자
-                                                    @else {{ ucfirst($admin['type']) }} @endif
-                                                </td>
-                                                <td>{{ $admin['email'] }}</td>
-                                                <td>{{ $admin['mobile'] }}</td>
-                                                <td>
-                                                    @if ($admin['status'] == 1)
-                                                        <a class="updateAdminStatus" id="admin-{{ $admin['id'] }}"
-                                                            admin_id="{{ $admin['id'] }}" href="javascript:void(0)">
-                                                            <span style="color:green">활성</span>
-                                                        </a>
-                                                    @else
-                                                        <a class="updateAdminStatus" id="admin-{{ $admin['id'] }}"
-                                                            admin_id="{{ $admin['id'] }}" href="javascript:void(0)">
-                                                            <span style="color:red">비활성</span>
-                                                        </a>
-                                                    @endif
-                                                </td>
-                                                <td>
-                                                    @if ($admin['type'] == 'vendor')
-                                                        <a href="{{ url('admin/view-vendor-details/' . $admin['id']) }}"
-                                                            class="btn02">상세</a>
-                                                    @endif
-                                                    <a href="{{ url('admin/add-edit-admin/' . $admin['id']) }}" class="btn02">수정</a>
-                                                    <a href="{{ url('admin/delete-admin/' . $admin['id']) }}"
-                                                        class="btn02 confirmDelete" module="admin" moduleid="{{ $admin['id'] }}"
-                                                        style="color: red;">삭제</a>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    @else
-                                        <tr>
-                                            <td colspan="7" class="no_data">검색된 관리자/판매자가 없습니다.</td>
-                                        </tr>
-                                    @endif
-                                </tbody>
-                            </table>
-                        </div>
-
-                        @if(!is_array($admins))
-                            <div class="page_bx1">
-                                {{ $admins->links() }}
-                            </div>
-                        @endif
-                    </div>
-                </div>
-            </div>
-        </div>
+    <div class="admin-toolbar"><p>총 <strong>{{ number_format($admins->total()) }}</strong>명</p><a class="admin-btn primary" href="{{ url('admin/add-edit-admin') }}">관리자/판매자 추가</a></div>
+    <div class="admin-table-wrap" tabindex="0" role="region" aria-label="관리자 및 판매자 목록">
+        <table class="admin-table admin-account-table">
+            <colgroup><col style="width:64px"><col style="width:190px"><col style="width:110px"><col><col style="width:150px"><col style="width:90px"><col style="width:240px"></colgroup>
+            <thead><tr><th>번호</th><th>이름</th><th>구분</th><th>이메일</th><th>연락처</th><th>상태</th><th>관리</th></tr></thead>
+            <tbody>
+            @forelse($admins as $admin)
+                <tr>
+                    <td>{{ $admin->id }}</td><td class="account-name">{{ $admin->name }}</td>
+                    <td>{{ ['superadmin'=>'최고관리자','admin'=>'관리자','subadmin'=>'서브 관리자','vendor'=>'판매자'][$admin->type] ?? '기타' }}</td>
+                    <td class="account-email" title="{{ $admin->email }}">{{ $admin->email }}</td><td class="nowrap">{{ $admin->mobile }}</td>
+                    <td><a class="updateAdminStatus" id="admin-{{ $admin->id }}" admin_id="{{ $admin->id }}" href="javascript:void(0)" title="계정 상태 변경"><span class="admin-status {{ $admin->status?'enabled':'disabled' }}">{{ $admin->status?'활성':'비활성' }}</span></a></td>
+                    <td><div class="admin-row-actions">
+                    @if($admin->type==='vendor')
+                        <a class="admin-btn primary" href="{{ url('admin/view-vendor-details/'.$admin->id) }}">상세</a>
+                    @endif
+                        <a class="admin-btn {{ $admin->type==='vendor'?'':'primary' }}" href="{{ url('admin/add-edit-admin/'.$admin->id) }}">수정</a>
+                        <a class="admin-btn danger confirmDelete" href="{{ url('admin/delete-admin/'.$admin->id) }}" module="admin" moduleid="{{ $admin->id }}">삭제</a>
+                    </div></td>
+                </tr>
+            @empty
+                <tr><td colspan="7" class="admin-empty">검색된 관리자/판매자가 없습니다.</td></tr>
+            @endforelse
+            </tbody>
+        </table>
     </div>
-
+    <div class="admin-pagination">{{ $admins->withQueryString()->onEachSide(2)->links('admin.shared.pagination') }}</div>
+</div>
     <script>
         $(document).ready(function () {
             // Arrow Detail Search Toggle
-            $(".btn01.arrow").click(function () {
+            $("#arrow1").click(function () {
                 var thisId = $(this).attr("id");
-                $(this).toggleClass("on");
+                $(this).attr("aria-expanded", $(this).attr("aria-expanded") !== "true" ? "true" : "false");
                 $(".arrowbx[data-arrowbx='" + thisId + "']").stop().slideToggle(300);
             });
 
@@ -230,9 +89,9 @@
                     data: { status: status, admin_id: admin_id },
                     success: function (resp) {
                         if (resp['status'] == 0) {
-                            $("#admin-" + admin_id).html("<span style='color:red'>비활성</span>");
+                            $("#admin-" + admin_id).html("<span class='admin-status disabled'>비활성</span>");
                         } else if (resp['status'] == 1) {
-                            $("#admin-" + admin_id).html("<span style='color:green'>활성</span>");
+                            $("#admin-" + admin_id).html("<span class='admin-status enabled'>활성</span>");
                         }
                     }, error: function () {
                         alert("오류가 발생했습니다.");

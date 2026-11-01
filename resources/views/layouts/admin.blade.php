@@ -38,6 +38,8 @@
 
     @stack('styles')
     <link href="{{ asset('common/portal.css').'?v='.filemtime(public_path('common/portal.css')) }}" rel="stylesheet">
+<link rel="stylesheet" href="{{ asset('common/admin-workspace.css').'?v='.filemtime(public_path('common/admin-workspace.css')) }}">
+<script defer src="{{ asset('common/admin-workspace.js').'?v='.filemtime(public_path('common/admin-workspace.js')) }}"></script>
 </head>
 
 <body class="portal portal-admin" id="@yield('page_type', 'main')">
@@ -70,6 +72,8 @@
                     <li><a href="{{ url('admin/users') }}" class="{{ $isUserManagement ? 'on' : '' }}">회원관리</a></li>
                 <li><a href="{{ url('admin/products') }}" class="{{ $isProductManagement ? 'on' : '' }}">상품관리</a>
                     </li>
+                    <li><a href="{{ url('admin/orders') }}" class="{{ $currentPage === 'orders' ? 'on' : '' }}">주문관리</a></li>
+                    <li><a href="{{ url('admin/shop-channel-closures') }}" class="{{ $currentPage === 'shop-channel-closures' ? 'on' : '' }}">Shop 채널</a></li>
                     <li><a href="{{ url('admin/notices') }}" class="{{ $isSupport ? 'on' : '' }}">고객센터</a></li>
                     <li><a href="{{ route('admin.channel_points.index') }}" class="{{ $currentPage === 'channel_points' ? 'on' : '' }}">포인트관리</a></li>
                     <li><a href="{{ route('admin.order_managers.index') }}" class="{{ $isOrderManagement ? 'on' : '' }}">발주관리</a></li>
@@ -102,6 +106,7 @@
         </footer>
     </div><!-- //wrap -->
     <script src="{{ asset('common/portal.js').'?v='.filemtime(public_path('common/portal.js')) }}"></script>
+    @yield('scripts')
     @stack('scripts')
 </body>
 

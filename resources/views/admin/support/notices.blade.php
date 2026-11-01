@@ -78,7 +78,7 @@
             cursor: default;
         }
     </style>
-    <div id="contents">
+    <div id="contents" class="admin-workspace admin-legacy">
         <div class="row">
             <div class="box box1">
                 <div class="page_info">
@@ -121,7 +121,7 @@
                                     <option value="100" {{ $perPage == 100 ? 'selected' : '' }}>100개씩 보기</option>
                                 </select>
                                 <div class="r_btn_w">
-                                    <a href="{{ url('admin/add-edit-notice') }}" class="btn02">공지사항 추가</a>
+                                    <a href="{{ route('admin.content.notices.create') }}" class="admin-btn primary">공지사항 추가</a> <a href="{{ url('admin/newpage') }}" class="admin-btn" data-new-window>새창에서 작성</a>
                                 </div>
                             </div>
                         </div>
@@ -173,11 +173,11 @@
                                                 </td>
                                                 <td style="text-align: left; max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
                                                     title="{{ $notice['title'] }}">
-                                                    {{ $notice['title'] }}
+                                                    <a href="{{ route('admin.content.notices.show',$notice['id']) }}">{{ $notice['title'] }}</a>
                                                 </td>
                                                 <td>
                                                     @if(!empty($notice['attachment']))
-                                                        <a href="{{ url('admin/attachments/notices/' . $notice['attachment']) }}"
+                                                        <a href="{{ route('admin.content.notices.download',$notice['id']) }}"
                                                             target="_blank" title="{{ $notice['attachment'] }}">📎</a>
                                                     @else
                                                         -
@@ -194,15 +194,15 @@
                                                     @else
                                                         <a class="updateNoticeStatus" id="notice-{{ $notice['id'] }}"
                                                             notice_id="{{ $notice['id'] }}" href="javascript:void(0)">
-                                                            <span style="color:red">비노출</span>
+                                                            <span>비노출</span>
                                                         </a>
                                                     @endif
                                                 </td>
                                                 <td>
-                                                    <a href="{{ url('admin/add-edit-notice/' . $notice['id']) }}"
-                                                        class="btn02">수정</a>
-                                                    <a href="JavaScript:void(0)" class="btn02 confirmDelete" module="notice"
-                                                        moduleid="{{ $notice['id'] }}" style="color: red;">삭제</a>
+                                                    <a href="{{ route('admin.content.notices.edit',$notice['id']) }}"
+                                                        class="admin-btn primary">수정</a>
+                                                    <a href="JavaScript:void(0)" class="admin-btn danger confirmDelete" module="notice"
+                                                        moduleid="{{ $notice['id'] }}">삭제</a>
                                                 </td>
                                             </tr>
                                         @endforeach
@@ -216,54 +216,7 @@
                         </div>
 
 
-                        {{-- 페이지네이션 --}}
-                        @if($notices->hasPages())
-                            <div class="page_bx" style="margin-top: 20px; text-align: center;">
-                                {{-- 첫 페이지 --}}
-                                @if($notices->onFirstPage())
-                                    <a href="{{ url()->current() }}" class="page_first disabled" style="pointer-events: none; opacity: 0.5;">first</a>
-                                @else
-                                    <a href="{{ $notices->appends(request()->query())->url(1) }}" class="page_first">first</a>
-                                @endif
-
-                                {{-- 이전 페이지 --}}
-                                @if($notices->onFirstPage())
-                                    <a href="{{ url()->current() }}" class="page_prev disabled" style="pointer-events: none; opacity: 0.5;">prev</a>
-                                @else
-                                    <a href="{{ $notices->appends(request()->query())->previousPageUrl() }}"
-                                        class="page_prev">prev</a>
-                                @endif
-
-                                {{-- 페이지 번호 --}}
-                                @php
-                                    $start = max($notices->currentPage() - 2, 1);
-                                    $end = min($start + 4, $notices->lastPage());
-                                    $start = max($end - 4, 1);
-                                @endphp
-                                @for($i = $start; $i <= $end; $i++)
-                                    @if($i == $notices->currentPage())
-                                        <a href="{{ url()->current() }}" class="num on">{{ $i }}</a>
-                                    @else
-                                        <a href="{{ $notices->appends(request()->query())->url($i) }}" class="num">{{ $i }}</a>
-                                    @endif
-                                @endfor
-
-                                {{-- 다음 페이지 --}}
-                                @if($notices->hasMorePages())
-                                    <a href="{{ $notices->appends(request()->query())->nextPageUrl() }}" class="page_next">next</a>
-                                @else
-                                    <a href="{{ url()->current() }}" class="page_next disabled" style="pointer-events: none; opacity: 0.5;">next</a>
-                                @endif
-
-                                {{-- 마지막 페이지 --}}
-                                @if($notices->currentPage() == $notices->lastPage())
-                                    <a href="{{ url()->current() }}" class="page_last disabled" style="pointer-events: none; opacity: 0.5;">last</a>
-                                @else
-                                    <a href="{{ $notices->appends(request()->query())->url($notices->lastPage()) }}"
-                                        class="page_last">last</a>
-                                @endif
-                            </div>
-                        @endif
+                        <div class="admin-pagination">{{ $notices->withQueryString()->onEachSide(2)->links('admin.shared.pagination') }}</div>
                     </div>
                 </div>
             </div>

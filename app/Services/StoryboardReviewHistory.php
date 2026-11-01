@@ -4,6 +4,12 @@ namespace App\Services;
 
 class StoryboardReviewHistory
 {
+    public function operationalChecks(): array
+    {
+        $archive=json_decode(file_get_contents(resource_path('storyboard/review-history.json')),true,512,JSON_THROW_ON_ERROR);
+        return $archive['operational_checks'] ?? [];
+    }
+
     /** Historical observations only; this reader must not create or replay review data. */
     public function all(): array
     {

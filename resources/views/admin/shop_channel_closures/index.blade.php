@@ -1,98 +1,51 @@
 @extends('layouts.admin')
-
 @section('content')
-    <div class="content-wrapper">
-        <section class="content-header">
-            <div class="container-fluid">
-                <div class="row mb-2">
-                    <div class="col-sm-6">
-                        <h1>Shop 채널 운영중지 승인</h1>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="content">
-            <div class="container-fluid">
-                @if(Session::has('success_message'))
-                    <div class="alert alert-success">{{ Session::get('success_message') }}</div>
-                @endif
-
-                <div class="card">
-                    <div class="card-header">
-                        <form method="GET" action="{{ route('admin.shop_channel_closures.index') }}" class="form-inline">
-                            <select name="status" class="form-control mr-2">
-                                <option value="all" {{ $status === 'all' ? 'selected' : '' }}>전체</option>
-                                <option value="requested" {{ $status === 'requested' ? 'selected' : '' }}>승인대기</option>
-                                <option value="approved" {{ $status === 'approved' ? 'selected' : '' }}>승인완료</option>
-                                <option value="rejected" {{ $status === 'rejected' ? 'selected' : '' }}>반려</option>
-                                <option value="none" {{ $status === 'none' ? 'selected' : '' }}>미요청</option>
-                            </select>
-                            <input type="text" name="keyword" value="{{ $keyword }}" class="form-control mr-2" placeholder="채널명/코드/판매자">
-                            <button type="submit" class="btn btn-primary">검색</button>
-                        </form>
-                    </div>
-                    <div class="card-body table-responsive p-0">
-                        <table class="table table-hover text-nowrap">
-                            <thead>
-                                <tr>
-                                    <th>No</th>
-                                    <th>판매자</th>
-                                    <th>Shop 채널</th>
-                                    <th>채널코드</th>
-                                    <th>운영상태</th>
-                                    <th>요청상태</th>
-                                    <th>요청일</th>
-                                    <th>메모</th>
-                                    <th>관리</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($channels as $channel)
-                                    <tr>
-                                        <td>{{ $channels->firstItem() + $loop->index }}</td>
-                                        <td>{{ $channel->vendor?->name ?? '-' }}</td>
-                                        <td>{{ $channel->channel_name }}</td>
-                                        <td>{{ $channel->channel_code }}</td>
-                                        <td>{{ (int) $channel->status === 1 ? '운영' : '중지' }}</td>
-                                        <td>
-                                            @switch($channel->closure_status)
-                                                @case('requested') 승인대기 @break
-                                                @case('approved') 승인완료 @break
-                                                @case('rejected') 반려 @break
-                                                @default 미요청
-                                            @endswitch
-                                        </td>
-                                        <td>{{ optional($channel->closure_requested_at)->format('Y-m-d H:i') ?? '-' }}</td>
-                                        <td>{{ $channel->closure_memo ?: '-' }}</td>
-                                        <td>
-                                            @if($channel->closure_status === 'requested')
-                                                <form method="POST" action="{{ route('admin.shop_channel_closures.approve', $channel->id) }}" style="display:inline-block;">
-                                                    @csrf
-                                                    <button type="submit" class="btn btn-sm btn-success">승인</button>
-                                                </form>
-                                                <form method="POST" action="{{ route('admin.shop_channel_closures.reject', $channel->id) }}" style="display:inline-block;">
-                                                    @csrf
-                                                    <button type="submit" class="btn btn-sm btn-danger">반려</button>
-                                                </form>
-                                            @else
-                                                -
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="9" class="text-center">운영중지 요청 내역이 없습니다.</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="card-footer clearfix">
-                        {{ $channels->links() }}
-                    </div>
-                </div>
-            </div>
-        </section>
+<div id="contents" class="admin-workspace admin-closures">
+    <div class="admin-closure-heading"><div><p>SHOP CHANNEL</p><h1>Shop 채널 운영중지 승인</h1></div><span class="admin-closure-caption">운영중지 요청 검토 · 처리</span></div>
+    @include('admin.shared.messages')
+    <section class="admin-panel admin-closure-search" aria-label="운영중지 요청 검색">
+        <form method="get" action="{{ route('admin.shop_channel_closures.index') }}" class="admin-filter">
+            <label>요청 상태<select name="status">
+                @foreach(['all'=>'전체','requested'=>'승인대기','approved'=>'승인완료','rejected'=>'반려','none'=>'미요청'] as $value=>$label)
+                <option value="{{ $value }}" @selected($status===$value)>{{ $label }}</option>
+                @endforeach
+            </select></label>
+            <label class="admin-closure-keyword">검색어<input type="search" name="keyword" value="{{ $keyword }}" placeholder="채널명 · 채널코드 · 판매자" maxlength="100"></label>
+            <div class="admin-actions"><button type="submit" class="admin-btn primary">검색</button><a href="{{ route('admin.shop_channel_closures.index') }}" class="admin-btn">초기화</a></div>
+        </form>
+    </section>
+    <div class="admin-toolbar"><p>운영중지 요청 목록 <strong>{{ number_format($channels->total()) }}</strong>건</p><span class="admin-help">승인대기 요청부터 표시합니다.</span></div>
+    <div class="admin-table-wrap" tabindex="0" role="region" aria-label="채널 운영중지 요청 목록">
+        <table class="admin-table admin-closure-table">
+            <colgroup><col style="width:5%"><col style="width:17%"><col style="width:24%"><col style="width:7%"><col style="width:8%"><col style="width:12%"><col style="width:12%"><col style="width:15%"></colgroup>
+            <thead><tr><th>번호</th><th>판매자</th><th>Shop 채널 / 채널코드</th><th>운영상태</th><th>요청상태</th><th>요청일시</th><th>메모</th><th>처리</th></tr></thead>
+            <tbody>
+            @forelse($channels as $channel)
+                <tr>
+                    <td>{{ $channels->firstItem()+$loop->index }}</td>
+                    <td class="closure-name">{{ $channel->vendor?->name ?? '-' }}</td>
+                    <td class="closure-name"><strong>{{ $channel->channel_name }}</strong><small>{{ $channel->channel_code }}</small></td>
+                    <td><span class="admin-status {{ (int)$channel->status===1?'enabled':'disabled' }}">{{ (int)$channel->status===1?'운영':'중지' }}</span></td>
+                    <td><span class="admin-status closure-state-{{ $channel->closure_status }}">{{ ['requested'=>'승인대기','approved'=>'승인완료','rejected'=>'반려','none'=>'미요청'][$channel->closure_status] ?? '미요청' }}</span></td>
+                    <td class="nowrap">{{ $channel->closure_requested_at?->format('Y-m-d') ?? '-' }}<small class="closure-time">{{ $channel->closure_requested_at?->format('H:i') }}</small></td>
+                    <td class="closure-memo">{{ $channel->closure_memo ?: '-' }}</td>
+                    <td>
+                    @if($channel->closure_status==='requested')
+                        <div class="admin-row-actions">
+                            <form method="post" action="{{ route('admin.shop_channel_closures.approve',$channel->id) }}">@csrf<button type="submit" class="admin-btn primary">승인</button></form>
+                            <form method="post" action="{{ route('admin.shop_channel_closures.reject',$channel->id) }}">@csrf<button type="submit" class="admin-btn danger">반려</button></form>
+                        </div>
+                    @else
+                        <span class="admin-help">{{ in_array($channel->closure_status,['approved','rejected'],true)?'처리 완료':'요청 없음' }}</span>
+                    @endif
+                    </td>
+                </tr>
+            @empty
+                <tr><td colspan="8" class="admin-empty">검색 조건에 맞는 운영중지 요청이 없습니다.</td></tr>
+            @endforelse
+            </tbody>
+        </table>
     </div>
+    <div class="admin-pagination">{{ $channels->withQueryString()->onEachSide(2)->links('admin.shared.pagination') }}</div>
+</div>
 @endsection

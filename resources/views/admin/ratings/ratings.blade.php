@@ -1,98 +1,40 @@
-{{-- This view is rendered by ratings() method in Admin/RatingController.php --}}
 @extends('admin.layout.layout')
-
-
 @section('content')
-    <div class="main-panel">
-        <div class="content-wrapper">
-            <div class="row">
-                <div class="col-lg-12 grid-margin stretch-card">
-                    <div class="card">
-                        <div class="card-body">
-                            <h4 class="card-title">Ratings</h4>
-                        
-                            
-
-                            {{-- Displaying The Validation Errors: https://laravel.com/docs/9.x/validation#quick-displaying-the-validation-errors AND https://laravel.com/docs/9.x/blade#validation-errors --}}
-                            {{-- Determining If An Item Exists In The Session (using has() method): https://laravel.com/docs/9.x/session#determining-if-an-item-exists-in-the-session --}}
-                            {{-- Our Bootstrap success message in case of updating admin password is successful: --}}
-                            @if (Session::has('success_message')) <!-- Check AdminController.php, updateAdminPassword() method -->
-                                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                    <strong>Success:</strong> {{ Session::get('success_message') }}
-                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                    <span aria-hidden="true">&times;</span>
-                                    </button>
-                                </div>
-                            @endif
-
-
-                            <div class="table-responsive pt-3">
-                                {{-- DataTable --}}
-                                <table id="ratings" class="table table-bordered"> {{-- using the id here for the DataTable --}}
-                                    <thead>
-                                        <tr>
-                                            <th>ID</th>
-                                            <th>Product Name</th>
-                                            <th>User Email</th>
-                                            <th>Review</th>
-                                            <th>Rating</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($ratings as $rating)
-                                            <tr>
-                                                <td>{{ $rating['id'] }}</td>
-                                                <td>
-                                                    <a target="_blank" href="{{ url('product/' . $rating['product']['id']) }}">
-                                                        {{ $rating['product']['product_name'] }}
-                                                    </a>
-                                                </td>
-                                                <td>{{ $rating['user']['email'] }}</td>
-                                                <td>{{ $rating['review'] }}</td>
-                                                <td>{{ $rating['rating'] }}</td>
-                                                <td>
-                                                    @if ($rating['status'] == 1)
-                                                        <a class="updateRatingStatus" id="rating-{{ $rating['id'] }}" rating_id="{{ $rating['id'] }}" href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-check" status="Active"></i> {{-- Icons from Skydash Admin Panel Template --}}
-                                                        </a>
-                                                    @else {{-- if the admin status is inactive --}}
-                                                        <a class="updateRatingStatus" id="rating-{{ $rating['id'] }}" rating_id="{{ $rating['id'] }}" href="javascript:void(0)"> {{-- Using HTML Custom Attributes. Check admin/js/custom.js --}}
-                                                            <i style="font-size: 25px" class="mdi mdi-bookmark-outline" status="Inactive"></i> {{-- Icons from Skydash Admin Panel Template --}}
-                                                        </a>
-                                                    @endif
-                                                </td>
-                                                <td>
-                                                    {{-- <a href="{{ url('admin/add-edit-rating/' . $rating['id']) }}"> --}}
-                                                        {{-- <i style="font-size: 25px" class="mdi mdi-pencil-box"></i> --}} {{-- Icons from Skydash Admin Panel Template --}}
-                                                    {{-- </a> --}}
-
-                                                    {{-- Confirm Deletion JS alert and Sweet Alert --}}
-                                                    {{-- <a title="Rating" class="confirmDelete" href="{{ url('admin/delete-rating/' . $rating['id']) }}"> --}}
-                                                        {{-- <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i> --}} {{-- Icons from Skydash Admin Panel Template --}}
-                                                    {{-- </a> --}}
-                                                    <a href="JavaScript:void(0)" class="confirmDelete" module="rating" moduleid="{{ $rating['id'] }}">
-                                                        <i style="font-size: 25px" class="mdi mdi-file-excel-box"></i> {{-- Icons from Skydash Admin Panel Template --}}
-                                                    </a>
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!-- content-wrapper ends -->
-        <!-- partial:../../partials/_footer.html -->
-        <footer class="footer">
-            <div class="d-sm-flex justify-content-center justify-content-sm-between">
-                <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © 2022. All rights reserved.</span>
-            </div>
-        </footer>
-        <!-- partial -->
-    </div>
+<div id="contents" class="admin-workspace admin-settings-list admin-reviews">
+    <div class="admin-toolbar"><h1>리뷰 관리</h1><p class="admin-help">상품 후기와 노출 상태를 확인합니다.</p></div>
+    @include('admin.shared.messages')
+    <section class="admin-panel admin-setting-panel">
+        <table id="ratings" class="admin-table">
+            <colgroup><col style="width:64px"><col style="width:240px"><col style="width:150px"><col><col style="width:80px"><col style="width:100px"><col style="width:164px"></colgroup>
+            <thead><tr><th>번호</th><th>상품명</th><th>작성자 이름</th><th>리뷰 내용</th><th>평점</th><th>노출 상태</th><th>관리</th></tr></thead>
+            <tbody>
+            @foreach($ratings as $rating)
+                <tr>
+                    <td>{{ $rating['id'] }}</td>
+                    <td class="review-product">
+                    @if($rating['product'])
+                        <a target="_blank" rel="noopener" href="{{ url('product/'.$rating['product']['id']) }}" title="{{ $rating['product']['product_name'] }}">{{ $rating['product']['product_name'] }}</a>
+                    @else
+                        <span class="admin-help">삭제된 상품</span>
+                    @endif
+                    </td>
+                    <td class="review-author" title="{{ $rating['user']['name'] ?? '비회원' }}">{{ $rating['user']['name'] ?? '비회원' }}</td>
+                    <td class="review-summary" title="{{ $rating['review'] }}">{{ \Illuminate\Support\Str::limit($rating['review'],80) ?: '내용 없음' }}</td>
+                    <td><strong class="review-score">{{ number_format($rating['rating'],1) }}</strong></td>
+                    <td><a class="updateRatingStatus" id="rating-{{ $rating['id'] }}" rating_id="{{ $rating['id'] }}" href="javascript:void(0)" title="노출 상태 변경"><i class="admin-setting-status {{ $rating['status']?'enabled':'disabled' }}" status="{{ $rating['status']?'Active':'Inactive' }}">{{ $rating['status']?'노출':'비노출' }}</i></a></td>
+                    <td><div class="admin-row-actions"><button type="button" class="admin-btn primary" data-dialog-open="review-{{ $rating['id'] }}">보기</button><a href="javascript:void(0)" class="admin-btn danger confirmDelete" module="rating" moduleid="{{ $rating['id'] }}">삭제</a></div></td>
+                </tr>
+            @endforeach
+            </tbody>
+        </table>
+    </section>
+    @foreach($ratings as $rating)
+    <dialog class="admin-modal" id="review-{{ $rating['id'] }}" aria-labelledby="review-title-{{ $rating['id'] }}">
+        <div class="admin-modal-header"><h2 id="review-title-{{ $rating['id'] }}">리뷰 상세 · {{ $rating['id'] }}번</h2><button type="button" class="admin-btn" data-dialog-close aria-label="리뷰 상세 닫기">×</button></div>
+        <dl class="admin-detail-grid"><dt>상품명</dt><dd>{{ $rating['product']['product_name'] ?? '삭제된 상품' }}</dd><dt>작성자</dt><dd>{{ $rating['user']['name'] ?? '비회원' }}</dd><dt>평점</dt><dd>{{ number_format($rating['rating'],1) }} / 5점</dd><dt>작성일시</dt><dd>{{ \Illuminate\Support\Carbon::parse($rating['created_at'])->format('Y-m-d H:i') }}</dd></dl>
+        <section class="review-full-content"><h3>리뷰 내용</h3><p>{{ $rating['review'] ?: '작성된 리뷰 내용이 없습니다.' }}</p></section>
+        <div class="admin-modal-footer"><button type="button" class="admin-btn primary" data-dialog-close>닫기</button></div>
+    </dialog>
+    @endforeach
+</div>
 @endsection

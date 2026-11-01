@@ -6,7 +6,7 @@
             <dt>신청일</dt><dd>{{ $claim->created_at?->format('Y-m-d H:i') }}</dd>
             <dt>신청 사유</dt><dd>{{ $claim->detail_reason ?: $claim->reason }}</dd>
             <dt>판매자 답변</dt><dd>{{ $claim->admin_comment ?: '처리 중입니다.' }}</dd>
-            <dt>결제수단</dt><dd>{{ $order->payment_method }}</dd>
+            <dt>결제수단</dt><dd>{{ ['Card'=>'신용카드','BankTransfer'=>'실시간계좌이체'][$order->payment_method] ?? $order->payment_method }}</dd>
             @if($item->refund_status)
                 <dt>환불상태</dt><dd>{{ $item->refund_status_label }}</dd>
                 @if($item->refund_status !== 'reversed_original')
@@ -21,7 +21,7 @@
             @endif
             @if($item->exchangeReplacement)<dt>교환상품</dt><dd>{{ $item->exchangeReplacement->product_name }} / {{ $item->exchangeReplacement->status_label }}<br>{{ $item->exchangeReplacement->courier_name }} {{ $item->exchangeReplacement->tracking_number }}</dd>@endif
         </dl>
-        @if($claim->pickup_method === 'manual')
+        @if($claim->pickup_method === 'manual' && in_array($item->normalized_status, array_merge(\App\Support\OrderItemStatus::pendingReturnStatuses(),\App\Support\OrderItemStatus::pendingExchangeStatuses()), true))
             <form action="{{ route('front.shop.order.claim.shipment', $claim->id) }}" method="POST" class="shop-section">
                 @csrf<h3>수동회수 발송정보</h3>
                 <label>택배사<input class="shop-control" name="customer_courier_name" value="{{ $claim->customer_courier_name }}" required maxlength="100"></label>

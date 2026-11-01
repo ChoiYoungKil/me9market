@@ -203,10 +203,16 @@ class AdminRoutesTest extends TestCase
         $this->actingAs($admin, 'admin')->get('/admin/brands')->assertStatus(200);
         $this->actingAs($admin, 'admin')->get('/admin/products')->assertStatus(200);
         $this->actingAs($admin, 'admin')->get('/admin/banners')->assertStatus(200);
+        $this->get('/admin/add-edit-banner')->assertOk()->assertDontSee('admin/images/photos');
+        $this->get('/admin/add-edit-banner/'.$banner->id)->assertOk()
+            ->assertSee('front/images/banner_images/'.$banner->image)
+            ->assertSee($banner->title)->assertDontSee('admin/images/photos');
         $this->actingAs($admin, 'admin')->get('/admin/notices')->assertStatus(200);
         $this->actingAs($admin, 'admin')->get('/admin/faqs')->assertStatus(200);
         $this->actingAs($admin, 'admin')->get('/admin/contacts')->assertStatus(200);
         $this->actingAs($admin, 'admin')->get('/admin/coupons')->assertStatus(200);
+        $this->get('/admin/add-edit-coupon')->assertOk();
+        $this->get('/admin/add-edit-coupon/'.$coupon->id)->assertOk()->assertSee($coupon->coupon_code);
         $this->actingAs($admin, 'admin')->get('/admin/users')->assertStatus(200);
         $this->actingAs($admin, 'admin')->get('/admin/orders')->assertStatus(200);
         $this->actingAs($admin, 'admin')->get('/admin/order-managers')->assertStatus(200);
@@ -301,7 +307,8 @@ class AdminRoutesTest extends TestCase
             'status' => 0,
         ]);
 
-        $this->actingAs($admin, 'admin')->post("/admin/order-managers/{$manager->id}/portal")->assertForbidden();
+        $this->actingAs($admin, 'admin')->post("/admin/order-managers/{$manager->id}/portal")
+            ->assertRedirect(route('admin.order_managers.index'))->assertSessionHas('error_message');
         $this->withSession(['distributor_id' => $manager->id])->get(route('distributor.orders.pending'))
             ->assertRedirect(route('distributor.login'));
         $manager->refresh()->update(['status' => 1]);
@@ -525,6 +532,287 @@ class AdminRoutesTest extends TestCase
         $this->assertDatabaseMissing('products_attributes', ['id' => $attribute->id]);
     }
 
+    public function test_unavailable_distributor_portals_show_reason_without_switching_session(): void
+    {
+        [$admin] = $this->createSetup();
+        $previous = Distributor::create(['name' => '기존 발주사', 'email' => 'previous-portal@example.test',
+            'password' => bcrypt('test-password'), 'status' => 1]);
+        $manager = Distributor::create(['name' => '접속 제한 발주사', 'email' => 'blocked-portal@example.test',
+            'password' => bcrypt('test-password'), 'status' => 0]);
+        $this->actingAs($admin, 'admin')->withSession(['distributor_id' => $previous->id,
+            'distributor_name' => $previous->name, 'distributor_email' => $previous->email]);
+        foreach ([
+            ['status' => 0, 'access_started_at' => null, 'access_ended_at' => null, 'label' => '중지'],
+            ['status' => 1, 'access_started_at' => now()->addDay(), 'access_ended_at' => now()->addDays(2), 'label' => '접속 전'],
+            ['status' => 1, 'access_started_at' => now()->subDays(2), 'access_ended_at' => now()->subDay(), 'label' => '기간 만료'],
+        ] as $case) {
+            $label = $case['label'];
+            unset($case['label']);
+            $manager->update($case);
+            $response = $this->get('/admin/order-managers')->assertOk()->assertSee($label);
+            $dom = new \DOMDocument;
+            @$dom->loadHTML('<?xml encoding="utf-8" ?>'.$response->getContent());
+            $xpath = new \DOMXPath($dom);
+            $buttons = $xpath->query('//form[@action="'.route('admin.order_managers.portal', $manager->id).'"]//button[@disabled]');
+            $this->assertCount(2, $buttons);
+            foreach (['pending', 'completed'] as $destination) {
+                $this->post(route('admin.order_managers.portal', $manager->id), ['destination' => $destination])
+                    ->assertRedirect(route('admin.order_managers.index'))
+                    ->assertSessionHas('error_message', fn ($message) => str_contains($message, $label))
+                    ->assertSessionHas('distributor_id', $previous->id)
+                    ->assertSessionHas('distributor_email', $previous->email);
+                $this->get('/admin/order-managers')->assertOk()->assertSee('상태와 접속 기간을 확인해 주세요.');
+            }
+        }
+        $manager->update(['status' => 1, 'access_started_at' => null, 'access_ended_at' => null]);
+        foreach (['pending', 'completed'] as $destination) {
+            $this->post(route('admin.order_managers.portal', $manager->id), ['destination' => $destination])
+                ->assertRedirect(route('distributor.orders.'.$destination))
+                ->assertSessionHas('distributor_id', $manager->id);
+            $this->get(route('distributor.orders.'.$destination))->assertOk()->assertSee($manager->name);
+        }
+    }
+
+    public function test_coupon_edit_preserves_code_owner_and_current_status(): void
+    {
+        [$admin, $vendor, , $category, $brand, , , $coupon] = $this->createSetup();
+        $coupon->vendor_id = $vendor->id;
+        $coupon->coupon_option = 'Automatic';
+        $coupon->coupon_type = 'Multiple Times';
+        $coupon->status = 0;
+        $coupon->save();
+        $this->actingAs($admin, 'admin');
+        $payload = ['coupon_option' => 'Automatic', 'coupon_code' => 'UNTRUSTED-REPLACEMENT',
+            'coupon_type' => 'Multiple Times', 'amount_type' => 'Percentage', 'amount' => 15,
+            'categories' => [$category->id], 'brands' => [$brand->id], 'expiry_date' => '2030-12-31'];
+        foreach ([0, 1] as $status) {
+            $coupon->status = $status;
+            $coupon->save();
+            $this->post('/admin/add-edit-coupon/'.$coupon->id, $payload)
+                ->assertSessionHasNoErrors()->assertRedirect('/admin/coupons');
+            $this->assertDatabaseHas('coupons', ['id' => $coupon->id, 'coupon_code' => 'SUMMER10',
+                'coupon_option' => 'Automatic', 'vendor_id' => $vendor->id, 'status' => $status,
+                'amount' => 15, 'expiry_date' => '2030-12-31']);
+        }
+    }
+
+    public function test_filter_editor_preserves_saved_multiple_categories_and_deep_options(): void
+    {
+        [$admin, , , $category] = $this->createSetup();
+        $child = $category->replicate();
+        $child->parent_id = $category->id;
+        $child->category_name = '하위 분류';
+        $child->url = 'filter-child';
+        $child->save();
+        $leaf = $child->replicate();
+        $leaf->parent_id = $child->id;
+        $leaf->category_name = '최하위 분류';
+        $leaf->url = 'filter-leaf';
+        $leaf->save();
+        $filter = \App\Models\ProductsFilter::forceCreate(['cat_ids' => $category->id.','.$leaf->id,
+            'filter_name' => '소재', 'filter_column' => 'qa_material', 'status' => 1]);
+        $response = $this->actingAs($admin, 'admin')->get('/admin/add-edit-filter/'.$filter->id)->assertOk();
+        $dom = new \DOMDocument;
+        @$dom->loadHTML('<?xml encoding="utf-8" ?>'.$response->getContent());
+        $selected = (new \DOMXPath($dom))->query('//select[@id="cat_ids"]//option[@selected]');
+        $this->assertCount(2, $selected);
+        $this->assertSame([(string) $category->id, (string) $leaf->id],
+            array_map(fn ($option) => $option->getAttribute('value'), iterator_to_array($selected)));
+        $this->assertDatabaseHas('products_filters', ['id' => $filter->id,
+            'cat_ids' => $category->id.','.$leaf->id, 'filter_column' => 'qa_material']);
+    }
+
+    public function test_product_editor_keeps_a_deeply_nested_category_selected(): void
+    {
+        [$admin, , , $category, , $product] = $this->createSetup();
+        $child = $category->replicate();
+        $child->parent_id = $category->id;
+        $child->category_name = '하위 분류';
+        $child->url = 'child-category';
+        $child->save();
+        $grandchild = $child->replicate();
+        $grandchild->parent_id = $child->id;
+        $grandchild->category_name = '최하위 분류';
+        $grandchild->url = 'grandchild-category';
+        $grandchild->save();
+        $product->category_id = $grandchild->id;
+        $product->save();
+
+        $response = $this->actingAs($admin, 'admin')
+            ->get("/admin/add-edit-product/{$product->id}")->assertOk();
+        $dom = new \DOMDocument;
+        @$dom->loadHTML('<?xml encoding="utf-8" ?>'.$response->getContent());
+        $options = (new \DOMXPath($dom))->query('//select[@name="category_id"]/optgroup/option[@selected]');
+        $this->assertCount(1, $options);
+        $this->assertSame((string) $grandchild->id, $options->item(0)->getAttribute('value'));
+    }
+
+    public function test_product_image_upload_resize_status_and_delete(): void
+    {
+        [$admin, , , , , $product] = $this->createSetup();
+        $images = collect();
+        try {
+            $this->actingAs($admin, 'admin')->post('/admin/add-images/'.$product->id, [
+                'images' => [\Illuminate\Http\UploadedFile::fake()->image('wide.png', 800, 400),
+                    \Illuminate\Http\UploadedFile::fake()->image('tall.jpg', 300, 600)],
+            ])->assertSessionHasNoErrors()->assertRedirect('/admin/add-images/'.$product->id);
+            $images = ProductsImage::where('product_id', $product->id)->orderBy('id')->get();
+            $this->assertCount(2, $images);
+            foreach ($images as $image) {
+                $this->assertSame(1, (int) $image->status);
+                foreach (['large', 'medium', 'small'] as $size) {
+                    $this->assertFileExists(public_path('front/images/product_images/'.$size.'/'.$image->image));
+                }
+            }
+            $this->assertSame([250, 125], array_slice(getimagesize(public_path('front/images/product_images/small/'.$images[0]->image)), 0, 2));
+            $this->assertSame([800, 400], array_slice(getimagesize(public_path('front/images/product_images/large/'.$images[0]->image)), 0, 2));
+            $this->postJson('/admin/update-image-status', ['image_id' => $images[0]->id, 'status' => 'Active'], ['X-Requested-With' => 'XMLHttpRequest'])
+                ->assertOk()->assertJsonPath('status', 0);
+            $this->assertDatabaseHas('products_images', ['id' => $images[0]->id, 'status' => 0]);
+            $this->postJson('/admin/update-image-status', ['image_id' => $images[0]->id, 'status' => 'Inactive'], ['X-Requested-With' => 'XMLHttpRequest'])
+                ->assertOk()->assertJsonPath('status', 1);
+            $this->post('/admin/delete-image/'.$images[0]->id)->assertRedirect();
+            $this->assertDatabaseMissing('products_images', ['id' => $images[0]->id]);
+            foreach (['large', 'medium', 'small'] as $size) {
+                $this->assertFileDoesNotExist(public_path('front/images/product_images/'.$size.'/'.$images[0]->image));
+            }
+        } finally {
+            foreach ($images as $image) {
+                foreach (['large', 'medium', 'small'] as $size) {
+                    $path = public_path('front/images/product_images/'.$size.'/'.$image->image);
+                    if (is_file($path)) unlink($path);
+                }
+            }
+        }
+    }
+
+    public function test_product_images_reject_missing_invalid_large_and_excess_files(): void
+    {
+        [$admin, , , , , $product] = $this->createSetup();
+        $this->actingAs($admin, 'admin');
+        foreach ([
+            [],
+            ['images' => [\Illuminate\Http\UploadedFile::fake()->createWithContent('fake.png', 'not an image')]],
+            ['images' => [\Illuminate\Http\UploadedFile::fake()->image('large.png')->size(5121)]],
+            ['images' => [\Illuminate\Http\UploadedFile::fake()->image('wide.png', 4097, 1)]],
+            ['images' => array_fill(0, 11, \Illuminate\Http\UploadedFile::fake()->image('many.png'))],
+        ] as $invalid) {
+            $this->postJson('/admin/add-images/'.$product->id, $invalid)->assertUnprocessable();
+            $this->assertSame(0, ProductsImage::where('product_id', $product->id)->count());
+        }
+    }
+
+    public function test_product_image_batch_failure_rolls_back_records_and_files(): void
+    {
+        [, , , , , $product] = $this->createSetup();
+        $dispatcher = ProductsImage::getEventDispatcher();
+        ProductsImage::setEventDispatcher(clone $dispatcher);
+        $filenames = [];
+        ProductsImage::creating(function ($image) use (&$filenames) {
+            $filenames[] = $image->image;
+            if (count($filenames) === 2) throw new \RuntimeException('Test image storage failure');
+        });
+        try {
+            app(\App\Services\AdminProductImageUpload::class)->store($product->id, [
+                \Illuminate\Http\UploadedFile::fake()->image('one.png'),
+                \Illuminate\Http\UploadedFile::fake()->image('two.png'),
+            ]);
+            $this->fail('The simulated failure should be propagated.');
+        } catch (\RuntimeException $error) {
+            $this->assertSame('Test image storage failure', $error->getMessage());
+            $this->assertSame(0, ProductsImage::where('product_id', $product->id)->count());
+            foreach ($filenames as $filename) {
+                foreach (['large', 'medium', 'small'] as $size) {
+                    $this->assertFileDoesNotExist(public_path('front/images/product_images/'.$size.'/'.$filename));
+                }
+            }
+        } finally {
+            ProductsImage::setEventDispatcher($dispatcher);
+        }
+    }
+
+    public function test_product_options_register_and_reject_duplicate_batch_without_partial_rows(): void
+    {
+        [$admin, , , , , $product] = $this->createSetup();
+        $this->actingAs($admin, 'admin')->post('/admin/add-edit-attributes/'.$product->id, [
+            'size' => ['기본', '대형'], 'sku' => ['OPTION-BASE', 'OPTION-LARGE'],
+            'price' => [1200, 1500], 'stock' => [10, 0],
+        ])->assertSessionHasNoErrors()->assertRedirect('/admin/add-edit-attributes/'.$product->id);
+        $this->assertDatabaseHas('products_attributes', ['product_id' => $product->id,
+            'size' => '기본', 'sku' => 'OPTION-BASE', 'price' => 1200, 'stock' => 10, 'status' => 1]);
+        $this->assertDatabaseHas('products_attributes', ['product_id' => $product->id,
+            'size' => '대형', 'sku' => 'OPTION-LARGE', 'price' => 1500, 'stock' => 0,
+            'option_type' => 'price', 'price_adjustment' => 300]);
+
+        $this->post('/admin/add-edit-attributes/'.$product->id, [
+            'size' => ['새 옵션', '중복 코드'], 'sku' => ['OPTION-NEW', 'OPTION-LARGE'],
+            'price' => [100, 200], 'stock' => [1, 1],
+        ])->assertSessionHasErrors('sku');
+        $this->assertDatabaseMissing('products_attributes', ['sku' => 'OPTION-NEW']);
+        $this->post('/admin/add-edit-attributes/'.$product->id, [
+            'size' => ['새 옵션', '기본'], 'sku' => ['OPTION-NEW', 'OPTION-OTHER'],
+            'price' => [100, 200], 'stock' => [1, 1],
+        ])->assertSessionHasErrors('size');
+        $this->assertSame(2, $product->attributes()->count());
+    }
+
+    public function test_product_options_validate_rows_and_numbers_before_writing(): void
+    {
+        [$admin, , , , , $product] = $this->createSetup();
+        $this->actingAs($admin, 'admin');
+        $valid = ['size' => ['기본', '대형'], 'sku' => ['OPT-1', 'OPT-2'],
+            'price' => [100, 200], 'stock' => [1, 2]];
+        foreach ([
+            ['stock' => [1, -1]], ['stock' => [1, '1.5']], ['price' => [100, -2]],
+            ['sku' => ['OPT-1', 'opt-1']], ['size' => ['기본', '기본']],
+            ['stock' => [1]], ['price' => [1 => 100, 2 => 200]],
+        ] as $invalid) {
+            $this->postJson('/admin/add-edit-attributes/'.$product->id, array_replace($valid, $invalid))
+                ->assertUnprocessable();
+            $this->assertSame(0, $product->attributes()->count());
+        }
+    }
+
+    public function test_product_option_edits_are_validated_and_atomic_with_product_scope(): void
+    {
+        [$admin, , , , , $product] = $this->createSetup();
+        $option = ProductsAttribute::create(['product_id' => $product->id, 'size' => '기본',
+            'sku' => 'EDIT-1', 'price' => 100, 'stock' => 10, 'status' => 1]);
+        $otherProduct = $product->replicate();
+        $otherProduct->product_code = 'OTHER-EDIT';
+        $otherProduct->save();
+        $other = ProductsAttribute::create(['product_id' => $otherProduct->id, 'size' => '대형',
+            'sku' => 'EDIT-2', 'price' => 200, 'stock' => 20, 'status' => 1]);
+        $this->actingAs($admin, 'admin')->post('/admin/edit-attributes/'.$product->id, [
+            'attributeId' => [$option->id], 'price' => [150], 'stock' => [12],
+        ])->assertSessionHasNoErrors()->assertRedirect('/admin/add-edit-attributes/'.$product->id);
+        $this->assertDatabaseHas('products_attributes', ['id' => $option->id, 'price' => 150, 'stock' => 12,
+            'option_type' => 'price', 'price_adjustment' => -1050]);
+        $this->post('/admin/edit-attributes/'.$product->id, [
+            'attributeId' => [$option->id, $other->id], 'price' => [1, 1], 'stock' => [1, 1],
+        ])->assertNotFound();
+        $this->postJson('/admin/edit-attributes/'.$product->id, [
+            'attributeId' => [$option->id], 'price' => [-1], 'stock' => [1],
+        ])->assertUnprocessable();
+        $this->postJson('/admin/edit-attributes/'.$product->id, [
+            'attributeId' => [$option->id], 'price' => [1], 'stock' => [],
+        ])->assertUnprocessable();
+        $this->assertDatabaseHas('products_attributes', ['id' => $option->id, 'price' => 150, 'stock' => 12]);
+        $this->assertDatabaseHas('products_attributes', ['id' => $other->id, 'price' => 200, 'stock' => 20]);
+
+        $textOption = ProductsAttribute::create(['product_id' => $product->id, 'size' => '각인 문구',
+            'sku' => 'EDIT-TEXT', 'price' => 1200, 'stock' => 20, 'status' => 1, 'option_type' => 'text']);
+        $this->postJson('/admin/edit-attributes/'.$product->id, [
+            'attributeId' => [$option->id, $textOption->id], 'price' => [1, 1300], 'stock' => [1, 1],
+        ])->assertUnprocessable();
+        $this->assertDatabaseHas('products_attributes', ['id' => $option->id, 'price' => 150, 'stock' => 12]);
+        $this->post('/admin/edit-attributes/'.$product->id, [
+            'attributeId' => [$textOption->id], 'price' => [1200], 'stock' => [15],
+        ])->assertSessionHasNoErrors();
+        $this->assertDatabaseHas('products_attributes', ['id' => $textOption->id,
+            'option_type' => 'text', 'price' => 1200, 'stock' => 15]);
+    }
+
     public function test_vendor_product_and_coupon_writes_are_scoped_to_own_records(): void
     {
         [, , $section, $category, $brand, $ownProduct, , , , , , $vendorAdmin] = $this->createSetup();
@@ -651,5 +939,40 @@ class AdminRoutesTest extends TestCase
         ] as $url) {
             $this->actingAs($vendorAdmin, 'admin')->get($url)->assertForbidden();
         }
+    }
+    public function test_vendor_edit_and_detail_resolve_company_and_bank_by_vendor_id(): void
+    {
+        [$admin,$vendor,,,,,,,,,, $vendorAdmin]=$this->createSetup();
+        $other=Vendor::forceCreate(['name'=>'Other vendor','email'=>'other-record@example.test','mobile'=>'01000000000','status'=>1]);
+        \App\Models\VendorsBusinessDetail::forceCreate(['id'=>$vendor->id+10000,'vendor_id'=>$vendor->id,'shop_name'=>'Correct company','address_proof_image'=>'qa-license.png','bank_copy_image'=>'qa-bank.png']);
+        \App\Models\VendorsBusinessDetail::forceCreate(['id'=>$vendor->id,'vendor_id'=>$other->id,'shop_name'=>'Wrong company']);
+        \App\Models\VendorsBankDetail::forceCreate(['id'=>$vendor->id+10000,'vendor_id'=>$vendor->id,'bank_name'=>'Correct bank','account_number'=>'QA-account','account_holder_name'=>'QA owner','bank_ifsc_code'=>'']);
+        \App\Models\VendorsBankDetail::forceCreate(['id'=>$vendor->id,'vendor_id'=>$other->id,'bank_name'=>'Wrong bank','account_number'=>'Other-account','account_holder_name'=>'Other owner','bank_ifsc_code'=>'']);
+        $this->actingAs($admin,'admin');
+        $this->get('/admin/add-edit-admin/'.$vendorAdmin->id)->assertOk()->assertSee('Correct company')->assertSee('Correct bank')->assertDontSee('Wrong company')->assertDontSee('Wrong bank');
+        $detail=$this->get('/admin/view-vendor-details/'.$vendorAdmin->id)->assertOk()->assertSee('Correct company')->assertSee('Correct bank')->assertDontSee('Wrong company')->assertDontSee('Wrong bank');
+        $detail->assertSee('name="vendor_id" value="'.$vendor->id.'"',false)->assertSee(route('admin.member.document',['vendor'=>$vendor->id,'kind'=>'license']),false)->assertSee(route('admin.member.document',['vendor'=>$vendor->id,'kind'=>'bankbook']),false);
+    }
+    public function test_vendor_form_accepts_split_mobile_and_stores_bankbook_in_business_documents(): void
+    {
+        [$admin,$vendor,,,,,,,,,, $vendorAdmin]=$this->createSetup();
+        $this->actingAs($admin,'admin');$storedPath=null;
+        try {
+            $response=$this->post('/admin/add-edit-admin/'.$vendorAdmin->id,[
+                'name'=>$vendorAdmin->name,'email'=>$vendorAdmin->email,'type'=>'vendor',
+                'mobile_1'=>'010','mobile_2'=>'2222','mobile_3'=>'3333','status'=>'1','seller_status'=>'1',
+                'shop_name'=>'Saved company','bank_name'=>'QA bank','account_number'=>'000000','account_holder_name'=>'QA owner',
+                'bank_copy_image'=>\Illuminate\Http\UploadedFile::fake()->image('bankbook.png'),
+            ]);
+            $response->assertSessionHasNoErrors();
+            $this->assertNull(session('error_message'),(string)session('error_message'));
+            $response->assertRedirect('/admin/admins');
+            $business=\App\Models\VendorsBusinessDetail::where('vendor_id',$vendor->id)->firstOrFail();
+            $storedPath=public_path('front/images/bank_copies/'.$business->bank_copy_image);
+            $this->assertFileExists($storedPath);
+            $this->assertSame('010-2222-3333',$vendorAdmin->fresh()->mobile);
+            $this->assertDatabaseHas('vendors_bank_details',['vendor_id'=>$vendor->id,'bank_name'=>'QA bank','bank_ifsc_code'=>'']);
+            $this->get(route('admin.member.document',['vendor'=>$vendor->id,'kind'=>'bankbook']))->assertOk()->assertDownload();
+        } finally { if($storedPath && is_file($storedPath))unlink($storedPath); }
     }
 }

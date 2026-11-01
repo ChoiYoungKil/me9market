@@ -10,7 +10,7 @@ class ShopChannelProduct extends Model
     use HasFactory;
 
     protected $fillable = [
-        'reward_points', 'listed_at',
+        'shipping_policy_id', 'reward_points', 'listed_at',
         'shop_channel_id',
         'product_id',
         'distributor_id',
@@ -50,6 +50,11 @@ class ShopChannelProduct extends Model
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+
+    public function shippingPolicy()
+    {
+        return $this->belongsTo(ChannelDeliveryCharge::class, 'shipping_policy_id');
     }
 
     public function distributor()

@@ -857,10 +857,8 @@ class ShopRuntimeTest extends TestCase
         ])
             ->get(route('front.shop.order.details', ['status' => 'shipping']))
             ->assertOk()
-            ->assertSee('전체 2건')
-            ->assertSee('확정대기 1건')
-            ->assertSee('배송중 1건')
-            ->assertSee('취소·교환·반품 1건')
+            ->assertViewHas('counts',fn($counts)=>$counts['all']===2 && $counts['confirm_pending']===1 && $counts['shipping']===1 && $counts['claims']===1)
+            ->assertSee('aria-label="주문상태"',false)
             ->assertSee('Shipping Customer')
             ->assertDontSee('Delivered Customer');
     }
@@ -890,7 +888,7 @@ class ShopRuntimeTest extends TestCase
         $this->post(route('shop.login.submit'), ['login_id' => 'shop-buyer', 'password' => 'password'])
             ->assertRedirect(route('shop.channel_main'))->assertSessionHas('shop_channel_id', $shop->id);
         $this->assertAuthenticatedAs($user);
-        $this->post(route('shop.logout'))->assertRedirect(route('shop.login'))->assertSessionMissing('shop_channel_id');
+        $this->post(route('shop.logout'))->assertRedirect(route('shop.login', ['channel' => $shop->channel_code]))->assertSessionMissing('shop_channel_id');
         $this->assertGuest();
         $user->update(['status' => 0]);
         $this->post(route('shop.login.submit'), ['login_id' => $user->email, 'password' => 'password'])

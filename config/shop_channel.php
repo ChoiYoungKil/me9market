@@ -1,6 +1,8 @@
 <?php
 
 return [
+    // User review is pending. Change only after explicit approval of this signup mapping.
+    'signup_terms_approved' => false,
     'payment_driver' => env('SHOP_PAYMENT_DRIVER', in_array(env('APP_ENV'), ['local', 'testing'], true) ? 'mock' : 'disabled'),
     'require_published_terms' => (bool) env('SHOP_REQUIRE_PUBLISHED_TERMS', true),
     'terms_url' => env('SHOP_TERMS_URL'),

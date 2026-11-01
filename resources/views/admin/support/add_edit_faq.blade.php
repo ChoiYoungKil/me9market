@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
 @section('content')
-    <div id="contents">
+    <div id="contents" class="admin-workspace admin-legacy">
         <div class="row">
             <div class="box box1">
                 <div class="page_info">
@@ -72,7 +72,7 @@
                                     <div class="f_bx">
                                         <!-- 기본 정보 -->
                                         <div class="f_w">
-                                            <div class="f_ttl">FAQ 정보</div>
+                                            <div class="f_ttl">자주묻는질문 정보</div>
                                             <div class="tb01">
                                                 <table class="two">
                                                     <tbody class="textL">

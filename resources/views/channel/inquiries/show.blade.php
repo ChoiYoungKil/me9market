@@ -1,3 +1,4 @@
+@push('styles')<link rel="stylesheet" href="/common/policy-rich-text.css">@endpush
 @extends('layouts.channel')
 
 @section('page_type', 'sub')
@@ -79,7 +80,7 @@
                                     </tr>
                                     <tr>
                                         <th><span>문의내용</span></th>
-                                        <td colspan="3" style="white-space: pre-line; line-height: 1.7;">{{ $inquiry->message }}</td>
+                                        <td colspan="3" style="white-space: pre-line; line-height: 1.7;">{!! app(\App\Services\RefundPolicyContent::class)->render($inquiry->message) !!}</td>
                                     </tr>
                                 </tbody>
                             </table>

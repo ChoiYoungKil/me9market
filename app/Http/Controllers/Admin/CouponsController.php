@@ -153,23 +153,23 @@ class CouponsController extends Controller
             }
 
             // 'Automatic'인 경우 랜덤 쿠폰 코드를 생성하고, 'Manual'인 경우 입력된 코드를 사용합니다.
-            if ($data['coupon_option'] == 'Automatic') {
+            if ($coupon->exists) {
+                $coupon_code = $coupon->coupon_code;
+            } elseif ($data['coupon_option'] == 'Automatic') {
                 $coupon_code = Str::random(8);
             } else { // 관리자나 입점업체가 직접 입력한 코드를 사용
                 $coupon_code = $data['coupon_code'];
             }
 
             $adminType = Auth::guard('admin')->user()->type; // 현재 인증된 사용자의 'type' 가져오기 (admin/vendor)    // 특정 Guard 인스턴스 접근: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
-            if ($adminType == 'vendor') {
-                $coupon->vendor_id = Auth::guard('admin')->user()->vendor_id; // 특정 Guard 인스턴스 접근: https://laravel.com/docs/9.x/authentication#accessing-specific-guard-instances
-            } else {
-                $coupon->vendor_id = 0;
+            if (! $coupon->exists) {
+                $coupon->vendor_id = $adminType === 'vendor' ? Auth::guard('admin')->user()->vendor_id : 0;
             }
 
             // dd($data);
 
             // `coupons` 테이블에 데이터 삽입
-            $coupon->coupon_option = $data['coupon_option'];
+            $coupon->coupon_option = $coupon->exists ? $coupon->coupon_option : $data['coupon_option'];
             $coupon->coupon_code = $coupon_code;
             $coupon->categories = $categories;
             $coupon->brands = $brands;
@@ -178,7 +178,7 @@ class CouponsController extends Controller
             $coupon->amount_type = $data['amount_type'];
             $coupon->amount = $data['amount'];
             $coupon->expiry_date = $data['expiry_date'];
-            $coupon->status = 1;
+            $coupon->status = $coupon->exists ? $coupon->status : 1;
 
             $coupon->save();
 

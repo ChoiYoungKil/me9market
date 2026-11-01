@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 @section('content')
-<div id="contents"><div class="row"><div class="box">
+<div id="contents" class="admin-workspace admin-legacy"><div class="row"><div class="box">
     <div class="page_info"><h1 class="ttl">배송비 정책 수정</h1><ul class="dep"><li>홈</li><li>배송비 설정</li><li>정책 수정</li></ul></div>
     @include('partials.delivery_messages')
     <p class="portal-description">판매자: {{ $charge->vendor?->name }} · {{ $charge->name }}</p>

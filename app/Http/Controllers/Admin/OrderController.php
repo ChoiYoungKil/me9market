@@ -23,42 +23,25 @@ class OrderController extends Controller
 
 
     // 관리자 패널의 주문 관리 섹션(admin/orders/orders.blade.php) 렌더링    
-    public function orders() {
-        // 사이드바 활성 페이지 설정을 위해 세션 사용
-        Session::put('page', 'orders');
-
-
-        // 로그인한 사용자를 확인하여 판매자인 경우 해당 판매자의 주문만, 관리자인 경우 전체 주문을 가져옴
-        $adminType = Auth::guard('admin')->user()->type;      
-        $vendor_id = Auth::guard('admin')->user()->vendor_id; 
-
-
-        if ($adminType == 'vendor') { // 로그인한 사용자가 판매자인 경우 상태 확인
-            $vendorStatus = Auth::guard('admin')->user()->status; 
-
-            if ($vendorStatus == 0) { // 판매자가 비활성 상태인 경우
-                return redirect('admin/update-vendor-details/personal')->with('error_message', '판매자 계정이 아직 승인되지 않았습니다. 개인, 사업자, 은행 정보를 모두 정확히 입력해 주세요.'); 
-            }
-        }
-
-
-        if ($adminType == 'vendor') { // 판매자인 경우 해당 판매자의 상품이 포함된 주문만 표시
-            $orders = Order::with([ 
-                'orders_products' => function($query) use ($vendor_id) { 
-                    $query->where('vendor_id', $vendor_id); 
-                }
-            ])->whereHas('orders_products', fn ($query) => $query->where('vendor_id', $vendor_id))->orderBy('id', 'Desc')->get()->toArray();
-
-        } else { // 관리자인 경우 모든 주문 표시
-            $orders = Order::with('orders_products')->orderBy('id', 'Desc')->get()->toArray(); 
-        }
-
-
-        return view('admin.orders.orders')->with(compact('orders'));
+    public function orders(Request $request) {
+        Session::put('page','orders');
+        $filters=$request->validate(['keyword'=>'nullable|string|max:100','item_status'=>['nullable',\Illuminate\Validation\Rule::in(array_keys(\App\Support\OrderItemStatus::labels()))],'from'=>'nullable|date_format:Y-m-d','to'=>['nullable','date_format:Y-m-d',\Illuminate\Validation\Rule::when($request->filled('from'),'after_or_equal:from')],'per_page'=>'nullable|in:10,20,50,100','export'=>'nullable|in:1']);
+        $admin=Auth::guard('admin')->user();$vendorId=$admin->type==='vendor'?(int)$admin->vendor_id:null;
+        $owner=fn($q)=>$q->when($vendorId!==null,fn($q)=>$q->where('vendor_id',$vendorId));
+        $query=Order::whereHas('orders_products',$owner)->with(['orders_products'=>fn($q)=>$owner($q)->with('shopChannel')]);
+        if($request->filled('keyword'))$query->where(function($q)use($filters,$owner){$keyword=$filters['keyword'];$q->where('name','like','%'.$keyword.'%')->orWhere('buyer_name','like','%'.$keyword.'%')->orWhere('email','like','%'.$keyword.'%')->orWhereHas('orders_products',fn($q)=>$owner($q)->where(fn($q)=>$q->where('product_name','like','%'.$keyword.'%')->orWhere('product_code','like','%'.$keyword.'%')->orWhere('tracking_number','like','%'.$keyword.'%')));$id=preg_replace('/^Me9(?:-Shop)?-0*/i','',$keyword);if(ctype_digit($id))$q->orWhere('id',(int)$id);});
+        if($request->filled('item_status'))$query->whereHas('orders_products',function($q)use($owner,$filters){$owner($q);\App\Support\AdminOrderStatusScope::apply($q,$filters['item_status']);});
+        if($request->filled('from'))$query->where('created_at','>=',$filters['from'].' 00:00:00');
+        if($request->filled('to'))$query->where('created_at','<',\Carbon\Carbon::parse($filters['to'])->addDay()->toDateString());
+        $query->orderByDesc('id');
+        if($request->boolean('export'))return app(\App\Services\AdminListExport::class)->download($query,'주문목록',['주문번호'=>fn($o)=>'Me9-Shop-'.str_pad($o->id,7,'0',STR_PAD_LEFT),'주문일'=>'created_at','주문자'=>fn($o)=>$o->buyer_name?:$o->name,'상품'=>fn($o)=>$o->orders_products->pluck('product_name')->implode(' / '),'상품금액'=>fn($o)=>$o->orders_products->sum('line_total'),'상품상태'=>fn($o)=>$o->orders_products->pluck('status_label')->unique()->implode(' / ')]);
+        $orders=$query->paginate((int)($filters['per_page']??20))->withQueryString();
+        return view('admin.orders.orders',compact('orders','filters'));
     }
 
     // 주문 상세 보기 페이지(admin/orders/order_details.blade.php) 렌더링
     public function orderDetails($id) {
+        if (in_array(Auth::guard('admin')->user()?->type,['admin','superadmin'],true)) return app(AdminOrderWorkspaceController::class)->show((int)$id);
         // 사이드바 활성 페이지 설정을 위해 세션 사용
         Session::put('page', 'orders');
 
@@ -201,6 +184,7 @@ class OrderController extends Controller
         $log->order_id = $item->order_id;
         $log->order_item_id = $item->id;
         $log->order_status = $item->item_status;
+        $log->actor = mb_substr(Auth::guard('admin')->user()?->name ?? '전체관리자',0,100);
         $log->save();
 
         \Illuminate\Support\Facades\DB::afterCommit(function () use ($item) {

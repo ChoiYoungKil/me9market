@@ -37,7 +37,8 @@
             </div>
             <div class="market-order-product">
                 <img class="market-order-image" src="{{ asset('front/images/product_images/small/'.$image) }}" alt="" width="88" height="88" loading="lazy">
-                <div class="market-order-product-copy"><h3>{{ $item->product_name }}</h3><p class="market-order-option">{{ $item->product_size ?: '기본옵션' }} / {{ $item->product_qty }}개</p>
+                <div class="market-order-product-copy"><h3>{{ $item->product_name }}</h3>
+@include('shared.order_item_recipient', ['shippingItem' => $item, 'shippingOrder' => $item->order])<p class="market-order-option">{{ $item->product_size ?: '기본옵션' }} / {{ $item->product_qty }}개</p>
                     @if($item->product?->category)<p class="market-order-category">{{ $item->product->category->category_name }}</p>@endif
                     @if($item->courier_name || $item->tracking_number)<p>택배사 {{ $item->courier_name }} · 송장번호 {{ $item->tracking_number }}</p>@endif
                     @if($item->is_exchange_replacement)<p class="market-order-link">교환 재발송 상품 #{{ $item->id }} · <a href="#order-item-{{ $item->replacement_for_order_product_id }}">원상품 보기 ↑</a></p>@endif

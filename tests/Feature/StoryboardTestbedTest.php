@@ -56,20 +56,28 @@ class StoryboardTestbedTest extends TestCase
             'payment_method' => 'Mock Card', 'payment_gateway' => 'Me9 Mock Payment', 'grand_total' => 1000]);
         $response = $this->actingAs($this->admin(), 'admin')->get('/admin/storyboard-test')->assertOk()
             ->assertSee('review-member')->assertSee('실제 변경 보류')->assertSee('추가 확인 있음')
-            ->assertSee('다음 진행: PPT 209번 Shop 채널')->assertSee('http://127.0.0.1:8000/notice/view/'.$notice->id)
+            ->assertSee('256~271번 전체 관리자')->assertSee('http://127.0.0.1:8000/notice/view/'.$notice->id)
             ->assertSee('http://127.0.0.1:8000/mypage/order/view?id='.$order->id)
             ->assertDontSee('http://127.0.0.1:8000/notice/view/'.$draft->id)
             ->assertDontSee('member30review1028')->assertDontSee('034-061')->assertDontSee($originalPassword);
         $this->assertStringContainsString('no-store', $response->headers->get('Cache-Control'));
         $this->assertSame('no-referrer', $response->headers->get('Referrer-Policy'));
         $pages = $response->viewData('pages');
-        $this->assertSame(range(1, 208), array_column($pages, 'number'));
+        $this->assertSame(range(1, 271), array_column($pages, 'number'));
+        $this->assertSame('partial', $pages[248]['status']);
+        $this->assertSame('document', $pages[249]['status']);
+        $this->assertSame('/distributor/orders/completed',$pages[254]['path']);
         $this->assertSame('deferred', $pages[38]['status']);
         $this->assertSame('partial', $pages[59]['status']);
         foreach ([81, 188, 190, 191] as $number) {
             $this->assertSame('excluded', $pages[$number - 1]['status']);
         }
         $this->assertSame('deferred', $pages[72]['status']);
+        $this->assertSame('excluded', $pages[210]['status']);
+        $this->assertSame('partial', $pages[212]['status']);
+        $this->assertSame('test_db', $pages[214]['status']);
+        $this->assertSame('2026-11-01', $pages[211]['history']['date']);
+        $this->assertSame('테스트 DB', $pages[214]['history']['cases'][3]['method']);
         $this->assertSame('partial', $pages[66]['status']);
         $this->assertTrue($pages[172]['admin']);
         $this->assertSame('/channel/settings/refund', $pages[207]['path']);
@@ -77,7 +85,7 @@ class StoryboardTestbedTest extends TestCase
         $response->assertSee('시연 과정·결과 보기')->assertSee('실제 시연 순서와 확인 결과')
             ->assertSee('자동 테스트 기록')->assertSee('미시연·보류·추가 확인')
             ->assertSee('검색된 기록 모두 펼치기')->assertSee('기록 모두 접기');
-        $this->assertSame(208, substr_count($response->getContent(), 'data-review-history='));
+        $this->assertSame(271, substr_count($response->getContent(), 'data-review-history='));
         $this->assertSame('2026-10-27', $pages[14]['history']['date']);
         $this->assertSame('2026-10-31', $pages[205]['history']['date']);
         $this->assertStringContainsString('명칭 누락', $pages[205]['history']['cases'][0]['action']);

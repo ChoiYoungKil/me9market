@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Front;
 use App\Http\Controllers\Controller;
 use App\Models\ChannelDeliveryCharge;
 use App\Models\Product;
+use App\Models\ShopChannelProduct;
 use App\Services\DeliveryPolicyCalculator;
 use App\Services\DeliveryPolicyRules;
 use Illuminate\Http\Request;
@@ -34,16 +35,24 @@ class ChannelDeliveryController extends Controller
             ->orWhere(fn ($q) => $q->whereNull('shipping_policy_id')->where('shipping_policy_name', $charge->name)));
     }
 
+    private function linkedShopProducts(ChannelDeliveryCharge $charge)
+    {
+        return ShopChannelProduct::where('shipping_policy_id', $charge->id)
+            ->whereHas('shopChannel', fn ($query) => $query->where('vendor_id', $charge->vendor_id));
+    }
+
     public function index(Request $request)
     {
         $filters = $request->validate(['keyword' => 'nullable|string|max:100']);
         $keyword = trim($filters['keyword'] ?? '');
+        $shopCounts = ShopChannelProduct::selectRaw('COUNT(*)')->join('shop_channels', 'shop_channels.id', '=', 'shop_channel_products.shop_channel_id')->whereColumn('shop_channel_products.shipping_policy_id', 'channel_delivery_charges.id')->whereColumn('shop_channels.vendor_id', 'channel_delivery_charges.vendor_id');
         $charges = ChannelDeliveryCharge::where('vendor_id', $this->vendorId())
             ->addSelect(['linked_product_count' => Product::selectRaw('count(*)')->whereColumn('products.vendor_id', 'channel_delivery_charges.vendor_id')
                 ->where(fn ($q) => $q->whereColumn('shipping_policy_id', 'channel_delivery_charges.id')
-                    ->orWhere(fn ($q) => $q->whereNull('shipping_policy_id')->whereColumn('shipping_policy_name', 'channel_delivery_charges.name')))])
+                    ->orWhere(fn ($q) => $q->whereNull('shipping_policy_id')->whereColumn('shipping_policy_name', 'channel_delivery_charges.name'))), 'linked_shop_product_count' => $shopCounts])
             ->when($keyword !== '', fn ($q) => $q->where('name', 'like', '%'.$keyword.'%'))
             ->latest('id')->paginate(20)->withQueryString();
+        $charges->getCollection()->each(function ($charge) { $charge->linked_product_count += (int) $charge->linked_shop_product_count; });
         $activeForm = is_string(old('form_key')) && preg_match('/^(create|edit-\d+)$/', old('form_key')) ? old('form_key') : '';
 
         return view('channel.sub00.delivery_charge_list', compact('charges', 'keyword', 'activeForm') + [
@@ -85,7 +94,7 @@ class ChannelDeliveryController extends Controller
     public function show(int $id)
     {
         $charge = $this->owned($id);
-        $charge->linked_product_count = $this->linkedProducts($charge)->count();
+        $charge->linked_product_count = $this->linkedProducts($charge)->count() + $this->linkedShopProducts($charge)->count();
 
         return view('channel.sub00.inc.channel_delivery_details', compact('charge') + ['shippingTypes' => DeliveryPolicyRules::shippingTypes(), 'paymentTypes' => DeliveryPolicyRules::paymentTypes()]);
     }
@@ -112,7 +121,7 @@ class ChannelDeliveryController extends Controller
     {
         DB::transaction(function () use ($id) {
             $charge = $this->owned($id, true);
-            if ($this->linkedProducts($charge)->exists()) {
+            if ($this->linkedProducts($charge)->exists() || $this->linkedShopProducts($charge)->exists()) {
                 throw ValidationException::withMessages(['shipping' => '상품에서 사용 중인 배송비 정책은 삭제할 수 없습니다.']);
             }
             $charge->delete();

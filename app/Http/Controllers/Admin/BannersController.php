@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Intervention\Image\Facades\Image;
 
 use App\Models\Banner;
@@ -74,7 +76,7 @@ class BannersController extends Controller
             $title = '배너 이미지 추가';
             $message = '배너가 성공적으로 추가되었습니다!';
         } else { // $id가 있으면 배너 수정
-            $banner = Banner::find($id);
+            $banner = Banner::findOrFail($id);
             $title = '배너 이미지 수정';
             $message = '배너가 성공적으로 업데이트되었습니다!';
         }
@@ -83,18 +85,33 @@ class BannersController extends Controller
         if ($request->isMethod('post')) { // 추가 또는 수정 폼 제출 시
             $data = $request->validate([
                 'type' => ['required', 'in:Slider,Fix'],
-                'link' => ['nullable', 'string', 'max:2048'],
+                'link' => ['nullable', 'string', 'max:2048', function ($attribute, $value, $fail) {
+                    if (preg_match('/[\x00-\x20\\\\]/', $value) || str_starts_with($value, '//') ||
+                        (preg_match('/^[^\/?#]*:/', $value) && !preg_match('/^https?:\/\//i', $value))) {
+                        $fail('연결 주소는 사이트 내 경로 또는 http(s) 주소로 입력해 주세요.');
+                    }
+                }],
                 'title' => ['nullable', 'string', 'max:255'],
                 'alt' => ['nullable', 'string', 'max:255'],
-                'image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+                'image' => [$banner->image ? 'nullable' : 'required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120', 'dimensions:max_width=8192,max_height=8192'],
+            ], [
+                'type.required' => '배너 유형을 선택해 주세요.',
+                'type.in' => '올바른 배너 유형을 선택해 주세요.',
+                'image.required' => '배너 이미지를 선택해 주세요.',
+                'image.image' => '정상적인 이미지 파일을 선택해 주세요.',
+                'image.mimes' => 'JPG, PNG, WEBP 이미지 파일을 선택해 주세요.',
+                'image.max' => '배너 이미지는 5MB 이하로 선택해 주세요.',
+                'image.dimensions' => '이미지 가로·세로는 각각 8,192px 이하로 선택해 주세요.',
             ]);
             // dd($data);
 
             $banner->type   = $data['type'];
-            $banner->link   = $data['link'];
-            $banner->title  = $data['title'];
-            $banner->alt    = $data['alt'];
-            $banner->status = 1;
+            $banner->link   = $data['link'] ?? '';
+            $banner->title  = $data['title'] ?? '';
+            $banner->alt    = $data['alt'] ?? '';
+            if (!$banner->exists) {
+                $banner->status = 1;
+            }
 
             
             if ($data['type'] == 'Slider') {
@@ -105,28 +122,33 @@ class BannersController extends Controller
                 $height = '450';
             }
 
-            // 배너 이미지 업로드    // 이미지 업로드를 위해 Intervention 패키지 사용
-            if ($request->hasFile('image')) { // HTML name 속성
-                $image_tmp = $request->file('image'); // 업로드된 파일 가져오기: https://laravel.com/docs/9.x/requests#retrieving-uploaded-files
-                if ($image_tmp->isValid()) {
-                    // 이미지 확장자 가져오기
-                    $extension = $image_tmp->getClientOriginalExtension();
-
-                    // 업로드된 이미지의 랜덤 이름 생성 (이름 중복 방지)
-                    $imageName = (string) \Illuminate\Support\Str::uuid().'.'.$extension;
-
-                    // 'public' 폴더 내 업로드된 이미지 경로 할당
-                    $imagePath = public_path('front/images/banner_images/'.$imageName);
-
-                    // Intervention 패키지를 사용하여 이미지 리사이즈 및 저장
-                    Image::make($image_tmp)->resize($width, $height)->save($imagePath); 
-
-                    // 데이터베이스 테이블에 이미지 이름 저장
+            $oldImage = $banner->getOriginal('image');
+            $imagePath = null;
+            try {
+                if ($request->hasFile('image')) {
+                    $upload = $request->file('image');
+                    $imageName = \Illuminate\Support\Str::uuid().'.'.$upload->extension();
+                    $directory = public_path('front/images/banner_images');
+                    File::ensureDirectoryExists($directory);
+                    $imagePath = $directory.'/'.$imageName;
+                    $image = Image::make($upload)->orientate();
+                    try {
+                        $image->resize($width, $height)->save($imagePath);
+                    } finally {
+                        $image->destroy();
+                    }
                     $banner->image = $imageName;
                 }
+                DB::transaction(fn () => $banner->save());
+            } catch (\Throwable $error) {
+                if ($imagePath) {
+                    File::delete($imagePath);
+                }
+                throw $error;
             }
-
-            $banner->save(); // 데이터 저장 (추가 또는 수정)
+            if ($imagePath && $oldImage && basename($oldImage) === $oldImage && !Banner::where('image', $oldImage)->exists()) {
+                File::delete(public_path('front/images/banner_images/'.$oldImage));
+            }
 
             return redirect('admin/banners')->with('success_message', $message); 
         }

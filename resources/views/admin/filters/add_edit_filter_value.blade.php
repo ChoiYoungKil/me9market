@@ -2,14 +2,14 @@
 
 
 @section('content')
-    <div class="main-panel">
+    <div class="main-panel admin-workspace admin-setting-form">
         <div class="content-wrapper">
             <div class="row">
                 <div class="col-md-12 grid-margin">
                     <div class="row">
                         <div class="col-12 col-xl-8 mb-4 mb-xl-0">
 
-                            <h4 class="card-title">Filter Values</h4>
+                            <h4 class="card-title">필터값 관리</h4>
                         </div>
 
                     </div>
@@ -26,7 +26,7 @@
                             {{-- Determining If An Item Exists In The Session (using has() method): https://laravel.com/docs/9.x/session#determining-if-an-item-exists-in-the-session --}}
                             @if (Session::has('error_message')) <!-- Check AdminController.php, updateAdminPassword() method -->
                             <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                <strong>Error:</strong> {{ Session::get('error_message') }}
+                                <strong>오류:</strong> {{ Session::get('error_message') }}
                                 <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                                 <span aria-hidden="true">&times;</span>
                                 </button>
@@ -35,7 +35,7 @@
 
 
 
-                            {{-- Displaying Laravel Validation Errors: https://laravel.com/docs/9.x/validation#quick-displaying-the-validation-errors --}}    
+                            {{-- Displaying Laravel Validation Errors: https://laravel.com/docs/9.x/validation#quick-displaying-the-validation-errors --}}
                             @if ($errors->any())
                             <div class="alert alert-danger alert-dismissible fade show" role="alert">
 
@@ -56,7 +56,7 @@
                             {{-- Our Bootstrap success message in case of updating admin password is successful: --}}
                             @if (Session::has('success_message')) <!-- Check AdminController.php, updateAdminPassword() method -->
                                 <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                    <strong>Success:</strong> {{ Session::get('success_message') }}
+                                    <strong>안내:</strong> {{ Session::get('success_message') }}
                                     <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                                     <span aria-hidden="true">&times;</span>
                                     </button>
@@ -64,27 +64,27 @@
                             @endif
 
 
-                            
+
                             <form class="forms-sample"   @if (empty($filter['id'])) action="{{ url('admin/add-edit-filter-value') }}" @else action="{{ url('admin/add-edit-filter-value/' . $filter['id']) }}" @endif   method="post" enctype="multipart/form-data">  <!-- If the id is not passed in from the route, this measn 'Add a new Filter Values', but if the id is passed in from the route, this means 'Edit the Filter Values' --> <!-- Using the enctype="multipart/form-data" to allow uploading files (images) -->
                                 @csrf
 
                                 <div class="form-group">
 
                                     {{-- Note: Dynamic Filters are applied to `categories` (parent categories and subcategories (child categories)), and not `sections`! --}}
-                                    <label for="filter_id">Select Filter</label>
+                                    <label for="filter_id">필터 선택</label>
                                     <select name="filter_id" id="filter_id" class="form-control text-dark"> {{-- We used the Square Brackets [] in name="cat_ids[]" is an array because we used the "multiple" HTML attribute to be able to choose multiple categories at the same time --}}
-                                        <option value="">Select Filter</option>
+                                        <option value="">필터 선택</option>
                                         @foreach ($filters as $filter) {{-- subcategories or child categories --}} {{-- Check FilterController.php --}}
                                             <option value="{{ $filter['id'] }}">{{ $filter['filter_name'] }}</option> {{-- subcategories or child categories --}}
                                         @endforeach
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label for="filter_value">Filter Value</label>
-                                    <input type="text" class="form-control" id="filter_value" placeholder="Enter Filter Value" name="filter_value"  @if (!empty($filter['filter_value'])) value="{{ $filter['filter_value'] }}" @else value="{{ old('filter_value') }}" @endif>  {{-- Repopulating Forms (using old() method): https://laravel.com/docs/9.x/validation#repopulating-forms --}}
+                                    <label for="filter_value">필터값</label>
+                                    <input type="text" class="form-control" id="filter_value" placeholder="필터값을 입력해 주세요" name="filter_value"  @if (!empty($filter['filter_value'])) value="{{ $filter['filter_value'] }}" @else value="{{ old('filter_value') }}" @endif>  {{-- Repopulating Forms (using old() method): https://laravel.com/docs/9.x/validation#repopulating-forms --}}
                                 </div>
-                                <button type="submit" class="btn btn-primary mr-2">Submit</button>
-                                <button type="reset"  class="btn btn-light">Cancel</button>
+                                <button type="submit" class="btn btn-primary mr-2">저장</button>
+                                <button type="reset"  class="btn btn-light">입력 초기화</button>
                             </form>
                         </div>
                     </div>
