@@ -3,6 +3,9 @@
 namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\Request;
+use Illuminate\Session\TokenMismatchException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -43,6 +46,23 @@ class Handler extends ExceptionHandler
      */
     public function register()
     {
+        $this->renderable(function (HttpException $exception, Request $request) {
+            if ($exception->getStatusCode() !== 419
+                || ! $exception->getPrevious() instanceof TokenMismatchException
+                || ! $request->isMethod('post')
+                || ! $request->routeIs('admin.login.submit')
+                || $request->expectsJson()) {
+                return null;
+            }
+
+            // Do not replay credentials or bypass CSRF; restart the login form with a fresh token.
+            $email = $request->input('email');
+
+            return redirect()->route('admin.login')
+                ->with('error_message', '로그인 화면의 유효시간이 지났습니다. 비밀번호를 다시 입력해 주세요.')
+                ->withInput(is_string($email) ? ['email' => mb_substr($email, 0, 255)] : []);
+        });
+
         $this->reportable(function (Throwable $e) {
             //
         });

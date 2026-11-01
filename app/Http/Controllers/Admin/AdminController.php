@@ -169,7 +169,9 @@ class AdminController extends Controller
             }
         }
 
-        return view('admin/login');
+        return response()->view('admin.login')
+            ->header('Cache-Control', 'no-store, private')
+            ->header('Pragma', 'no-cache');
     }
 
     public function logout(Request $request) {
