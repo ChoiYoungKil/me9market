@@ -52,3 +52,6 @@
 @media(max-width:800px){#product-management .catalog-toolbar{align-items:flex-start}#product-management .catalog-toolbar .field-inline{justify-content:flex-start}}
 #product-management .management-table td:first-child{white-space:normal;word-break:break-all;overflow-wrap:anywhere;line-height:1.6}
 #product-management .management-table .product-name{white-space:normal}
+
+/* Shop 채널목록 관리 버튼: 줄 사이와 버튼 사이 간격 */
+.shop-list-row-actions{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px 6px}.shop-list-row-actions>form{display:flex;margin:0;padding:0}.shop-list-row-actions .btn02{display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;height:30px;min-height:30px;line-height:28px;margin:0}

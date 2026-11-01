@@ -14,7 +14,7 @@
 @endpush
 
 @section('content')
-    <div id="contents">
+    <div id="contents" class="channel-order-inquiries">
         <div class="row">
             <div class="box box1">
                 <div class="page_info">
@@ -133,3 +133,4 @@
         </div>
     </div>
 @endsection
+@push('styles')<link rel="stylesheet" href="{{ asset('channel_assets/css/catalog-settings.css') }}?v={{ filemtime(public_path('channel_assets/css/catalog-settings.css')) }}">@endpush

@@ -996,7 +996,7 @@ class ChannelProductController extends Controller
             return redirect()->route('channel.product_own')->with('error_message', '권한이 없습니다.');
         }
 
-        $categories = $this->baseProductCategories();
+        $categories = $this->baseProductCategories($product);
         $sections = \App\Models\Section::where('status', 1)->get();
 
         return view('channel.sub02.product_base_edit', [
@@ -1285,10 +1285,12 @@ class ChannelProductController extends Controller
         return $data;
     }
 
-    protected function baseProductCategories()
+    protected function baseProductCategories(?Product $product = null)
     {
         $noticeCategoryNames = array_keys($this->productNoticeMajorCategories());
         $vendorId = Auth::guard('admin')->user()->vendor_id ?? null;
+        $selectedMajorId = $product?->exists && (int) $product->vendor_id === (int) $vendorId
+            ? $this->categorySelectionForProduct($product)['major'] : null;
 
         $categories = Category::with(['subCategories' => function ($query) use ($vendorId) {
                 $this->applyChannelCategoryScope($query, $vendorId);
@@ -1299,9 +1301,15 @@ class ChannelProductController extends Controller
             }])
             ->where('parent_id', 0)
             ->where('status', 1)
-            ->whereIn('category_name', $noticeCategoryNames)
-            ->orderBy('category_name')
-            ->get();
+            ->where(function ($query) use ($noticeCategoryNames, $selectedMajorId) {
+                $query->whereIn('category_name', $noticeCategoryNames);
+                if ($selectedMajorId) {
+                    $query->orWhere('id', $selectedMajorId);
+                }
+            })
+            ->orderBy('category_name');
+        $this->applyChannelCategoryScope($categories, $vendorId);
+        $categories = $categories->get();
 
         $noticeOrder = array_flip(array_keys($this->productNoticeMajorCategories()));
 

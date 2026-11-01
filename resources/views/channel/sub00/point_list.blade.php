@@ -13,10 +13,11 @@
 @push('styles')
 <link rel="stylesheet" href="/channel_assets/css/order-workspace.css?v={{ filemtime(public_path('channel_assets/css/order-workspace.css')) }}">
 <link rel="stylesheet" href="/channel_assets/css/point-history.css?v={{ filemtime(public_path('channel_assets/css/point-history.css')) }}">
+<link rel="stylesheet" href="{{ asset('channel_assets/css/catalog-settings.css') }}?v={{ filemtime(public_path('channel_assets/css/catalog-settings.css')) }}">
 @endpush
 @section('content')
-<div id="contents"><div class="order-workspace point-workspace">
-    <div class="order-page-heading"><div><p>환경설정</p><h1>포인트 관리</h1></div></div>
+<div id="contents" class="channel-order-page channel-settings-page settings-point"><div class="order-workspace point-workspace">
+    @include('channel.sub02.partials.product_heading', ['catalogTitle' => '포인트 관리', 'catalogSection' => '환경설정'])
     @if($errors->any())<section class="order-panel point-error" role="alert">{{ $errors->first() }}</section>@endif
     <section class="order-panel" aria-labelledby="point-summary-title">
         <h2 id="point-summary-title">포인트 현황</h2>

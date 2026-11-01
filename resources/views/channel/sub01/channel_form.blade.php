@@ -4,8 +4,11 @@
     $banners=$shop?->banner_images ?? []; if(is_string($banners))$banners=json_decode($banners,true)?:[];
     $templates=old('purchase_sms_templates',$shop?->purchase_sms_templates??[]);
 @endphp
-<div id="contents"><div class="channel-shop" id="channel-shop-form">
-<header><p>MY CHANNEL</p><h1>{{ $editing ? 'Shop 채널 정보수정' : 'Shop 채널등록' }}</h1></header>
+@push('styles')
+<link rel="stylesheet" href="{{ asset('channel_assets/css/catalog-settings.css') }}?v={{ filemtime(public_path('channel_assets/css/catalog-settings.css')) }}">
+@endpush
+<div id="contents" class="channel-shop-editor-page"><div class="channel-shop" id="channel-shop-form">
+<div class="row"><div class="box box1"><div class="page_info"><h1 class="ttl">{{ $editing ? 'Shop 채널 정보수정' : 'Shop 채널등록' }}</h1><ul class="dep"><li>HOME</li><li>Shop채널관리</li><li>{{ $editing ? 'Shop 채널 정보수정' : 'Shop 채널등록' }}</li></ul></div></div></div>
 @if(session('success_message'))<p class="shop-feedback" role="status">{{ session('success_message') }}</p>@endif
 @if($errors->any())<div class="shop-feedback error" role="alert">@foreach($errors->all() as $error)<p>{{ $error }}</p>@endforeach</div>@endif
 <p class="shop-feedback error" data-form-feedback role="alert" hidden></p>
@@ -17,7 +20,7 @@
     <fieldset><legend>공개여부</legend><label><input type="radio" name="is_public" value="1" @checked($value('is_public',1)==1)>공개</label><label><input type="radio" name="is_public" value="0" @checked($value('is_public',1)==0)>비공개</label></fieldset>
     <fieldset><legend>구매권한</legend><label><input type="checkbox" name="is_member_only" value="1" @checked($value('is_member_only',0)) data-member-only>회원전용</label></fieldset>
     <div class="wide" data-private-controls hidden><button type="button" data-open-private>인원관리</button><span>접속가능인원 <strong data-private-count>0</strong>명</span><p class="shop-help">비공개 채널은 등록된 휴대폰번호와 입장코드로 접속합니다.</p></div>
-    <label class="wide">채널명 <em>필수</em><input name="channel_name" value="{{ $value('channel_name') }}" maxlength="255" required></label>
+    <label class="wide"><span>채널명 <em>필수</em></span><input name="channel_name" value="{{ $value('channel_name') }}" maxlength="255" required></label>
     <label class="wide">카피라이트<input name="copyright" value="{{ $value('copyright') }}" maxlength="255"></label>
     <div class="wide"><label for="shop-keyword-input">그룹 keyword <em>필수 · 1개 이상</em></label><div class="field-inline"><input id="shop-keyword-input" maxlength="50" placeholder="키워드 입력 후 Enter 또는 추가"><button type="button" data-add-keyword>추가</button></div><div class="keyword-tags" data-keyword-tags></div></div>
 </div></section>

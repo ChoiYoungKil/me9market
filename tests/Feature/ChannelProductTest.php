@@ -573,6 +573,56 @@ class ChannelProductTest extends TestCase
         $this->get('/channel/product/partial')->assertOk()->assertViewHas('products',fn($rows)=>$rows->total()===1);
     }
 
+    public function test_stopped_product_filter_stays_visible_and_can_return_to_all(): void
+    {
+        [, $admin, , $active] = $this->createSetup();
+        $stopped = $active->replicate();
+        $stopped->product_code = 'STOPPED-REVIEW';
+        $stopped->status = 0;
+        $stopped->save();
+        $response = $this->actingAs($admin, 'admin')->get('/channel/product/own?status=0')->assertOk()
+            ->assertViewHas('products', fn ($rows) => $rows->total() === 1 && $rows->first()->id === $stopped->id);
+        $document = new \DOMDocument;
+        @$document->loadHTML($response->getContent());
+        $xpath = new \DOMXPath($document);
+        $this->assertSame(0, $xpath->query('//*[@data-search-details and @hidden]')->length);
+        $this->assertSame(1, $xpath->query('//input[@name="status" and @value="0" and @checked]')->length);
+        $this->get('/channel/product/own?status=')->assertOk()
+            ->assertViewHas('products', fn ($rows) => $rows->total() === 2);
+    }
+
+    public function test_category_row_controls_submit_to_their_own_update_form_and_common_rows_are_read_only(): void
+    {
+        [$vendor, $admin] = $this->createSetup();
+        $section = \App\Models\Section::forceCreate(['name' => '검수 분류', 'status' => 1]);
+        $major = \App\Models\Category::forceCreate(['section_id' => $section->id, 'parent_id' => 0,
+            'category_name' => '기타 수입품', 'category_image' => '', 'url' => 'design-major', 'status' => 1]);
+        $middle = \App\Models\Category::forceCreate(['section_id' => $section->id, 'parent_id' => $major->id,
+            'vendor_id' => $vendor->id, 'category_name' => '검수 중분류', 'category_image' => '', 'url' => 'design-middle', 'status' => 1]);
+        $minor = \App\Models\Category::forceCreate(['section_id' => $section->id, 'parent_id' => $middle->id,
+            'vendor_id' => $vendor->id, 'category_name' => '검수 소분류', 'category_image' => '', 'url' => 'design-minor', 'status' => 1]);
+        $common = \App\Models\Category::forceCreate(['section_id' => $section->id, 'parent_id' => $major->id,
+            'vendor_id' => null, 'category_name' => '공통 분류', 'category_image' => '', 'url' => 'design-common', 'status' => 1]);
+        $response = $this->actingAs($admin, 'admin')->get(route('channel.product.categories'))->assertOk();
+        $dom = new \DOMDocument;
+        @$dom->loadHTML('<?xml encoding="utf-8" ?>'.$response->getContent());
+        $xpath = new \DOMXPath($dom);
+        foreach ([$middle, $minor] as $category) {
+            $id = 'category-edit-'.$category->id;
+            $this->assertSame($category->category_name, $xpath->query('//input[@name="category_name" and @form="'.$id.'"]')->item(0)->getAttribute('value'));
+            $this->assertCount(1, $xpath->query('//select[@name="status" and @form="'.$id.'"]'));
+            $this->assertSame(route('channel.product.categories.update', $category->id), $xpath->query('//form[@id="'.$id.'"]')->item(0)->getAttribute('action'));
+            $this->post(route('channel.product.categories.update', $category->id), [
+                'category_name' => $category->category_name.' 수정', 'status' => 1,
+            ])->assertSessionHasNoErrors()->assertRedirect(route('channel.product.categories'));
+            $this->assertDatabaseHas('categories', ['id' => $category->id, 'category_name' => $category->category_name.' 수정']);
+        }
+        $this->assertCount(0, $xpath->query('//form[@id="category-edit-'.$common->id.'"]'));
+        $this->post(route('channel.product.categories.update', $common->id), ['category_name' => '타사 변경', 'status' => 0])
+            ->assertSessionHas('error_message');
+        $this->assertDatabaseHas('categories', ['id' => $common->id, 'category_name' => '공통 분류', 'status' => 1]);
+    }
+
     public function test_only_full_administrator_can_publish_default_refund_information(): void
     {
         [, $admin] = $this->createSetup();$this->actingAs($admin,'admin');

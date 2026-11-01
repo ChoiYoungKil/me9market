@@ -4,6 +4,7 @@
         $formatSidebarCount = fn ($value) => ($value ?? 0) > 99 ? '99+' : (string) ($value ?? 0);
     @endphp
     <div class="con_bx">
+        <a href="{{ route('channel.index') }}" class="channel-dashboard-entry {{ request()->routeIs('channel.index') ? 'is-active' : '' }}" @if(request()->routeIs('channel.index')) aria-current="page" @endif>대시보드</a>
         @if($channelCan('order'))<div class="con1">
             <div class="ttl">주문관리</div>
             <ul>
@@ -169,6 +170,11 @@
 </div>
 
 <style>
+    .portal #header .t_menu .dashboard-home-link { padding:7px 12px; border:1px solid #7184bf; border-radius:5px; background:#304361; color:#fff; font-size:13px; white-space:nowrap; }
+    .portal #header .t_menu .dashboard-home-link:hover, .portal #header .t_menu .dashboard-home-link.on { background:#4b6cf7; border-color:#4b6cf7; }
+    .portal #l_menu .channel-dashboard-entry { display:block; margin:16px 20px; padding:12px 16px; border:1px solid #c9d5f7; border-radius:6px; background:#eef3ff; color:#3653bb; font-size:14px; font-weight:700; text-align:center; }
+    .portal #l_menu .channel-dashboard-entry:hover, .portal #l_menu .channel-dashboard-entry.is-active { background:#4b6cf7; color:#fff; border-color:#4b6cf7; }
+    .portal #l_menu .channel-dashboard-entry:focus-visible { outline:2px solid #4b6cf7; outline-offset:3px; }
     #l_menu .con3 .con_w .dep1>a {
         display: flex;
         justify-content: space-between;

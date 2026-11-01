@@ -53,6 +53,59 @@ class JointPurchaseManagementTest extends TestCase
         $this->assertEquals($joint->id, $service->activePurchaseForProduct($joint->product_id)->id);
     }
 
+    public function test_edit_retains_an_existing_nonstandard_category_without_exposing_foreign_categories(): void
+    {
+        [$admin, $data] = $this->setupForm();
+        $this->post(route('channel.joint_purchase.store'), $data)->assertSessionHasNoErrors();
+        $joint = JointPurchase::firstOrFail();
+        $major = Category::findOrFail($data['major_category_id']);
+        $major->forceFill(['category_name' => '기존 생활 분류', 'vendor_id' => $admin->vendor_id])->save();
+        $foreign = Category::forceCreate(['section_id' => $major->section_id, 'parent_id' => 0,
+            'category_name' => '의류/패션', 'category_image' => '', 'url' => 'foreign-root', 'status' => 1,
+            'vendor_id' => $admin->vendor_id + 1000]);
+        $response = $this->get(route('channel.joint_purchase.edit', $joint->id))->assertOk();
+        $this->assertContains($major->id, array_column($response->viewData('categoryTree'), 'id'));
+        $this->assertNotContains($foreign->id, array_column($response->viewData('categoryTree'), 'id'));
+        $response = $this->get(route('channel.product.base.edit', $joint->product_id))->assertOk();
+        $this->assertContains($major->id, array_column($response->viewData('categoryTree'), 'id'));
+        $this->assertNotContains($foreign->id, array_column($response->viewData('categoryTree'), 'id'));
+        unset($data['benefit_quantity'], $data['benefit_amount']);
+        $data['sale_name'] = '기존 분류 유지 수정';
+        $this->post(route('channel.joint_purchase.update', $joint->id), $data)->assertSessionHasNoErrors();
+        $this->assertEquals($major->id, $joint->product->fresh()->category_id);
+    }
+
+    public function test_policy_preview_state_preserves_formatting_and_removes_unsafe_html(): void
+    {
+        [$admin] = $this->setupForm();
+        $policy = ShopCancelRefundPolicy::forceCreate(['vendor_id' => $admin->vendor_id, 'name' => '서식 안내',
+            'content' => '<p><strong>반품 안내</strong></p><script>unsafePreview()</script><img src=x onerror="unsafePreview()">',
+            'status' => 'active', 'type' => 'custom', 'product_count' => 0]);
+        $response = $this->get(route('channel.joint_purchase.create'))->assertOk();
+        preg_match('/<script type="application\/json" id="joint-form-state">(.*?)<\/script>/s', $response->getContent(), $matches);
+        $state = json_decode($matches[1], true, 512, JSON_THROW_ON_ERROR);
+        $this->assertStringContainsString('<strong>반품 안내</strong>', $state['policies'][$policy->id]);
+        $this->assertStringNotContainsString('<script', $state['policies'][$policy->id]);
+        $this->assertStringNotContainsString('onerror', $state['policies'][$policy->id]);
+    }
+
+    public function test_single_status_filter_can_select_each_state_and_return_to_all(): void
+    {
+        [, $data] = $this->setupForm();
+        foreach ([0, 1, 2] as $state) {
+            $this->post(route('channel.joint_purchase.store'), array_replace($data, [
+                'purchase_code' => 'STATUS-'.$state, 'joint_status' => $state,
+            ]))->assertSessionHasNoErrors();
+        }
+        foreach ([0, 1, 2] as $state) {
+            $response = $this->get(route('channel.joint_purchase.list', ['state' => $state]))->assertOk();
+            $this->assertSame(1, $response->viewData('jointPurchases')->total());
+            $this->assertSame('STATUS-'.$state, $response->viewData('jointPurchases')->first()->purchase_code);
+        }
+        $response = $this->get(route('channel.joint_purchase.list', ['state' => 'all']))->assertOk();
+        $this->assertSame(3, $response->viewData('jointPurchases')->total());
+    }
+
     public function test_invalid_benefits_dates_and_uploads_never_create_product(): void
     {
         [, $data] = $this->setupForm();

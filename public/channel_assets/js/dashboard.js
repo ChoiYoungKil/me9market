@@ -2,7 +2,7 @@
     const source = document.getElementById('dashboard-chart-data');
     if (!source || typeof Chart === 'undefined' || !document.getElementById('dashboard-shop-chart')) return;
     const data = JSON.parse(source.textContent);
-    const colors = ['#6255a5','#3a9c9a','#d59a40','#bd6589','#657fb5','#8b9b4d','#cd775c'];
+    const colors = ['#4b6cf7','#3a9c9a','#d59a40','#bd6589','#657fb5','#8b9b4d','#cd775c'];
     new Chart(document.getElementById('dashboard-shop-chart'), {
         type: 'pie',
         data: {labels: data.shops.labels, datasets: [{data: data.shops.data, backgroundColor: colors}]},

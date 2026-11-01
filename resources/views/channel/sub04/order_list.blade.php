@@ -10,10 +10,11 @@
 @section('page_type', 'sub')
 @push('styles')
 <link rel="stylesheet" href="/channel_assets/css/order-workspace.css?v={{ filemtime(public_path('channel_assets/css/order-workspace.css')) }}">
+<link rel="stylesheet" href="{{ asset('channel_assets/css/catalog-settings.css') }}?v={{ filemtime(public_path('channel_assets/css/catalog-settings.css')) }}">
 @endpush
 @section('content')
-<div id="contents"><div class="order-workspace">
-    <div class="order-page-heading"><div><p>주문관리</p><h1>{{ $orderPageTitle }}</h1></div><span>HOME · 주문관리 · {{ $orderPageTitle }}</span></div>
+<div id="contents" class="channel-order-page"><div class="order-workspace">
+    @include('channel.sub02.partials.product_heading', ['catalogTitle' => $orderPageTitle, 'catalogSection' => '주문관리'])
     <section class="order-panel">
         <form method="GET" action="{{ $searchAction }}" id="orderSearchForm">
             <input type="hidden" name="detail_open" value="{{ $detailOpen ? 1 : 0 }}">

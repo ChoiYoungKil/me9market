@@ -24,7 +24,10 @@ class ChannelJointPurchaseController extends ChannelProductController
 
     public function index(Request $request)
     {
-        $filters = $request->validate(['q' => 'nullable|string|max:150', 'search_type' => 'nullable|in:name,code', 'date_from' => 'nullable|date_format:Y-m-d', 'date_to' => ['nullable', 'date_format:Y-m-d', ...($request->filled('date_from') ? ['after_or_equal:date_from'] : [])], 'states' => 'nullable|array', 'states.*' => 'in:0,1,2', 'per_page' => 'nullable|in:20,40,60,80,100']);
+        $filters = $request->validate(['q' => 'nullable|string|max:150', 'search_type' => 'nullable|in:name,code', 'date_from' => 'nullable|date_format:Y-m-d', 'date_to' => ['nullable', 'date_format:Y-m-d', ...($request->filled('date_from') ? ['after_or_equal:date_from'] : [])], 'state' => 'nullable|in:all,0,1,2', 'states' => 'nullable|array', 'states.*' => 'in:0,1,2', 'per_page' => 'nullable|in:20,40,60,80,100']);
+        if (isset($filters['state'])) {
+            $filters['states'] = $filters['state'] === 'all' ? [] : [(string) $filters['state']];
+        }
         $query = JointPurchase::with(['product.images'])->whereHas('product', fn ($q) => $q->where('vendor_id', Auth::guard('admin')->user()->vendor_id));
         if ($q = $filters['q'] ?? '') {
             $query->where(function ($w) use ($q, $filters) {
@@ -55,7 +58,7 @@ class ChannelJointPurchaseController extends ChannelProductController
         $product = $joint?->product?->load('images') ?? new Product(['status' => 0, 'product_color' => '#000000', 'brand_id' => Brand::where('status', 1)->value('id'), 'product_price' => 0]);
 
         return view('channel.sub03.joint_purchase_form', [
-            'joint' => $joint, 'product' => $product, 'categoryTree' => $this->categoryTreeForView(), 'categorySelection' => $this->categorySelectionForProduct($product),
+            'joint' => $joint, 'product' => $product, 'categoryTree' => $this->categoryTreeForView($this->baseProductCategories($product)), 'categorySelection' => $this->categorySelectionForProduct($product),
             'productNoticeTemplates' => $this->productNoticeTemplates(), 'orderManagers' => $this->orderManagersForView(),
             'cancelRefundPolicies' => $this->cancelRefundPoliciesForView(Auth::guard('admin')->user()->vendor_id),
             'defaultRefundPolicy' => PlatformRefundPolicy::currentContent(), 'brands' => Brand::where('status', 1)->get(),

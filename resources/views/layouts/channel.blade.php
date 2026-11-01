@@ -55,10 +55,11 @@
 	<div id="wrap" class="@yield('head_none')">
 		<header id="header">
             <button class="portal-menu-toggle" type="button" aria-controls="l_menu" aria-expanded="false">메뉴</button>
-			<a href="/" class="logo">Me9 market</a>
+			<a href="{{ route('channel.index') }}" class="logo" aria-label="채널관리자 대시보드">Me9 market</a>
 
 			<div class="t_menu" id="gnb" role="navigation" aria-label="주 메뉴">
 				<ul>
+                    <li><a href="{{ route('channel.index') }}" class="dashboard-home-link {{ request()->routeIs('channel.index') ? 'on' : '' }}">대시보드 홈</a></li>
 @if($channelCan('shop'))					<li><a href="{{ route('channel.shop_list') }}" class="{{ request()->is('channel/shop*') ? 'on' : '' }}">Shop채널관리</a></li>@endif
 @if($channelCan('product'))					<li><a href="{{ route('channel.product_own') }}" class="{{ request()->is('channel/product*') ? 'on' : '' }}">상품관리</a></li>@endif
 @if($channelCan('joint_purchase'))					<li><a href="{{ route('channel.joint_purchase.list') }}" class="{{ request()->is('channel/joint-purchase*') ? 'on' : '' }}">공동구매관리</a></li>@endif

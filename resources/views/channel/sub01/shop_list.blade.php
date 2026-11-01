@@ -2,12 +2,13 @@
 
 @section('page_type', 'sub')
 @push('styles')<link rel="stylesheet" href="{{ asset('channel_assets/css/shop-configuration.css') }}?v={{ filemtime(public_path('channel_assets/css/shop-configuration.css')) }}">@endpush
+@push('styles')<link rel="stylesheet" href="{{ asset('channel_assets/css/catalog-settings.css') }}?v={{ filemtime(public_path('channel_assets/css/catalog-settings.css')) }}">@endpush
 @php
     $dep1_id = "01";
 @endphp
 
 @section('content')
-    <div id="contents">
+    <div id="contents" class="channel-shop-list-page">
         <div class="row">
             <div class="box box1">
                 <div class="page_info">
@@ -186,20 +187,22 @@
                                             </td>
                                             <td class="t_c"><a href="{{ route('shop.enter', $shop->channel_code) }}" target="_blank" rel="noopener">{{ $shop->channel_code }}</a></td>
                                             <td class="t_c">
-                                                <form action="{{ route('channel.shop.copy', $shop->id) }}" method="POST" style="display: inline;">
+                                                <div class="shop-list-row-actions">
+                                                <form action="{{ route('channel.shop.copy', $shop->id) }}" method="POST">
                                                     @csrf
                                                     <button type="submit" class="btn02 col2" onclick="return confirm('Shop 채널 정보를 복사하시겠습니까? 판매상품과 접속자 명단은 복사되지 않습니다.')">복사</button>
                                                 </form>
-                                                <button type="button" class="btn02 col2 copy-channel-url" data-copy-url="{{ route('shop.enter', $shop->channel_code) }}" style="border: none; cursor: pointer; padding: 0 10px;">주소복사</button>
+                                                <button type="button" class="btn02 col6 copy-channel-url" data-copy-url="{{ route('shop.enter', $shop->channel_code) }}" style="cursor: pointer; padding: 0 10px;">주소복사</button>
                                                 <a href="{{ route('channel.shop_info', ['id' => $shop->id]) }}"
                                                     class="btn02 col7">관리</a>
                                                 <a href="{{ route('channel.shop.open', $shop->id) }}" target="_blank" rel="noopener"
                                                     class="btn02 col5">보기</a>
-                                                <form action="{{ route('channel.shop.delete', $shop->id) }}" method="POST" style="display: inline;">
+                                                <form action="{{ route('channel.shop.delete', $shop->id) }}" method="POST">
                                                     @csrf
                                                     <button type="submit" class="btn02" onclick="return confirm('정말 삭제하시겠습니까?')"
                                                         style="border: none; cursor: pointer; padding: 0 10px;">삭제</button>
                                                 </form>
+                                                </div>
                                             </td>
                                         </tr>
                                     @empty

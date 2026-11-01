@@ -1,9 +1,10 @@
 @extends('layouts.channel')
 @section('page_type','sub')
 @push('styles')<link rel="stylesheet" href="{{ asset('channel_assets/css/information.css') }}?v={{ filemtime(public_path('channel_assets/css/information.css')) }}">@endpush
+@push('styles')<link rel="stylesheet" href="{{ asset('channel_assets/css/catalog-settings.css') }}?v={{ filemtime(public_path('channel_assets/css/catalog-settings.css')) }}">@endpush
 @section('content')
-<div id="contents"><div id="channel-information">
-<header class="info-heading"><p>MY CHANNEL</p><h1>정보관리</h1></header>
+<div id="contents" class="channel-information-page"><div id="channel-information">
+@include('channel.sub02.partials.product_heading', ['catalogTitle' => '정보관리', 'catalogSection' => '환경설정'])
 @if(session('success_message'))<p class="info-message success" role="status">{{ session('success_message') }}</p>@endif
 @if(session('error_message'))<p class="info-message error" role="alert">{{ session('error_message') }}</p>@endif
 @if($errors->any())<div class="info-message error" role="alert">@foreach($errors->all() as $message)<p>{{ $message }}</p>@endforeach</div>@endif
@@ -16,7 +17,7 @@
 <form id="infoForm" method="POST" enctype="multipart/form-data" action="{{ route('channel.info.update') }}">@csrf
 <details class="info-panel info-company" @if($errors->any()) open @endif><summary><span>회원사 정보</span><small>{{ $details?->shop_name ?: $vendor?->name ?: '미등록' }} · 펼치기 / 접기</small></summary>
     <div class="info-grid">
-        <label class="wide">회원사명 <em>필수</em><input name="shop_name" value="{{ old('shop_name',$details?->shop_name ?: $vendor?->name) }}" maxlength="255" required></label>
+        <label class="wide"><span>회원사명 <em>필수</em></span><input name="shop_name" value="{{ old('shop_name',$details?->shop_name ?: $vendor?->name) }}" maxlength="255" required></label>
         <fieldset class="wide"><legend>사업자구분 <em>필수</em></legend><div class="info-radio-row">@foreach(['개인판매','개인사업자','법인사업자'] as $type)<label><input type="radio" name="shop_business_type" value="{{ $type }}" @checked(old('shop_business_type',$details?->shop_business_type) === $type) required>{{ $type }}</label>@endforeach</div></fieldset>
         <label>사업자등록번호<input name="business_license_number" inputmode="numeric" value="{{ old('business_license_number',$details?->business_license_number) }}" placeholder="000-00-00000" maxlength="12"></label>
         <label>대표연락처<input type="tel" name="shop_mobile" value="{{ old('shop_mobile',$details?->shop_mobile) }}" placeholder="010-0000-0000" maxlength="15"></label>

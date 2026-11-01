@@ -2,11 +2,14 @@
 @section('page_type', 'main')
 @push('styles')
 <link rel="stylesheet" href="{{ asset('channel_assets/css/dashboard.css') }}?v={{ filemtime(public_path('channel_assets/css/dashboard.css')) }}">
+<link rel="stylesheet" href="{{ asset('channel_assets/css/catalog-settings.css') }}?v={{ filemtime(public_path('channel_assets/css/catalog-settings.css')) }}">
 @endpush
 @section('content')
-<div id="contents"><div id="channel-dashboard">
+<div id="contents" class="channel-order-page channel-dashboard-page">
+@include('channel.sub02.partials.product_heading', ['catalogTitle' => '대시보드', 'catalogSection' => '채널관리'])
+<div id="channel-dashboard">
 <div class="dashboard-body">
-    <div class="dashboard-heading"><div><p>MY CHANNEL</p><h1>대시보드</h1></div><span>수집기간 : {{ $from->format('Y.m.d') }} ~ {{ $to->format('Y.m.d') }} · 최근 15일</span></div>
+    <div class="dashboard-heading"><span>수집기간 : {{ $from->format('Y.m.d') }} ~ {{ $to->format('Y.m.d') }} · 최근 15일</span></div>
     @if(session('success_message'))<p class="dashboard-feedback" role="status">{{ session('success_message') }}</p>@endif
     @if($errors->any())<p class="dashboard-feedback error" role="alert">{{ $errors->first() }}</p>@endif
     <section class="dashboard-shortcuts" aria-label="바로가기 메뉴"><strong>바로가기</strong>

@@ -63,3 +63,45 @@
 @media(max-width:1450px){#channel-dashboard .dashboard-overview{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}#channel-dashboard .dashboard-overview>.dashboard-chart:last-child{grid-column:1/-1}#channel-dashboard .dashboard-lists{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:1000px){#channel-dashboard{grid-template-columns:minmax(0,1fr)}#channel-dashboard .dashboard-channel-rail{border:0;padding:0;display:flex;gap:12px;flex-wrap:wrap;align-items:center}#channel-dashboard .dashboard-channel-rail>a{flex:1 1 160px}#channel-dashboard .dashboard-channel-rail>p{margin:0}#channel-dashboard .dashboard-status{grid-template-columns:repeat(4,minmax(0,1fr))}#channel-dashboard .dashboard-metric{border-bottom:1px solid #edf0f5}}
 @media(max-width:600px){#channel-dashboard .dashboard-heading>span{font-size:11px}#channel-dashboard h1{font-size:23px}#channel-dashboard .dashboard-overview{grid-template-columns:minmax(0,1fr)}#channel-dashboard .dashboard-status{grid-template-columns:repeat(2,minmax(0,1fr))}#channel-dashboard .dashboard-status>a:last-child{grid-column:1/-1}#channel-dashboard .dashboard-panel{padding:16px}#channel-dashboard .dashboard-lists table{min-width:560px}#channel-dashboard .dashboard-shortcuts{align-items:start}#channel-dashboard .dashboard-shortcuts nav{flex-basis:calc(100% - 75px)}#channel-dashboard .dashboard-shortcuts form{right:auto;left:0;width:230px}}
+
+/* 채널관리 공통 파란 제목·표·버튼 스타일 */
+.portal #contents.channel-dashboard-page #channel-dashboard{grid-template-columns:minmax(0,1fr) 220px;gap:20px;color:#333}
+.portal #contents.channel-dashboard-page .dashboard-heading{justify-content:flex-end;margin:0 0 14px}
+.portal #contents.channel-dashboard-page .dashboard-panel,
+.portal #contents.channel-dashboard-page .dashboard-shortcuts,
+.portal #contents.channel-dashboard-page .dashboard-status{border:0;border-radius:12px}
+.portal #contents.channel-dashboard-page .dashboard-panel{padding:24px}
+.portal #contents.channel-dashboard-page h2{font-size:16px;color:#4b6cf7}
+.portal #contents.channel-dashboard-page .dashboard-shortcuts{padding:18px 24px;gap:16px}
+.portal #contents.channel-dashboard-page .dashboard-shortcuts>strong{color:#4b6cf7}
+.portal #contents.channel-dashboard-page .dashboard-shortcuts nav a,
+.portal #contents.channel-dashboard-page .dashboard-more,
+.portal #contents.channel-dashboard-page .dashboard-panel-heading>a{display:inline-flex;align-items:center;justify-content:center;min-height:30px;padding:4px 12px;border:1px solid #aebfea;border-radius:5px;background:#eef3ff;color:#3653bb;font-size:12px;line-height:20px;white-space:nowrap}
+.portal #contents.channel-dashboard-page .dashboard-shortcuts summary{padding:7px 12px;min-height:34px;border:1px solid #4b6cf7;border-radius:5px;background:#4b6cf7;color:#fff;font-size:12px}
+.portal #contents.channel-dashboard-page button{min-height:34px;font-size:12px;background:#4b6cf7}
+.portal #contents.channel-dashboard-page input[type=checkbox]{accent-color:#4b6cf7}
+.portal #contents.channel-dashboard-page .dashboard-metric{padding:22px 10px}
+.portal #contents.channel-dashboard-page .dashboard-metric strong{font-size:26px;color:#4b6cf7;font-variant-numeric:tabular-nums}
+.portal #contents.channel-dashboard-page .dashboard-metric small,
+.portal #contents.channel-dashboard-page summary{color:#3653bb}
+.portal #contents.channel-dashboard-page .dashboard-metric:hover{background:#f2f5ff}
+.portal #contents.channel-dashboard-page .dashboard-overview,
+.portal #contents.channel-dashboard-page .dashboard-lists{gap:20px}
+.portal #contents.channel-dashboard-page .dashboard-panel-heading{margin-bottom:20px}
+.portal #contents.channel-dashboard-page table{font-size:13px}
+.portal #contents.channel-dashboard-page th{background:#4b6cf7;color:#fff;font-weight:700;text-align:center}
+.portal #contents.channel-dashboard-page th,
+.portal #contents.channel-dashboard-page td{padding:12px 10px;border:1px solid #e2e6ef;vertical-align:middle}
+.portal #contents.channel-dashboard-page td a{color:#3653bb}
+.portal #contents.channel-dashboard-page td a:hover{text-decoration:underline}
+.portal #contents.channel-dashboard-page .dashboard-company dt{font-size:12px}
+.portal #contents.channel-dashboard-page .dashboard-channel-rail{border:0;padding:24px 18px;background:#fff;border-radius:12px}
+.portal #contents.channel-dashboard-page .dashboard-channel-rail>a{padding:14px 12px;background:#f8faff;border-color:#dfe6f5}
+.portal #contents.channel-dashboard-page .dashboard-channel-rail>a:hover{border-color:#4b6cf7}
+.portal #contents.channel-dashboard-page .dashboard-channel-rail>a strong{color:#3653bb}
+.portal #contents.channel-dashboard-page .dashboard-channel-rail>a.dashboard-channel-manage{min-height:34px;padding:7px 12px;background:#4b6cf7;border-color:#4b6cf7;color:#fff}
+.portal #contents.channel-dashboard-page a:focus-visible,
+.portal #contents.channel-dashboard-page summary:focus-visible,
+.portal #contents.channel-dashboard-page button:focus-visible{outline:2px solid #92a8f6;outline-offset:2px}
+@media(max-width:1000px){.portal #contents.channel-dashboard-page #channel-dashboard{grid-template-columns:minmax(0,1fr)}.portal #contents.channel-dashboard-page .dashboard-channel-rail{padding:20px}}
+@media(max-width:600px){.portal #contents.channel-dashboard-page .dashboard-panel{padding:16px}.portal #contents.channel-dashboard-page .dashboard-shortcuts{padding:16px;gap:12px}}

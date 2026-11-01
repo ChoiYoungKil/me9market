@@ -166,7 +166,7 @@
         .category-choice-list button:hover { border-color:#344054; background:#f8fafc; }
         .category-choice-list .category-more { font-weight:700; color:#175cd3; }
     </style>
-    <div id="contents" class="product-manager-page">
+    <div id="contents" class="product-manager-page product-catalog-editor">
         <div class="row">
             <div class="box box1">
                 <div class="page_info">
@@ -207,9 +207,9 @@
                                                     {{ $product->product_code }}
                                                 @endif
                                             </td>
-                                            <th>상품상태</th>
-                                            <td>
-                                                <ul class="chk01">
+                                            <td colspan="2" class="catalog-status-cell">
+                                                <div class="catalog-status-inline"><span id="product-status-label">상품상태</span>
+                                                <fieldset class="catalog-status-group" aria-labelledby="product-status-label"><ul class="chk01">
                                                     <li>
                                                         <input type="radio" name="status" id="status_1" value="1" {{ old('status', $product->status) == 1 ? 'checked' : '' }}>
                                                         <label for="status_1">판매</label>
@@ -218,7 +218,7 @@
                                                         <input type="radio" name="status" id="status_0" value="0" {{ old('status', $product->status) == 0 ? 'checked' : '' }}>
                                                         <label for="status_0">중지</label>
                                                     </li>
-                                                </ul>
+                                                </ul></fieldset></div>
                                             </td>
                                         </tr>
                                         <tr>
@@ -312,7 +312,9 @@
 	                                        <tr>
 	                                            <th>상품설명</th>
 	                                            <td colspan="3">
-	                                                <textarea name="description" id="product_description_editor" class="wFull">{{ old('description', $product->description) }}</textarea>
+	                                                <div class="product-description-field">
+	                                                    <textarea name="description" id="product_description_editor" class="wFull" rows="10" aria-label="상품설명">{{ old('description', $product->description) }}</textarea>
+	                                                </div>
 	                                            </td>
 	                                        </tr>
                                     </tbody>
@@ -591,7 +593,9 @@
                                         <tr id="detail_text_row">
                                             <th>상세 텍스트</th>
                                             <td>
-                                                <textarea name="detail_text" class="wFull">{{ old('detail_text', $product->detail_text ?? '') }}</textarea>
+                                                <div class="product-description-field">
+                                                    <textarea name="detail_text" id="product_detail_editor" class="wFull" aria-label="상품 상세 설명">{{ old('detail_text', $product->detail_text ?? '') }}</textarea>
+                                                </div>
                                             </td>
                                         </tr>
                                     </tbody>
@@ -784,29 +788,36 @@
 @endsection
 
 @push('styles')<link rel="stylesheet" href="/common/policy-rich-text.css?v={{ filemtime(public_path('common/policy-rich-text.css')) }}"><link rel="stylesheet" href="{{ asset('channel_assets/css/shop-configuration.css') }}?v={{ filemtime(public_path('channel_assets/css/shop-configuration.css')) }}"><link rel="stylesheet" href="{{ asset('channel_assets/css/product-form.css') }}?v={{ filemtime(public_path('channel_assets/css/product-form.css')) }}">@endpush
+@push('styles')<link rel="stylesheet" href="{{ asset('channel_assets/css/catalog-settings.css') }}?v={{ filemtime(public_path('channel_assets/css/catalog-settings.css')) }}">@endpush
 @push('scripts')
 <script src="https://cdn.ckeditor.com/4.22.1/full/ckeditor.js"></script>
 <script>
 	document.addEventListener('DOMContentLoaded', function () {
 	    var productForm = document.querySelector('.product-base-form');
-	    if (typeof CKEDITOR !== 'undefined' && document.getElementById('product_description_editor')) {
-	        CKEDITOR.replace('product_description_editor', {
-	            height: 320,
-	            language: 'ko',
-	            versionCheck: false,
-	            toolbar: [
-	                { name: 'document', items: ['Source', '-', 'Preview'] },
-	                { name: 'clipboard', items: ['Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo'] },
-	                '/',
-	                { name: 'basicstyles', items: ['Bold', 'Italic', 'Underline', 'Strike', '-', 'RemoveFormat'] },
-	                { name: 'paragraph', items: ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'Blockquote'] },
-	                { name: 'links', items: ['Link', 'Unlink'] },
-	                { name: 'insert', items: ['Table', 'HorizontalRule'] },
-	                '/',
-	                { name: 'styles', items: ['Format', 'Font', 'FontSize'] },
-	                { name: 'colors', items: ['TextColor', 'BGColor'] },
-	                { name: 'tools', items: ['Maximize'] }
-	            ]
+	    if (typeof CKEDITOR !== 'undefined') {
+	        ['product_description_editor', 'product_detail_editor'].forEach(function (editorId) {
+	            if (!document.getElementById(editorId)) return;
+	            CKEDITOR.replace(editorId, {
+	                height: 240,
+	                width: '100%',
+	                resize_dir: 'vertical',
+	                contentsCss: 'body { margin: 14px 16px; font-family: Arial, "Malgun Gothic", sans-serif; font-size: 14px; line-height: 1.7; color: #333; } img { max-width: 100%; height: auto; }',
+	                language: 'ko',
+	                versionCheck: false,
+	                toolbar: [
+	                    { name: 'document', items: ['Source', '-', 'Preview'] },
+	                    { name: 'clipboard', items: ['Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo'] },
+	                    { name: 'basicstyles', items: ['Bold', 'Italic', 'Underline', 'Strike', '-', 'RemoveFormat'] },
+	                    { name: 'paragraph', items: ['NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'Blockquote'] },
+	                    { name: 'links', items: ['Link', 'Unlink'] },
+	                    { name: 'insert', items: ['Table', 'HorizontalRule'] },
+	                    '/',
+	                    { name: 'styles', items: ['Format', 'Font', 'FontSize'] },
+	                    { name: 'colors', items: ['TextColor', 'BGColor'] },
+	                    { name: 'tools', items: ['Maximize'] }
+	                ],
+	                removePlugins: 'exportpdf'
+	            });
 	        });
 	    }
 

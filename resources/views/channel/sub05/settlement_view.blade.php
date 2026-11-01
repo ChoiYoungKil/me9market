@@ -8,10 +8,12 @@
 @push('styles')
 <link rel="stylesheet" href="/channel_assets/css/order-workspace.css?v={{ filemtime(public_path('channel_assets/css/order-workspace.css')) }}">
 <link rel="stylesheet" href="/channel_assets/css/settlement-workspace.css?v={{ filemtime(public_path('channel_assets/css/settlement-workspace.css')) }}">
+<link rel="stylesheet" href="{{ asset('channel_assets/css/catalog-settings.css') }}?v={{ filemtime(public_path('channel_assets/css/catalog-settings.css')) }}">
 @endpush
 @section('content')
-<div id="contents"><div class="order-workspace settlement-workspace">
-    <div class="order-page-heading"><div><p>{{ $period }}{{ $summary ? ' / '.$summary->shop_channel_name : '' }}</p><h1>정산 상세 내역</h1></div><a class="order-button" href="{{ route('channel.settlement.list',['period'=>$period]) }}">목록으로</a></div>
+<div id="contents" class="channel-order-page channel-settlement-page"><div class="order-workspace settlement-workspace">
+    @include('channel.sub02.partials.product_heading', ['catalogTitle' => '정산 상세 내역', 'catalogSection' => '정산관리'])
+    <div class="settlement-context-bar"><p>{{ $period }}{{ $summary ? ' / '.$summary->shop_channel_name : '' }}</p><a class="order-button" href="{{ route('channel.settlement.list',['period'=>$period]) }}">목록으로</a></div>
     @if($summary)
     <section class="order-panel">
         <h2>정산 요약</h2>
@@ -30,7 +32,7 @@
     @endif
     <section class="order-panel">
         <div class="order-toolbar"><h2>주문별 상세</h2><p>총 <strong>{{ $orders->total() }}</strong> 건</p></div>
-        <div class="order-table-scroll" tabindex="0"><table class="order-table">
+        <div class="order-table-scroll" tabindex="0"><table class="order-table settlement-detail-table">
             <thead><tr><th>확정일자</th><th>주문번호</th><th>상품정보</th><th>수량</th><th>역할</th><th>PG구분</th><th>매출</th><th>매입</th><th>포인트 예수금 / 사용</th><th>SMS 후불</th><th>지급액</th></tr></thead>
             <tbody>
             @forelse($orders as $item)

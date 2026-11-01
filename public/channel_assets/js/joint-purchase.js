@@ -7,10 +7,6 @@ document.addEventListener('DOMContentLoaded', () => {
             details.hidden = !details.hidden;
             toggle.setAttribute('aria-expanded', String(!details.hidden));
         });
-        const all = document.getElementById('joint-all-states');
-        const states = [...list.querySelectorAll('[name="states[]"]')];
-        all.addEventListener('change', () => { if (all.checked) states.forEach(s => s.checked = false); });
-        states.forEach(s => s.addEventListener('change', () => all.checked = !states.some(s => s.checked)));
         list.querySelector('[name=per_page]').addEventListener('change', () => document.getElementById('joint-search').requestSubmit());
         const dialog = document.getElementById('joint-delete-dialog');
         list.querySelectorAll('[data-delete-joint]').forEach(button => button.addEventListener('click', () => {
@@ -37,7 +33,8 @@ document.addEventListener('DOMContentLoaded', () => {
         group('joint-manager-fields', checked('order_manager_enabled') === '1');
         group('joint-shipping-base', find('shipping_policy_type').value !== 'free');
         group('joint-shipping-threshold', find('shipping_policy_type').value === 'free_conditional');
-        document.getElementById('joint-policy-preview').textContent = state.policies[find('cancel_refund_policy_id').value] || '총관리자가 등록한 기본 안내가 없습니다.';
+        // Policy HTML is sanitized on the server before it enters the form state.
+        document.getElementById('joint-policy-preview').innerHTML = state.policies[find('cancel_refund_policy_id').value] || '총관리자가 등록한 기본 안내가 없습니다.';
     }
     form.addEventListener('change', update); update();
     const major = document.getElementById('joint-major'), middle = document.getElementById('joint-middle'), minor = document.getElementById('joint-minor');
